@@ -1,0 +1,121 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/04-snapshot
+
+Dynamo workshop · Snapshot Pod recovery
+LIVE CLUSTER
+Run: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/04-snapshot
+
+Offstage preparation / prime
+Primed. Keep this run for the onstage Pod replacement; capture is not repeated.
+
+Next: 1/4  An initialized engine, saved once
+
+================================================================
+1/4  An initialized engine, saved once
+Inspect the prepared artifact and restore contract; capture happened offstage.
+================================================================
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/04-snapshot/snapshot-settings.yaml
+scope: 'Native vLLM Snapshot restore. Dynamo DGD integration: still to qualify.'
+initialize_once:
+  resource: SnapshotJob
+  name: super-vl-tp2-cuinterpose
+  tensor_parallel_size: 2
+  capture: prepared offstage
+artifact:
+  content_uid: b0b67cbb-51b4-45da-9792-05cf6175014f
+  bytes: 98903175597
+  restore_storage: nvme
+  node: kubecon-nke-site-cp-0124
+replacement_pod:
+  annotations:
+    nvidia.com/restore-from: super-vl-tp2-cuinterpose
+what_survives: Initialized engine. KV cache was released before capture; no live stream
+  is saved.
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s get podsnapshot super-vl-tp2-cuinterpose -n dynamo-ft-20261022t173026z
+NAME                       CONTENT                                                   READY   AGE
+super-vl-tp2-cuinterpose   podsnapshotcontent-174e9cdb-c8fc-49c0-840d-d3295577a95f   True    12d
+Current implementation uses native Snapshot resources. Dynamo DGD lifecycle integration is still to qualify.
+
+Step finished in 5.7s
+
+Next: 2/4  Replace the Pod
+
+================================================================
+2/4  Replace the Pod
+Delete this demo's serving Pod, restore a new one, and follow recovery through readiness.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s delete pod snapshot-demo-347d73213e-1 -n dynamo-ft-20261022t173026z --wait=true
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s apply -f /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/04-snapshot/snapshot-demo-347d73213e-2.json
+
+Restore timing
+Pod to Ready: 41.00s
+Agent restore: 37.31s
+  criu_prepare                0.011s
+  criu_restore               20.175s
+  cuda_restore               14.970s
+  gpu_device_map              0.042s
+  overlay_capture             0.593s
+  pagebroker_commit           0.000s
+  pagebroker_mount            0.002s
+  pagebroker_stage            0.005s
+  unaccounted                 1.510s
+Capture, NVMe staging and artifact verification happened offstage. Agent restore and Pod-to-Ready have different boundaries; do not add them. No matched cold-start baseline is included.
+
+Step finished in 103.3s
+
+Next: 3/4  Check what recovered
+
+================================================================
+3/4  Check what recovered
+A new Pod UID, the same artifact and compatible GPUs, and a restored engine.
+================================================================
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/04-snapshot/recovery-proof.json
+{
+  "simulated": false,
+  "before_uid": "1faec9d7-2510-4d42-a243-1458703eaf25",
+  "after_uid": "5ed03c67-b389-4e9d-acfb-3dd938192be0",
+  "content_uid": "b0b67cbb-51b4-45da-9792-05cf6175014f",
+  "node": "kubecon-nke-site-cp-0124",
+  "physical_gpu_pair": [
+    [
+      "kubecon-nke-site-cp-0124",
+      "gpu-1"
+    ],
+    [
+      "kubecon-nke-site-cp-0124",
+      "gpu-3"
+    ]
+  ],
+  "scope": "Same-node initialized-engine recovery. KV released before capture; no active request saved."
+}
+
+Step finished in 5.0s
+
+Next: 4/4  Use the recovered engine
+
+================================================================
+4/4  Use the recovered engine
+Make a fresh inference request. In-flight requests and prefix caches are separate concerns.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-20261022t173026z pod/snapshot-demo-347d73213e-2 18003:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error --max-time 180 http://127.0.0.1:18003/test
+{
+  "text": "READY",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "tp": 2
+}
+This qualified artifact exposes /test and generates READY. Coding-agent chat and Dynamo registration remain integration work.
+
+Step finished in 13.5s
+
+Demo complete. The service stays running.
+
+Resume: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/04-snapshot/run.sh --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/04-snapshot
+Cleanup: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/04-snapshot/run.sh cleanup --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/04-snapshot

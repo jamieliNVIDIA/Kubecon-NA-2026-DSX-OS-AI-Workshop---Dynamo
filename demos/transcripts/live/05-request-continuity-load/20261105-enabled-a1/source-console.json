@@ -1,0 +1,12 @@
+{
+  "exported_at": "2026-11-05T18:14:11.796328+00:00",
+  "source": "results/overnight-migration-enabled-20261105-a1/qualification-console.log",
+  "source_sha256": "d31b2e98c30265e9bd9bf3273385aa27b28fa94f627e44dcc1ca095750eb7579",
+  "source_bytes": 7536,
+  "main_txt_sha256": "d31b2e98c30265e9bd9bf3273385aa27b28fa94f627e44dcc1ca095750eb7579",
+  "ready_excerpt_sha256": "346ba65b209abb2767e1444b89f101cfd8652bcf656c52b373517bddee348b23",
+  "redactions": 0,
+  "ready_excerpt": "Exact actual console suffix beginning after offstage preparation; no reconstructed text.",
+  "source_exit_code": 0,
+  "source_exit_attestation": "Root polled the owning execution session77305 and reported EXIT0."
+}

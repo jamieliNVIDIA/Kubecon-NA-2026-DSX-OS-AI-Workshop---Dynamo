@@ -1,0 +1,55 @@
+{
+  "scope": "Read-only selection of terminal MX phase data; no active routing state/logs or cluster mutation",
+  "host": "ip-172-31-10-102",
+  "physical_workspace": "/home/ubuntu/workshop-measurements/20261103-stable-controller/workspace",
+  "logical_workspace": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop",
+  "remote_relative_paths": [
+    "results/workshop-mx-startup-20261103-artifact04",
+    "results/workshop-rr-20261103-resume02/continuation-stable-a2/mx-artifact04-batch",
+    "results/workshop-rr-20261103-resume02/continuation-stable-a2/mx-artifact04-cleanup",
+    "results/workshop-rr-20261103-resume02/continuation-stable-a2/mx-artifact04-analysis",
+    "results/workshop-rr-20261103-resume02/continuation-stable-a2/mx-artifact04-cleanup-proof",
+    "results/workshop-rr-20261103-resume02/continuation-stable-a2/mx-outcome.json",
+    "results/workshop-rr-20261103-resume02/continuation-stable-a2/plan.json"
+  ],
+  "required_mx_files": [
+    "comparison.json",
+    "artifact-reuse-evidence.json",
+    "source-artifact-publication.log",
+    "startup-analysis.json",
+    "startup-summary.csv",
+    "state.json",
+    "spec.json",
+    "spec.sha256",
+    "model-lock.json",
+    "source.json",
+    "target-native.json",
+    "target-p2p.json",
+    "target-artifacts.json",
+    "coordinator.json",
+    "evidence-sha256.json"
+  ],
+  "required_arm_directories": [
+    "central-source-bootstrap",
+    "central-native-storage",
+    "central-mx-weights",
+    "central-mx-artifacts",
+    "after-cleanup"
+  ],
+  "selection_rules": [
+    "Recursive regular files only inside the exact selected paths; no symlinks or parent escapes",
+    "Include command-*.json created by the MX batch/cleanup; no preparation or unrelated credential receipts",
+    "Exclude active RR state.json, continuation STATUS/exit and ongoing routing/controller logs until whole-campaign termination",
+    "Create a NEW read-only completed-file inventory of SHA256 and byte length on the stable host; capture it locally before transfer; do not alter frozen inputs",
+    "Existing batch evidence-sha256.json is historical and predates later state/analysis/CPU cleanup; preserve it but do not treat it as the final copy manifest",
+    "Verify received file bytes against the NEW inventory, then merge with unchanged original local preflight files and seal complete local archive"
+  ],
+  "origin_evidence_preserved": [
+    "results/workshop-stable-controller-20261103/artifact04-origin-preflight-inventory.json",
+    "results/workshop-stable-controller-20261103/artifact04-origin-preflight-state.json"
+  ],
+  "snapshot_source": "results/workshop-stable-controller-20261103/status-a1/status.json",
+  "snapshot_sha256": "372120dc94317530a84cd79ce23d2baab9da4c4bddd1067f8bb579a8bcdf7326",
+  "raw_pullback_complete": false,
+  "final_local_integrity_verified": false
+}

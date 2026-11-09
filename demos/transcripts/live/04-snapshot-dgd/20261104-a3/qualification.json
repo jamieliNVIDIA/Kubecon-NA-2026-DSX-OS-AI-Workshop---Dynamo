@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "kind": "snapshot_dgd_qualification",
+  "mode": "live",
+  "status": "live_passed",
+  "packaged_at": "2026-11-04T21:41:55.205125+00:00",
+  "run": "results/workshop-snapshot-dgd-20261104-a3",
+  "transcript": "qualification.txt",
+  "transcript_sha256": "2102815c45f3173990a4cbbde4de018ec6ac59c1fe051a4e30ea22dbda396949",
+  "raw_sha256": "2102815c45f3173990a4cbbde4de018ec6ac59c1fe051a4e30ea22dbda396949",
+  "raw_path": "results/workshop-snapshot-dgd-20261104-a3/qualification-console.log",
+  "redaction_count": 0,
+  "scope": "Actual deploy/verify/replace/cleanup CLI stdout/stderr; not the demo 4 presenter main-panel program or PTY recording.",
+  "storage": "EFS",
+  "node_scope": "same node and exact physical GPU UUID pair",
+  "runtime": {
+    "patch_configmap": "snapshot-dgd-runtime-patch-v3",
+    "patch_sha256": "047a6b087f8af397a392e789c1b2a7fe0c5387ab151ea6c5c29358350ebea3f8",
+    "module_path": "/usr/local/lib/python3.12/dist-packages/dynamo/vllm/snapshot.py",
+    "gpu_uuids": [
+      "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110",
+      "GPU-75461e0d-6588-94c9-2517-dca859f5c68b"
+    ],
+    "node": "kubecon-nke-site-cp-0124",
+    "cache_home": "/model-cache/feature-tests/20261015-super-vl-tp2/hf"
+  },
+  "timing": {
+    "fault_requested_at": "2026-11-04T21:31:49.908018+00:00",
+    "pod_created_at": "2026-11-04T21:31:50Z",
+    "restored_at": "2026-11-04T21:37:30Z",
+    "ready_at": "2026-11-04T21:37:42Z",
+    "first_success_at": "2026-11-04T21:38:04.626530+00:00",
+    "fault_to_first_success_seconds": 374.718512,
+    "pod_to_ready_seconds": 352.0,
+    "scope": "Same-node replacement through unchanged Dynamo frontend; no in-flight request or prefix-cache recovery."
+  },
+  "private_evidence_snapshot": "results/workshop-snapshot-dgd-20261104-a3/qualification-package-evidence",
+  "evidence_sha256": {
+    "model-lock.json": "f348241d54b05f77c6c9fe5e7a52e4af4aff6030aa0301c2a88a2f25fb469fad",
+    "snapshot-dgd-spec.json": "7f6852b258144dac87b2988dabb5fe372c8d588a3f4b9ef5a49c5c635c9ec3c8",
+    "initial-identity.json": "e588e6e41759e3ce1d063eb2903b9209a4e027a6b3a1173e3cf4a3d077b1ae9b",
+    "initial-request.json": "035c5ff8284d453eea30f246dd3550ea799bfe364fcb98138cc5dac3b5ec6dc4",
+    "replacement-identity.json": "2cdf871740a8de6a1fc113bf77d0d747177898358cb000c5178b5fb935f9ae40",
+    "replacement-request.json": "256590f04916a049b1e20a85dfc64af28e29f1405edcdf95cf9f048298e4a1cc",
+    "replacement-timing.json": "2383fa15e814ccfa0c56933ca8eecdeeabfad4cbd4b380b4578757d2b6d84761",
+    "qualification-exit.json": "8e93ec9e9bdec1c7474d93e0801d1d9929cf4154f9b568e08f4ec9eebe007216",
+    "final-cleanup-proof.json": "493b3d1639ed9b3fc53dba73e3e09ad9b65ee2abdaf78bf042fb5202d668b128",
+    "captured-snapshot.json": "0b2c00d404b7622d5fe3e2c3936d9f485aa50ad0b885eff66caf075063cb93e2",
+    "captured-content.json": "1117de70047f247dfccbf05ce4554fdb5bee9bc1a064c66389d3f79899da00a5",
+    "deployment.yaml": "311168325db30fbd5081877658f3db5e2e55b532e342918fa06daff17e714767"
+  },
+  "limits": [
+    "Experimental pinned-runtime overlay and offline cache preparation required",
+    "No NVMe DGD timing or matched cold-start speedup",
+    "No cross-node restoration",
+    "No in-flight request migration or KV preservation",
+    "Presenter UI not yet wired to DGD qualification"
+  ]
+}

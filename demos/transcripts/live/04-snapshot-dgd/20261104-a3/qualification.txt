@@ -1,0 +1,151 @@
+2026-11-04T20:58:16.003331+00:00 Exclusive local and remote GPU reservations acquired; preflight passed
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py deploy --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-20261104-a3
+{
+  "snapshot-dgd-admission": {
+    "status": "passed",
+    "updated_at": "2026-11-04T20:58:21.677575+00:00",
+    "scope": "Admission only; no GPU allocation or DGD created"
+  }
+}
+{
+  "snapshot-dgd-deployment": {
+    "status": "submitted",
+    "updated_at": "2026-11-04T20:58:26.862644+00:00",
+    "uid": "575e5c6e-52ff-4ce4-a31a-52fd21e193a0"
+  }
+}
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py verify --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-20261104-a3 --timeout 3600
+{
+  "snapshot-dgd-source-helper": {
+    "status": "completed",
+    "updated_at": "2026-11-04T21:25:35.621002+00:00",
+    "pod_uid": "9544f81a-8f7d-4caa-9557-92e8087142ac",
+    "snapshot_uid": "c9a06d82-5070-40d1-98f2-000416894780",
+    "scope": "Only CPU keepalive stopped after durable artifact Ready"
+  }
+}
+{
+  "snapshot-dgd-initial": {
+    "status": "passed",
+    "updated_at": "2026-11-04T21:31:46.842680+00:00",
+    "dgd_uid": "575e5c6e-52ff-4ce4-a31a-52fd21e193a0",
+    "worker_name": "ft-snapshot-vllmsnapshotworker-70d99cee-557db675d6-dwx7t",
+    "worker_uid": "25f8eeef-ea2d-402c-9218-b384001f94f3",
+    "frontend_uid": "afaeba1c-5dcf-4653-8125-452ba0641804",
+    "service_uid": "64024253-deed-4ad7-9ea1-7d6d8b19bf60",
+    "service_name": "ft-snapshot-frontend",
+    "checkpoint_name": "checkpoint-377dd0042168f6d4dfa51967bf27b30d",
+    "checkpoint_uid": "c9a06d82-5070-40d1-98f2-000416894780",
+    "content_uid": "e10fab7b-f3f8-4084-85d2-f4c59cce586a",
+    "source_uid": "9544f81a-8f7d-4caa-9557-92e8087142ac",
+    "node": "kubecon-nke-site-cp-0124",
+    "gpu_uuids": [
+      "GPU-75461e0d-6588-94c9-2517-dca859f5c68b",
+      "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110"
+    ],
+    "pod_created_at": "2026-11-04T21:25:39Z",
+    "restored_at": "2026-11-04T21:31:07Z",
+    "ready_at": "2026-11-04T21:31:19Z",
+    "controller_lineage": [
+      {
+        "kind": "ReplicaSet",
+        "name": "ft-snapshot-vllmsnapshotworker-70d99cee-557db675d6",
+        "uid": "a698072e-1460-4e20-beb5-c2bed4f0e224"
+      },
+      {
+        "kind": "Deployment",
+        "name": "ft-snapshot-vllmsnapshotworker-70d99cee",
+        "uid": "84ae4db2-0163-49e9-a4bd-d258fc29ac51"
+      },
+      {
+        "kind": "DynamoComponentDeployment",
+        "name": "ft-snapshot-vllmsnapshotworker-70d99cee",
+        "uid": "4cc0fc6c-14e1-4be3-9093-76bb2ba142da"
+      },
+      {
+        "kind": "DynamoGraphDeployment",
+        "name": "ft-snapshot",
+        "uid": "575e5c6e-52ff-4ce4-a31a-52fd21e193a0"
+      }
+    ],
+    "response_worker": {
+      "prefill_worker_id": 852328509295357,
+      "decode_worker_id": 852328509295357
+    },
+    "first_success_at": "2026-11-04T21:31:39.750692+00:00"
+  }
+}
+
+Initial frontend coding response:
+def add(a, b):
+    return a + b
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py replace --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-20261104-a3 --timeout 1800
+{
+  "snapshot-dgd-replacement": {
+    "status": "passed",
+    "updated_at": "2026-11-04T21:38:17.376815+00:00",
+    "dgd_uid": "575e5c6e-52ff-4ce4-a31a-52fd21e193a0",
+    "worker_name": "ft-snapshot-vllmsnapshotworker-70d99cee-557db675d6-twfrr",
+    "worker_uid": "1887a296-3ccc-4ddc-98fa-c36a203d33a4",
+    "frontend_uid": "afaeba1c-5dcf-4653-8125-452ba0641804",
+    "service_uid": "64024253-deed-4ad7-9ea1-7d6d8b19bf60",
+    "service_name": "ft-snapshot-frontend",
+    "checkpoint_name": "checkpoint-377dd0042168f6d4dfa51967bf27b30d",
+    "checkpoint_uid": "c9a06d82-5070-40d1-98f2-000416894780",
+    "content_uid": "e10fab7b-f3f8-4084-85d2-f4c59cce586a",
+    "source_uid": "9544f81a-8f7d-4caa-9557-92e8087142ac",
+    "node": "kubecon-nke-site-cp-0124",
+    "gpu_uuids": [
+      "GPU-75461e0d-6588-94c9-2517-dca859f5c68b",
+      "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110"
+    ],
+    "pod_created_at": "2026-11-04T21:31:50Z",
+    "restored_at": "2026-11-04T21:37:30Z",
+    "ready_at": "2026-11-04T21:37:42Z",
+    "controller_lineage": [
+      {
+        "kind": "ReplicaSet",
+        "name": "ft-snapshot-vllmsnapshotworker-70d99cee-557db675d6",
+        "uid": "a698072e-1460-4e20-beb5-c2bed4f0e224"
+      },
+      {
+        "kind": "Deployment",
+        "name": "ft-snapshot-vllmsnapshotworker-70d99cee",
+        "uid": "84ae4db2-0163-49e9-a4bd-d258fc29ac51"
+      },
+      {
+        "kind": "DynamoComponentDeployment",
+        "name": "ft-snapshot-vllmsnapshotworker-70d99cee",
+        "uid": "4cc0fc6c-14e1-4be3-9093-76bb2ba142da"
+      },
+      {
+        "kind": "DynamoGraphDeployment",
+        "name": "ft-snapshot",
+        "uid": "575e5c6e-52ff-4ce4-a31a-52fd21e193a0"
+      }
+    ],
+    "response_worker": {
+      "prefill_worker_id": 741928725038905,
+      "decode_worker_id": 741928725038905
+    },
+    "first_success_at": "2026-11-04T21:38:04.626530+00:00"
+  }
+}
+
+Replacement frontend coding response:
+def add(a, b):
+    return a + b
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py cleanup --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-20261104-a3
+{
+  "snapshot-dgd-cleanup": {
+    "status": "passed",
+    "updated_at": "2026-11-04T21:38:32.419777+00:00",
+    "scope": "Owned workloads/claims gone; snapshots, artifacts, storage and caller lease retained"
+  }
+}
+Owned remote GPU reservation released
+2026-11-04T21:38:34.826633+00:00 DGD Snapshot recovery qualification passed; owned workloads cleaned

@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-05T20:50:32.315504+00:00",
+  "gpu_cleanup_passed": true,
+  "gpu_lease_absent": true,
+  "borrowed_cpu_retained": true,
+  "source_pod_uid": "4385c581-2c2c-446a-8f7d-123617386cf8",
+  "source_namespace": "dynamo-ft-routing-overnight-20261105-a1",
+  "retained": [
+    "CPU Pod",
+    "PVC",
+    "namespace",
+    "prior routing archives",
+    "prepared cache"
+  ]
+}

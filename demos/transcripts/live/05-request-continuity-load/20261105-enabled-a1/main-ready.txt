@@ -1,0 +1,18 @@
+enabled: two workers and frontend Ready; EngineCore identities recorded.
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-3bef380e-demo service/demo-continuity-enabled-frontend 18154:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18154/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793895453,"owned_by":"nvidia","context_window":1048576}]}
+
+Baseline: four concurrent coding streams, no fault.
+
+Fault: four identical concurrent coding streams, one observed EngineCore SIGKILL.
+
+[fault] SIGKILL EngineCore on worker 4230309658068301 (demo-continuity-enabled-0-agg-chcd9)
+{
+  "mode": "enabled",
+  "baseline_completed": 4,
+  "fault_completed": 4,
+  "scope": "Controlled coding-stream integration qualification; not AgentX replay or an SLO benchmark."
+}

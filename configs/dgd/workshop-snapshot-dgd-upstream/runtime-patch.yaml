@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ConfigMap
+immutable: true
+metadata:
+  name: snapshot-dgd-upstream-kv-v1
+  namespace: dynamo-ft-20261104t221053z
+  labels:
+    feature-test-run: dynamo-ft-20261104t221053z
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+data:
+  snapshot.py: "# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION\
+    \ & AFFILIATES. All rights reserved.\n# SPDX-License-Identifier: Apache-2.0\n\n\
+    import gc\nimport logging\nimport os\nfrom collections.abc import Callable\nfrom\
+    \ typing import Any\n\nfrom dynamo.common.snapshot.lifecycle import (\n    EngineSnapshotController,\n\
+    \    SnapshotConfig,\n    configure_snapshot_capture_env,\n)\n\nfrom .args import\
+    \ Config\nfrom .handlers import VllmEnginePauseController\nfrom .publisher import\
+    \ StatLoggerFactory\nfrom .worker_factory import EngineSetupResult, SnapshotEngineSetupResult\n\
+    \nlogger = logging.getLogger(__name__)\n\n\nclass _ReleaseOnlyKvCache:\n    \"\
+    \"\"Engine client whose sleep discards only the KV cache.\n\n    Snapshot captures\
+    \ the weights on the GPU, so they need no host copy.\n    \"\"\"\n\n    def __init__(self,\
+    \ engine_client: Any):\n        self._engine_client = engine_client\n\n    def\
+    \ __getattr__(self, name: str) -> Any:\n        return getattr(self._engine_client,\
+    \ name)\n\n    async def sleep(self, *_args: object) -> None:\n        await self._engine_client.release_kv_cache_memory()\n\
+    \n\nfrom dynamo.common.snapshot.constants import (\n    KUBERNETES_REQUIRED_ENV_NAMES,\n\
+    \    KUBERNETES_OPTIONAL_ENV_NAMES,\n    RESTORE_RUNTIME_ENV_NAMES,\n    SNAPSHOT_RESTORE_CONTEXT_FILE,\n\
+    )\n\n\ndef write_cuinterpose_restore_context_from_proxy(proc_root=\"/proc\", control_dir=None):\n\
+    \    \"\"\"Publish only validated destination identity for normal Dynamo refresh.\"\
+    \"\"\n    import json\n    import tempfile\n    from pathlib import Path\n\n \
+    \   proxy = Path(proc_root) / \"1\"\n    expected_command = [b\"/snapshot-control/snapshot-restore-proxy\"\
+    ]\n    if proxy.joinpath(\"cmdline\").read_bytes().rstrip(b\"\\0\").split(b\"\\\
+    0\") != expected_command:\n        raise RuntimeError(\"Destination PID 1 is not\
+    \ the expected Snapshot restore proxy\")\n    supported = (set(KUBERNETES_REQUIRED_ENV_NAMES)\
+    \ | set(KUBERNETES_OPTIONAL_ENV_NAMES)\n                 | set(RESTORE_RUNTIME_ENV_NAMES))\n\
+    \    # The original lifecycle clears HF_HUB_OFFLINE on restore. Preserve the\n\
+    \    # destination Pod's explicit policy before Rust model registration, which\n\
+    \    # otherwise attempts external metadata discovery despite a staged cache.\n\
+    \    # This field is not in the pinned restore-context schema, so apply it\n \
+    \   # separately rather than passing an unsupported field to normal refresh.\n\
+    \    supported_bytes = {name.encode(\"ascii\"): name for name in supported | {\"\
+    HF_HUB_OFFLINE\"}}\n    destination_env = {}\n    # Do not decode, copy, or log\
+    \ unrelated environment variables, including\n    # credentials. Nulls below explicitly\
+    \ clear absent capture-time settings.\n    for entry in proxy.joinpath(\"environ\"\
+    ).read_bytes().split(b\"\\0\"):\n        if not entry:\n            continue\n\
+    \        key, separator, raw_value = entry.partition(b\"=\")\n        if key not\
+    \ in supported_bytes:\n            continue\n        name = supported_bytes[key]\n\
+    \        if not separator or name in destination_env:\n            raise RuntimeError(\"\
+    Invalid or duplicate supported proxy environment variable\")\n        try:\n \
+    \           destination_env[name] = raw_value.decode(\"utf-8\")\n        except\
+    \ UnicodeDecodeError:\n            raise RuntimeError(\"Invalid encoding in supported\
+    \ proxy environment variable\") from None\n    if any(not destination_env.get(name)\
+    \ for name in KUBERNETES_REQUIRED_ENV_NAMES):\n        raise RuntimeError(\"Destination\
+    \ proxy lacks required Kubernetes identity\")\n    source_uid = os.environ.get(\"\
+    POD_UID\")\n    if not source_uid or destination_env[\"POD_UID\"] == source_uid:\n\
+    \        raise RuntimeError(\"Destination Pod UID is absent or matches captured\
+    \ source identity\")\n    offline_policy = destination_env.get(\"HF_HUB_OFFLINE\"\
+    )\n    if offline_policy is not None and offline_policy not in (\"0\", \"1\"):\n\
+    \        raise RuntimeError(\"Destination HF_HUB_OFFLINE policy must be 0, 1,\
+    \ or absent\")\n    context = {\"env\": {name: destination_env.get(name) for name\
+    \ in sorted(supported)}}\n    directory = Path(control_dir or os.environ.get(\"\
+    DYN_SNAPSHOT_CONTROL_DIR\", \"/snapshot-control\"))\n    if not directory.is_dir():\n\
+    \        raise RuntimeError(\"Snapshot control directory is unavailable\")\n \
+    \   context_path = directory / SNAPSHOT_RESTORE_CONTEXT_FILE\n    if context_path.exists()\
+    \ or context_path.is_symlink():\n        raise RuntimeError(\"Refusing existing\
+    \ Snapshot restore context\")\n    descriptor, temporary = tempfile.mkstemp(prefix=\"\
+    .restore-context-\", dir=directory)\n    try:\n        with os.fdopen(descriptor,\
+    \ \"w\", encoding=\"utf-8\") as stream:\n            stream.write(json.dumps(context,\
+    \ sort_keys=True, separators=(\",\", \":\")) + \"\\n\")\n            stream.flush()\n\
+    \            os.fsync(stream.fileno())\n        # Link is an atomic create-if-absent\
+    \ operation on this emptyDir. A\n        # concurrent/stale writer cannot be silently\
+    \ overwritten.\n        os.link(temporary, context_path)\n    finally:\n     \
+    \   os.unlink(temporary)\n    if offline_policy is None:\n        os.environ.pop(\"\
+    HF_HUB_OFFLINE\", None)\n    else:\n        os.environ[\"HF_HUB_OFFLINE\"] = offline_policy\n\
+    \    logger.info(\"CuInterpose Snapshot destination identity captured from restore\
+    \ proxy\")\n    return context\n\n\nasync def prepare_snapshot_engine(\n    config:\
+    \ Config,\n    setup_vllm_engine: Callable[..., EngineSetupResult],\n) -> EngineSnapshotController[SnapshotEngineSetupResult]\
+    \ | None:\n    snapshot_config = SnapshotConfig.from_env()\n    if snapshot_config\
+    \ is None:\n        return None\n\n    if config.headless:\n        raise ValueError(\n\
+    \            \"--headless is incompatible with snapshot mode \"\n            \"\
+    (DYN_SNAPSHOT_CONTROL_DIR is set). \"\n            \"Remove --headless or unset\
+    \ DYN_SNAPSHOT_CONTROL_DIR.\"\n        )\n\n    configure_snapshot_capture_env()\n\
+    \    logger.info(\"Snapshot mode enabled (watcher-driven signals)\")\n    config.engine_args.enable_sleep_mode\
+    \ = True\n\n    stat_logger_factory = StatLoggerFactory(\n        endpoint=None,\n\
+    \        embedding_worker=config.embedding_worker,\n    )\n    engine = setup_vllm_engine(config,\
+    \ stat_logger_factory)\n    # Decide before the first pause: reaching this at\
+    \ pause time would raise\n    # after sleep() had already released the engine's\
+    \ memory.\n    checkpoint_hooks = all(\n        hasattr(engine[0], hook)\n   \
+    \     for hook in (\"checkpoint_prepare\", \"checkpoint_restore\")\n    )\n  \
+    \  if not checkpoint_hooks:\n        logger.warning(\n            \"This vLLM\
+    \ build has no AsyncLLM.checkpoint_prepare/checkpoint_restore; \"\n          \
+    \  \"snapshotting without communicator checkpointing. \"\n            \"Requires\
+    \ vLLM 0.27.0 or newer.\"\n        )\n    # GMS restores weights outside the checkpoint,\
+    \ so they must be released,\n    # and vLLM before 0.31.0 can release them only\
+    \ by sleeping.\n    engine_client = engine[0]\n    if (\n        getattr(config.engine_args,\
+    \ \"load_format\", None) != \"gms\"\n        and os.environ.get(\"DYN_GMS_USE_V1\"\
+    ) != \"true\"\n        and hasattr(engine_client, \"release_kv_cache_memory\"\
+    )\n    ):\n        engine_client = _ReleaseOnlyKvCache(engine_client)\n\n    gc.collect()\n\
+    \    snapshot_controller = EngineSnapshotController(\n        engine=(engine,\
+    \ stat_logger_factory),\n        pause_controller=VllmEnginePauseController(\n\
+    \            engine_client,\n            prepare_for_process_checkpoint=checkpoint_hooks,\n\
+    \        ),\n        snapshot_config=snapshot_config,\n        pause_args=(None,),\n\
+    \    )\n    if not await snapshot_controller.wait_for_restore():\n        logger.info(\"\
+    vLLM snapshot captured successfully\")\n        os._exit(0)\n\n    write_cuinterpose_restore_context_from_proxy(control_dir=snapshot_config.control_dir)\n\
+    \    return snapshot_controller\n"

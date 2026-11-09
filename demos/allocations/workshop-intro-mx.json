@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "assignment_id": "workshop-intro-mx",
+  "lease": ".local/workshop-intro-mx.gpu-lease",
+  "targets": {
+    "intro": {
+      "node": "kubecon-nke-site-cp-0124",
+      "gpu_uuids": [
+        "GPU-c220c1d0-843c-ce3c-b1f9-3ad67af277d7",
+        "GPU-ea836524-584e-0719-d7bb-0de129f5e7d3"
+      ]
+    },
+    "source": {
+      "node": "kubecon-nke-site-cp-0124",
+      "gpu_uuids": [
+        "GPU-c220c1d0-843c-ce3c-b1f9-3ad67af277d7",
+        "GPU-ea836524-584e-0719-d7bb-0de129f5e7d3"
+      ]
+    },
+    "peer": {
+      "node": "kubecon-nke-site-cp-0198",
+      "gpu_uuids": [
+        "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5",
+        "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326"
+      ]
+    }
+  }
+}

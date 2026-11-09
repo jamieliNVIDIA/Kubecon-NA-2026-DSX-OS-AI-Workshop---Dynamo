@@ -1,0 +1,1019 @@
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+use anyhow::Result;
+use derive_builder::Builder;
+use figment::{
+    Figment,
+    providers::{Env, Format, Serialized, Toml},
+};
+use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::sync::OnceLock;
+use validator::Validate;
+
+#[doc(hidden)]
+pub mod env_config;
+pub mod environment_names;
+
+/// Parser generation shared by startup validation and frontend routing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParserVersion {
+    Auto,
+    V1,
+    V2,
+}
+
+impl TryFrom<Option<&str>> for ParserVersion {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Option<&str>) -> Result<Self> {
+        use environment_names::llm::DYN_PARSER_VERSION;
+        match value {
+            Some("1") => Ok(Self::V1),
+            Some("2") => Ok(Self::V2),
+            Some("auto") | None => Ok(Self::Auto),
+            Some(value) => {
+                anyhow::bail!("{DYN_PARSER_VERSION} must be unset, auto, 1, or 2; got {value:?}")
+            }
+        }
+    }
+}
+
+/// Read parser startup configuration once so request routing cannot diverge from it.
+pub fn selected_parser_version() -> Result<ParserVersion> {
+    use environment_names::llm::{DYN_ENABLE_EXPERIMENTAL_PARSERS_V2, DYN_PARSER_VERSION};
+    static VERSION: OnceLock<Result<ParserVersion, String>> = OnceLock::new();
+    VERSION
+        .get_or_init(|| {
+            let version = match std::env::var(DYN_PARSER_VERSION) {
+                Ok(value) => ParserVersion::try_from(Some(value.as_str())),
+                Err(std::env::VarError::NotPresent) => ParserVersion::try_from(None),
+                Err(std::env::VarError::NotUnicode(_)) => Err(anyhow::anyhow!(
+                    "{DYN_PARSER_VERSION} must be unset, auto, 1, or 2; value is not valid UTF-8"
+                )),
+            };
+            let experimental = std::env::var_os(DYN_ENABLE_EXPERIMENTAL_PARSERS_V2);
+            let enabled = experimental
+                .as_ref()
+                .map(|value| {
+                    let value = value.to_str().ok_or_else(|| {
+                        anyhow::anyhow!("value is not valid UTF-8")
+                    })?;
+                    parse_bool(value).map_err(|error| {
+                        anyhow::anyhow!("{DYN_ENABLE_EXPERIMENTAL_PARSERS_V2}={value:?} is not a valid boolean: {error}")
+                    })
+                })
+                .transpose();
+
+            let selection = match (enabled, version) {
+                (Ok(Some(true)), Ok(ParserVersion::V1))
+                | (Ok(Some(false)), Ok(ParserVersion::V2)) => Err(anyhow::anyhow!(
+                    "conflicting parser settings: {DYN_ENABLE_EXPERIMENTAL_PARSERS_V2}={:?} conflicts with {DYN_PARSER_VERSION}={:?}",
+                    experimental.as_ref().map(|value| value.to_string_lossy()),
+                    std::env::var_os(DYN_PARSER_VERSION)
+                        .map(|value| value.to_string_lossy().into_owned())
+                )),
+                (Err(error), _) => Err(error),
+                (Ok(_), Err(error)) => Err(error),
+                (Ok(Some(true)), Ok(ParserVersion::Auto)) => Ok(ParserVersion::V2),
+                (Ok(Some(false)) | Ok(None), Ok(ParserVersion::Auto)) => Ok(ParserVersion::Auto),
+                (Ok(Some(false)), Ok(ParserVersion::V1)) => Ok(ParserVersion::V1),
+                (Ok(Some(true)), Ok(ParserVersion::V2)) => Ok(ParserVersion::V2),
+                (Ok(None), Ok(ParserVersion::V1)) => Ok(ParserVersion::V1),
+                (Ok(None), Ok(ParserVersion::V2)) => Ok(ParserVersion::V2),
+            };
+
+            if let Some(raw_value) = experimental.as_ref() {
+                let value = raw_value.to_str().unwrap_or("<non-UTF-8>");
+                let resolved = selection
+                    .as_ref()
+                    .map(|selection| format!("{selection:?}"))
+                    .unwrap_or_else(|_| "invalid or conflicting settings".to_string());
+                tracing::warn!(
+                    target: "dynamo_unified",
+                    value,
+                    resolved_selection = %resolved,
+                    "experimental V2 parser routing setting is present"
+                );
+            }
+
+            selection.map_err(|error| error.to_string())
+        })
+        .as_ref()
+        .copied()
+        .map_err(|error| anyhow::anyhow!(error.clone()))
+}
+
+/// Default system host for health and metrics endpoints
+const DEFAULT_SYSTEM_HOST: &str = "0.0.0.0";
+
+/// Default system port for health and metrics endpoints (-1 = disabled)
+const DEFAULT_SYSTEM_PORT: i16 = -1;
+
+/// Default health endpoint paths
+const DEFAULT_SYSTEM_HEALTH_PATH: &str = "/health";
+const DEFAULT_SYSTEM_LIVE_PATH: &str = "/live";
+
+/// Default health check configuration
+/// This is the wait time before sending canary health checks when no activity is detected
+pub const DEFAULT_CANARY_WAIT_TIME_SECS: u64 = 10;
+/// Default timeout for individual health check requests
+pub const DEFAULT_HEALTH_CHECK_REQUEST_TIMEOUT_SECS: u64 = 3;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkerConfig {
+    /// Grace shutdown period for the system server.
+    pub graceful_shutdown_timeout: u64,
+}
+
+impl WorkerConfig {
+    /// Instantiates and reads server configurations from appropriate sources.
+    /// Panics on invalid configuration.
+    pub fn from_settings() -> Self {
+        // All calls should be global and thread safe.
+        Figment::new()
+            .merge(Serialized::defaults(Self::default()))
+            .merge(Env::prefixed("DYN_WORKER_"))
+            .extract()
+            .unwrap() // safety: Called on startup, so panic is reasonable
+    }
+}
+
+impl Default for WorkerConfig {
+    fn default() -> Self {
+        WorkerConfig {
+            graceful_shutdown_timeout: if cfg!(debug_assertions) {
+                1 // Debug build: 1 second
+            } else {
+                30 // Release build: 30 seconds
+            },
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum HealthStatus {
+    Ready,
+    NotReady,
+}
+
+/// Runtime configuration
+/// Defines the configuration for Tokio runtimes
+#[derive(Serialize, Deserialize, Validate, Debug, Builder, Clone)]
+#[builder(build_fn(private, name = "build_internal"), derive(Debug, Serialize))]
+pub struct RuntimeConfig {
+    /// Number of async worker threads
+    /// If set to 1, the runtime will run in single-threaded mode
+    /// Set this at runtime with environment variable DYN_RUNTIME_NUM_WORKER_THREADS. Defaults to
+    /// number of cores.
+    #[validate(range(min = 1))]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub num_worker_threads: Option<usize>,
+
+    /// Maximum number of blocking threads
+    /// Blocking threads are used for blocking operations, this value must be greater than 0.
+    /// Set this at runtime with environment variable DYN_RUNTIME_MAX_BLOCKING_THREADS.
+    ///
+    /// Defaults to the core count (`impl Default`). The `#[builder(default = "512")]` below
+    /// applies only when building through `RuntimeConfigBuilder` without setting this field.
+    ///
+    /// This is a ceiling, not a preallocation: Tokio spawns blocking threads on demand and reaps
+    /// them when idle, so measure at steady state under load.
+    #[validate(range(min = 1))]
+    #[builder(default = "512")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub max_blocking_threads: usize,
+
+    /// System status server host for health and metrics endpoints
+    /// Set this at runtime with environment variable DYN_SYSTEM_HOST
+    #[builder(default = "DEFAULT_SYSTEM_HOST.to_string()")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub system_host: String,
+
+    /// System status server port for health and metrics endpoints
+    /// Set to -1 to disable the system status server (default)
+    /// Set to 0 to bind to a random available port
+    /// Set to a positive port number (e.g. 8081) to bind to a specific port
+    /// Set this at runtime with environment variable DYN_SYSTEM_PORT
+    #[builder(default = "DEFAULT_SYSTEM_PORT")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub system_port: i16,
+
+    /// Health and metrics System status server enabled (DEPRECATED)
+    /// This field is deprecated. Use system_port instead (set to positive value to enable)
+    /// Environment variable DYN_SYSTEM_ENABLED is deprecated
+    #[deprecated(
+        note = "Use system_port instead. Set DYN_SYSTEM_PORT to enable the system metrics server."
+    )]
+    #[builder(default = "false")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub system_enabled: bool,
+
+    /// Starting Health Status
+    /// Set this at runtime with environment variable DYN_SYSTEM_STARTING_HEALTH_STATUS
+    #[builder(default = "HealthStatus::NotReady")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub starting_health_status: HealthStatus,
+
+    /// Use Endpoint Health Status
+    /// When using endpoint health status, health status
+    /// is the AND of individual endpoint health
+    /// Set this at runtime with environment variable DYN_SYSTEM_USE_ENDPOINT_HEALTH_STATUS
+    /// with the list of endpoints to consider for system health
+    #[builder(default = "vec![]")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub use_endpoint_health_status: Vec<String>,
+
+    /// Health endpoint paths
+    /// Set this at runtime with environment variable DYN_SYSTEM_HEALTH_PATH
+    #[builder(default = "DEFAULT_SYSTEM_HEALTH_PATH.to_string()")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub system_health_path: String,
+    /// Set this at runtime with environment variable DYN_SYSTEM_LIVE_PATH
+    #[builder(default = "DEFAULT_SYSTEM_LIVE_PATH.to_string()")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub system_live_path: String,
+
+    /// Number of threads for the Rayon compute pool
+    /// If not set, defaults to num_cpus / 2
+    /// Set this at runtime with environment variable DYN_COMPUTE_THREADS
+    #[builder(default = "None")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub compute_threads: Option<usize>,
+
+    /// Stack size for compute threads in bytes
+    /// Defaults to 2MB (2097152 bytes)
+    /// Set this at runtime with environment variable DYN_COMPUTE_STACK_SIZE
+    #[builder(default = "Some(2 * 1024 * 1024)")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub compute_stack_size: Option<usize>,
+
+    /// Thread name prefix for compute pool threads
+    /// Set this at runtime with environment variable DYN_COMPUTE_THREAD_PREFIX
+    #[builder(default = "\"compute\".to_string()")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub compute_thread_prefix: String,
+
+    /// Enable active health checking with payloads
+    /// Set this at runtime with environment variable DYN_HEALTH_CHECK_ENABLED
+    #[builder(default = "false")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub health_check_enabled: bool,
+
+    /// Canary wait time in seconds (time to wait before sending health check when no activity)
+    /// Set this at runtime with environment variable DYN_CANARY_WAIT_TIME
+    #[builder(default = "DEFAULT_CANARY_WAIT_TIME_SECS")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub canary_wait_time_secs: u64,
+
+    /// Health check request timeout in seconds
+    /// Set this at runtime with environment variable DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+    #[builder(default = "DEFAULT_HEALTH_CHECK_REQUEST_TIMEOUT_SECS")]
+    #[builder_field_attr(serde(skip_serializing_if = "Option::is_none"))]
+    pub health_check_request_timeout_secs: u64,
+}
+
+impl fmt::Display for RuntimeConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // If None, it defaults to "number of cores", so we indicate that.
+        match self.num_worker_threads {
+            Some(val) => write!(f, "num_worker_threads={val}, ")?,
+            None => write!(f, "num_worker_threads=default (num_cores), ")?,
+        }
+
+        write!(f, "max_blocking_threads={}, ", self.max_blocking_threads)?;
+        write!(f, "system_host={}, ", self.system_host)?;
+        write!(f, "system_port={}, ", self.system_port)?;
+        write!(
+            f,
+            "use_endpoint_health_status={:?}",
+            self.use_endpoint_health_status
+        )?;
+        write!(
+            f,
+            "starting_health_status={:?}",
+            self.starting_health_status
+        )?;
+        write!(f, ", system_health_path={}", self.system_health_path)?;
+        write!(f, ", system_live_path={}", self.system_live_path)?;
+        write!(f, ", health_check_enabled={}", self.health_check_enabled)?;
+        write!(f, ", canary_wait_time_secs={}", self.canary_wait_time_secs)?;
+        write!(
+            f,
+            ", health_check_request_timeout_secs={}",
+            self.health_check_request_timeout_secs
+        )?;
+
+        Ok(())
+    }
+}
+
+impl RuntimeConfig {
+    pub fn builder() -> RuntimeConfigBuilder {
+        RuntimeConfigBuilder::default()
+    }
+
+    pub(crate) fn figment() -> Figment {
+        Figment::new()
+            .merge(Serialized::defaults(RuntimeConfig::default()))
+            .merge(Toml::file("/opt/dynamo/defaults/runtime.toml"))
+            .merge(Toml::file("/opt/dynamo/etc/runtime.toml"))
+            .merge(Env::prefixed("DYN_RUNTIME_").filter_map(|k| {
+                let full_key = format!("DYN_RUNTIME_{}", k.as_str());
+                // filters out empty environment variables
+                match std::env::var(&full_key) {
+                    Ok(v) if !v.is_empty() => Some(k.into()),
+                    _ => None,
+                }
+            }))
+            .merge(Env::prefixed("DYN_SYSTEM_").filter_map(|k| {
+                let full_key = format!("DYN_SYSTEM_{}", k.as_str());
+                // filters out empty environment variables
+                match std::env::var(&full_key) {
+                    Ok(v) if !v.is_empty() => {
+                        // Map DYN_SYSTEM_* to the correct field names
+                        let mapped_key = match k.as_str() {
+                            "HOST" => "system_host",
+                            "PORT" => "system_port",
+                            "ENABLED" => "system_enabled",
+                            "USE_ENDPOINT_HEALTH_STATUS" => "use_endpoint_health_status",
+                            "STARTING_HEALTH_STATUS" => "starting_health_status",
+                            "HEALTH_PATH" => "system_health_path",
+                            "LIVE_PATH" => "system_live_path",
+                            _ => k.as_str(),
+                        };
+                        Some(mapped_key.into())
+                    }
+                    _ => None,
+                }
+            }))
+            .merge(Env::prefixed("DYN_COMPUTE_").filter_map(|k| {
+                let full_key = format!("DYN_COMPUTE_{}", k.as_str());
+                // filters out empty environment variables
+                match std::env::var(&full_key) {
+                    Ok(v) if !v.is_empty() => {
+                        // Map DYN_COMPUTE_* to the correct field names
+                        let mapped_key = match k.as_str() {
+                            "THREADS" => "compute_threads",
+                            "STACK_SIZE" => "compute_stack_size",
+                            "THREAD_PREFIX" => "compute_thread_prefix",
+                            _ => k.as_str(),
+                        };
+                        Some(mapped_key.into())
+                    }
+                    _ => None,
+                }
+            }))
+            .merge(Env::prefixed("DYN_HEALTH_CHECK_").filter_map(|k| {
+                let full_key = format!("DYN_HEALTH_CHECK_{}", k.as_str());
+                // filters out empty environment variables
+                match std::env::var(&full_key) {
+                    Ok(v) if !v.is_empty() => {
+                        // Map DYN_HEALTH_CHECK_* to the correct field names
+                        let mapped_key = match k.as_str() {
+                            "ENABLED" => "health_check_enabled",
+                            "REQUEST_TIMEOUT" => "health_check_request_timeout_secs",
+                            _ => k.as_str(),
+                        };
+                        Some(mapped_key.into())
+                    }
+                    _ => None,
+                }
+            }))
+            .merge(Env::prefixed("DYN_CANARY_").filter_map(|k| {
+                let full_key = format!("DYN_CANARY_{}", k.as_str());
+                // filters out empty environment variables
+                match std::env::var(&full_key) {
+                    Ok(v) if !v.is_empty() => {
+                        // Map DYN_CANARY_* to the correct field names
+                        let mapped_key = match k.as_str() {
+                            "WAIT_TIME" => "canary_wait_time_secs",
+                            _ => k.as_str(),
+                        };
+                        Some(mapped_key.into())
+                    }
+                    _ => None,
+                }
+            }))
+    }
+
+    /// Load the runtime configuration from the environment and configuration files
+    /// Configuration is priorities in the following order, where the last has the lowest priority:
+    /// 1. Environment variables (top priority)
+    ///    TO DO: Add documentation for configuration files. Paths should be configurable.
+    /// 2. /opt/dynamo/etc/runtime.toml
+    /// 3. /opt/dynamo/defaults/runtime.toml (lowest priority)
+    ///
+    /// Environment variables are prefixed with `DYN_RUNTIME_` and `DYN_SYSTEM`
+    pub fn from_settings() -> Result<RuntimeConfig> {
+        use environment_names::runtime::system as env_system;
+        Self::validate_parser_environment()?;
+        // Check for deprecated environment variables
+        if std::env::var(env_system::DYN_SYSTEM_USE_ENDPOINT_HEALTH_STATUS).is_ok() {
+            tracing::warn!(
+                "DYN_SYSTEM_USE_ENDPOINT_HEALTH_STATUS is deprecated and no longer used. \
+                System health is now determined by endpoints that register with health check payloads. \
+                Please update your configuration to register health check payloads directly on endpoints."
+            );
+        }
+
+        if std::env::var(env_system::DYN_SYSTEM_ENABLED).is_ok() {
+            tracing::warn!(
+                "DYN_SYSTEM_ENABLED is deprecated. \
+                System metrics server is now controlled solely by DYN_SYSTEM_PORT. \
+                Set DYN_SYSTEM_PORT to a positive value to enable the server, or set to -1 to disable (default)."
+            );
+        }
+
+        let config: RuntimeConfig = Self::figment().extract()?;
+        config.validate()?;
+        Ok(config)
+    }
+
+    pub fn validate_parser_environment() -> Result<()> {
+        selected_parser_version().map(|_| ())
+    }
+
+    /// Check if System server should be enabled
+    /// System server is enabled when DYN_SYSTEM_PORT is set to 0 or a positive value
+    /// Port 0 binds to a random available port
+    /// Negative values disable the server
+    pub fn system_server_enabled(&self) -> bool {
+        self.system_port >= 0
+    }
+
+    pub fn single_threaded() -> Self {
+        RuntimeConfig {
+            num_worker_threads: Some(1),
+            max_blocking_threads: 1,
+            system_host: DEFAULT_SYSTEM_HOST.to_string(),
+            system_port: DEFAULT_SYSTEM_PORT,
+            #[allow(deprecated)]
+            system_enabled: false,
+            starting_health_status: HealthStatus::NotReady,
+            use_endpoint_health_status: vec![],
+            system_health_path: DEFAULT_SYSTEM_HEALTH_PATH.to_string(),
+            system_live_path: DEFAULT_SYSTEM_LIVE_PATH.to_string(),
+            compute_threads: Some(1),
+            compute_stack_size: Some(2 * 1024 * 1024),
+            compute_thread_prefix: "compute".to_string(),
+            health_check_enabled: false,
+            canary_wait_time_secs: DEFAULT_CANARY_WAIT_TIME_SECS,
+            health_check_request_timeout_secs: DEFAULT_HEALTH_CHECK_REQUEST_TIMEOUT_SECS,
+        }
+    }
+
+    /// The Tokio builder for this config, not yet built.
+    ///
+    /// Separate from [`Self::create_runtime`] because the pyo3 bridge builds its own runtime:
+    /// `pyo3_async_runtimes::tokio::init` takes a builder and calls `build()` later. Handing it
+    /// this builder is the only way to bound that runtime's size. Both paths go through here so
+    /// they cannot drift apart.
+    pub fn tokio_builder(&self) -> tokio::runtime::Builder {
+        let mut builder = tokio::runtime::Builder::new_multi_thread();
+        builder
+            .worker_threads(
+                self.num_worker_threads
+                    .unwrap_or_else(|| std::thread::available_parallelism().unwrap().get()),
+            )
+            .max_blocking_threads(self.max_blocking_threads)
+            .enable_all();
+        if env_is_truthy(environment_names::runtime::DYN_ENABLE_POLL_HISTOGRAM) {
+            tracing::info!(
+                "Tokio poll-time histogram enabled (DYN_ENABLE_POLL_HISTOGRAM); \
+                 expect ~2× Instant::now() overhead per task poll"
+            );
+            builder.enable_metrics_poll_time_histogram();
+        }
+        builder
+    }
+
+    /// Create a new default runtime configuration
+    pub(crate) fn create_runtime(&self) -> std::io::Result<tokio::runtime::Runtime> {
+        self.tokio_builder().build()
+    }
+}
+
+impl Default for RuntimeConfig {
+    fn default() -> Self {
+        let num_cores = std::thread::available_parallelism().unwrap().get();
+        Self {
+            num_worker_threads: Some(num_cores),
+            max_blocking_threads: num_cores,
+            system_host: DEFAULT_SYSTEM_HOST.to_string(),
+            system_port: DEFAULT_SYSTEM_PORT,
+            #[allow(deprecated)]
+            system_enabled: false,
+            starting_health_status: HealthStatus::NotReady,
+            use_endpoint_health_status: vec![],
+            system_health_path: DEFAULT_SYSTEM_HEALTH_PATH.to_string(),
+            system_live_path: DEFAULT_SYSTEM_LIVE_PATH.to_string(),
+            compute_threads: None,
+            compute_stack_size: Some(2 * 1024 * 1024),
+            compute_thread_prefix: "compute".to_string(),
+            health_check_enabled: false,
+            canary_wait_time_secs: DEFAULT_CANARY_WAIT_TIME_SECS,
+            health_check_request_timeout_secs: DEFAULT_HEALTH_CHECK_REQUEST_TIMEOUT_SECS,
+        }
+    }
+}
+
+impl RuntimeConfigBuilder {
+    /// Build and validate the runtime configuration
+    pub fn build(&self) -> Result<RuntimeConfig> {
+        let config = self.build_internal()?;
+        config.validate()?;
+        Ok(config)
+    }
+}
+
+// Canonical truthy/falsy/bool parsing for user-supplied configuration
+// (environment variables, headers, config values). The single implementation
+// lives in the zero-dependency `dynamo-truthy` crate so that crates which
+// cannot depend on `dynamo-runtime` share it too; this re-export is the
+// canonical import path for everything that can.
+pub use dynamo_truthy::{
+    env_is_falsey, env_is_truthy, is_falsey, is_truthy, parse_bool, parse_bool_opt,
+};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConsoleLogFormat {
+    Readable,
+    Jsonl,
+}
+
+impl ConsoleLogFormat {
+    fn from_env_value(value: &str) -> Option<Self> {
+        match value.to_ascii_lowercase().as_str() {
+            "readable" => Some(Self::Readable),
+            "jsonl" => Some(Self::Jsonl),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Readable => "readable",
+            Self::Jsonl => "jsonl",
+        }
+    }
+}
+
+/// Return whether the legacy `DYN_LOGGING_JSONL` switch is enabled.
+///
+/// This remains a separate compatibility signal because older deployments
+/// also use it to enable local trace-context propagation.
+pub(crate) fn legacy_jsonl_logging_enabled() -> bool {
+    env_is_truthy(environment_names::logging::DYN_LOGGING_JSONL)
+}
+
+/// Return the console log format.
+///
+/// `DYN_LOGGING_CONSOLE_FORMAT` takes precedence. `DYN_LOGGING_JSONL` remains
+/// supported as a legacy fallback when the new setting is unset or blank.
+pub fn console_log_format() -> ConsoleLogFormat {
+    let legacy_format = || {
+        if legacy_jsonl_logging_enabled() {
+            ConsoleLogFormat::Jsonl
+        } else {
+            ConsoleLogFormat::Readable
+        }
+    };
+
+    match std::env::var(environment_names::logging::DYN_LOGGING_CONSOLE_FORMAT) {
+        Ok(value) if value.trim().is_empty() => legacy_format(),
+        Ok(value) => match ConsoleLogFormat::from_env_value(value.trim()) {
+            Some(format) => format,
+            None => {
+                eprintln!(
+                    "Invalid {} value '{}'; using readable console logs",
+                    environment_names::logging::DYN_LOGGING_CONSOLE_FORMAT,
+                    value
+                );
+                ConsoleLogFormat::Readable
+            }
+        },
+        Err(_) => legacy_format(),
+    }
+}
+
+/// Return whether the effective console log format is JSONL.
+pub fn jsonl_logging_enabled() -> bool {
+    console_log_format() == ConsoleLogFormat::Jsonl
+}
+
+/// Check whether logging with ANSI terminal escape codes and colors is disabled.
+/// Set the `DYN_SDK_DISABLE_ANSI_LOGGING` environment variable a [`is_truthy`] value
+pub fn disable_ansi_logging() -> bool {
+    env_is_truthy(environment_names::logging::DYN_SDK_DISABLE_ANSI_LOGGING)
+}
+
+/// Check whether to use local timezone for logging timestamps (default is UTC)
+/// Set the `DYN_LOG_USE_LOCAL_TZ` environment variable to a [`is_truthy`] value
+pub fn use_local_timezone() -> bool {
+    env_is_truthy(environment_names::logging::DYN_LOG_USE_LOCAL_TZ)
+}
+
+/// Returns true if `DYN_LOGGING_SPAN_EVENTS` is set to a truthy value.
+pub fn span_events_enabled() -> bool {
+    env_is_truthy(environment_names::logging::DYN_LOGGING_SPAN_EVENTS)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_runtime_config_builder_overrides_related_fields() -> Result<()> {
+        let config = RuntimeConfig::builder()
+            .num_worker_threads(Some(24))
+            .max_blocking_threads(32)
+            .system_host("127.0.0.1".to_string())
+            .system_port(9090)
+            .build()?;
+
+        assert_eq!(config.num_worker_threads, Some(24));
+        assert_eq!(config.max_blocking_threads, 32);
+        assert_eq!(config.system_host, "127.0.0.1");
+        assert_eq!(config.system_port, 9090);
+        Ok(())
+    }
+
+    /// Both thread-pool variables must survive `from_settings()`.
+    ///
+    /// Covers parsing on its own, so if a frontend's thread count ignores
+    /// `DYN_RUNTIME_MAX_BLOCKING_THREADS` the cause is wiring rather than parsing.
+    ///
+    /// `temp_env::with_vars` restores the old values on the way out, including on panic.
+    #[test]
+    fn test_from_settings_reads_both_thread_env_vars() {
+        const WORKERS: &str = "DYN_RUNTIME_NUM_WORKER_THREADS";
+        const BLOCKING: &str = "DYN_RUNTIME_MAX_BLOCKING_THREADS";
+
+        temp_env::with_vars([(WORKERS, Some("7")), (BLOCKING, Some("11"))], || {
+            let config = RuntimeConfig::from_settings().expect("from_settings failed");
+            assert_eq!(config.num_worker_threads, Some(7), "{WORKERS} was not read");
+            assert_eq!(config.max_blocking_threads, 11, "{BLOCKING} was not read");
+        });
+    }
+
+    #[test]
+    fn parser_selection_configuration_table() {
+        const CHILD: &str = "DYNAMO_PARSER_SELECTION_TEST_CHILD";
+        const EXPECTED: &str = "DYNAMO_PARSER_SELECTION_EXPECTED";
+        use environment_names::llm::{DYN_ENABLE_EXPERIMENTAL_PARSERS_V2, DYN_PARSER_VERSION};
+
+        if std::env::var_os(CHILD).is_some() {
+            let expected = std::env::var(EXPECTED).expect("expected selection");
+            let result = selected_parser_version();
+            match expected.as_str() {
+                "Auto" => assert_eq!(result.unwrap(), ParserVersion::Auto),
+                "V1" => assert_eq!(result.unwrap(), ParserVersion::V1),
+                "V2" => assert_eq!(result.unwrap(), ParserVersion::V2),
+                "conflict" => {
+                    let error = result.unwrap_err().to_string();
+                    assert!(error.contains(DYN_ENABLE_EXPERIMENTAL_PARSERS_V2));
+                    assert!(error.contains(DYN_PARSER_VERSION));
+                }
+                "invalid" => {
+                    assert!(result.is_err());
+                    assert!(RuntimeConfig::from_settings().is_err());
+                }
+                other => panic!("unexpected expected selection: {other}"),
+            }
+            return;
+        }
+
+        let cases = [
+            (None, None, "Auto"),
+            (Some("false"), None, "Auto"),
+            (Some("0"), None, "Auto"),
+            (Some("off"), None, "Auto"),
+            (Some("no"), None, "Auto"),
+            (Some(""), None, "Auto"),
+            (Some("true"), None, "V2"),
+            (Some("1"), None, "V2"),
+            (Some("on"), None, "V2"),
+            (Some("yes"), None, "V2"),
+            (None, Some("auto"), "Auto"),
+            (None, Some("1"), "V1"),
+            (None, Some("v1"), "invalid"),
+            (None, Some("2"), "V2"),
+            (None, Some("v2"), "invalid"),
+            (Some("false"), Some("auto"), "Auto"),
+            (Some("true"), Some("auto"), "V2"),
+            (Some("false"), Some("1"), "V1"),
+            (Some("false"), Some("2"), "conflict"),
+            (Some("true"), Some("1"), "conflict"),
+            (Some("true"), Some("2"), "V2"),
+            (Some("false"), Some("v1"), "invalid"),
+            (Some("false"), Some("v2"), "invalid"),
+            (Some("true"), Some("v1"), "invalid"),
+            (Some("true"), Some("v2"), "invalid"),
+            (Some("perhaps"), None, "invalid"),
+            (None, Some(""), "invalid"),
+            (None, Some("3"), "invalid"),
+        ];
+        for (experimental, version, expected) in cases {
+            let mut command = crate::test_utils::isolated_command(
+                "config::tests::parser_selection_configuration_table",
+            );
+            command.env(CHILD, "1").env(EXPECTED, expected).env(
+                DYN_ENABLE_EXPERIMENTAL_PARSERS_V2,
+                experimental.unwrap_or(""),
+            );
+            if experimental.is_none() {
+                command.env_remove(DYN_ENABLE_EXPERIMENTAL_PARSERS_V2);
+            }
+            if let Some(version) = version {
+                command.env(DYN_PARSER_VERSION, version);
+            } else {
+                command.env_remove(DYN_PARSER_VERSION);
+            }
+            let output = command
+                .output()
+                .expect("run isolated parser selection test");
+            crate::test_utils::assert_isolated_success(&output);
+        }
+    }
+
+    #[test]
+    fn parser_selection_is_cached_for_process_lifetime() {
+        const CHILD: &str = "DYNAMO_PARSER_SELECTION_CACHE_CHILD";
+        if std::env::var_os(CHILD).is_none() {
+            let output = crate::test_utils::isolated_command(
+                "config::tests::parser_selection_is_cached_for_process_lifetime",
+            )
+            .env(CHILD, "1")
+            .env(
+                environment_names::llm::DYN_ENABLE_EXPERIMENTAL_PARSERS_V2,
+                "true",
+            )
+            .output()
+            .expect("run isolated parser cache test");
+            crate::test_utils::assert_isolated_success(&output);
+            return;
+        }
+
+        assert_eq!(selected_parser_version().unwrap(), ParserVersion::V2);
+        temp_env::with_vars(
+            [
+                (
+                    environment_names::llm::DYN_ENABLE_EXPERIMENTAL_PARSERS_V2,
+                    None,
+                ),
+                (environment_names::llm::DYN_PARSER_VERSION, Some("1")),
+            ],
+            || {
+                assert_eq!(selected_parser_version().unwrap(), ParserVersion::V2);
+            },
+        );
+    }
+
+    #[test]
+    fn parser_selection_warning_is_emitted_once_and_startup_rejects_conflicts() {
+        const CHILD: &str = "DYNAMO_PARSER_SELECTION_WARNING_CHILD";
+        const MODE: &str = "DYNAMO_PARSER_SELECTION_WARNING_MODE";
+        if std::env::var_os(CHILD).is_none() {
+            let warning = crate::test_utils::isolated_command(
+                "config::tests::parser_selection_warning_is_emitted_once_and_startup_rejects_conflicts",
+            )
+            .env(CHILD, "1")
+            .env(MODE, "warning")
+            .env(environment_names::llm::DYN_ENABLE_EXPERIMENTAL_PARSERS_V2, "true")
+            .output()
+            .expect("run isolated parser warning test");
+            crate::test_utils::assert_isolated_success(&warning);
+            let stderr = String::from_utf8_lossy(&warning.stderr);
+            assert_eq!(
+                stderr
+                    .matches("experimental V2 parser routing setting is present")
+                    .count(),
+                1,
+                "{stderr}"
+            );
+            assert!(stderr.contains("value=\"true\""), "{stderr}");
+            assert!(stderr.contains("resolved_selection=V2"), "{stderr}");
+
+            let conflict = crate::test_utils::isolated_command(
+                "config::tests::parser_selection_warning_is_emitted_once_and_startup_rejects_conflicts",
+            )
+            .env(CHILD, "1")
+            .env(MODE, "conflict")
+            .env(environment_names::llm::DYN_ENABLE_EXPERIMENTAL_PARSERS_V2, "true")
+            .env(environment_names::llm::DYN_PARSER_VERSION, "1")
+            .output()
+            .expect("run isolated parser startup conflict test");
+            crate::test_utils::assert_isolated_success(&conflict);
+            let stderr = String::from_utf8_lossy(&conflict.stderr);
+            assert_eq!(
+                stderr
+                    .matches("experimental V2 parser routing setting is present")
+                    .count(),
+                1,
+                "{stderr}"
+            );
+            return;
+        }
+
+        match std::env::var(MODE).as_deref() {
+            Ok("warning") => {
+                let subscriber = tracing_subscriber::fmt()
+                    .with_ansi(false)
+                    .with_writer(std::io::stderr)
+                    .finish();
+                tracing::subscriber::with_default(subscriber, || {
+                    assert_eq!(selected_parser_version().unwrap(), ParserVersion::V2);
+                    assert_eq!(selected_parser_version().unwrap(), ParserVersion::V2);
+                });
+            }
+            Ok("conflict") => {
+                let subscriber = tracing_subscriber::fmt()
+                    .with_ansi(false)
+                    .with_writer(std::io::stderr)
+                    .finish();
+                tracing::subscriber::with_default(subscriber, || {
+                    let error = RuntimeConfig::from_settings().unwrap_err().to_string();
+                    assert!(error.contains("DYN_ENABLE_EXPERIMENTAL_PARSERS_V2"));
+                    assert!(error.contains("DYN_PARSER_VERSION"));
+                });
+            }
+            value => panic!("unexpected test mode: {value:?}"),
+        }
+    }
+
+    /// The builder given to the pyo3 bridge must carry the configured worker count.
+    ///
+    /// The bridge calls `build()` itself, so nothing on our side sees the resulting runtime. If
+    /// this stopped applying the config, a bridge-built runtime would quietly go back to one
+    /// worker per CPU — the original bug, in a place no other test looks.
+    #[test]
+    fn test_tokio_builder_applies_configured_worker_threads() -> Result<()> {
+        let config = RuntimeConfig::builder()
+            .num_worker_threads(Some(3))
+            .max_blocking_threads(5)
+            .build()?;
+
+        let runtime = config.tokio_builder().build()?;
+        assert_eq!(runtime.metrics().num_workers(), 3);
+        Ok(())
+    }
+
+    /// With `num_worker_threads` unset, the builder falls back to the core count.
+    #[test]
+    fn test_tokio_builder_defaults_worker_threads_to_core_count() -> Result<()> {
+        let config = RuntimeConfig {
+            num_worker_threads: None,
+            ..RuntimeConfig::default()
+        };
+
+        let runtime = config.tokio_builder().build()?;
+        assert_eq!(
+            runtime.metrics().num_workers(),
+            std::thread::available_parallelism()?.get()
+        );
+        Ok(())
+    }
+
+    /// `max_blocking_threads` must actually cap concurrent blocking work.
+    ///
+    /// This is the setting whose effect on a frontend's thread count could not be observed, and
+    /// `num_workers()` cannot show it — Tokio counts blocking threads separately and only
+    /// exposes that count under `tokio_unstable`. Measuring concurrency works on stable instead:
+    /// blocking threads are spawned on demand up to the cap, so queueing more tasks than the cap
+    /// must serialize them.
+    ///
+    /// Only the upper bound is asserted. A missing cap shows up as a peak near the task count,
+    /// while asserting a lower bound would make the test depend on the scheduler overlapping
+    /// tasks, which a loaded CI machine need not do.
+    #[test]
+    fn test_tokio_builder_applies_max_blocking_threads() -> Result<()> {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        const CAP: usize = 2;
+
+        let config = RuntimeConfig::builder()
+            .num_worker_threads(Some(2))
+            .max_blocking_threads(CAP)
+            .build()?;
+        let runtime = config.tokio_builder().build()?;
+
+        let in_flight = Arc::new(AtomicUsize::new(0));
+        let peak = Arc::new(AtomicUsize::new(0));
+
+        runtime.block_on(async {
+            let tasks: Vec<_> = (0..CAP * 4)
+                .map(|_| {
+                    let in_flight = Arc::clone(&in_flight);
+                    let peak = Arc::clone(&peak);
+                    tokio::task::spawn_blocking(move || {
+                        let now = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
+                        peak.fetch_max(now, Ordering::SeqCst);
+                        // Long enough that tasks overlap if the cap allows it.
+                        std::thread::sleep(std::time::Duration::from_millis(20));
+                        in_flight.fetch_sub(1, Ordering::SeqCst);
+                    })
+                })
+                .collect();
+
+            for task in tasks {
+                task.await.expect("blocking task panicked");
+            }
+        });
+
+        let observed = peak.load(Ordering::SeqCst);
+        assert!(
+            observed <= CAP,
+            "{observed} blocking tasks ran at once, but the cap was {CAP}"
+        );
+        Ok(())
+    }
+
+    /// `Default` sets `max_blocking_threads` to the core count, not the `#[builder(default)]`
+    /// of 512 — that applies only when building through `RuntimeConfigBuilder`.
+    #[test]
+    fn test_default_max_blocking_threads_is_core_count() {
+        let cores = std::thread::available_parallelism().unwrap().get();
+        let config = RuntimeConfig::default();
+        assert_eq!(config.max_blocking_threads, cores);
+        assert_eq!(config.num_worker_threads, Some(cores));
+    }
+
+    #[test]
+    fn test_runtime_config_rejects_invalid_thread_count() -> Result<()> {
+        let result = RuntimeConfig::builder()
+            .num_worker_threads(Some(0))
+            .max_blocking_threads(0)
+            .build();
+
+        let error = result.unwrap_err().to_string();
+        assert!(error.contains("num_worker_threads: Validation error"));
+        assert!(error.contains("max_blocking_threads: Validation error"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_system_server_enabled_by_nonnegative_port() {
+        let mut config = RuntimeConfig::default();
+        for (port, enabled) in [(-1, false), (0, true), (9527, true)] {
+            config.system_port = port;
+            assert_eq!(config.system_server_enabled(), enabled);
+        }
+    }
+
+    #[test]
+    fn test_is_truthy_and_falsey() {
+        // Test truthy values
+        assert!(is_truthy("1"));
+        assert!(is_truthy("true"));
+        assert!(is_truthy("TRUE"));
+        assert!(is_truthy("on"));
+        assert!(is_truthy("yes"));
+
+        // Test falsey values
+        assert!(is_falsey("0"));
+        assert!(is_falsey("false"));
+        assert!(is_falsey("FALSE"));
+        assert!(is_falsey("off"));
+        assert!(is_falsey("no"));
+
+        // Test opposite behavior
+        assert!(!is_truthy("0"));
+        assert!(!is_falsey("1"));
+    }
+
+    #[test]
+    fn test_console_log_format() {
+        use environment_names::logging;
+
+        for (console_format, legacy_jsonl, expected) in [
+            (None, None, ConsoleLogFormat::Readable),
+            (None, Some("true"), ConsoleLogFormat::Jsonl),
+            (Some(""), Some("true"), ConsoleLogFormat::Jsonl),
+            (Some("   "), Some("true"), ConsoleLogFormat::Jsonl),
+            (Some(" jsonl "), Some("false"), ConsoleLogFormat::Jsonl),
+            (Some("readable"), Some("true"), ConsoleLogFormat::Readable),
+            (Some("jsonl"), Some("false"), ConsoleLogFormat::Jsonl),
+            (
+                Some("unsupported"),
+                Some("true"),
+                ConsoleLogFormat::Readable,
+            ),
+        ] {
+            temp_env::with_vars(
+                [
+                    (logging::DYN_LOGGING_CONSOLE_FORMAT, console_format),
+                    (logging::DYN_LOGGING_JSONL, legacy_jsonl),
+                ],
+                || {
+                    assert_eq!(console_log_format(), expected);
+                    assert_eq!(jsonl_logging_enabled(), expected == ConsoleLogFormat::Jsonl);
+                },
+            );
+        }
+    }
+}
+

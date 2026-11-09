@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "namespace": "dynamo-ft-20261022t173026z",
+  "snapshot_name": "super-vl-tp2-cuinterpose",
+  "snapshot_uid": "174e9cdb-c8fc-49c0-840d-d3295577a95f",
+  "content_uid": "b0b67cbb-51b4-45da-9792-05cf6175014f",
+  "source_pod_uid": "8e37e151-5892-4d7a-99ed-f8be5e027057",
+  "node": "kubecon-nke-site-cp-0124",
+  "physical_gpu_pair": [
+    [
+      "kubecon-nke-site-cp-0124",
+      "gpu-1"
+    ],
+    [
+      "kubecon-nke-site-cp-0124",
+      "gpu-3"
+    ]
+  ],
+  "physical_gpu_uuids": [
+    "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110",
+    "GPU-75461e0d-6588-94c9-2517-dca859f5c68b"
+  ],
+  "files": 2021,
+  "logical_bytes": 98903175597,
+  "hash_manifest_sha256": "58ebf8c04fc310c3d9a2c924943f7a6f0079ac4fbe4469d8e6177338e314bbea",
+  "qualification_report": "reports/2026-10-22-snapshot-tp2-nvme-comparison.md",
+  "capture_template": "configs/dgd/snapshot-super-vl-tp2-cuinterpose-keepalive/snapshotjob.yaml"
+}

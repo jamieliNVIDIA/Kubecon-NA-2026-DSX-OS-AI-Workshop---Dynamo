@@ -1,0 +1,91 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/demo-09-metrics-recorded-20261105-a1
+
+Dynamo workshop · Workload and metrics
+RECORDED EVIDENCE / NO CLUSTER CALLS
+Commands shown relative to the run directory.
+Run: results/demo-09-metrics-recorded-20261105-a1
+Historical exports, metric definitions and derived values verified; no cluster calls.
+
+Next: 1/3  What did AIPerf send?
+
+================================================================
+1/3  What did AIPerf send?
+Replay coding-agent trees; distinguish tree concurrency from active inference requests.
+================================================================
+
+$ cat workload.txt
+RECORDED: one Super VL TP2 worker / 2 H100s / AgentX C4.
+Recorded command shape: aiperf profile --config profile.yaml
+
+scenario: inferencex-agentx-mvp
+datasets:
+- dataset: semianalysis_cc_traces_weka_062126
+phases:
+- type: concurrency
+  concurrency: 4
+  duration: 900.0
+  grace_period: 300.0
+  timing_mode: agentic_replay
+
+One coding-agent tree contains many inference requests and tool waits.
+Branches can add parallel requests. C4 is not four active HTTP requests.
+Both use concurrency, but the counted unit matters.
+This is the same pinned full AgentX corpus used in the scaling pilots.
+The recorded run sampled partial trees; it did not complete coding tasks.
+
+Next: 2/3  What did a user experience?
+
+================================================================
+2/3  What did a user experience?
+Read first-content latency, inter-token latency and per-request generation rate.
+================================================================
+
+$ cat user-metrics.txt
+RECORDED: user-visible latency and active generation
+
+Accepted measured requests                      122
+Reported request errors                           0
+TTFT p50 / p99 (ms)                  306.19 /  2150.72
+ITL p50 / p99 (ms per token)            6.99 /    11.42
+Mean decode tokens/s/request                 139.79
+
+TTFT: request start -> first content chunk.
+ITL: (last content time - first content time) / (output tokens - 1).
+This run assumes one token in the first chunk; per-chunk usage was off.
+Rate per request = 1 / ITL_seconds; the shown mean averages those rates.
+ITL percentiles summarize request-average gaps, not all token gaps.
+These generation rates exclude TTFT, queueing before first content,
+and tool waits. They are not end-to-end agent speed.
+
+Next: 3/3  What did the service do?
+
+================================================================
+3/3  What did the service do?
+Read throughput, GPU normalization and cache reuse with their actual denominators.
+================================================================
+
+$ cat service-metrics.txt
+RECORDED: service rate and prefix reuse
+
+Canonical output tokens/s                     81.16
+Observed output tokens/s/H100                  40.58
+Completed output tokens                      97,394
+Server prompt tokens (sum over requests)  20,949,158
+Server cache-read prompt tokens          20,068,224
+Cache read / prompt tokens (%)                95.79
+
+Admission / grace bound: 900 / 300 s
+Canonical rate denominator: 1200.00 s
+Observed request span:       902.69 s
+
+Aggregate rate = completed output tokens / canonical observation window.
+Per-GPU rate divides that observed rate by the two assigned H100s.
+Tool waits and drain count here; this is not peak GPU capacity.
+Prompt totals include repeated context; cache-read is server-reported.
+More cache reuse saves prefill work, not generation of each new token.
+Do not divide aggregate rate by C4 to infer generation speed per user.
+Scaling asks how these measures change as load grows. No curve is
+inferred from this single low-load observation.
+
+Recorded metrics investigation complete. No cluster resources were created.
+Resume: ./demos/09-agentx-metrics/run.sh --run results/demo-09-metrics-recorded-20261105-a1

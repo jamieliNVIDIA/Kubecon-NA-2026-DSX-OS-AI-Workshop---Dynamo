@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "audited_at": "2026-11-05T19:23:02.382616+00:00",
+  "run": "results/take-home-live-public-20261105-a2",
+  "namespace": "dynamo-ft-takehome-b81f6a6b95",
+  "namespace_uid": "7c0455d3-c6c5-4298-aa62-6ad4eae78ef9",
+  "probe_pod_uid": "299decf3-41a8-43c4-a6e2-764e626880b2",
+  "image": "nvcr.io/nvidia/ai-dynamo/vllm-runtime-nightly@sha256:c186817f4669d615d2b14bee5a6119d35d4d0fe186fdfab69920da8de9d09337",
+  "versions": {
+    "ai-dynamo": "1.7.0.dev20261103",
+    "ai-dynamo-runtime": "1.7.0.dev20261103",
+    "vllm": "0.32.0",
+    "torch": "2.13.0+cu130",
+    "transformers": "5.19.0",
+    "nixl": "1.5.0"
+  },
+  "checks": {
+    "source_hashes_match": true,
+    "input_hashes_match": true,
+    "succeeded_once": true,
+    "exact_image": true,
+    "same_program": true,
+    "no_pull_secret": true,
+    "no_overlay": true,
+    "no_gpu_claim_or_request": true,
+    "cpu_registry_imports_pass": true,
+    "matching_dynamo_versions": true,
+    "namespace_created_exactly_once": true,
+    "owned_cpu_pod_deleted": true
+  },
+  "files_sha256": {
+    "qualification-spec.json": "a315925f0d7ca8aedfc97af6ddf1e94de9635b542072245d643b209d659dee48",
+    "runtime-probe-pod.json": "2ab4877f5dea359fee4098ad06d634f4496190b68306c03f7b0c8772e54ad0f8",
+    "runtime-probe-observed.json": "b322145f92e247c52c8130bd9d4823bc01674ed8e25c198b8963df834d522b84",
+    "runtime-probe.log": "e4a1e0a5d08497647526d05b91048fc4ba535cb1a49cb32fcae71f756bcdfdeb"
+  },
+  "scope": "Offline independent validation of root-generated unmodified-image CPU evidence; no GPU kernels, weight loading, serving, fresh download, anonymous-registry or other-feature qualification.",
+  "prior_source_ref_note": "Fresh installed nixl package version is1.5.0. This supersedes the older1.4.1 source-ref inference for this exact unmodified image; old receipt retained unchanged."
+}

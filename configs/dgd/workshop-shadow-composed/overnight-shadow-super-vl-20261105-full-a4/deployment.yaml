@@ -1,0 +1,274 @@
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+metadata:
+  name: ft-shadow
+  namespace: dynamo-ft-r610-2f515dd0-demo
+  labels:
+    feature-test-run: dynamo-ft-r610-2f515dd0-demo
+  annotations:
+    nvidia.com/dynamo-kube-discovery-mode: container
+spec:
+  backendFramework: vllm
+  components:
+  - name: Frontend
+    type: frontend
+    replicas: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+          command:
+          - python3
+          - -m
+          - dynamo.frontend
+          args:
+          - --router-mode
+          - round-robin
+          - --trust-remote-code
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: void
+          - name: DYN_MIGRATION_LIMIT
+            value: '0'
+          resources:
+            requests:
+              cpu: '1'
+              memory: 4Gi
+            limits:
+              memory: 8Gi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 60
+            failureThreshold: 60
+          volumeMounts:
+          - name: shared-model-cache
+            mountPath: /model-cache
+        volumes:
+        - name: shared-model-cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        imagePullSecrets:
+        - name: common-runtime-pull
+      metadata:
+        labels:
+          workshop-role: frontend
+          feature-test-run: dynamo-ft-r610-2f515dd0-demo
+          workshop-demo: shadow
+          app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    runtimeVersionOverride: 1.6.0
+  - name: agg
+    type: worker
+    replicas: 1
+    podTemplate:
+      spec:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: nvidia.com/gpu.product
+                  operator: In
+                  values:
+                  - NVIDIA-H100-80GB-HBM3
+        tolerations:
+        - key: nvidia.com/gpu
+          operator: Equal
+          value: 'true'
+          effect: NoSchedule
+        volumes:
+        - name: shared-model-cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        - name: writer-runtime
+          configMap:
+            name: shadow-descriptors-bd851d2ba3c5
+        - name: runtime-descriptors
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: mx-dev-cache
+          emptyDir:
+            medium: Memory
+            sizeLimit: 96Gi
+        - name: mx-dev-bootstrap
+          configMap:
+            name: shadow-mx-899d55e55118-mx-stage
+            defaultMode: 420
+        containers:
+        - name: main
+          image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+          command:
+          - python3
+          - -m
+          - dynamo.vllm
+          args:
+          - --model
+          - nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+          - --revision
+          - 8a115b9d966adce8c059a7bcf47f49a1e57957d8
+          - --served-model-name
+          - nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+          - --trust-remote-code
+          - --tensor-parallel-size
+          - '2'
+          - --max-model-len
+          - '8192'
+          - --max-num-seqs
+          - '4'
+          - --max-num-batched-tokens
+          - '1024'
+          - --gpu-memory-utilization
+          - '0.65'
+          - --reasoning-parser
+          - nemotron_v3
+          - --enforce-eager
+          - --language-model-only
+          - --attention-backend
+          - FLASHINFER
+          - --mamba-backend
+          - flashinfer
+          - --mamba-ssm-cache-dtype
+          - float16
+          - --mamba-cache-mode
+          - align
+          - --load-format
+          - gms
+          - --enable-sleep-mode
+          - --kv-cache-memory-bytes
+          - '2147483648'
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+            value: '180'
+          - name: CUDA_LAUNCH_BLOCKING
+            value: '1'
+          - name: NCCL_IB_DISABLE
+            value: '1'
+          - name: PYTHONHASHSEED
+            value: '0'
+          - name: DYN_WORKSHOP_SHADOW_DESCRIPTOR_DIR
+            value: /var/run/workshop-shadow-descriptors
+          - name: DYN_WORKSHOP_SHADOW_RUNTIME_IDENTITY
+            value: '{"candidate": "overnight-shadow-super-vl-20261105-full-a4", "image_sha256":
+              "e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+              "model_config_sha256": "35189a8038d1b1f934e58cba50eb7e97b42a4da569424e35b9fd1048058bc7ea",
+              "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8", "source_manifest_sha256":
+              "792236dc5b441f9f4ef7815031ceadfc0a8881a55475fb73e7633341a2f6dfe0",
+              "tensor_parallel_size": 2}'
+          resources:
+            requests:
+              cpu: '8'
+              memory: 224Gi
+              nvidia.com/gpu: '2'
+            limits:
+              memory: 352Gi
+              nvidia.com/gpu: '2'
+          securityContext:
+            runAsUser: 0
+            capabilities:
+              add:
+              - IPC_LOCK
+              - SYS_RESOURCE
+          startupProbe:
+            httpGet:
+              path: /live
+              port: 9090
+            periodSeconds: 30
+            timeoutSeconds: 20
+            failureThreshold: 120
+          volumeMounts:
+          - name: shared-model-cache
+            mountPath: /model-cache
+          - name: dshm
+            mountPath: /dev/shm
+          - name: writer-runtime
+            subPath: model_loader.py
+            readOnly: true
+            mountPath: /usr/local/lib/python3.12/dist-packages/gpu_memory_service/integrations/vllm/model_loader.py
+          - name: writer-runtime
+            subPath: workshop_humming.py
+            readOnly: true
+            mountPath: /usr/local/lib/python3.12/dist-packages/gpu_memory_service/integrations/vllm/workshop_humming.py
+          - name: writer-runtime
+            subPath: patches.py
+            readOnly: true
+            mountPath: /usr/local/lib/python3.12/dist-packages/gpu_memory_service/integrations/vllm/patches.py
+          - name: writer-runtime
+            subPath: workshop_descriptors.py
+            readOnly: true
+            mountPath: /usr/local/lib/python3.12/dist-packages/gpu_memory_service/integrations/vllm/workshop_descriptors.py
+          - name: writer-runtime
+            subPath: workshop_parameter_inventory.py
+            readOnly: true
+            mountPath: /usr/local/lib/python3.12/dist-packages/gpu_memory_service/integrations/vllm/workshop_parameter_inventory.py
+          - name: runtime-descriptors
+            mountPath: /var/run/workshop-shadow-descriptors
+          - name: mx-dev-cache
+            mountPath: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            readOnly: true
+        imagePullSecrets:
+        - name: common-runtime-pull
+        nodeSelector:
+          kubernetes.io/hostname: kubecon-nke-site-cp-0124
+        initContainers:
+        - name: mx-dev-cache-stage
+          image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+          command:
+          - python3
+          - /mx-dev-bootstrap/stage.py
+          args:
+          - --spec
+          - /mx-dev-bootstrap/stage-spec.json
+          - --hf-home
+          - /model-cache/feature-tests/20261015-super-vl-tp2/hf
+          - --timeout-seconds
+          - '1200'
+          - --rpc-timeout
+          - '900'
+          env:
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: void
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          resources:
+            requests:
+              cpu: '2'
+              memory: 96Gi
+            limits:
+              cpu: '4'
+              memory: 112Gi
+          volumeMounts:
+          - name: mx-dev-cache
+            mountPath: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+          - name: mx-dev-bootstrap
+            mountPath: /mx-dev-bootstrap
+            readOnly: true
+      metadata:
+        labels:
+          workshop-role: worker
+          feature-test-run: dynamo-ft-r610-2f515dd0-demo
+          workshop-demo: shadow
+          app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    runtimeVersionOverride: 1.6.0
+    experimental:
+      gpuMemoryService:
+        deviceClassName: dynamo-ft-r610-2f515dd0-demo-shadow
+      failover: {}

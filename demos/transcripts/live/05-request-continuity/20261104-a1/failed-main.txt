@@ -1,0 +1,337 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a1
+
+Dynamo workshop · Request continuity
+LIVE CLUSTER
+Run: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a1
+
+Preparation
+
+Next: 1/4  Two prepared cases
+
+================================================================
+1/4  Two prepared cases
+The same two-worker configuration, with frontend migration set to zero or three.
+================================================================
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a1/migration-settings.yaml
+Frontend:
+  DYN_MIGRATION_LIMIT:
+    disabled: '0'
+    enabled: '3'
+  DYN_HTTP_BACKEND_STREAM_TIMEOUT_SECS: '30'
+workers_per_case: 2
+tensor_parallel_size: 2
+client_retries: 0
+fault_gate_visible_content_chunks: 16
+
+Step finished in 0.0s
+
+Next: 2/4  Break a streaming response
+
+================================================================
+2/4  Break a streaming response
+After visible output, kill its serving EngineCore and inspect the stream failure.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-6fb3be2c-demo service/demo-continuity-disabled-frontend 18004:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18004/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793830315,"owned_by":"nvidia","context_window":1048576}]}
+
+Request body:
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a self-contained Python pytest module for an integer add(a, b) function. Include 60 individually named test functions, covering positive and negative values, zero, commutativity, and large integers. Each function needs its own assertion. Return Python code only, no explanations or markdown."
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "max_completion_tokens": 2048,
+  "temperature": 0,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "nvext": {
+    "extra_fields": [
+      "worker_id",
+      "timing"
+    ]
+  }
+}
+
+$ streaming POST /v1/chat/completions (one request; no client retry)
+def add(a, b):
+    return a + b
+
+def test_add_positive_1():
+    assert
+[fault] SIGKILL EngineCore on worker 361298914607647 (demo-continuity-disabled-0-agg-wwf26)
+ add(1, 2) == 3
+
+def test_add
+[stream error] {"message": "Service temporarily unavailable", "type": "service_unavailable", "code": 503}
+
+[data: [DONE]]
+
+Observed outcome:
+{
+  "simulated": false,
+  "arm": "disabled",
+  "response_id": "chatcmpl-66d33bcb-6405-4da2-8545-3a3b214caded",
+  "http_requests": 1,
+  "failed_worker": "361298914607647",
+  "continuation_workers": [],
+  "error_frames": [
+    {
+      "message": "Service temporarily unavailable",
+      "type": "service_unavailable",
+      "code": 503
+    }
+  ],
+  "read_error": null,
+  "finish_reasons": [],
+  "done": true,
+  "successful_completion": false,
+  "client_recovery_gap_seconds": null,
+  "scope": "One request, no client retries; gap spans last received old-worker content to first peer content."
+}
+
+Step finished in 18.2s
+
+Next: 3/4  Continue through worker failure
+
+================================================================
+3/4  Continue through worker failure
+Repeat with migration enabled: follow one request across two workers.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-6fb3be2c-demo service/demo-continuity-enabled-frontend 18004:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18004/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793830334,"owned_by":"nvidia","context_window":1048576}]}
+
+Request body:
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a self-contained Python pytest module for an integer add(a, b) function. Include 60 individually named test functions, covering positive and negative values, zero, commutativity, and large integers. Each function needs its own assertion. Return Python code only, no explanations or markdown."
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "max_completion_tokens": 2048,
+  "temperature": 0,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "nvext": {
+    "extra_fields": [
+      "worker_id",
+      "timing"
+    ]
+  }
+}
+
+$ streaming POST /v1/chat/completions (one request; no client retry)
+def add(a, b):
+    return a + b
+
+def test_add_positive_1():
+    assert
+[fault] SIGKILL EngineCore on worker 1636253979746942 (demo-continuity-enabled-0-agg-5n76w)
+ add(1, 2) == 3
+
+def test_add_positive_2():
+    assert add(10, 20) == 30
+
+def test_add_positive_3():
+    assert add(100, 200) == 300
+
+def test_add_positive_4():
+    assert add(5, 5) == 10
+
+def test_add_positive_5():
+    assert add(123, 456) == 579
+
+def test_add_negative_1():
+    assert add(-1, -2) == -3
+
+def test_add_negative_2():
+    assert add(-10, -20) == -30
+
+def test_add_negative_3():
+    assert add(-100, -200) == -300
+
+def test_add_negative_4():
+    assert add(-5, -5) == -10
+
+def test_add_negative_5():
+    assert add(-123, -456) == -579
+
+def test_add_zero_1():
+    assert add(0, 0) == 0
+
+def test_add_zero_2():
+    assert add(0, 5) == 5
+
+def test_add_zero_3():
+    assert add(5, 0) == 5
+
+def test_add_zero_4():
+    assert add(0, -5) == -5
+
+def test_add_zero_5():
+    assert add(-5, 0) == -5
+
+def test_add_mixed_1():
+    assert add(5, -3) == 2
+
+def test_add_mixed_2():
+    assert add(-5, 3) == -2
+
+def test_add_mixed_3():
+    assert add(10, -10) == 0
+
+def test_add_mixed_4():
+    assert add(-10, 10) == 0
+
+def test_add_mixed_5():
+    assert add(100, -1) == 99
+
+def test_add_commutative_1():
+    assert add(1, 2) == add(2, 1)
+
+def test_add_commutative_2():
+    assert add(10, 20) == add(20, 10)
+
+def test_add_commutative_3():
+    assert add(-5, 10) == add(10, -5)
+
+def test_add_commutative_4():
+    assert add(0, 7) == add(7, 0)
+
+def test_add_commutative_5():
+    assert add(123, 456) == add(456, 123)
+
+def test_add_large_1():
+    assert add(10**10, 10**10) == 2 * 10**10
+
+def test_add_large_2():
+    assert add(10**15, 10**15) == 2 * 10**15
+
+def test_add_large_3():
+    assert add(10**100, 10**100) == 2 * 10**100
+
+def test_add_large_4():
+    assert add(999999999999, 1) == 1000000000000
+
+def test_add_large_5():
+    assert add(10**50, -10**50) == 0
+
+def test_add_single_digit_1():
+    assert add(1, 1) == 2
+
+def test_add_single_digit_2():
+    assert add(2, 3) == 5
+
+def test_add_single_digit_3():
+    assert add(9, 9) == 18
+
+def test_add_single_digit_4():
+    assert add(0, 9) == 9
+
+def test_add_single_digit_5():
+    assert add(9, 0) == 9
+
+def test_add_double_digit_1():
+    assert add(10, 10) == 20
+
+def test_add_double_digit_2():
+    assert add(99, 1) == 100
+
+def test_add_double_digit_3():
+    assert add(50, 50) == 100
+
+def test_add_double_digit_4():
+    assert add(11, 22) == 33
+
+def test_add_double_digit_5():
+    assert add(99, 99) == 198
+
+def test_add_triple_digit_1():
+    assert add(100, 200) == 300
+
+def test_add_triple_digit_2():
+    assert add(999, 1) == 1000
+
+def test_add_triple_digit_3():
+    assert add(500, 500) == 1000
+
+def test_add_triple_digit_4():
+    assert add(123, 321) == 444
+
+def test_add_triple_digit_5():
+    assert add(999, 999) == 1998
+
+def test_add_boundary_max_int_1():
+    assert add(2147483647, 0) == 2147483647
+
+def test_add_boundary_max_int_2():
+    assert add(2147483647, 1) == 2147483648
+
+def test_add_boundary_min_int_1():
+    assert add(-2147483648, 0) == -2147483648
+
+def test_add_boundary_min_int_2():
+    assert add(-2147483648, 1) == -2147483647
+
+def test_add_boundary_range_1():
+    assert add(2147483647, -2147483648) == -1
+
+def test_add_boundary_range_2():
+    assert add(-2147483648, 2147483647) == -1
+
+def test_add_sequential_1():
+    assert add(1, 1) == 2
+
+def test_add_sequential_2():
+    assert add(2, 2) == 4
+
+def test_add_sequential_3():
+    assert add(3, 3) == 6
+
+def test_add_sequential_4():
+    assert add(4, 4) == 8
+
+def test_add_sequential_5():
+    assert add(5, 5) == 10
+
+def test_add_random_1():
+    assert add(7, 3) == 10
+
+def test_add_random_2():
+    assert add(14, 28) == 42
+
+def test_add_random_3():
+    assert add(100, 200) == 300
+
+def test_add_random_4():
+    assert add(1000, 2000) == 3000
+
+def test_add_random_5():
+    assert add(12345, 67890) == 80235
+[data: [DONE]]
+
+Resume: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/05-request-continuity/run.sh --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a1
+Cleanup: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/05-request-continuity/run.sh cleanup --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a1
+
+Demo stopped: Migration-enabled stream did not continue on a healthy peer and finish.

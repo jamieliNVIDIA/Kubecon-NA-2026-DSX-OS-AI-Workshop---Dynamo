@@ -1,0 +1,43 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: snapshot-nvme-local
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dynamo-workshop-snapshot-nvme-cp0124
+spec:
+  capacity:
+    storage: 1Ti
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: snapshot-nvme-local
+  local:
+    path: /mnt/dynamo-snapshot
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - kubecon-nke-site-cp-0124
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: snapshot-artifacts-nvme-cp0124
+  namespace: dynamo-system
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: snapshot-nvme-local
+  volumeName: dynamo-workshop-snapshot-nvme-cp0124
+  resources:
+    requests:
+      storage: 1Ti

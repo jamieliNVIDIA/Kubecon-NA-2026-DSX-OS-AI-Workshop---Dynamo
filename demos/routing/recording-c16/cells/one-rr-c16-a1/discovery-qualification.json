@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "mode": "round-robin",
+  "worker_pod_ips": [
+    "192.168.100.42"
+  ],
+  "smoke_worker_ids": [
+    "4922339824612165"
+  ],
+  "scope": "One RR worker exercised by four bounded smoke requests"
+}

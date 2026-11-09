@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "audited_at": "2026-11-05T20:12:22.216014+00:00",
+  "parent": "results/take-home-live-public-20261105-a4",
+  "revision": "results/take-home-service-selector-20261105-a1",
+  "image": "nvcr.io/nvidia/ai-dynamo/vllm-runtime-nightly@sha256:c186817f4669d615d2b14bee5a6119d35d4d0fe186fdfab69920da8de9d09337",
+  "namespace": "dynamo-ft-takehome-9812d1b965",
+  "namespace_uid": "6ebf8c2c-b3da-4700-a770-b5ff1a695a9b",
+  "dgd_uid": "056dfdf7-2d2c-4634-84d0-6c5e29e70ad4",
+  "service_uid": "1f0d5bad-417f-42fd-873c-5607b3a6a777",
+  "gpu_proof": {
+    "assignment_id": "takehome-take-home-live-public-20261105-a4",
+    "role": "intro",
+    "node": "kubecon-nke-site-cp-0942",
+    "gpu_uuids": [
+      "GPU-58272147-35f4-6125-0810-25497aee2a1a",
+      "GPU-e4f59982-2d2b-0692-84bd-ca6c7d709c1e"
+    ],
+    "pod_uid": "c0d2b22c-cdeb-4072-9456-857f8ed79ab2",
+    "claim_uid": "b9d92d26-48b1-4038-a2d7-5436a05ce2aa",
+    "scope": "Observed placement, not utilization or inference proof."
+  },
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "http_status": 200,
+  "client_requests": 1,
+  "client_retries": 0,
+  "finish_reason": "stop",
+  "files_sha256": {
+    "patch-spec.json": "85601d63b97413c4ec56ef9565be4e02fc2726581bd4c5ce9ca29ceb43a51482",
+    "server-dry-run.json": "943b15ac54cad115871cd92253009f429d48859350313456597d00dfb6d1a8c8",
+    "models.json": "496599b8bfc3a542a6f5d5ccea01938cf45114fc69654ef03c5b94e0a33741c6",
+    "controller.py": "ce2c557212a57458e5cb99403aff3f64d545e8058059d309d5fd75cde713a766",
+    "response-http.json": "171f82c16aaae48166ddab41aa95fb6ef066a71960446fd4163e5491c78cfd57",
+    "response.raw.json": "00dfd0cebe8dfc9d1b0250010f3a9d9997fc8f1b5b484cf623e0fae90b068a9d",
+    "service-after.json": "27bcb52c70cba25edf2b68d74e97ae652a8308973c6275ef64d89269d8016298",
+    "response.json": "47c8220541b6112b6a1f33f69889926e4cfc57aced9d3d68104fe9052229f39b",
+    "service-before.json": "cc317e6d3df0fb8828003253be996107001a360bf5c2899fa726966f12044f39",
+    "execution.json": "fd8c8ed940d2eb0761a5267020a5d920d8603ec98412350f7c402c742f4160ff",
+    "port-forward.log": "8023cab3593c485eb29b09db19f68daf79dcd80e4995855edc4762aaf2e0f5bc",
+    "pods-before.json": "139c6c82461976b26e2547856aee503198bf0c05d92a89b23e45cb369a7cc281",
+    "endpoints.json": "9c572c002fcaf9b27d61e37c2b7aac4ae7a3a6fa9ef77f8d30043a484bcbb1c1",
+    "pods-after.json": "139c6c82461976b26e2547856aee503198bf0c05d92a89b23e45cb369a7cc281"
+  },
+  "cleanup": "pending root canonical cleanup",
+  "scope": "Independent offline verification of actual cached DRA serving on unmodified public image with explicit UID0 and a guarded Service-selector-only revision. Same ready engines/pods/image/GPUs; original request. No fresh download, cold-start performance, code correctness or other-feature qualification."
+}

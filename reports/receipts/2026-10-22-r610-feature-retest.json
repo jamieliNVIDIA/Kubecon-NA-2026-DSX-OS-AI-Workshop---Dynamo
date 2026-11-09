@@ -1,0 +1,656 @@
+{
+  "features": {
+    "driver": "610.57.04",
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+    "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+    "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+    "tensor_parallel_size": 2,
+    "features": {
+      "agg": {
+        "status": "passed",
+        "namespace": "dynamo-ft-r610-d906a5f1-agg",
+        "state": "results/20261022-r610-feature-retest/agg/state.json",
+        "checks": {
+          "agg-inference": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:00:37.358915+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "usage": {
+              "prompt_tokens": 23,
+              "completion_tokens": 3,
+              "total_tokens": 26,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "message": {
+              "content": "READY",
+              "refusal": null,
+              "role": "assistant"
+            },
+            "scope": "Model registration and inference only; transfer and routing require separate evidence"
+          },
+          "kv-routing": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:01:02.516820+00:00",
+            "worker_ids": [
+              1657028904718351,
+              4793368944365014
+            ],
+            "independent_prefixes": 2,
+            "unforced_repeats": 6,
+            "frontend_stored_event_delta": 2.0,
+            "cached_tokens": [
+              4224,
+              4224,
+              4224,
+              4224,
+              4224,
+              4224
+            ],
+            "evidence": [
+              "routing-requests.json",
+              "agg-metrics-before.json",
+              "agg-metrics-after.json"
+            ],
+            "scope": "Two cross-node workers, forced cold seeding then unforced cache affinity and engine prefix reuse"
+          },
+          "super-vl-agg": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:01:18.931481+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2
+          },
+          "r610-feature": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:09:01.444224+00:00",
+            "tested_feature": "agg",
+            "evidence": "agg-console.log",
+            "scope": "Recovered same-campaign child receipt after wrapper keyword collision; no repeated workload"
+          }
+        },
+        "state_sha256": "3d50182b952d410d01915d6d8cf58b9b8eb5a2400d89667dde9cca8600cf7253"
+      },
+      "sidecar": {
+        "status": "passed",
+        "namespace": "dynamo-ft-r610-d906a5f1-sidecar",
+        "state": "results/20261022-r610-feature-retest/sidecar/state.json",
+        "checks": {
+          "sidecar-startup-grace": {
+            "status": "applied",
+            "updated_at": "2026-10-22T20:59:37.803942+00:00",
+            "seconds": 1800,
+            "old_pod_uid": "763aff31-7858-422b-8cf6-27a0ec48e27e",
+            "scope": "Owned sidecar DGD only; native engine handshake matches existing 30-minute startup probe; image/model unchanged"
+          },
+          "sidecar-inference": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:08:15.641324+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "usage": {
+              "prompt_tokens": 23,
+              "completion_tokens": 3,
+              "total_tokens": 26
+            },
+            "message": {
+              "content": "READY",
+              "refusal": null,
+              "role": "assistant"
+            },
+            "scope": "Model registration and inference only; transfer and routing require separate evidence"
+          },
+          "engine-sidecar": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:08:20.628922+00:00",
+            "pod": "ft-sidecar-0-worker-k8vbm",
+            "node": "kubecon-nke-site-cp-0942",
+            "engine_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "sidecar_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "engine_packages": {
+              "vllm": "0.31.1rc1.dev23+g43b4aaea3",
+              "ai-dynamo": "1.6.0",
+              "nixl": "1.5.0",
+              "torch": "2.13.0+cu130"
+            },
+            "evidence": [
+              "sidecar-smoke.json",
+              "engine-sidecar.log",
+              "engine-packages.json"
+            ],
+            "scope": "Native vLLM gRPC engine, separate CPU-only sidecar, registered model and expected inference output. SGLang and feature parity were not tested."
+          },
+          "super-vl-sidecar": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:08:31.925919+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2
+          },
+          "r610-feature": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:09:05.736124+00:00",
+            "tested_feature": "sidecar",
+            "evidence": "sidecar-console.log",
+            "scope": "Recovered same-campaign child receipt after wrapper keyword collision; no repeated workload"
+          }
+        },
+        "state_sha256": "646772f8631f95280186adffed0dcf582362604b3fe821f58f31d098b249bee1"
+      },
+      "image-smoke": {
+        "status": "passed",
+        "namespace": "dynamo-ft-r610-d906a5f1-image-smoke",
+        "state": "results/20261022-r610-feature-retest/image-smoke/state.json",
+        "checks": {
+          "image-inference": {
+            "status": "passed",
+            "updated_at": "2026-10-22T20:58:36.208182+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "usage": {
+              "prompt_tokens": 23,
+              "completion_tokens": 3,
+              "total_tokens": 26,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "message": {
+              "content": "READY",
+              "refusal": null,
+              "role": "assistant"
+            },
+            "scope": "Model registration and inference only; transfer and routing require separate evidence"
+          },
+          "super-vl-image": {
+            "status": "passed",
+            "updated_at": "2026-10-22T20:58:39.605005+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2,
+            "topology": "image",
+            "scope": "One synthetic image on an aggregated worker; no video or image-aware routing qualification"
+          },
+          "super-vl-image-smoke": {
+            "status": "passed",
+            "updated_at": "2026-10-22T20:58:39.624199+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2
+          },
+          "r610-feature": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:09:09.093114+00:00",
+            "tested_feature": "image-smoke",
+            "evidence": "image-smoke-console.log",
+            "scope": "Recovered same-campaign child receipt after wrapper keyword collision; no repeated workload"
+          }
+        },
+        "state_sha256": "6d0552da9ea85c67f0647781bf56df78cc2bf407e6a7838c9720ea1de7b52b6d"
+      },
+      "grove": {
+        "status": "passed",
+        "namespace": "dynamo-ft-r610-d906a5f1-grove",
+        "state": "results/20261022-r610-feature-retest/grove/state.json",
+        "checks": {
+          "grove-kai": {
+            "status": "passed",
+            "updated_at": "2026-10-22T20:39:03.960360+00:00",
+            "initial_pods": 4,
+            "scaled_pods": 6,
+            "initial_gpu_count": 4,
+            "scaled_gpu_count": 8,
+            "scheduler": "kai-scheduler",
+            "gpu_arithmetic_validated": true,
+            "scope": "PodGang creation, GPU resource admission and coordinated scaling; not quota reclaim or topology qualification"
+          },
+          "super-vl-grove": {
+            "status": "passed",
+            "updated_at": "2026-10-22T20:39:40.332708+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2
+          },
+          "r610-feature": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:09:11.855982+00:00",
+            "tested_feature": "grove",
+            "evidence": "grove-console.log",
+            "scope": "Recovered same-campaign child receipt after wrapper keyword collision; no repeated workload"
+          }
+        },
+        "state_sha256": "1e1d4ab1a346ec01c456b378b4de5292447e7e4fa727ec889d02947c53429d8c"
+      },
+      "kvcr": {
+        "status": "passed",
+        "namespace": "dynamo-ft-r610-040e184f-kvcr",
+        "state": "results/20261022-r610-kvcr-retry/kvcr/state.json",
+        "checks": {
+          "kvcr-inference": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:57:08.272864+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "usage": {
+              "prompt_tokens": 23,
+              "completion_tokens": 3,
+              "total_tokens": 26,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "message": {
+              "content": "READY",
+              "refusal": null,
+              "role": "assistant"
+            },
+            "scope": "Model registration and inference only; transfer and routing require separate evidence"
+          },
+          "kvcr": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:58:15.489253+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "source_node": "kubecon-nke-site-cp-0124",
+            "target_node": "kubecon-nke-site-cp-0198",
+            "blocks": 6.0,
+            "bytes": 103809024.0,
+            "cached_tokens": 4224,
+            "backend": "LIBFABRIC",
+            "provider": "efa",
+            "remote_failed": 0,
+            "remote_partial": 0,
+            "evidence": [
+              "kvcr-requests.json",
+              "kvcr-metrics-before.json",
+              "kvcr-metrics-after.json"
+            ],
+            "scope": "Cross-node router-hinted peer cache reuse; matched source/destination blocks and bytes plus expected output"
+          },
+          "kvcr-canary-stability": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:58:58.881828+00:00",
+            "canary_enabled": true,
+            "canary_timeout_seconds": 180,
+            "samples_per_worker": 3,
+            "idle_interval_seconds": 15,
+            "evidence": [
+              "kvcr-idle-health.json"
+            ],
+            "scope": "Both tuned KVCR workers remain Ready with zero restarts during a bounded idle health check"
+          },
+          "super-vl-kvcr": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:59:12.984566+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2
+          },
+          "r610-feature": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:59:20.643359+00:00",
+            "tested_feature": "kvcr",
+            "exit_code": 0,
+            "timed_out": false,
+            "evidence": "kvcr-console.log"
+          }
+        },
+        "state_sha256": "74f3d4bb7c9408fcff83a8ad016ccc9ee1ceab2882f93ef38b922db7b976f745",
+        "prior_attempt": {
+          "state": "results/20261022-r610-feature-retest/kvcr/state.json",
+          "sha256": "55e9b2f75efbfd214619f3a5f08edb27d904a047ddb34a794ea1dcbc89a0b993",
+          "status": "blocked",
+          "error": "Need two ready KVCR endpoints"
+        }
+      },
+      "disagg": {
+        "status": "passed",
+        "namespace": "dynamo-ft-r610-d906a5f1-disagg",
+        "state": "results/20261022-r610-feature-retest/disagg/state.json",
+        "checks": {
+          "disagg-inference": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:38:15.197623+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "usage": {
+              "prompt_tokens": 23,
+              "completion_tokens": 3,
+              "total_tokens": 26,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "message": {
+              "content": "READY",
+              "refusal": null,
+              "role": "assistant"
+            },
+            "scope": "Model registration and inference only; transfer and routing require separate evidence"
+          },
+          "disaggregation": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:38:30.198777+00:00",
+            "nodes": {
+              "ft-disagg-0-decode-9zlz2": "kubecon-nke-site-cp-0198",
+              "ft-disagg-0-prefill-dvvtg": "kubecon-nke-site-cp-0124"
+            },
+            "transfer_metric_deltas": {
+              "vllm:nixl_bytes_transferred_sum": 224591872.0,
+              "vllm:nixl_bytes_transferred_count": 4.0,
+              "vllm:nixl_num_failed_transfers_total": 0.0,
+              "vllm:nixl_num_failed_notifications_total": 0.0
+            },
+            "imported_prompt_tokens": 6237.0,
+            "evidence": [
+              "disagg-requests.json",
+              "disagg-metrics-before.json",
+              "disagg-metrics-after.json"
+            ],
+            "scope": "Cross-node LIBFABRIC-configured P/D, nonzero completed KV transfer bytes, no transfer failures and expected outputs"
+          },
+          "super-vl-disagg": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:39:35.542997+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2
+          },
+          "r610-feature": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:42:19.908204+00:00",
+            "tested_feature": "disagg",
+            "evidence": "disagg-console.log",
+            "scope": "Recovered same-campaign terminal child receipt after supervisor repair; no repeated workload"
+          }
+        },
+        "state_sha256": "b22df839d094fa397220695b8c47894ce59d8089019e3b9d9ed3780c047fe8d8"
+      },
+      "mx": {
+        "status": "passed",
+        "namespace": "dynamo-ft-r610-d906a5f1-mx",
+        "state": "results/20261022-r610-feature-retest/mx/state.json",
+        "checks": {
+          "modelexpress": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:41:33.729734+00:00",
+            "source_node": "kubecon-nke-site-cp-0124",
+            "target_node": "kubecon-nke-site-cp-0198",
+            "tensors": 3738,
+            "gigabytes_from_log": 80.54,
+            "transfer_seconds_from_log": 4.41,
+            "backend": "LIBFABRIC",
+            "provider": "efa",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "usage": {
+              "prompt_tokens": 23,
+              "completion_tokens": 3,
+              "total_tokens": 26,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "evidence": [
+              "modelexpress-target.log",
+              "modelexpress-inference.json"
+            ],
+            "scope": "Full model weights transferred cross-node via P2P; receiver generated expected output without disk fallback. Timing is not a benchmark."
+          },
+          "super-vl-mx": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:42:12.231726+00:00",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2
+          },
+          "r610-feature": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:42:24.872524+00:00",
+            "tested_feature": "mx",
+            "evidence": "mx-console.log",
+            "scope": "Recovered same-campaign terminal child receipt after supervisor repair; no repeated workload"
+          }
+        },
+        "state_sha256": "5aa522e4250acc6fc742a8745b87b428e3fbe3ec4d7269746b08abe4a8689717"
+      },
+      "shadow": {
+        "status": "blocked",
+        "namespace": "dynamo-ft-r610-d906a5f1-shadow",
+        "state": "results/20261022-r610-feature-retest/shadow/state.json",
+        "checks": {
+          "shadow-runtime": {
+            "status": "present",
+            "updated_at": "2026-10-22T21:41:39.641022+00:00",
+            "packages": {
+              "ai-dynamo": "1.6.0",
+              "ai-dynamo-runtime": "1.6.0",
+              "vllm": "0.31.1rc1.dev23+g43b4aaea3"
+            },
+            "files": {
+              "gpu_memory_service/integrations/vllm/worker.py": {
+                "present": true,
+                "sha256": "a42d0388f796f1373d12919b81fa92a33db0ac47d0dd12fd2829381489769d79"
+              },
+              "gpu_memory_service/integrations/vllm/patches.py": {
+                "present": true,
+                "sha256": "a1bce1a996b85ff25d9541aeae80adb2735642748d6fd24c8510e85a5f96846b"
+              },
+              "gpu_memory_service/failover_lock/failover_metrics.py": {
+                "present": true,
+                "sha256": "d3b28d52d3838727d2e77a37e9faa293766a7f7f29727c13abe78f1ec81b2dd5"
+              },
+              "gpu_memory_service/common/protocol/messages.py": {
+                "present": true,
+                "sha256": "f484dd6e9c9e4eb38990f8f220dbf98402ea3c89664980578f19ac62a16973d5"
+              },
+              "dynamo/vllm/args.py": {
+                "present": true,
+                "sha256": "366a3835ed063713faccc52d0a4251e3318503648b900dcf30e1a88b0cae774c"
+              },
+              "dynamo/vllm/main.py": {
+                "present": true,
+                "sha256": "23f0c5bb4abc78e4247547e35bbc7c70912cc40081adae8b0d891c2d478c942f"
+              }
+            },
+            "shadow_entrypoints": {
+              "DYN_VLLM_GMS_SHADOW_MODE": true,
+              "create_failover_metrics": true,
+              "gms_shadow_mode": true
+            },
+            "image_id": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "scope": "CPU-only inspection of pinned runtime entrypoints; does not prove H100/Nemotron GMS startup or failover"
+          },
+          "shadow-preflight": {
+            "status": "present",
+            "updated_at": "2026-10-22T21:41:59.108907+00:00",
+            "blockers": [],
+            "eligible_nodes": [
+              "kubecon-nke-site-cp-0124",
+              "kubecon-nke-site-cp-0198",
+              "kubecon-nke-site-cp-0942"
+            ],
+            "scope": "Infrastructure presence and allocator isolation only; runtime/model and actual DRA allocation still need qualification"
+          },
+          "shadow-compat-patch": {
+            "status": "prepared",
+            "updated_at": "2026-10-22T21:41:50.415021+00:00",
+            "configmap": "shadow-gms-compat-8f75223bc585",
+            "sha256": "8f75223bc5856a4cca206d416607d2807d985857b3d181938d9c1529c3d8f422",
+            "original_sha256": "a1bce1a996b85ff25d9541aeae80adb2735642748d6fd24c8510e85a5f96846b",
+            "path": "configs/patches/shadow-gms-vllm031/patches.py",
+            "scope": "Source/image-verified test-local request_memory overlay; no shared image change"
+          },
+          "shadow-deployment": {
+            "status": "created",
+            "updated_at": "2026-10-22T21:42:02.103789+00:00",
+            "name": "ft-shadow",
+            "physical_gpus": 2,
+            "engine_containers": 2,
+            "node": "kubecon-nke-site-cp-0124",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+          },
+          "shadow-startup": {
+            "status": "blocked",
+            "updated_at": "2026-10-22T21:57:10.620018+00:00",
+            "container": "engine-1",
+            "signatures": [
+              "Shape/dtype mismatch for"
+            ],
+            "evidence": "shadow-startup-fatal-engine-1-1792706230619099000.log",
+            "fault_injected": false
+          },
+          "shadow-cleanup": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:57:30.307757+00:00",
+            "scope": "Owned shadow DGD only; retain model cache/PVC"
+          },
+          "shadow-final-cleanup": {
+            "status": "passed",
+            "updated_at": "2026-10-22T21:58:40.418488+00:00",
+            "remaining_pods": 0,
+            "remaining_claims": 0,
+            "scope": "Owned Shadow Pods terminated and their GPU claims garbage-collected; cache retained"
+          },
+          "super-vl-shadow": {
+            "status": "blocked",
+            "updated_at": "2026-10-22T21:58:35.401215+00:00",
+            "error": "Permanent Shadow startup failure: ['Shape/dtype mismatch for']; see shadow-startup-fatal-engine-1-1792706230619099000.log",
+            "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+            "tensor_parallel_size": 2
+          },
+          "r610-feature": {
+            "status": "blocked",
+            "updated_at": "2026-10-22T21:58:41.821694+00:00",
+            "tested_feature": "shadow",
+            "exit_code": 1,
+            "timed_out": false,
+            "evidence": "shadow-console.log"
+          },
+          "post-shadow-cuda": {
+            "status": "passed",
+            "updated_at": "2026-10-22T22:01:50.419109+00:00",
+            "node": "kubecon-nke-site-cp-0124",
+            "devices": [
+              {
+                "device": "gpu-4",
+                "uuid": "GPU-b896cc31-be76-0f28-2e2d-d82564b624b7"
+              },
+              {
+                "device": "gpu-5",
+                "uuid": "GPU-a63322d6-c08e-79cb-c42a-031aeb4c1488"
+              }
+            ],
+            "uuids": [
+              "GPU-b896cc31-be76-0f28-2e2d-d82564b624b7",
+              "GPU-a63322d6-c08e-79cb-c42a-031aeb4c1488"
+            ],
+            "cuda_count": 2,
+            "arithmetic": "passed",
+            "scope": "Fresh arithmetic on exact affected GPU pair after process cleanup; no reset and no clearing of Xid history"
+          }
+        },
+        "state_sha256": "b50540ead3357cdef068049e66033a5bfb20bf017009f42aef9ca7ee00333730"
+      }
+    },
+    "scope": "Bounded functionality; not capacity/performance; blocked preferred-model Shadow is not a pass",
+    "validation": "Per-feature input locks, underlying receipts, wrapper outcome and idle cleanup receipts; final inventory/health separate",
+    "shadow_control": {
+      "state": "results/20261022-r610-feature-retest/shadow-control/state.json",
+      "state_sha256": "ce917f2cbb0e8b0ccbe1d05522cdc2508f48d0421df96a58709b5727a40d9be9",
+      "model": "Qwen/Qwen3-0.6B",
+      "tensor_parallel_size": 1,
+      "checks": {
+        "shadow-failover": {
+          "status": "passed",
+          "updated_at": "2026-10-22T22:04:09.650927+00:00",
+          "model": "Qwen/Qwen3-0.6B",
+          "physical_gpus": 1,
+          "active_before": "engine-0",
+          "active_after": "engine-1",
+          "pod_uid": "0823a48f-548d-4310-8a00-9b59d790f43d",
+          "fault_command_to_first_verified_response_seconds": 2.6192104590000156,
+          "worker_before": {
+            "prefill_worker_id": 6561793188292585,
+            "decode_worker_id": 6561793188292585
+          },
+          "worker_after": {
+            "prefill_worker_id": 5673914922391339,
+            "decode_worker_id": 5673914922391339
+          },
+          "tensor_parallel_size": 1,
+          "scope": "EngineCore process failure at the locked TP size; timing includes kubectl exec overhead; no node/hardware failure, KV continuity, or throughput claim",
+          "failed_requests": 1,
+          "new_standby_confirmed": true
+        },
+        "shadow-final-cleanup": {
+          "status": "passed",
+          "updated_at": "2026-10-22T22:04:24.919310+00:00",
+          "remaining_pods": 0,
+          "remaining_claims": 0,
+          "scope": "Owned Shadow Pods terminated and their GPU claims garbage-collected; cache retained"
+        },
+        "r610-shadow-control": {
+          "status": "passed",
+          "updated_at": "2026-10-22T22:04:24.922655+00:00",
+          "model": "Qwen/Qwen3-0.6B",
+          "tensor_parallel_size": 1,
+          "scope": "Small-model process failover only; does not qualify preferred Nemotron or TP2 recovery"
+        }
+      },
+      "scope": "Separate small-model control; does not qualify preferred-model or TP2 recovery"
+    }
+  },
+  "final_cluster_audit": {
+    "before": "results/20261022-r610-feature-before",
+    "after": "results/20261022-r610-feature-final",
+    "nodes": [
+      {
+        "node": "kubecon-nke-site-cp-0124",
+        "driver": "610.57.04",
+        "ready": true,
+        "boot_id_unchanged": true,
+        "uid_unchanged": true,
+        "condition_statuses_unchanged": true,
+        "efa": "32",
+        "gpu_count": 8,
+        "smi_driver": "610.57.04",
+        "new_xids": [
+          "2026-10-22T21:56:23,383418+00:00 NVRM: Xid (PCI:0000:a8:00): 31, pid=2813732, name=VLLM::Worker, channel 0x0000000d, intr 00000000. MMU Fault: ENGINE GRAPHICS GPC5 GPCCLIENT_T1_0 faulted @ 0x5d_df360000. Fault is of type FAULT_RO_VIOLATION ACCESS_TYPE_VIRT_WRITE",
+          "2026-10-22T21:56:23,424689+00:00 NVRM: Xid (PCI:0000:97:00): 31, pid=2812768, name=VLLM::Worker, channel 0x0000001e, intr 00000000. MMU Fault: ENGINE GRAPHICS GPC1 GPCCLIENT_T1_5 faulted @ 0x5d_df360000. Fault is of type FAULT_RO_VIOLATION ACCESS_TYPE_VIRT_WRITE"
+        ],
+        "preexisting_xid_lines": 86,
+        "health_commands_passed": true,
+        "health_observed_at": "2026-10-22T22:05:40.257491+00:00"
+      },
+      {
+        "node": "kubecon-nke-site-cp-0198",
+        "driver": "610.57.04",
+        "ready": true,
+        "boot_id_unchanged": true,
+        "uid_unchanged": true,
+        "condition_statuses_unchanged": true,
+        "efa": "32",
+        "gpu_count": 8,
+        "smi_driver": "610.57.04",
+        "new_xids": [],
+        "preexisting_xid_lines": 0,
+        "health_commands_passed": true,
+        "health_observed_at": "2026-10-22T22:05:49.790321+00:00"
+      },
+      {
+        "node": "kubecon-nke-site-cp-0942",
+        "driver": "610.57.04",
+        "ready": true,
+        "boot_id_unchanged": true,
+        "uid_unchanged": true,
+        "condition_statuses_unchanged": true,
+        "efa": "32",
+        "gpu_count": 8,
+        "smi_driver": "610.57.04",
+        "new_xids": [],
+        "preexisting_xid_lines": 0,
+        "health_commands_passed": true,
+        "health_observed_at": "2026-10-22T22:05:58.546549+00:00"
+      }
+    ],
+    "blockers": [
+      "Node health mismatch: kubecon-nke-site-cp-0124"
+    ],
+    "claims": 0,
+    "active_feature_pods": [],
+    "unready_infrastructure": [],
+    "infrastructure_restart_increases": [],
+    "helm_unchanged": true,
+    "status": "blocked"
+  },
+  "final_inventory_finished_at": "2026-10-22T22:05:52.868446+00:00",
+  "scope": "Completed bounded R610 feature rechecks; preferred Shadow blocked, Qwen control separate; two new Shadow writer Xid 31 events retained"
+}

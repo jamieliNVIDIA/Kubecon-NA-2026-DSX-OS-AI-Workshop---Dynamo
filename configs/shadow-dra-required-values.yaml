@@ -1,0 +1,15 @@
+# Proposed dedicated demo-cluster target for standalone DRA 0.5.0.
+# Merge with complete reviewed values; first disable the competing NVIDIA GPU
+# device plugin on all three nodes. This is not a complete/approved upgrade.
+# See reports/2026-10-13-cluster-setup-next-steps.md.
+# Complete values: configs/cluster-upgrade/gpu-dra-values.yaml.
+# Apply instructions: reports/2026-10-14-gpu-dra-upgrade.md.
+gpuResourcesEnabledOverride: true
+nvidiaDriverRoot: /run/nvidia/driver
+resources:
+  gpus:
+    enabled: true
+  computeDomains:
+    enabled: false
+kubeletPlugin:
+  nodeSelector: {}

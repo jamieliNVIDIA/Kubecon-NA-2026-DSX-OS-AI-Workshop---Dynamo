@@ -1,0 +1,326 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/01-single-replica
+
+Dynamo workshop · First deployment
+LIVE CLUSTER
+Run: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/01-single-replica
+Namespace: dynamo-ft-r610-a31e31ae-demo
+
+Preparation
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s get namespace dynamo-ft-r610-a31e31ae-demo
+NAME                           STATUS   AGE
+dynamo-ft-r610-a31e31ae-demo   Active   79s
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s get pvc feature-cache -n dynamo-ft-r610-a31e31ae-demo
+NAME            STATUS   VOLUME                             CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+feature-cache   Bound    dynamo-ft-r610-a31e31ae-demo-efs   128Gi      RWX                           <unset>                 74s
+Preparation is complete. The checkpoint is staged; no external model download is timed.
+
+Next: 1/4  The deployment
+
+================================================================
+1/4  The deployment
+One HTTP frontend and one vLLM worker replica; the worker uses two H100s.
+================================================================
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/01-single-replica/deployment.yaml
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+metadata:
+  name: demo-inference
+  namespace: dynamo-ft-r610-a31e31ae-demo
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-r610-a31e31ae-demo
+spec:
+  backendFramework: vllm
+  components:
+  - name: Frontend
+    type: frontend
+    replicas: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+          command:
+          - python3
+          - -m
+          - dynamo.frontend
+          args:
+          - --router-mode
+          - round-robin
+          - --trust-remote-code
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: void
+          resources:
+            requests:
+              cpu: '1'
+              memory: 4Gi
+            limits:
+              memory: 8Gi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 60
+            failureThreshold: 60
+          volumeMounts:
+          - name: shared-model-cache
+            mountPath: /model-cache
+        volumes:
+        - name: shared-model-cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        imagePullSecrets:
+        - name: common-runtime-pull
+      metadata:
+        labels:
+          workshop-role: frontend
+    runtimeVersionOverride: 1.6.0
+  - name: agg
+    type: worker
+    replicas: 1
+    podTemplate:
+      spec:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: nvidia.com/gpu.product
+                  operator: In
+                  values:
+                  - NVIDIA-H100-80GB-HBM3
+        tolerations:
+        - key: nvidia.com/gpu
+          operator: Equal
+          value: 'true'
+          effect: NoSchedule
+        volumes:
+        - name: shared-model-cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        containers:
+        - name: main
+          image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+          command:
+          - python3
+          - -m
+          - dynamo.vllm
+          args:
+          - --model
+          - nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+          - --revision
+          - 8a115b9d966adce8c059a7bcf47f49a1e57957d8
+          - --trust-remote-code
+          - --tensor-parallel-size
+          - '2'
+          - --max-num-seqs
+          - '4'
+          - --gpu-memory-utilization
+          - '0.85'
+          - --limit-mm-per-prompt
+          - '{"image":1,"video":0}'
+          - --reasoning-parser
+          - nemotron_v3
+          - --enforce-eager
+          - --language-model-only
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+            value: '180'
+          resources:
+            requests:
+              cpu: '8'
+              memory: 128Gi
+            limits:
+              memory: 256Gi
+            claims:
+            - name: gpu-main
+          securityContext:
+            runAsUser: 0
+            capabilities:
+              add:
+              - IPC_LOCK
+              - SYS_RESOURCE
+          startupProbe:
+            httpGet:
+              path: /live
+              port: 9090
+            periodSeconds: 30
+            timeoutSeconds: 20
+            failureThreshold: 120
+          volumeMounts:
+          - name: shared-model-cache
+            mountPath: /model-cache
+          - name: dshm
+            mountPath: /dev/shm
+        imagePullSecrets:
+        - name: common-runtime-pull
+        resourceClaims:
+        - name: gpu-main
+          resourceClaimTemplateName: demo-inference-gpus
+      metadata:
+        labels:
+          workshop-role: worker
+    runtimeVersionOverride: 1.6.0
+
+Step finished in 0.0s
+
+Next: 2/4  Deploy and start
+
+================================================================
+2/4  Deploy and start
+Follow Pod startup, model loading, and engine initialization through readiness.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s apply -f /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/01-single-replica/deployment.yaml
+Starting the service. Phase timing updates in the resource pane.
+
+  Pod startup      running     4.2s
+  Model loading    pending        —
+  Engine init      pending        —
+  Readiness        pending        —
+
+  Pod startup      done       16.5s
+  Model loading    pending        —
+  Engine init      pending        —
+  Readiness        pending        —
+
+  Pod startup      done       16.5s
+  Model loading    done      263.2s
+  Engine init      pending        —
+  Readiness        pending        —
+
+  Pod startup      done       16.5s
+  Model loading    done      263.2s
+  Engine init      done       81.8s
+  Readiness        running        —
+
+  Pod startup      done       16.5s
+  Model loading    done      263.2s
+  Engine init      done       81.8s
+  Readiness        done           —
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s get dgd,deployments,services,pods,resourceclaims -n dynamo-ft-r610-a31e31ae-demo -o wide
+NAME                                              READY   BACKEND   AGE
+dynamographdeployment.nvidia.com/demo-inference   True    vllm      7m51s
+
+NAME                              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE     SELECTOR
+service/demo-inference-0          ClusterIP   None            <none>        <none>     7m51s   app.kubernetes.io/managed-by=grove-operator,app.kubernetes.io/part-of=demo-inference,grove.io/podcliqueset-replica-index=0
+service/demo-inference-agg        ClusterIP   10.109.205.51   <none>        9090/TCP   7m51s   nvidia.com/dynamo-component-type=worker,nvidia.com/dynamo-component=agg,nvidia.com/dynamo-namespace=dynamo-ft-r610-a31e31ae-demo-demo-inference
+service/demo-inference-frontend   ClusterIP   10.96.235.53    <none>        8000/TCP   7m51s   nvidia.com/dynamo-component-type=frontend,nvidia.com/dynamo-component=Frontend,nvidia.com/dynamo-namespace=dynamo-ft-r610-a31e31ae-demo-demo-inference
+
+NAME                                  READY   STATUS    RESTARTS   AGE     IP               NODE                       NOMINATED NODE   READINESS GATES
+pod/demo-inference-0-agg-wkbpc        1/1     Running   0          7m46s   192.168.92.243   kubecon-nke-site-cp-0124   <none>           <none>
+pod/demo-inference-0-frontend-wdc89   1/1     Running   0          7m46s   192.168.92.232   kubecon-nke-site-cp-0124   <none>           <none>
+
+NAME                                                                      STATE                AGE
+resourceclaim.resource.k8s.io/demo-inference-0-agg-wkbpc-gpu-main-njpzg   allocated,reserved   7m47s
+
+Startup timing
+  Kubernetes worker Ready timestamp: 465.5s since apply
+  worker_and_frontend_ready           474.0s
+
+Engine log subphases (slowest TP rank):
+  model_loading                      263.18s
+  engine_initialization               81.84s
+  warmup                           not logged
+  Compilation / CUDA graphs        disabled for this demo
+  Startup proceeds without presenter pauses; readiness is polled every 5 seconds.
+  Logged subphases can overlap; do not sum them.
+  Checkpoint already staged; external download is excluded.
+  This introductory profile skips torch.compile and CUDA graphs (eager execution).
+
+Step finished in 476.3s
+
+Next: 3/4  The HTTP endpoint
+
+================================================================
+3/4  The HTTP endpoint
+Forward the frontend Service and check the advertised model.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-a31e31ae-demo service/demo-inference-frontend 18000:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18000/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793778326,"owned_by":"nvidia","context_window":1048576}]}
+
+Step finished in 4.0s
+
+Next: 4/4  Make a request
+
+================================================================
+4/4  Make a request
+Send a small request through the frontend to the GPU worker.
+================================================================
+
+Request body:
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a short Python function add(a, b) that returns their sum. Reply with code only."
+    }
+  ],
+  "max_completion_tokens": 64,
+  "temperature": 0,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  }
+}
+
+
+$ curl --fail --silent --show-error --max-time 180 http://127.0.0.1:18000/v1/chat/completions -H 'Content-Type: application/json' --data-binary @/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/01-single-replica/request.json
+{
+  "id": "chatcmpl-9b014dbe-3b4d-4b35-a5b9-795ebcfe7b57",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "content": "def add(a, b):\n    return a + b",
+        "refusal": null,
+        "role": "assistant"
+      },
+      "finish_reason": "stop",
+      "logprobs": null
+    }
+  ],
+  "created": 1793778326,
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "object": "chat.completion",
+  "usage": {
+    "prompt_tokens": 36,
+    "completion_tokens": 12,
+    "total_tokens": 48,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  }
+}
+
+Step finished in 2.3s
+
+Demo complete. The service stays running.
+
+Resume: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/01-single-replica/run.sh --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/01-single-replica
+Cleanup: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/01-single-replica/run.sh cleanup --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/01-single-replica

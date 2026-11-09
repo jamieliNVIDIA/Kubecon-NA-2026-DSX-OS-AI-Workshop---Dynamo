@@ -1,0 +1,35 @@
+{
+  "model_names": [
+    "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+  ],
+  "endpoint_type": "chat",
+  "streaming": true,
+  "urls": [
+    "http://127.0.0.1:8000"
+  ],
+  "timeout_seconds": 1800.0,
+  "use_server_token_count": true,
+  "tokenizer_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "tokenizer_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "extra_inputs": [
+    [
+      "ignore_eos",
+      true
+    ]
+  ],
+  "public_dataset": "semianalysis_cc_traces_weka_062126",
+  "max_context_length": 1048576,
+  "random_seed": 20261030,
+  "cache_bust": "first_turn_prefix",
+  "benchmark_duration": 900.0,
+  "benchmark_grace_period": 300.0,
+  "concurrency": 1,
+  "trajectory_start_min_ratio": 0.0,
+  "trajectory_start_max_ratio": 1.0,
+  "system_idle_gap_cap_seconds": 10.0,
+  "scenario": "inferencex-agentx-mvp",
+  "agentic_warmup_grace_period": 1800.0,
+  "artifact_directory": "artifacts/agentx-c1",
+  "no_gpu_telemetry": true,
+  "ui_type": "none"
+}

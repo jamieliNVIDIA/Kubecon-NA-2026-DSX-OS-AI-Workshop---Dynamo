@@ -1,0 +1,260 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceClaimTemplate
+  metadata:
+    name: ft-kvcr-agg-main-gpus
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-r610-d906a5f1-kvcr
+    namespace: dynamo-ft-r610-d906a5f1-kvcr
+  spec:
+    spec:
+      devices:
+        requests:
+        - name: gpu
+          exactly:
+            deviceClassName: gpu.nvidia.com
+            count: 2
+- apiVersion: nvidia.com/v1beta1
+  kind: DynamoGraphDeployment
+  metadata:
+    name: ft-kvcr
+    namespace: dynamo-ft-r610-d906a5f1-kvcr
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-r610-d906a5f1-kvcr
+  spec:
+    backendFramework: vllm
+    components:
+    - name: Frontend
+      type: frontend
+      replicas: 1
+      podTemplate:
+        spec:
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            imagePullPolicy: IfNotPresent
+            command:
+            - python3
+            - -m
+            - dynamo.frontend
+            args:
+            - --router-mode
+            - kv
+            - --trust-remote-code
+            env:
+            - name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - name: PYTHONHASHSEED
+              value: '0'
+            - name: NCCL_IB_DISABLE
+              value: '1'
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            - name: TEST_RUN
+              value: kvcr
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: VLLM_KV_EVENTS_USE_INT_BLOCK_HASHES
+              value: '1'
+            - name: VLLM_LOGGING_LEVEL
+              value: INFO
+            - name: NIXL_LOG_LEVEL
+              value: INFO
+            - name: FI_PROVIDER
+              value: efa
+            - name: FI_EFA_USE_DEVICE_RDMA
+              value: '1'
+            - name: FI_EFA_FORK_SAFE
+              value: '1'
+            - name: FI_EFA_ENABLE_SHM_TRANSFER
+              value: '0'
+            - name: FI_HMEM_CUDA_USE_DMABUF
+              value: '1'
+            resources:
+              requests:
+                cpu: '1'
+                memory: 4Gi
+              limits:
+                memory: 8Gi
+            startupProbe:
+              httpGet:
+                path: /health
+                port: 8000
+              periodSeconds: 10
+              timeoutSeconds: 60
+              failureThreshold: 60
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: dshm
+              mountPath: /dev/shm
+            - name: kvcr
+              mountPath: /kvcr
+              readOnly: true
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 16Gi
+          - name: kvcr
+            configMap:
+              name: kvcr-runtime
+          imagePullSecrets:
+          - name: common-runtime-pull
+          activeDeadlineSeconds: 3600
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+            feature-test-run: dynamo-ft-r610-d906a5f1-kvcr
+      runtimeVersionOverride: 1.6.0
+    - name: agg
+      type: worker
+      replicas: 2
+      sharedMemorySize: 16Gi
+      podTemplate:
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: nvidia.com/gpu.product
+                    operator: In
+                    values:
+                    - NVIDIA-H100-80GB-HBM3
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchLabels:
+                    feature-test-role: kvcr
+                topologyKey: kubernetes.io/hostname
+          tolerations:
+          - key: nvidia.com/gpu
+            operator: Equal
+            value: 'true'
+            effect: NoSchedule
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 16Gi
+          - name: kvcr
+            configMap:
+              name: kvcr-runtime
+          - name: efa
+            configMap:
+              name: efa-userspace
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            imagePullPolicy: IfNotPresent
+            workingDir: /workspace/
+            command:
+            - bash
+            - /efa/entrypoint.sh
+            args:
+            - python3
+            - /kvcr/worker.py
+            env:
+            - name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - name: PYTHONHASHSEED
+              value: '0'
+            - name: NCCL_IB_DISABLE
+              value: '1'
+            - name: TEST_RUN
+              value: kvcr
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: VLLM_KV_EVENTS_USE_INT_BLOCK_HASHES
+              value: '1'
+            - name: VLLM_LOGGING_LEVEL
+              value: INFO
+            - name: NIXL_LOG_LEVEL
+              value: INFO
+            - name: FI_PROVIDER
+              value: efa
+            - name: FI_EFA_USE_DEVICE_RDMA
+              value: '1'
+            - name: FI_EFA_FORK_SAFE
+              value: '1'
+            - name: FI_EFA_ENABLE_SHM_TRANSFER
+              value: '0'
+            - name: FI_HMEM_CUDA_USE_DMABUF
+              value: '1'
+            - name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+              value: '180'
+            resources:
+              requests:
+                cpu: '8'
+                memory: 128Gi
+                vpc.amazonaws.com/efa: '8'
+              limits:
+                memory: 256Gi
+                vpc.amazonaws.com/efa: '8'
+              claims:
+              - name: gpu-main
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+            startupProbe:
+              httpGet:
+                path: /live
+                port: 9090
+              periodSeconds: 30
+              timeoutSeconds: 20
+              failureThreshold: 120
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: dshm
+              mountPath: /dev/shm
+            - name: kvcr
+              mountPath: /kvcr
+              readOnly: true
+            - name: efa
+              mountPath: /efa
+              readOnly: true
+          imagePullSecrets:
+          - name: common-runtime-pull
+          activeDeadlineSeconds: 3600
+          resourceClaims:
+          - name: gpu-main
+            resourceClaimTemplateName: ft-kvcr-agg-main-gpus
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+            feature-test-run: dynamo-ft-r610-d906a5f1-kvcr
+            feature-test-role: kvcr
+      runtimeVersionOverride: 1.6.0

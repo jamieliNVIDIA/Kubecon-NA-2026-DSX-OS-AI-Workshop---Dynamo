@@ -1,0 +1,360 @@
+{
+  "schema": 1,
+  "kind": "snapshot_dgd_upstream_nvme_qualification",
+  "mode": "live",
+  "status": "live_passed",
+  "packaged_at": "2026-11-05T00:40:39.715718+00:00",
+  "run": "results/workshop-snapshot-dgd-upstream-nvme-20261104-a1",
+  "transcript": "qualification.txt",
+  "transcript_sha256": "e531e818ff369f548bf24b81a218abeb052689f93af6043ffc04be40e07cc8d4",
+  "raw_sha256": "e531e818ff369f548bf24b81a218abeb052689f93af6043ffc04be40e07cc8d4",
+  "raw_path": "results/workshop-snapshot-dgd-upstream-nvme-20261104-a1/qualification-console.log",
+  "redaction_count": 0,
+  "scope": "Actual qualification CLI output; separate from demo 4 presenter main-panel recording",
+  "storage": "pre-staged node-local NVMe",
+  "node_scope": "same node and exact physical GPU UUID pair",
+  "runtime": {
+    "patch_configmap": "snapshot-dgd-upstream-kv-v1",
+    "patch_sha256": "919766b39c7f240927ce5a8535e7e6ff21e5010e673de3c3c022ce2c7a7bc537",
+    "module_path": "/usr/local/lib/python3.12/dist-packages/dynamo/vllm/snapshot.py",
+    "gpu_uuids": [
+      "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110",
+      "GPU-75461e0d-6588-94c9-2517-dca859f5c68b"
+    ],
+    "node": "kubecon-nke-site-cp-0124",
+    "cache_home": "/model-cache/feature-tests/20261015-super-vl-tp2/hf"
+  },
+  "adapter_provenance": {
+    "profile": "super-vl-dgd-snapshot-upstream-kv-v1",
+    "source_sha256": "1998c2625b90f480541ed585ff3b2957de6ea86027cf380dde7435c47b795fc0",
+    "upstream_commit": "521225369330f2120f1676748057a692a24c2303",
+    "upstream_url": "https://github.com/ai-dynamo/dynamo/blob/521225369330f2120f1676748057a692a24c2303/components/src/dynamo/vllm/snapshot.py",
+    "upstream_module_sha256": "9e467ad95714a7979a778ad32631da0f40593c05b50f04c9a64df40168ca59b1",
+    "patched_sha256": "919766b39c7f240927ce5a8535e7e6ff21e5010e673de3c3c022ce2c7a7bc537",
+    "scope": "Exact merged PR #15887 module plus the v3 destination identity/offline bridge",
+    "pause_controller": "installed dynamo.vllm.handlers.VllmEnginePauseController",
+    "communicator_hooks": "Upstream detection and checkpoint_prepare/checkpoint_restore preserved",
+    "custom_pause_controller": false,
+    "remaining_custom_runtime_changes": [
+      "allowlisted restore proxy environment to restore-context.json",
+      "destination HF_HUB_OFFLINE policy restoration before registration"
+    ]
+  },
+  "analysis": {
+    "storage": "pre-staged node-local NVMe",
+    "concurrency_context": {
+      "received_from_chat": "01a17f5c-f224-7af2-a527-467596bbe40f",
+      "namespace": "dynamo-ft-rrkv-20261104-a1",
+      "nodes": [
+        "kubecon-nke-site-cp-0198",
+        "kubecon-nke-site-cp-0942"
+      ],
+      "source": "Incoming coordination message: user explicitly authorized parallel RR/KV on separate exact GPU pairs",
+      "snapshot_scope": "cp-0124 and recorded exact TP2 pair; no shared operator/agent/storage changes",
+      "shared_storage_caveat": "Concurrent activity on other nodes may share EFS/network services; this is a functional local-storage qualification, not a matched throughput benchmark"
+    },
+    "content_uid": "5eb7993d-64b0-4969-990d-5f2556012e0a",
+    "files": 1818,
+    "logical_bytes": 94229153009,
+    "source_hash_seconds": 330.82846374999986,
+    "copy_seconds": 47.14838699999996,
+    "local_verification_seconds": 73.14174245899994,
+    "hash_manifest_sha256": "30dd43cf3384935d075c55d52356e22740e100105863cf7e8a64a2e4d323893f",
+    "nvme": {
+      "initial": {
+        "agent_seconds": 34.053246449,
+        "agent_started_at": "2026-11-05T00:33:43.767558931Z",
+        "artifact_mount_events": [
+          {
+            "at": "2026-11-05T00:33:43.869217954Z",
+            "source": "/checkpoints/artifacts/5eb7993d-64b0-4969-990d-5f2556012e0a/containers/main"
+          }
+        ],
+        "phase_seconds": {
+          "criu_prepare": 0.01374148,
+          "criu_restore": 19.358563836,
+          "cuda_restore": 13.052959699,
+          "gpu_device_map": 0.042237834999999994,
+          "overlay_capture": 0.419635831,
+          "pagebroker_commit": 0.00038637,
+          "pagebroker_mount": 0.001176158,
+          "pagebroker_stage": 0.00415747,
+          "unaccounted": 1.16038777
+        },
+        "raw": {
+          "pod": "dynamo-ft-20261104t234901z/ft-snapshot-vllmsnapshotworker-10da2759-56574645bb-c8z7l",
+          "snapshot": "checkpoint-0ee4f641ae0072665013aae4427a3400",
+          "content_uid": "5eb7993d-64b0-4969-990d-5f2556012e0a",
+          "source_container": "main",
+          "destination_container": "main",
+          "container_id": "eebac3e62d050ee630ea2698b12e087054fec1bc2f7577d351720da3f9507d64",
+          "restore": {
+            "duration": "34.053246449s",
+            "phases": {
+              "criu_prepare": "13.74148ms",
+              "criu_restore": "19.358563836s",
+              "cuda_restore": "13.052959699s",
+              "gpu_device_map": "42.237835ms",
+              "overlay_capture": "419.635831ms",
+              "pagebroker_commit": "386.37\u00b5s",
+              "pagebroker_mount": "1.176158ms",
+              "pagebroker_stage": "4.15747ms",
+              "unaccounted": "1.16038777s"
+            },
+            "started_to_complete": "34.057149492s"
+          }
+        },
+        "pod_to_restored_seconds": 36.0,
+        "pod_to_ready_seconds": 48.0,
+        "pod_to_observed_success_seconds": 128.997872,
+        "overlay_active_to_ready_seconds": 78.417068,
+        "pod_created_before_overlay_seconds": 0,
+        "scope": "Initial serving Pod created after NVMe activation; Pod and agent clocks exclude staging"
+      },
+      "replacement": {
+        "agent_seconds": 36.862565626,
+        "agent_started_at": "2026-11-05T00:36:27.558855974Z",
+        "artifact_mount_events": [
+          {
+            "at": "2026-11-05T00:36:27.657234551Z",
+            "source": "/checkpoints/artifacts/5eb7993d-64b0-4969-990d-5f2556012e0a/containers/main"
+          }
+        ],
+        "phase_seconds": {
+          "criu_prepare": 0.013620198,
+          "criu_restore": 19.307424842,
+          "cuda_restore": 16.060919444,
+          "gpu_device_map": 0.039327627000000004,
+          "overlay_capture": 0.450409848,
+          "pagebroker_commit": 0.00039934899999999996,
+          "pagebroker_mount": 0.001054905,
+          "pagebroker_stage": 0.004637632,
+          "unaccounted": 0.9847717810000001
+        },
+        "raw": {
+          "pod": "dynamo-ft-20261104t234901z/ft-snapshot-vllmsnapshotworker-10da2759-56574645bb-7j9r2",
+          "snapshot": "checkpoint-0ee4f641ae0072665013aae4427a3400",
+          "content_uid": "5eb7993d-64b0-4969-990d-5f2556012e0a",
+          "source_container": "main",
+          "destination_container": "main",
+          "container_id": "6ba62bc584a10c32629f787514e17fda4e2d60b9985e34b2383aa5eb17f42ec2",
+          "restore": {
+            "duration": "36.862565626s",
+            "phases": {
+              "criu_prepare": "13.620198ms",
+              "criu_restore": "19.307424842s",
+              "cuda_restore": "16.060919444s",
+              "gpu_device_map": "39.327627ms",
+              "overlay_capture": "450.409848ms",
+              "pagebroker_commit": "399.349\u00b5s",
+              "pagebroker_mount": "1.054905ms",
+              "pagebroker_stage": "4.637632ms",
+              "unaccounted": "984.771781ms"
+            },
+            "started_to_complete": "36.866949561s"
+          }
+        },
+        "pod_to_restored_seconds": 47.0,
+        "pod_to_ready_seconds": 59.0,
+        "pod_to_observed_success_seconds": 98.824812,
+        "fault_to_observed_success_seconds": 99.111868,
+        "scope": "Automatic same-node replacement; pre-staged read-only NVMe copy remains active"
+      }
+    },
+    "device_read_bytes_during_restores": 187783430144,
+    "device_reads_fraction_of_two_logical_artifacts": 0.9964189645537006,
+    "disk_read_observations": [
+      {
+        "at": "2026-11-05T00:33:14.374538+00:00",
+        "device": "nvme0n1",
+        "values": [
+          3006905,
+          0,
+          768886602,
+          310631253,
+          1512716,
+          18022,
+          381288760,
+          2223769,
+          0,
+          133009,
+          312855023,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "at": "2026-11-05T00:38:13.173790+00:00",
+        "device": "nvme0n1",
+        "values": [
+          4439747,
+          0,
+          1135651114,
+          451805153,
+          1512716,
+          18022,
+          381288760,
+          2223769,
+          0,
+          170462,
+          454028923,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "previous_efs_reference": {
+      "run": "results/workshop-snapshot-dgd-upstream-20261104-a1",
+      "timings": {
+        "initial": {
+          "agent_seconds": 320.301622822,
+          "agent_started_at": "2026-11-04T23:12:17.999527271Z",
+          "artifact_mount_events": [
+            {
+              "at": "2026-11-04T23:12:18.101173459Z",
+              "source": "/checkpoints/artifacts/a396aac2-1ce2-4a8d-8dc5-dbb2e7001c54/containers/main"
+            }
+          ],
+          "phase_seconds": {
+            "criu_prepare": 0.012498131,
+            "criu_restore": 301.856048313,
+            "cuda_restore": 13.699944019,
+            "gpu_device_map": 0.042784461,
+            "overlay_capture": 0.452296903,
+            "pagebroker_commit": 0.00044903099999999996,
+            "pagebroker_mount": 0.0014661560000000001,
+            "pagebroker_stage": 0.0032604780000000002,
+            "unaccounted": 4.23287533
+          },
+          "raw": {
+            "pod": "dynamo-ft-20261104t221053z/ft-snapshot-vllmsnapshotworker-9b045732-57bbd4c9f4-s7stn",
+            "snapshot": "checkpoint-d58e76bdfe4e44f56b04214554bb34f2",
+            "content_uid": "a396aac2-1ce2-4a8d-8dc5-dbb2e7001c54",
+            "source_container": "main",
+            "destination_container": "main",
+            "container_id": "6c5be0ab2134aff69bcc20625cb49fa1fdb12e8eaa1a3446ced0edb54405285c",
+            "restore": {
+              "duration": "5m20.301622822s",
+              "phases": {
+                "criu_prepare": "12.498131ms",
+                "criu_restore": "5m1.856048313s",
+                "cuda_restore": "13.699944019s",
+                "gpu_device_map": "42.784461ms",
+                "overlay_capture": "452.296903ms",
+                "pagebroker_commit": "449.031\u00b5s",
+                "pagebroker_mount": "1.466156ms",
+                "pagebroker_stage": "3.260478ms",
+                "unaccounted": "4.23287533s"
+              },
+              "started_to_complete": "5m20.305367212s"
+            }
+          },
+          "pod_to_ready_seconds": 334.0
+        },
+        "replacement": {
+          "agent_seconds": 319.940668699,
+          "agent_started_at": "2026-11-04T23:18:34.673285685Z",
+          "artifact_mount_events": [
+            {
+              "at": "2026-11-04T23:18:34.776812261Z",
+              "source": "/checkpoints/artifacts/a396aac2-1ce2-4a8d-8dc5-dbb2e7001c54/containers/main"
+            }
+          ],
+          "phase_seconds": {
+            "criu_prepare": 0.012261329999999999,
+            "criu_restore": 301.750217668,
+            "cuda_restore": 15.282645113,
+            "gpu_device_map": 0.043730597,
+            "overlay_capture": 0.458383922,
+            "pagebroker_commit": 0.00039294899999999997,
+            "pagebroker_mount": 0.001316812,
+            "pagebroker_stage": 0.003625109,
+            "unaccounted": 2.388095199
+          },
+          "raw": {
+            "pod": "dynamo-ft-20261104t221053z/ft-snapshot-vllmsnapshotworker-9b045732-57bbd4c9f4-5w54l",
+            "snapshot": "checkpoint-d58e76bdfe4e44f56b04214554bb34f2",
+            "content_uid": "a396aac2-1ce2-4a8d-8dc5-dbb2e7001c54",
+            "source_container": "main",
+            "destination_container": "main",
+            "container_id": "ee10760b7030b069fc3499162df626bc57f81a7afc5288c9c80929a5c3127053",
+            "restore": {
+              "duration": "5m19.940668699s",
+              "phases": {
+                "criu_prepare": "12.26133ms",
+                "criu_restore": "5m1.750217668s",
+                "cuda_restore": "15.282645113s",
+                "gpu_device_map": "43.730597ms",
+                "overlay_capture": "458.383922ms",
+                "pagebroker_commit": "392.949\u00b5s",
+                "pagebroker_mount": "1.316812ms",
+                "pagebroker_stage": "3.625109ms",
+                "unaccounted": "2.388095199s"
+              },
+              "started_to_complete": "5m19.945930077s"
+            }
+          },
+          "pod_to_ready_seconds": 342.0
+        }
+      },
+      "scope": "Same runtime/model/engine/GPU settings, different automatically captured artifact; observational, not matched speedup"
+    },
+    "scope": "Two successful same-artifact NVMe restores through unchanged Dynamo frontend; no node loss, KV preservation or request migration"
+  },
+  "predeployment_correction": {
+    "original_failure": "predeployment-probe-attempt-01-exit.json",
+    "reason": "df must inspect the existing local filesystem from its host mount namespace",
+    "deployment_or_capture_replayed": false
+  },
+  "private_evidence_snapshot": "results/workshop-snapshot-dgd-upstream-nvme-20261104-a1/qualification-package-evidence",
+  "evidence_sha256": {
+    "model-lock.json": "f348241d54b05f77c6c9fe5e7a52e4af4aff6030aa0301c2a88a2f25fb469fad",
+    "snapshot-dgd-spec.json": "c36980bfc5eb7ce5778eb2f1d6780601bea0f9466ff1495506873d24888baaa6",
+    "storage-spec.json": "f3785abac9844a0549abaa4a1fc5c4a3f9a2f0c6f8be8f857ee1e7187295b862",
+    "deployment.yaml": "63638b164640348cf00bb4789693e77a59f5e25dc4a6fbfdce63281d36ac934f",
+    "initial-identity.json": "14905292ee3300e7ad601a2f5f0a200cf3db5692b33467be4c80b452c907decd",
+    "initial-request.json": "a66ec0c62b92ec01272b7321fceb040d0166b91159c70658ef0844738627dd07",
+    "replacement-identity.json": "e9ad1a193665230a10a217ed217ff2114c538490b72ab6039041bd097274e1c0",
+    "replacement-request.json": "394b37e61225dec10bf4bc3ccaf36979292d90090938ebc5942359a878ef5ec6",
+    "replacement-timing.json": "b201f7679ad3798450db65c8ae266bdd9f7293613dcedfdb0bbd1e53a2f1dffb",
+    "qualification-exit.json": "66096a71c255d78002a0a56f751215b0a49c7791ab5fa3b4bbd855cc8f3f1d35",
+    "final-cleanup-proof.json": "f77f19e84ef1579a3e14653f9769afb26764d5ed371c1fc8dde86de428b79d8d",
+    "captured-snapshot.json": "46394a6a9542c0955f6c0f0a6432b6e2cd4bca9e42a73fee6eb76600a103976a",
+    "captured-content.json": "e788c2f403ec7ededfcfcaa42ac55a292856036b435a572aae40c8fc1f6bd337",
+    "patch.json": "68de22ac63c997b0c382010fe07318926a6a68a91fa29e7f406297daea71158b",
+    "runtime-inspection.json": "1688c44261a5d2c0fa4409cb9811aac196724a8980de4e95be60232660c9187f",
+    "source-snapshot.json": "a7fc69beec24ae3e697c893bb15ec2687f6ab11ee9cef4ece1e3a3bf795771de",
+    "source-snapshot-resume.json": "ff90228e91d80683332d685b0d282aa7756d51de00cb0cb9a3ebbfae8e8a2872",
+    "predeployment-probe-attempt-01-exit.json": "8a3cf55f6b21dcea92e705ca51d166b99237e4e27d7b0cf534fc606cf446f271",
+    "nvme-inspection.json": "5b325cf814c0388271c6431c60055db1f963743da2d086acd494d51c6536cd51",
+    "nvme-stage-evidence.json": "dfd0a23409d2388224df20a4d7ab447620b4c1eea0c4f9430a95c6d3eb1626fc",
+    "nvme-cleanup-evidence.json": "3c0d04ab3baca2dd6b79b12698d24542840f67a74df4523afd278c1ab5afef1c",
+    "nvme-source-inventory.json": "33188b34c8afe32babc2320073b37cfb3906c80c58d7e4dd28a90a5f7a0bc4a5",
+    "nvme-artifact-files.sha256": "30dd43cf3384935d075c55d52356e22740e100105863cf7e8a64a2e4d323893f",
+    "nvme-reads-before-restores.json": "239471f596666fbf550e87a1cc0a930e9a24b1dcf0d3dbf7c8022c95c1513a96",
+    "nvme-reads-after-restores.json": "53c34e53e2e01380fcef29449f61205725875ee115e7ac7d6bdc009f07d8d100",
+    "nvme-analysis.json": "a18fb4baffee8d0747e63793bc8e384791a5e5048e10ffb8261466e56163030d",
+    "final-storage-view.log": "5b98223ed5538b611a11387b458a85aca63287cf0f72ed8ada9eb7ed8f04ecde",
+    "offline-tests.log": "966d888e745e3bec43778a57bd01756ded3538828340eb200d273deb8cbe8856",
+    "concurrency-context.json": "6424251ff93bdc13180bf10aa948d6425244936f5082ad49f7eddb9adedfa951",
+    "post-run-safety-hardening.json": "cafcf231882b05ec235b523874cf306cc968ef6488cde3de9ce8a37012020e36",
+    "post-run-safety-tests.log": "d2cea0ae028577b719e4d7346ec37e448e6a7f65087d47459ed8f8920b43670f"
+  },
+  "limits": [
+    "Pinned image requires upstream module backport plus identity/offline bridge",
+    "Capture remains EFS; copying and all hash verification occur before measured restores",
+    "Both serving Pod clocks exclude preparation; Pods created after NVMe activation",
+    "Prior EFS run used a different artifact; no matched storage or cold-start speedup",
+    "No node-loss, KV preservation or in-flight request migration qualification",
+    "Concurrent RR/KV campaign on separate nodes may share EFS/network services",
+    "Presenter UI integration remains separate"
+  ]
+}

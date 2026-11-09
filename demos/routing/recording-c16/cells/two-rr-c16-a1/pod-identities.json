@@ -1,0 +1,188 @@
+{
+  "source_file_sha256": "973f0a143e5292f90cf7941c3fd90f88e9d92f66e5a0ee19c5f21b14e1586bed",
+  "scope": "Identity/runtime excerpt; Pod environment omitted.",
+  "items": [
+    {
+      "metadata": {
+        "name": "ft-agg-0-agg-cjcpz",
+        "uid": "9fc8dcff-4517-4f4b-aad8-bd96543f2851"
+      },
+      "spec": {
+        "nodeName": "kubecon-nke-site-cp-0942",
+        "containers": [
+          {
+            "name": "main",
+            "image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "args": [
+              "--model",
+              "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+              "--revision",
+              "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+              "--served-model-name",
+              "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+              "--trust-remote-code",
+              "--tensor-parallel-size",
+              "2",
+              "--max-num-seqs",
+              "128",
+              "--max-num-batched-tokens",
+              "8192",
+              "--gpu-memory-utilization",
+              "0.85",
+              "--enable-prefix-caching",
+              "--block-size",
+              "64",
+              "--mamba-backend",
+              "flashinfer",
+              "--mamba-ssm-cache-dtype",
+              "float16",
+              "--mamba-cache-mode",
+              "align",
+              "--reasoning-parser",
+              "nemotron_v3",
+              "--kv-events-config",
+              "{\"publisher\":\"zmq\",\"topic\":\"kv-events\",\"endpoint\":\"tcp://*:20080\",\"enable_kv_cache_events\":true}",
+              "--disaggregation-mode",
+              "agg",
+              "--limit-mm-per-prompt",
+              "{\"image\":1,\"video\":0}",
+              "--language-model-only"
+            ]
+          }
+        ]
+      },
+      "status": {
+        "podIP": "192.168.98.189",
+        "containerStatuses": [
+          {
+            "name": "main",
+            "imageID": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "ready": true,
+            "restartCount": 0
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "ft-agg-0-agg-m9fz4",
+        "uid": "d3e301c9-323e-402d-aea7-72ce36c98489"
+      },
+      "spec": {
+        "nodeName": "kubecon-nke-site-cp-0198",
+        "containers": [
+          {
+            "name": "main",
+            "image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "args": [
+              "--model",
+              "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+              "--revision",
+              "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+              "--served-model-name",
+              "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+              "--trust-remote-code",
+              "--tensor-parallel-size",
+              "2",
+              "--max-num-seqs",
+              "128",
+              "--max-num-batched-tokens",
+              "8192",
+              "--gpu-memory-utilization",
+              "0.85",
+              "--enable-prefix-caching",
+              "--block-size",
+              "64",
+              "--mamba-backend",
+              "flashinfer",
+              "--mamba-ssm-cache-dtype",
+              "float16",
+              "--mamba-cache-mode",
+              "align",
+              "--reasoning-parser",
+              "nemotron_v3",
+              "--kv-events-config",
+              "{\"publisher\":\"zmq\",\"topic\":\"kv-events\",\"endpoint\":\"tcp://*:20080\",\"enable_kv_cache_events\":true}",
+              "--disaggregation-mode",
+              "agg",
+              "--limit-mm-per-prompt",
+              "{\"image\":1,\"video\":0}",
+              "--language-model-only"
+            ]
+          }
+        ]
+      },
+      "status": {
+        "podIP": "192.168.100.46",
+        "containerStatuses": [
+          {
+            "name": "main",
+            "imageID": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "ready": true,
+            "restartCount": 0
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "ft-agg-0-frontend-r4pkw",
+        "uid": "aa95e1a1-5a1c-4bd4-85f1-2002a5eb200e"
+      },
+      "spec": {
+        "nodeName": "kubecon-nke-site-cp-0942",
+        "containers": [
+          {
+            "name": "main",
+            "image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "args": [
+              "--router-mode",
+              "round-robin",
+              "--kv-cache-block-size",
+              "64",
+              "--trust-remote-code"
+            ]
+          }
+        ]
+      },
+      "status": {
+        "podIP": "192.168.98.160",
+        "containerStatuses": [
+          {
+            "name": "main",
+            "imageID": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "ready": true,
+            "restartCount": 0
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "rr-loadgen",
+        "uid": "4385c581-2c2c-446a-8f7d-123617386cf8"
+      },
+      "spec": {
+        "nodeName": "kubecon-nke-site-cp-0942",
+        "containers": [
+          {
+            "name": "loadgen",
+            "image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "args": null
+          }
+        ]
+      },
+      "status": {
+        "podIP": "192.168.98.183",
+        "containerStatuses": [
+          {
+            "name": "loadgen",
+            "imageID": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+            "ready": true,
+            "restartCount": 0
+          }
+        ]
+      }
+    }
+  ]
+}

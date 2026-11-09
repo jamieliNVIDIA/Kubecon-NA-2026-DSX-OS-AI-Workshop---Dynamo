@@ -1,0 +1,1871 @@
+{
+  "purpose": "Structural exact-prefix and replay-scheduling evidence, not observed server cache hits or GPU performance",
+  "corpus_path": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/20261030-agentx-workload-prep-000329/corpus/traces.jsonl",
+  "corpus_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+  "preparation_receipt": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-rr-20261030-prep-1705/cpu-qualification-a3/receipt-c1.json",
+  "preparation_receipt_sha256": "4491b645ff0e99c9eaf5b306a05bb959b10ce6b7e9fb944ab8e330386208de3f",
+  "helper_sha256": "a7071ae4e31f718497901d368190ff77893ec3b75f60913ec0d7c8754820be0d",
+  "metadata_conversations": 9843,
+  "stats": {
+    "parent_child_recorded_named_subagent_main": {
+      "comparisons": 1697,
+      "prefix_ge_1_tokens": 276,
+      "prefix_ge_1024_tokens": 40,
+      "prefix_exceeds_declared_tools_plus_system": 276
+    },
+    "parent_child_inferred_context_chain": {
+      "comparisons": 7753,
+      "prefix_ge_1_tokens": 515,
+      "prefix_ge_1024_tokens": 505,
+      "prefix_ge_8192_tokens": 424,
+      "prefix_ge_32768_tokens": 390,
+      "prefix_ge_65536_tokens": 265,
+      "prefix_ge_131072_tokens": 203,
+      "prefix_exceeds_declared_tools_plus_system": 515,
+      "prefix_ge_32768_and_first_requests_overlap": 139
+    },
+    "siblings_both_recorded_named_subagent_mains": {
+      "comparisons": 17018,
+      "prefix_ge_1_tokens": 14841,
+      "prefix_ge_1024_tokens": 14774,
+      "prefix_ge_8192_tokens": 14591,
+      "prefix_ge_32768_tokens": 2421,
+      "prefix_exceeds_declared_tools_plus_system": 14841,
+      "prefix_ge_32768_and_first_requests_overlap": 226,
+      "prefix_ge_65536_tokens": 182,
+      "prefix_ge_131072_tokens": 3
+    },
+    "siblings_includes_inferred_context_chain": {
+      "comparisons": 503397,
+      "prefix_ge_1_tokens": 6685,
+      "prefix_ge_1024_tokens": 6148,
+      "prefix_exceeds_declared_tools_plus_system": 6685,
+      "prefix_ge_8192_tokens": 4584,
+      "prefix_ge_32768_tokens": 2435,
+      "prefix_ge_65536_tokens": 1048,
+      "prefix_ge_131072_tokens": 743,
+      "prefix_ge_32768_and_first_requests_overlap": 49
+    }
+  },
+  "examples": {
+    "parent_child_recorded_named_subagent_main": {
+      "largest_prefix": [
+        {
+          "trace_id": "6c6be4bc5a49a5d1062b8becdbf188480843",
+          "corpus_line": 173,
+          "branch_id": "6c6be4bc5a49a5d1062b8becdbf188480843:spawn:subagent_001_9eb83fa3",
+          "branch_mode": "spawn",
+          "parent_turn_index": 7,
+          "join_turn_indices": [
+            11
+          ],
+          "identical_leading_blocks": 36,
+          "identical_leading_block_tokens": 2304,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "6c6be4bc5a49a5d1062b8becdbf188480843",
+            "source_kind": "weka_main",
+            "source_outer_idx": 7,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 110208,
+            "recorded_output_tokens": 5745,
+            "timestamp_ms": 144174.0,
+            "api_time_ms": 78106.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "6c6be4bc5a49a5d1062b8becdbf188480843::sa:subagent_001_9eb83fa3",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 8,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 72448,
+            "recorded_output_tokens": 282,
+            "timestamp_ms": 170936.0,
+            "api_time_ms": 16698.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 16698.0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        },
+        {
+          "trace_id": "6c6be4bc5a49a5d1062b8becdbf188480843",
+          "corpus_line": 173,
+          "branch_id": "6c6be4bc5a49a5d1062b8becdbf188480843:spawn:subagent_001_9eb83fa3",
+          "branch_mode": "spawn",
+          "parent_turn_index": 7,
+          "join_turn_indices": [
+            11
+          ],
+          "identical_leading_blocks": 36,
+          "identical_leading_block_tokens": 2304,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "6c6be4bc5a49a5d1062b8becdbf188480843",
+            "source_kind": "weka_main",
+            "source_outer_idx": 7,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 110208,
+            "recorded_output_tokens": 5745,
+            "timestamp_ms": 144174.0,
+            "api_time_ms": 78106.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "6c6be4bc5a49a5d1062b8becdbf188480843::sa:subagent_004_118e2455",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 11,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 72128,
+            "recorded_output_tokens": 385,
+            "timestamp_ms": 222654.0,
+            "api_time_ms": 17138.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        },
+        {
+          "trace_id": "a1c8f806f868f22e423cd1016130ef83b740",
+          "corpus_line": 252,
+          "branch_id": "a1c8f806f868f22e423cd1016130ef83b740:spawn:subagent_001_caef5e7f",
+          "branch_mode": "spawn",
+          "parent_turn_index": 52,
+          "join_turn_indices": [],
+          "identical_leading_blocks": 26,
+          "identical_leading_block_tokens": 1664,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "a1c8f806f868f22e423cd1016130ef83b740",
+            "source_kind": "weka_main",
+            "source_outer_idx": 55,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 115584,
+            "recorded_output_tokens": 722,
+            "timestamp_ms": 6247809.0,
+            "api_time_ms": 14949.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "a1c8f806f868f22e423cd1016130ef83b740::sa:subagent_001_caef5e7f",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 126,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 49088,
+            "recorded_output_tokens": 183,
+            "timestamp_ms": 265239527.0,
+            "api_time_ms": 4009.0000000000005,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        },
+        {
+          "trace_id": "a1c8f806f868f22e423cd1016130ef83b740",
+          "corpus_line": 252,
+          "branch_id": "a1c8f806f868f22e423cd1016130ef83b740:spawn:subagent_001_caef5e7f",
+          "branch_mode": "spawn",
+          "parent_turn_index": 52,
+          "join_turn_indices": [],
+          "identical_leading_blocks": 26,
+          "identical_leading_block_tokens": 1664,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "a1c8f806f868f22e423cd1016130ef83b740",
+            "source_kind": "weka_main",
+            "source_outer_idx": 55,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 115584,
+            "recorded_output_tokens": 722,
+            "timestamp_ms": 6247809.0,
+            "api_time_ms": 14949.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "a1c8f806f868f22e423cd1016130ef83b740::sa:subagent_002_5316cca9",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 127,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 49088,
+            "recorded_output_tokens": 355,
+            "timestamp_ms": 265247349.0,
+            "api_time_ms": 7161.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        },
+        {
+          "trace_id": "a1c8f806f868f22e423cd1016130ef83b740",
+          "corpus_line": 252,
+          "branch_id": "a1c8f806f868f22e423cd1016130ef83b740:spawn:subagent_001_caef5e7f",
+          "branch_mode": "spawn",
+          "parent_turn_index": 52,
+          "join_turn_indices": [],
+          "identical_leading_blocks": 26,
+          "identical_leading_block_tokens": 1664,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "a1c8f806f868f22e423cd1016130ef83b740",
+            "source_kind": "weka_main",
+            "source_outer_idx": 55,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 115584,
+            "recorded_output_tokens": 722,
+            "timestamp_ms": 6247809.0,
+            "api_time_ms": 14949.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "a1c8f806f868f22e423cd1016130ef83b740::sa:subagent_003_4927c288",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 128,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 49344,
+            "recorded_output_tokens": 195,
+            "timestamp_ms": 265259306.99999997,
+            "api_time_ms": 4073.0000000000005,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        }
+      ],
+      "largest_prefix_with_first_request_overlap": [
+        {
+          "trace_id": "6c6be4bc5a49a5d1062b8becdbf188480843",
+          "corpus_line": 173,
+          "branch_id": "6c6be4bc5a49a5d1062b8becdbf188480843:spawn:subagent_001_9eb83fa3",
+          "branch_mode": "spawn",
+          "parent_turn_index": 7,
+          "join_turn_indices": [
+            11
+          ],
+          "identical_leading_blocks": 36,
+          "identical_leading_block_tokens": 2304,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "6c6be4bc5a49a5d1062b8becdbf188480843",
+            "source_kind": "weka_main",
+            "source_outer_idx": 7,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 110208,
+            "recorded_output_tokens": 5745,
+            "timestamp_ms": 144174.0,
+            "api_time_ms": 78106.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "6c6be4bc5a49a5d1062b8becdbf188480843::sa:subagent_001_9eb83fa3",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 8,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 72448,
+            "recorded_output_tokens": 282,
+            "timestamp_ms": 170936.0,
+            "api_time_ms": 16698.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 16698.0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        },
+        {
+          "trace_id": "c46ba0cc37132f9a7885c7d222ef104b68cc",
+          "corpus_line": 314,
+          "branch_id": "c46ba0cc37132f9a7885c7d222ef104b68cc:spawn:subagent_001_b6117c0d",
+          "branch_mode": "spawn",
+          "parent_turn_index": 92,
+          "join_turn_indices": [
+            100
+          ],
+          "identical_leading_blocks": 26,
+          "identical_leading_block_tokens": 1664,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "c46ba0cc37132f9a7885c7d222ef104b68cc",
+            "source_kind": "weka_main",
+            "source_outer_idx": 93,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 189440,
+            "recorded_output_tokens": 7846,
+            "timestamp_ms": 1578943.0,
+            "api_time_ms": 92108.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "c46ba0cc37132f9a7885c7d222ef104b68cc::sa:subagent_001_b6117c0d",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 94,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 53120,
+            "recorded_output_tokens": 377,
+            "timestamp_ms": 1619490.0,
+            "api_time_ms": 7740.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 7740.0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        },
+        {
+          "trace_id": "c46ba0cc37132f9a7885c7d222ef104b68cc",
+          "corpus_line": 314,
+          "branch_id": "c46ba0cc37132f9a7885c7d222ef104b68cc:spawn:subagent_001_b6117c0d",
+          "branch_mode": "spawn",
+          "parent_turn_index": 92,
+          "join_turn_indices": [
+            100
+          ],
+          "identical_leading_blocks": 26,
+          "identical_leading_block_tokens": 1664,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "c46ba0cc37132f9a7885c7d222ef104b68cc",
+            "source_kind": "weka_main",
+            "source_outer_idx": 93,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 189440,
+            "recorded_output_tokens": 7846,
+            "timestamp_ms": 1578943.0,
+            "api_time_ms": 92108.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "c46ba0cc37132f9a7885c7d222ef104b68cc::sa:subagent_002_ba994029",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 95,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 52800,
+            "recorded_output_tokens": 402,
+            "timestamp_ms": 1637800.0,
+            "api_time_ms": 13180.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 13180.0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        },
+        {
+          "trace_id": "dee5c7d3983203a3c39d6a349527c39f65cb",
+          "corpus_line": 352,
+          "branch_id": "dee5c7d3983203a3c39d6a349527c39f65cb:spawn:subagent_002_561e5132",
+          "branch_mode": "spawn",
+          "parent_turn_index": 99,
+          "join_turn_indices": [
+            111
+          ],
+          "identical_leading_blocks": 26,
+          "identical_leading_block_tokens": 1664,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "dee5c7d3983203a3c39d6a349527c39f65cb",
+            "source_kind": "weka_main",
+            "source_outer_idx": 101,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 339328,
+            "recorded_output_tokens": 5265,
+            "timestamp_ms": 4952082.0,
+            "api_time_ms": 72694.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "dee5c7d3983203a3c39d6a349527c39f65cb::sa:subagent_002_561e5132",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 102,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 28864,
+            "recorded_output_tokens": 241,
+            "timestamp_ms": 5024509.0,
+            "api_time_ms": 4579.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 267.0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        },
+        {
+          "trace_id": "dee5c7d3983203a3c39d6a349527c39f65cb",
+          "corpus_line": 352,
+          "branch_id": "dee5c7d3983203a3c39d6a349527c39f65cb:spawn:subagent_003_d63d2344",
+          "branch_mode": "spawn",
+          "parent_turn_index": 100,
+          "join_turn_indices": [
+            113
+          ],
+          "identical_leading_blocks": 26,
+          "identical_leading_block_tokens": 1664,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "dee5c7d3983203a3c39d6a349527c39f65cb",
+            "source_kind": "weka_main",
+            "source_outer_idx": 103,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 347968,
+            "recorded_output_tokens": 4216,
+            "timestamp_ms": 5028371.0,
+            "api_time_ms": 54990.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "dee5c7d3983203a3c39d6a349527c39f65cb::sa:subagent_003_d63d2344",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 104,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 30848,
+            "recorded_output_tokens": 285,
+            "timestamp_ms": 5082810.0,
+            "api_time_ms": 4834.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 551.0,
+          "comparison_category": "parent_child_recorded_named_subagent_main"
+        }
+      ]
+    },
+    "parent_child_inferred_context_chain": {
+      "largest_prefix": [
+        {
+          "trace_id": "27de9ca964aa7905c2f5438db8bdd72d8b02",
+          "corpus_line": 72,
+          "branch_id": "27de9ca964aa7905c2f5438db8bdd72d8b02:flatspawn:9",
+          "branch_mode": "spawn",
+          "parent_turn_index": 318,
+          "join_turn_indices": [
+            319
+          ],
+          "identical_leading_blocks": 12987,
+          "identical_leading_block_tokens": 831168,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "27de9ca964aa7905c2f5438db8bdd72d8b02",
+            "source_kind": "weka_main",
+            "source_outer_idx": 331,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 831168,
+            "recorded_output_tokens": 3161,
+            "timestamp_ms": 44341969.0,
+            "api_time_ms": 74443.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "27de9ca964aa7905c2f5438db8bdd72d8b02::fa:009",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 332,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 831168,
+            "recorded_output_tokens": 907,
+            "timestamp_ms": 44377758.0,
+            "api_time_ms": 17142.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 17142.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        },
+        {
+          "trace_id": "43d1f727aec4d8b3f2aec42f816e7fabe193",
+          "corpus_line": 102,
+          "branch_id": "43d1f727aec4d8b3f2aec42f816e7fabe193:flatspawn:1",
+          "branch_mode": "spawn",
+          "parent_turn_index": 321,
+          "join_turn_indices": [
+            322
+          ],
+          "identical_leading_blocks": 11871,
+          "identical_leading_block_tokens": 759744,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "43d1f727aec4d8b3f2aec42f816e7fabe193",
+            "source_kind": "weka_main",
+            "source_outer_idx": 322,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 759744,
+            "recorded_output_tokens": 10473,
+            "timestamp_ms": 22892037.0,
+            "api_time_ms": 46107.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "43d1f727aec4d8b3f2aec42f816e7fabe193::fa:001",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 323,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 759744,
+            "recorded_output_tokens": 8926,
+            "timestamp_ms": 22925045.0,
+            "api_time_ms": 40167.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 13099.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        },
+        {
+          "trace_id": "4ba38d0b213f0aeab695e16da9c91635a817",
+          "corpus_line": 115,
+          "branch_id": "4ba38d0b213f0aeab695e16da9c91635a817:flatspawn:1",
+          "branch_mode": "spawn",
+          "parent_turn_index": 333,
+          "join_turn_indices": [],
+          "identical_leading_blocks": 11696,
+          "identical_leading_block_tokens": 748544,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "4ba38d0b213f0aeab695e16da9c91635a817",
+            "source_kind": "weka_main",
+            "source_outer_idx": 334,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 752064,
+            "recorded_output_tokens": 5289,
+            "timestamp_ms": 164983370.0,
+            "api_time_ms": 39787.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "4ba38d0b213f0aeab695e16da9c91635a817::fa:001",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 335,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 748608,
+            "recorded_output_tokens": 6228,
+            "timestamp_ms": 164995478.0,
+            "api_time_ms": 36201.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 27679.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        },
+        {
+          "trace_id": "069d7bf5f1efb4e76e3c84510367e6af78a5",
+          "corpus_line": 12,
+          "branch_id": "069d7bf5f1efb4e76e3c84510367e6af78a5:flatspawn:0",
+          "branch_mode": "spawn",
+          "parent_turn_index": 216,
+          "join_turn_indices": [
+            217
+          ],
+          "identical_leading_blocks": 11011,
+          "identical_leading_block_tokens": 704704,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "069d7bf5f1efb4e76e3c84510367e6af78a5",
+            "source_kind": "weka_main",
+            "source_outer_idx": 224,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 704704,
+            "recorded_output_tokens": 91,
+            "timestamp_ms": 57520367.0,
+            "api_time_ms": 15372.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "069d7bf5f1efb4e76e3c84510367e6af78a5::aux:000",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 225,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 704704,
+            "recorded_output_tokens": 88,
+            "timestamp_ms": 57529024.0,
+            "api_time_ms": 13598.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 6715.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        },
+        {
+          "trace_id": "af10a683bae5a4ff3d5f122fb49f179d94bb",
+          "corpus_line": 280,
+          "branch_id": "af10a683bae5a4ff3d5f122fb49f179d94bb:flatspawn:3",
+          "branch_mode": "spawn",
+          "parent_turn_index": 201,
+          "join_turn_indices": [],
+          "identical_leading_blocks": 10426,
+          "identical_leading_block_tokens": 667264,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "af10a683bae5a4ff3d5f122fb49f179d94bb",
+            "source_kind": "weka_main",
+            "source_outer_idx": 208,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 667328,
+            "recorded_output_tokens": 3756,
+            "timestamp_ms": 24540138.0,
+            "api_time_ms": 25965.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "af10a683bae5a4ff3d5f122fb49f179d94bb::fa:003",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 209,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 667328,
+            "recorded_output_tokens": 3482,
+            "timestamp_ms": 24547500.0,
+            "api_time_ms": 26142.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 18603.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        }
+      ],
+      "largest_prefix_with_first_request_overlap": [
+        {
+          "trace_id": "27de9ca964aa7905c2f5438db8bdd72d8b02",
+          "corpus_line": 72,
+          "branch_id": "27de9ca964aa7905c2f5438db8bdd72d8b02:flatspawn:9",
+          "branch_mode": "spawn",
+          "parent_turn_index": 318,
+          "join_turn_indices": [
+            319
+          ],
+          "identical_leading_blocks": 12987,
+          "identical_leading_block_tokens": 831168,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "27de9ca964aa7905c2f5438db8bdd72d8b02",
+            "source_kind": "weka_main",
+            "source_outer_idx": 331,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 831168,
+            "recorded_output_tokens": 3161,
+            "timestamp_ms": 44341969.0,
+            "api_time_ms": 74443.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "27de9ca964aa7905c2f5438db8bdd72d8b02::fa:009",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 332,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 831168,
+            "recorded_output_tokens": 907,
+            "timestamp_ms": 44377758.0,
+            "api_time_ms": 17142.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 17142.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        },
+        {
+          "trace_id": "43d1f727aec4d8b3f2aec42f816e7fabe193",
+          "corpus_line": 102,
+          "branch_id": "43d1f727aec4d8b3f2aec42f816e7fabe193:flatspawn:1",
+          "branch_mode": "spawn",
+          "parent_turn_index": 321,
+          "join_turn_indices": [
+            322
+          ],
+          "identical_leading_blocks": 11871,
+          "identical_leading_block_tokens": 759744,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "43d1f727aec4d8b3f2aec42f816e7fabe193",
+            "source_kind": "weka_main",
+            "source_outer_idx": 322,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 759744,
+            "recorded_output_tokens": 10473,
+            "timestamp_ms": 22892037.0,
+            "api_time_ms": 46107.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "43d1f727aec4d8b3f2aec42f816e7fabe193::fa:001",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 323,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 759744,
+            "recorded_output_tokens": 8926,
+            "timestamp_ms": 22925045.0,
+            "api_time_ms": 40167.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 13099.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        },
+        {
+          "trace_id": "4ba38d0b213f0aeab695e16da9c91635a817",
+          "corpus_line": 115,
+          "branch_id": "4ba38d0b213f0aeab695e16da9c91635a817:flatspawn:1",
+          "branch_mode": "spawn",
+          "parent_turn_index": 333,
+          "join_turn_indices": [],
+          "identical_leading_blocks": 11696,
+          "identical_leading_block_tokens": 748544,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "4ba38d0b213f0aeab695e16da9c91635a817",
+            "source_kind": "weka_main",
+            "source_outer_idx": 334,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 752064,
+            "recorded_output_tokens": 5289,
+            "timestamp_ms": 164983370.0,
+            "api_time_ms": 39787.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "4ba38d0b213f0aeab695e16da9c91635a817::fa:001",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 335,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 748608,
+            "recorded_output_tokens": 6228,
+            "timestamp_ms": 164995478.0,
+            "api_time_ms": 36201.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 27679.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        },
+        {
+          "trace_id": "069d7bf5f1efb4e76e3c84510367e6af78a5",
+          "corpus_line": 12,
+          "branch_id": "069d7bf5f1efb4e76e3c84510367e6af78a5:flatspawn:0",
+          "branch_mode": "spawn",
+          "parent_turn_index": 216,
+          "join_turn_indices": [
+            217
+          ],
+          "identical_leading_blocks": 11011,
+          "identical_leading_block_tokens": 704704,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "069d7bf5f1efb4e76e3c84510367e6af78a5",
+            "source_kind": "weka_main",
+            "source_outer_idx": 224,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 704704,
+            "recorded_output_tokens": 91,
+            "timestamp_ms": 57520367.0,
+            "api_time_ms": 15372.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "069d7bf5f1efb4e76e3c84510367e6af78a5::aux:000",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 225,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 704704,
+            "recorded_output_tokens": 88,
+            "timestamp_ms": 57529024.0,
+            "api_time_ms": 13598.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 6715.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        },
+        {
+          "trace_id": "af10a683bae5a4ff3d5f122fb49f179d94bb",
+          "corpus_line": 280,
+          "branch_id": "af10a683bae5a4ff3d5f122fb49f179d94bb:flatspawn:3",
+          "branch_mode": "spawn",
+          "parent_turn_index": 201,
+          "join_turn_indices": [],
+          "identical_leading_blocks": 10426,
+          "identical_leading_block_tokens": 667264,
+          "max_declared_tools_plus_system_tokens": 0,
+          "parent": {
+            "conversation_id": "af10a683bae5a4ff3d5f122fb49f179d94bb",
+            "source_kind": "weka_main",
+            "source_outer_idx": 208,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 667328,
+            "recorded_output_tokens": 3756,
+            "timestamp_ms": 24540138.0,
+            "api_time_ms": 25965.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "child": {
+            "conversation_id": "af10a683bae5a4ff3d5f122fb49f179d94bb::fa:003",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 209,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 667328,
+            "recorded_output_tokens": 3482,
+            "timestamp_ms": 24547500.0,
+            "api_time_ms": 26142.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 18603.0,
+          "comparison_category": "parent_child_inferred_context_chain"
+        }
+      ]
+    },
+    "siblings_both_recorded_named_subagent_mains": {
+      "largest_prefix": [
+        {
+          "trace_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "corpus_line": 356,
+          "parent_conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "parent_turn_index": 57,
+          "branch_ids": [
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3",
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            86293788.0,
+            86293788.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 2177,
+          "identical_leading_block_tokens": 139328,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_007_bcad4777",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 195,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 143424,
+            "recorded_output_tokens": 646,
+            "timestamp_ms": 516878011.0,
+            "api_time_ms": 12860.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_008_3bf1a88a",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 233,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 143488,
+            "recorded_output_tokens": 581,
+            "timestamp_ms": 604831793.0,
+            "api_time_ms": 9759.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        },
+        {
+          "trace_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "corpus_line": 356,
+          "parent_conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "parent_turn_index": 57,
+          "branch_ids": [
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3",
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            86293788.0,
+            86293788.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 2052,
+          "identical_leading_block_tokens": 131328,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_006_1bdd5bea",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 184,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 143360,
+            "recorded_output_tokens": 552,
+            "timestamp_ms": 431168993.0,
+            "api_time_ms": 8705.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_007_bcad4777",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 195,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 143424,
+            "recorded_output_tokens": 646,
+            "timestamp_ms": 516878011.0,
+            "api_time_ms": 12860.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        },
+        {
+          "trace_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "corpus_line": 356,
+          "parent_conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "parent_turn_index": 57,
+          "branch_ids": [
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3",
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            86293788.0,
+            86293788.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 2052,
+          "identical_leading_block_tokens": 131328,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_006_1bdd5bea",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 184,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 143360,
+            "recorded_output_tokens": 552,
+            "timestamp_ms": 431168993.0,
+            "api_time_ms": 8705.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_008_3bf1a88a",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 233,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 143488,
+            "recorded_output_tokens": 581,
+            "timestamp_ms": 604831793.0,
+            "api_time_ms": 9759.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        },
+        {
+          "trace_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "corpus_line": 356,
+          "parent_conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "parent_turn_index": 57,
+          "branch_ids": [
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3",
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            86293788.0,
+            86293788.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 2041,
+          "identical_leading_block_tokens": 130624,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_002_7b565ce3",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 89,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 134528,
+            "recorded_output_tokens": 310,
+            "timestamp_ms": 86293788.0,
+            "api_time_ms": 13400.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_003_205bc073",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 90,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 134528,
+            "recorded_output_tokens": 385,
+            "timestamp_ms": 86302712.0,
+            "api_time_ms": 10715.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 4476.0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        },
+        {
+          "trace_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "corpus_line": 356,
+          "parent_conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "parent_turn_index": 57,
+          "branch_ids": [
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3",
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            86293788.0,
+            86293788.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 2041,
+          "identical_leading_block_tokens": 130624,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_002_7b565ce3",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 89,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 134528,
+            "recorded_output_tokens": 310,
+            "timestamp_ms": 86293788.0,
+            "api_time_ms": 13400.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_004_07aa77c8",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 154,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 134528,
+            "recorded_output_tokens": 332,
+            "timestamp_ms": 103701551.0,
+            "api_time_ms": 11574.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        }
+      ],
+      "largest_prefix_with_first_request_overlap": [
+        {
+          "trace_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "corpus_line": 356,
+          "parent_conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87",
+          "parent_turn_index": 57,
+          "branch_ids": [
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3",
+            "e094e1381d88f8aa6c9592279d51f97c5d87:spawn:subagent_002_7b565ce3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            86293788.0,
+            86293788.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 2041,
+          "identical_leading_block_tokens": 130624,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_002_7b565ce3",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 89,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 134528,
+            "recorded_output_tokens": 310,
+            "timestamp_ms": 86293788.0,
+            "api_time_ms": 13400.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "e094e1381d88f8aa6c9592279d51f97c5d87::sa:subagent_003_205bc073",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 90,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 134528,
+            "recorded_output_tokens": 385,
+            "timestamp_ms": 86302712.0,
+            "api_time_ms": 10715.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 4476.0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        },
+        {
+          "trace_id": "208d6e28928b0b3d3b33db3c690173d15be3",
+          "corpus_line": 58,
+          "parent_conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3",
+          "parent_turn_index": 96,
+          "branch_ids": [
+            "208d6e28928b0b3d3b33db3c690173d15be3:spawn:subagent_004_dcde0781",
+            "208d6e28928b0b3d3b33db3c690173d15be3:spawn:subagent_004_dcde0781"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            11546869.0,
+            11546869.0
+          ],
+          "join_turn_indices": [
+            [
+              97
+            ],
+            [
+              97
+            ]
+          ],
+          "identical_leading_blocks": 1130,
+          "identical_leading_block_tokens": 72320,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_006_80c02286",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 110,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 77248,
+            "recorded_output_tokens": 105,
+            "timestamp_ms": 11555543.0,
+            "api_time_ms": 7238.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_007_069d8a89",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 111,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 77248,
+            "recorded_output_tokens": 93,
+            "timestamp_ms": 11557696.0,
+            "api_time_ms": 5939.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 5085.0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        },
+        {
+          "trace_id": "208d6e28928b0b3d3b33db3c690173d15be3",
+          "corpus_line": 58,
+          "parent_conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3",
+          "parent_turn_index": 96,
+          "branch_ids": [
+            "208d6e28928b0b3d3b33db3c690173d15be3:spawn:subagent_004_dcde0781",
+            "208d6e28928b0b3d3b33db3c690173d15be3:spawn:subagent_004_dcde0781"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            11546869.0,
+            11546869.0
+          ],
+          "join_turn_indices": [
+            [
+              97
+            ],
+            [
+              97
+            ]
+          ],
+          "identical_leading_blocks": 1127,
+          "identical_leading_block_tokens": 72128,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_004_dcde0781",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 108,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 77504,
+            "recorded_output_tokens": 102,
+            "timestamp_ms": 11546869.0,
+            "api_time_ms": 6182.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_005_1df74b3d",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 109,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 77184,
+            "recorded_output_tokens": 107,
+            "timestamp_ms": 11550782.0,
+            "api_time_ms": 2288.0000000000005,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 2269.0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        },
+        {
+          "trace_id": "208d6e28928b0b3d3b33db3c690173d15be3",
+          "corpus_line": 58,
+          "parent_conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3",
+          "parent_turn_index": 121,
+          "branch_ids": [
+            "208d6e28928b0b3d3b33db3c690173d15be3:spawn:subagent_008_1a216ddc",
+            "208d6e28928b0b3d3b33db3c690173d15be3:spawn:subagent_008_1a216ddc"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            16322809.0,
+            16322809.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 1127,
+          "identical_leading_block_tokens": 72128,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_012_be174c2e",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 172,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 77504,
+            "recorded_output_tokens": 111,
+            "timestamp_ms": 17252735.0,
+            "api_time_ms": 8480.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_013_a9e0df34",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 173,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 77248,
+            "recorded_output_tokens": 111,
+            "timestamp_ms": 17261011.0,
+            "api_time_ms": 5279.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 204.0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        },
+        {
+          "trace_id": "208d6e28928b0b3d3b33db3c690173d15be3",
+          "corpus_line": 58,
+          "parent_conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3",
+          "parent_turn_index": 121,
+          "branch_ids": [
+            "208d6e28928b0b3d3b33db3c690173d15be3:spawn:subagent_008_1a216ddc",
+            "208d6e28928b0b3d3b33db3c690173d15be3:spawn:subagent_008_1a216ddc"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            16322809.0,
+            16322809.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 1127,
+          "identical_leading_block_tokens": 72128,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_013_a9e0df34",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 173,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 77248,
+            "recorded_output_tokens": 111,
+            "timestamp_ms": 17261011.0,
+            "api_time_ms": 5279.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_014_30f64472",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 174,
+            "source_inner_idx": 0,
+            "recorded_input_tokens": 77440,
+            "recorded_output_tokens": 116,
+            "timestamp_ms": 17263685.0,
+            "api_time_ms": 1926.0000000000002,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 1926.0,
+          "comparison_category": "siblings_both_recorded_named_subagent_mains"
+        }
+      ]
+    },
+    "siblings_includes_inferred_context_chain": {
+      "largest_prefix": [
+        {
+          "trace_id": "1fc68c514c7fb89dbc498ae9da77d5476cec",
+          "corpus_line": 56,
+          "parent_conversation_id": "1fc68c514c7fb89dbc498ae9da77d5476cec",
+          "parent_turn_index": 238,
+          "branch_ids": [
+            "1fc68c514c7fb89dbc498ae9da77d5476cec:flatspawn:3",
+            "1fc68c514c7fb89dbc498ae9da77d5476cec:flatspawn:3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            27172307.0,
+            27172307.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 14162,
+          "identical_leading_block_tokens": 906368,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "1fc68c514c7fb89dbc498ae9da77d5476cec::fa:010",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 728,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 906368,
+            "recorded_output_tokens": 9541,
+            "timestamp_ms": 166823892.0,
+            "api_time_ms": 131891.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "1fc68c514c7fb89dbc498ae9da77d5476cec::fa:011",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 732,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 913024,
+            "recorded_output_tokens": 16257,
+            "timestamp_ms": 167130748.0,
+            "api_time_ms": 208926.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        },
+        {
+          "trace_id": "5b6e131844fbcb4a57f8cf516831dc679004",
+          "corpus_line": 141,
+          "parent_conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004",
+          "parent_turn_index": 103,
+          "branch_ids": [
+            "5b6e131844fbcb4a57f8cf516831dc679004:spawn:subagent_001_d27a77b4",
+            "5b6e131844fbcb4a57f8cf516831dc679004:flatspawn:3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            13913664.0,
+            6175620.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 14031,
+          "identical_leading_block_tokens": 897984,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004::sa:subagent_031_71d8128e:fa:002",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 642,
+            "source_inner_idx": 67,
+            "recorded_input_tokens": 908800,
+            "recorded_output_tokens": 1057,
+            "timestamp_ms": 66458028.00000001,
+            "api_time_ms": 65390.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004::fa:022",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 639,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 897984,
+            "recorded_output_tokens": 674,
+            "timestamp_ms": 64020426.0,
+            "api_time_ms": 25812.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        },
+        {
+          "trace_id": "5a9a76f59fdf426aa787299972bd5241209e",
+          "corpus_line": 140,
+          "parent_conversation_id": "5a9a76f59fdf426aa787299972bd5241209e",
+          "parent_turn_index": 50,
+          "branch_ids": [
+            "5a9a76f59fdf426aa787299972bd5241209e:flatspawn:1",
+            "5a9a76f59fdf426aa787299972bd5241209e:flatspawn:1"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            60930611.0,
+            60930611.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 13517,
+          "identical_leading_block_tokens": 865088,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "5a9a76f59fdf426aa787299972bd5241209e::fa:006",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 398,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 865088,
+            "recorded_output_tokens": 420,
+            "timestamp_ms": 90399390.0,
+            "api_time_ms": 14071.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "5a9a76f59fdf426aa787299972bd5241209e::fa:007",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 422,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 890624,
+            "recorded_output_tokens": 1056,
+            "timestamp_ms": 93055006.0,
+            "api_time_ms": 24431.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        },
+        {
+          "trace_id": "5a9a76f59fdf426aa787299972bd5241209e",
+          "corpus_line": 140,
+          "parent_conversation_id": "5a9a76f59fdf426aa787299972bd5241209e",
+          "parent_turn_index": 50,
+          "branch_ids": [
+            "5a9a76f59fdf426aa787299972bd5241209e:flatspawn:1",
+            "5a9a76f59fdf426aa787299972bd5241209e:flatspawn:1"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            60930611.0,
+            60930611.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 13450,
+          "identical_leading_block_tokens": 860800,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "5a9a76f59fdf426aa787299972bd5241209e::aux:005",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 393,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 860864,
+            "recorded_output_tokens": 119,
+            "timestamp_ms": 89805762.0,
+            "api_time_ms": 17574.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "5a9a76f59fdf426aa787299972bd5241209e::fa:006",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 398,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 865088,
+            "recorded_output_tokens": 420,
+            "timestamp_ms": 90399390.0,
+            "api_time_ms": 14071.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        },
+        {
+          "trace_id": "5a9a76f59fdf426aa787299972bd5241209e",
+          "corpus_line": 140,
+          "parent_conversation_id": "5a9a76f59fdf426aa787299972bd5241209e",
+          "parent_turn_index": 50,
+          "branch_ids": [
+            "5a9a76f59fdf426aa787299972bd5241209e:flatspawn:1",
+            "5a9a76f59fdf426aa787299972bd5241209e:flatspawn:1"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            60930611.0,
+            60930611.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 13450,
+          "identical_leading_block_tokens": 860800,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "5a9a76f59fdf426aa787299972bd5241209e::aux:005",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 393,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 860864,
+            "recorded_output_tokens": 119,
+            "timestamp_ms": 89805762.0,
+            "api_time_ms": 17574.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "5a9a76f59fdf426aa787299972bd5241209e::fa:007",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 422,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 890624,
+            "recorded_output_tokens": 1056,
+            "timestamp_ms": 93055006.0,
+            "api_time_ms": 24431.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        }
+      ],
+      "largest_prefix_with_first_request_overlap": [
+        {
+          "trace_id": "5b6e131844fbcb4a57f8cf516831dc679004",
+          "corpus_line": 141,
+          "parent_conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004",
+          "parent_turn_index": 103,
+          "branch_ids": [
+            "5b6e131844fbcb4a57f8cf516831dc679004:spawn:subagent_001_d27a77b4",
+            "5b6e131844fbcb4a57f8cf516831dc679004:spawn:subagent_001_d27a77b4"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            13913664.0,
+            13913664.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 11575,
+          "identical_leading_block_tokens": 740800,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004::sa:subagent_007_707bcc96:fa:003",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 410,
+            "source_inner_idx": 280,
+            "recorded_input_tokens": 740800,
+            "recorded_output_tokens": 26,
+            "timestamp_ms": 29522708.0,
+            "api_time_ms": 8702.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004::sa:subagent_007_707bcc96:aux:004",
+            "source_kind": "weka_subagent",
+            "source_outer_idx": 410,
+            "source_inner_idx": 281,
+            "recorded_input_tokens": 740800,
+            "recorded_output_tokens": 49,
+            "timestamp_ms": 29524697.0,
+            "api_time_ms": 15844.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 6713.0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        },
+        {
+          "trace_id": "5b6e131844fbcb4a57f8cf516831dc679004",
+          "corpus_line": 141,
+          "parent_conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004",
+          "parent_turn_index": 103,
+          "branch_ids": [
+            "5b6e131844fbcb4a57f8cf516831dc679004:flatspawn:3",
+            "5b6e131844fbcb4a57f8cf516831dc679004:flatspawn:3"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            6175620.0,
+            6175620.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 10325,
+          "identical_leading_block_tokens": 660800,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004::aux:086",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 3009,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 660800,
+            "recorded_output_tokens": 2403,
+            "timestamp_ms": 712940460.0,
+            "api_time_ms": 17022.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "5b6e131844fbcb4a57f8cf516831dc679004::aux:087",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 3010,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 660800,
+            "recorded_output_tokens": 1961,
+            "timestamp_ms": 712947997.0,
+            "api_time_ms": 17469.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 9485.0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        },
+        {
+          "trace_id": "085aacf44ac5428ad3c6b4f6cd431e083832",
+          "corpus_line": 16,
+          "parent_conversation_id": "085aacf44ac5428ad3c6b4f6cd431e083832",
+          "parent_turn_index": 349,
+          "branch_ids": [
+            "085aacf44ac5428ad3c6b4f6cd431e083832:flatspawn:5",
+            "085aacf44ac5428ad3c6b4f6cd431e083832:flatspawn:5"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            113905971.0,
+            113905971.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 10087,
+          "identical_leading_block_tokens": 645568,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "085aacf44ac5428ad3c6b4f6cd431e083832::fa:005",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 377,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 645568,
+            "recorded_output_tokens": 7304,
+            "timestamp_ms": 113905971.0,
+            "api_time_ms": 100623.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "085aacf44ac5428ad3c6b4f6cd431e083832::fa:006",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 378,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 645568,
+            "recorded_output_tokens": 7198,
+            "timestamp_ms": 113910658.0,
+            "api_time_ms": 102584.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 95936.0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        },
+        {
+          "trace_id": "7e1d737e310877f906f911238c378c39fd0e",
+          "corpus_line": 200,
+          "parent_conversation_id": "7e1d737e310877f906f911238c378c39fd0e",
+          "parent_turn_index": 58,
+          "branch_ids": [
+            "7e1d737e310877f906f911238c378c39fd0e:flatspawn:2",
+            "7e1d737e310877f906f911238c378c39fd0e:flatspawn:2"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            3398365.0,
+            3398365.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 7240,
+          "identical_leading_block_tokens": 463360,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "7e1d737e310877f906f911238c378c39fd0e::aux:005",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 343,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 474560,
+            "recorded_output_tokens": 414,
+            "timestamp_ms": 17922348.0,
+            "api_time_ms": 18258.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "7e1d737e310877f906f911238c378c39fd0e::fa:006",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 344,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 474624,
+            "recorded_output_tokens": 347,
+            "timestamp_ms": 17934025.0,
+            "api_time_ms": 7710.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 6581.0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        },
+        {
+          "trace_id": "7e1d737e310877f906f911238c378c39fd0e",
+          "corpus_line": 200,
+          "parent_conversation_id": "7e1d737e310877f906f911238c378c39fd0e",
+          "parent_turn_index": 58,
+          "branch_ids": [
+            "7e1d737e310877f906f911238c378c39fd0e:flatspawn:2",
+            "7e1d737e310877f906f911238c378c39fd0e:flatspawn:2"
+          ],
+          "branch_modes": [
+            "spawn",
+            "spawn"
+          ],
+          "branch_start_timestamps_ms": [
+            3398365.0,
+            3398365.0
+          ],
+          "join_turn_indices": [
+            [],
+            []
+          ],
+          "identical_leading_blocks": 7237,
+          "identical_leading_block_tokens": 463168,
+          "max_declared_tools_plus_system_tokens": 0,
+          "left": {
+            "conversation_id": "7e1d737e310877f906f911238c378c39fd0e::aux:004",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 342,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 463360,
+            "recorded_output_tokens": 273,
+            "timestamp_ms": 17912038.0,
+            "api_time_ms": 13177.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "right": {
+            "conversation_id": "7e1d737e310877f906f911238c378c39fd0e::aux:005",
+            "source_kind": "weka_flat",
+            "source_outer_idx": 343,
+            "source_inner_idx": null,
+            "recorded_input_tokens": 474560,
+            "recorded_output_tokens": 414,
+            "timestamp_ms": 17922348.0,
+            "api_time_ms": 18258.0,
+            "declared_tools_plus_system_tokens": 0,
+            "subagent_type": null
+          },
+          "first_requests_overlap_ms": 2867.0,
+          "comparison_category": "siblings_includes_inferred_context_chain"
+        }
+      ]
+    }
+  },
+  "method": "Within each trace namespace, compare ordered hash_ids from the actual replay child's first request with its spawning parent turn, and with sibling first requests attached to that same parent turn. Full matching blocks times recorded block_size. No substring or semantic similarity comparison. Overlap uses recorded canonical request timestamp and api_time_ms; dispatch permits overlap but live overlap depends on response times and scheduling."
+}

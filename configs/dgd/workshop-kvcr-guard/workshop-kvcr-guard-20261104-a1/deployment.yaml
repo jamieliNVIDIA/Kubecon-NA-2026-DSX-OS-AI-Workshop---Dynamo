@@ -1,0 +1,636 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceClaimTemplate
+  metadata:
+    name: ft-kvcr-guard-a-gpus
+    namespace: dynamo-ft-r610-861a009c-kvcrguard
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-r610-861a009c-kvcrguard
+  spec:
+    spec:
+      devices:
+        requests:
+        - name: gpu
+          exactly:
+            deviceClassName: gpu.nvidia.com
+            count: 2
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceClaimTemplate
+  metadata:
+    name: ft-kvcr-guard-b-gpus
+    namespace: dynamo-ft-r610-861a009c-kvcrguard
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-r610-861a009c-kvcrguard
+  spec:
+    spec:
+      devices:
+        requests:
+        - name: gpu
+          exactly:
+            deviceClassName: gpu.nvidia.com
+            count: 2
+- apiVersion: nvidia.com/v1beta1
+  kind: DynamoGraphDeployment
+  metadata:
+    name: ft-kvcr-guard
+    namespace: dynamo-ft-r610-861a009c-kvcrguard
+    annotations:
+      nvidia.com/dynamo-discovery-backend: kubernetes
+      nvidia.com/dynamo-kube-discovery-mode: container
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-r610-861a009c-kvcrguard
+  spec:
+    backendFramework: vllm
+    components:
+    - name: Frontend
+      type: frontend
+      replicas: 1
+      podTemplate:
+        spec:
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            command:
+            - python3
+            - /guard-runtime/runtime.py
+            - frontend
+            args: []
+            env:
+            - name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            - name: KVCR_DYNAMO_NAMESPACE
+              value: dynamo-ft-r610-861a009c-kvcrguard-guard
+            - name: CONTAINER_NAME
+              value: main
+            - name: DYN_MIGRATION_LIMIT
+              value: '0'
+            resources:
+              requests:
+                cpu: '1'
+                memory: 4Gi
+              limits:
+                memory: 8Gi
+            startupProbe:
+              httpGet:
+                path: /health
+                port: 8000
+              periodSeconds: 10
+              timeoutSeconds: 60
+              failureThreshold: 60
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: guard-runtime
+              mountPath: /guard-runtime
+              readOnly: true
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: guard-runtime
+            configMap:
+              name: kvcr-guard-runtime-24f56786caaa
+          imagePullSecrets:
+          - name: common-runtime-pull
+          nodeSelector:
+            kubernetes.io/hostname: kubecon-nke-site-cp-0124
+          terminationGracePeriodSeconds: 45
+        metadata:
+          labels:
+            feature-test-run: dynamo-ft-r610-861a009c-kvcrguard
+            workshop-kvcr-guard: 'true'
+            workshop-role: frontend
+      runtimeVersionOverride: 1.6.0
+    - name: engine-a
+      type: worker
+      replicas: 1
+      podTemplate:
+        spec:
+          tolerations:
+          - key: nvidia.com/gpu
+            operator: Equal
+            value: 'true'
+            effect: NoSchedule
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 16Gi
+          - name: guard-runtime
+            configMap:
+              name: kvcr-guard-runtime-24f56786caaa
+          - name: candidate
+            configMap:
+              name: kvcr-guard-source-582346cda31b
+          - name: guard-socket
+            emptyDir: {}
+          - name: guard-memory
+            emptyDir:
+              medium: Memory
+              sizeLimit: 5Gi
+          - name: efa
+            configMap:
+              name: efa-userspace
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            command:
+            - bash
+            - /efa/entrypoint.sh
+            args:
+            - python3
+            - /candidate/bootstrap.py
+            - python3
+            - /guard-runtime/runtime.py
+            - engine
+            env:
+            - &id001
+              name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - &id002
+              name: HF_HUB_OFFLINE
+              value: '1'
+            - &id003
+              name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - &id004
+              name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+              value: '180'
+            - &id005
+              name: KVCR_DYNAMO_NAMESPACE
+              value: dynamo-ft-r610-861a009c-kvcrguard-guard
+            - name: CONTAINER_NAME
+              value: main
+            - &id006
+              name: DYN_MIGRATION_LIMIT
+              value: '0'
+            - &id007
+              name: KVCR_PEER
+              value: a
+            - &id008
+              name: KVCR_MODEL
+              value: nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+            - &id009
+              name: KVCR_MODEL_REVISION
+              value: 8a115b9d966adce8c059a7bcf47f49a1e57957d8
+            - &id010
+              name: KVCR_BUNDLE_SHA256
+              value: 176da4c6303e62291643ca86883dfcdf9d4eb4584f78be0982c251019db82cbf
+            - &id011
+              name: KVCR_COMPATIBILITY_DIGEST
+              value: super-vl-tp2-guard-dd5df02c-block64-v1
+            - &id012
+              name: PYTHONHASHSEED
+              value: '0'
+            - &id013
+              name: VLLM_KV_EVENTS_USE_INT_BLOCK_HASHES
+              value: '1'
+            - &id014
+              name: VLLM_LOGGING_LEVEL
+              value: INFO
+            - &id015
+              name: KVCR_LOG_LEVEL
+              value: DEBUG
+            - &id016
+              name: NIXL_LOG_LEVEL
+              value: INFO
+            - &id017
+              name: FI_PROVIDER
+              value: efa
+            - &id018
+              name: FI_EFA_USE_DEVICE_RDMA
+              value: '1'
+            - &id019
+              name: FI_EFA_FORK_SAFE
+              value: '1'
+            - &id020
+              name: FI_EFA_ENABLE_SHM_TRANSFER
+              value: '0'
+            - &id021
+              name: FI_HMEM_CUDA_USE_DMABUF
+              value: '1'
+            - &id022
+              name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - &id023
+              name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - &id024
+              name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - &id025
+              name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            resources:
+              requests:
+                cpu: '8'
+                memory: 128Gi
+                vpc.amazonaws.com/efa: '8'
+              limits:
+                memory: 256Gi
+                vpc.amazonaws.com/efa: '8'
+              claims:
+              - name: gpu-main
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+            startupProbe:
+              httpGet:
+                path: /live
+                port: 9090
+              periodSeconds: 30
+              timeoutSeconds: 20
+              failureThreshold: 120
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: dshm
+              mountPath: /dev/shm
+            - &id026
+              name: candidate
+              mountPath: /candidate
+              readOnly: true
+            - &id027
+              name: guard-runtime
+              mountPath: /guard-runtime
+              readOnly: true
+            - &id028
+              name: efa
+              mountPath: /efa
+              readOnly: true
+            - &id029
+              name: guard-socket
+              mountPath: /run/kvcr
+          - name: kvcr-services
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            command:
+            - bash
+            - /efa/entrypoint.sh
+            args:
+            - python3
+            - /candidate/bootstrap.py
+            - python3
+            - /guard-runtime/runtime.py
+            - service
+            env:
+            - *id001
+            - *id002
+            - *id003
+            - *id004
+            - *id005
+            - *id006
+            - *id007
+            - *id008
+            - *id009
+            - *id010
+            - *id011
+            - *id012
+            - *id013
+            - *id014
+            - *id015
+            - *id016
+            - *id017
+            - *id018
+            - *id019
+            - *id020
+            - *id021
+            - *id022
+            - *id023
+            - *id024
+            - *id025
+            - name: CONTAINER_NAME
+              value: kvcr-services
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            - name: DYN_SYSTEM_PORT
+              value: '9091'
+            - name: DYN_DISCOVERY_BACKEND
+              value: kubernetes
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+            resources:
+              requests:
+                cpu: '2'
+                memory: 6Gi
+                vpc.amazonaws.com/efa: '1'
+              limits:
+                memory: 8Gi
+                vpc.amazonaws.com/efa: '1'
+            readinessProbe:
+              httpGet:
+                path: /ready
+                port: 9092
+              periodSeconds: 5
+              timeoutSeconds: 2
+              failureThreshold: 3
+            volumeMounts:
+            - *id026
+            - *id027
+            - *id028
+            - *id029
+            - name: guard-memory
+              mountPath: /dev/shm/kvcr
+          imagePullSecrets:
+          - name: common-runtime-pull
+          resourceClaims:
+          - name: gpu-main
+            resourceClaimTemplateName: ft-kvcr-guard-a-gpus
+          nodeSelector:
+            kubernetes.io/hostname: kubecon-nke-site-cp-0124
+          terminationGracePeriodSeconds: 45
+        metadata:
+          labels:
+            feature-test-run: dynamo-ft-r610-861a009c-kvcrguard
+            workshop-kvcr-guard: 'true'
+            workshop-role: worker
+            kvcr-peer: a
+      runtimeVersionOverride: 1.6.0
+    - name: engine-b
+      type: worker
+      replicas: 1
+      podTemplate:
+        spec:
+          tolerations:
+          - key: nvidia.com/gpu
+            operator: Equal
+            value: 'true'
+            effect: NoSchedule
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 16Gi
+          - name: guard-runtime
+            configMap:
+              name: kvcr-guard-runtime-24f56786caaa
+          - name: candidate
+            configMap:
+              name: kvcr-guard-source-582346cda31b
+          - name: guard-socket
+            emptyDir: {}
+          - name: guard-memory
+            emptyDir:
+              medium: Memory
+              sizeLimit: 5Gi
+          - name: efa
+            configMap:
+              name: efa-userspace
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            command:
+            - bash
+            - /efa/entrypoint.sh
+            args:
+            - python3
+            - /candidate/bootstrap.py
+            - python3
+            - /guard-runtime/runtime.py
+            - engine
+            env:
+            - &id030
+              name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - &id031
+              name: HF_HUB_OFFLINE
+              value: '1'
+            - &id032
+              name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - &id033
+              name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+              value: '180'
+            - &id034
+              name: KVCR_DYNAMO_NAMESPACE
+              value: dynamo-ft-r610-861a009c-kvcrguard-guard
+            - name: CONTAINER_NAME
+              value: main
+            - &id035
+              name: DYN_MIGRATION_LIMIT
+              value: '0'
+            - &id036
+              name: KVCR_PEER
+              value: b
+            - &id037
+              name: KVCR_MODEL
+              value: nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+            - &id038
+              name: KVCR_MODEL_REVISION
+              value: 8a115b9d966adce8c059a7bcf47f49a1e57957d8
+            - &id039
+              name: KVCR_BUNDLE_SHA256
+              value: 176da4c6303e62291643ca86883dfcdf9d4eb4584f78be0982c251019db82cbf
+            - &id040
+              name: KVCR_COMPATIBILITY_DIGEST
+              value: super-vl-tp2-guard-dd5df02c-block64-v1
+            - &id041
+              name: PYTHONHASHSEED
+              value: '0'
+            - &id042
+              name: VLLM_KV_EVENTS_USE_INT_BLOCK_HASHES
+              value: '1'
+            - &id043
+              name: VLLM_LOGGING_LEVEL
+              value: INFO
+            - &id044
+              name: KVCR_LOG_LEVEL
+              value: DEBUG
+            - &id045
+              name: NIXL_LOG_LEVEL
+              value: INFO
+            - &id046
+              name: FI_PROVIDER
+              value: efa
+            - &id047
+              name: FI_EFA_USE_DEVICE_RDMA
+              value: '1'
+            - &id048
+              name: FI_EFA_FORK_SAFE
+              value: '1'
+            - &id049
+              name: FI_EFA_ENABLE_SHM_TRANSFER
+              value: '0'
+            - &id050
+              name: FI_HMEM_CUDA_USE_DMABUF
+              value: '1'
+            - &id051
+              name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - &id052
+              name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - &id053
+              name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - &id054
+              name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            resources:
+              requests:
+                cpu: '8'
+                memory: 128Gi
+                vpc.amazonaws.com/efa: '8'
+              limits:
+                memory: 256Gi
+                vpc.amazonaws.com/efa: '8'
+              claims:
+              - name: gpu-main
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+            startupProbe:
+              httpGet:
+                path: /live
+                port: 9090
+              periodSeconds: 30
+              timeoutSeconds: 20
+              failureThreshold: 120
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: dshm
+              mountPath: /dev/shm
+            - &id055
+              name: candidate
+              mountPath: /candidate
+              readOnly: true
+            - &id056
+              name: guard-runtime
+              mountPath: /guard-runtime
+              readOnly: true
+            - &id057
+              name: efa
+              mountPath: /efa
+              readOnly: true
+            - &id058
+              name: guard-socket
+              mountPath: /run/kvcr
+          - name: kvcr-services
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            command:
+            - bash
+            - /efa/entrypoint.sh
+            args:
+            - python3
+            - /candidate/bootstrap.py
+            - python3
+            - /guard-runtime/runtime.py
+            - service
+            env:
+            - *id030
+            - *id031
+            - *id032
+            - *id033
+            - *id034
+            - *id035
+            - *id036
+            - *id037
+            - *id038
+            - *id039
+            - *id040
+            - *id041
+            - *id042
+            - *id043
+            - *id044
+            - *id045
+            - *id046
+            - *id047
+            - *id048
+            - *id049
+            - *id050
+            - *id051
+            - *id052
+            - *id053
+            - *id054
+            - name: CONTAINER_NAME
+              value: kvcr-services
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            - name: DYN_SYSTEM_PORT
+              value: '9091'
+            - name: DYN_DISCOVERY_BACKEND
+              value: kubernetes
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+            resources:
+              requests:
+                cpu: '2'
+                memory: 6Gi
+                vpc.amazonaws.com/efa: '1'
+              limits:
+                memory: 8Gi
+                vpc.amazonaws.com/efa: '1'
+            readinessProbe:
+              httpGet:
+                path: /ready
+                port: 9092
+              periodSeconds: 5
+              timeoutSeconds: 2
+              failureThreshold: 3
+            volumeMounts:
+            - *id055
+            - *id056
+            - *id057
+            - *id058
+            - name: guard-memory
+              mountPath: /dev/shm/kvcr
+          imagePullSecrets:
+          - name: common-runtime-pull
+          resourceClaims:
+          - name: gpu-main
+            resourceClaimTemplateName: ft-kvcr-guard-b-gpus
+          nodeSelector:
+            kubernetes.io/hostname: kubecon-nke-site-cp-0124
+          terminationGracePeriodSeconds: 45
+        metadata:
+          labels:
+            feature-test-run: dynamo-ft-r610-861a009c-kvcrguard
+            workshop-kvcr-guard: 'true'
+            workshop-role: worker
+            kvcr-peer: b
+      runtimeVersionOverride: 1.6.0

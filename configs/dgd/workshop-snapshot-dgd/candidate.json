@@ -1,0 +1,37 @@
+{
+  "profile": "super-vl-dgd-snapshot-cuinterpose-v3",
+  "source_sha256": "1998c2625b90f480541ed585ff3b2957de6ea86027cf380dde7435c47b795fc0",
+  "patched_sha256": "047a6b087f8af397a392e789c1b2a7fe0c5387ab151ea6c5c29358350ebea3f8",
+  "scope": "Workload-local Snapshot pause and proxy identity adapters; original Dynamo refresh and registration retained",
+  "capture": [
+    "pause_generation",
+    "release_kv_cache_memory"
+  ],
+  "restore": [
+    "wake_up",
+    "resume_generation",
+    "check_health"
+  ],
+  "communicator_hooks": false,
+  "restore_context": "Allowlisted /proc/1/environ from verified Snapshot proxy; new Pod UID required; atomic create",
+  "huggingface_offline_policy": "Restore destination proxy HF_HUB_OFFLINE=0/1 or clear if absent before model registration",
+  "status": "live same-node DGD qualification and cleanup passed",
+  "run": "results/workshop-snapshot-dgd-20261104-a3",
+  "qualified_at": "2026-11-04T21:38:34.825480+00:00",
+  "storage": "EFS",
+  "replacement_pod_to_ready_seconds": 352.0,
+  "deletion_intent_to_observed_success_seconds": 374.718512,
+  "qualification_manifest": "demos/transcripts/live/04-snapshot-dgd/20261104-a3/qualification.json",
+  "remaining": [
+    "Presenter runner wiring",
+    "DGD recovery from pre-staged NVMe",
+    "Final runtime qualification or upstreaming of experimental adapter"
+  ],
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "files": {
+    "deployment.yaml": "311168325db30fbd5081877658f3db5e2e55b532e342918fa06daff17e714767",
+    "runtime-patch.yaml": "9cad5673f0dca065a5e977d9caea7a728bfd465bd0ccc8c7551678f107337d9c"
+  }
+}

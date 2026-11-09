@@ -1,0 +1,98 @@
+{
+  "ref": "v1.5.1",
+  "revision": "2093662a4d4e5fd318732935213dde08dc7be818",
+  "archive_url": "https://codeload.github.com/ai-dynamo/dynamo/tar.gz/2093662a4d4e5fd318732935213dde08dc7be818",
+  "archive_sha256": "4d7e5045b26d5295f005aa87084793b04604bfee6e913c85d667e00b1b5ffa7f",
+  "files": [
+    {
+      "path": "deploy/operator/internal/dra/dra.go",
+      "sha256": "e5bcf64e1a5ef840b805f978ee2403db575b2c19d45eb02169fb22ae8f8b066d",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/deploy/operator/internal/dra/dra.go"
+    },
+    {
+      "path": "deploy/operator/internal/dra/dra_test.go",
+      "sha256": "dfaaafaf96992006bcd60694df26d47f6fb8a77ad957a006ada514c094aa8c0d",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/deploy/operator/internal/dra/dra_test.go"
+    },
+    {
+      "path": "deploy/operator/internal/dynamo/failover.go",
+      "sha256": "2a562f548f7434840b11a2a4a20007856a3c7a014de27dcbdf42d7e97b28b375",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/deploy/operator/internal/dynamo/failover.go"
+    },
+    {
+      "path": "deploy/operator/internal/dynamo/failover_vllm.go",
+      "sha256": "5f5e88d892f3b73b0d356c092a57eb0c119781234ef09f495864cc2d08cbb700",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/deploy/operator/internal/dynamo/failover_vllm.go"
+    },
+    {
+      "path": "deploy/operator/internal/gms/gms.go",
+      "sha256": "12306a383146a2974eccc7e053a86c579459fdfc60fbd6dfc173c84d3cd2f57c",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/deploy/operator/internal/gms/gms.go"
+    },
+    {
+      "path": "examples/backends/vllm/deploy/agg_failover.yaml",
+      "sha256": "cd4ad43526e2e7d74426160c681496de81ad167174ff744d45b07f668befc23a",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/examples/backends/vllm/deploy/agg_failover.yaml"
+    },
+    {
+      "path": "lib/gpu_memory_service/README.md",
+      "sha256": "0cfc5114ffd73b97e6b4dbadc5384fdf666172582553caba8bd0067bb29564da",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/README.md"
+    },
+    {
+      "path": "lib/gpu_memory_service/client/rpc.py",
+      "sha256": "1b4821835b171e9d56d808b5f55551eed33602b33bc78d2509e3ff7951315c61",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/client/rpc.py"
+    },
+    {
+      "path": "lib/gpu_memory_service/common/protocol/messages.py",
+      "sha256": "f484dd6e9c9e4eb38990f8f220dbf98402ea3c89664980578f19ac62a16973d5",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/common/protocol/messages.py"
+    },
+    {
+      "path": "lib/gpu_memory_service/common/utils.py",
+      "sha256": "b1d2e60ed1f2a3e247efe99d9feea3dc41d11a054044417bcf0478d26f65efd4",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/common/utils.py"
+    },
+    {
+      "path": "lib/gpu_memory_service/failover_lock/failover_metrics.py",
+      "sha256": "b2daeece8c843e30bfac75c930f3ee353254624ec72c2b219d73e59ad8c2640e",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/failover_lock/failover_metrics.py"
+    },
+    {
+      "path": "lib/gpu_memory_service/failover_lock/flock/lock.py",
+      "sha256": "c6fc7a8e7bc1cad7611e99c2340aed0c335fbf28e7cf88f894ebb10e65834855",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/failover_lock/flock/lock.py"
+    },
+    {
+      "path": "lib/gpu_memory_service/integrations/vllm/model_loader.py",
+      "sha256": "8df118e077cf79bea3760ac13f2bb2374fd4bd7b5cc71c3153fbc30c83966dd3",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/integrations/vllm/model_loader.py"
+    },
+    {
+      "path": "lib/gpu_memory_service/integrations/vllm/patches.py",
+      "sha256": "0997336070831798c8ba29949f3b707d700432b9f2a46f6055ada9454242a445",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/integrations/vllm/patches.py"
+    },
+    {
+      "path": "lib/gpu_memory_service/integrations/vllm/worker.py",
+      "sha256": "0390072889f420b15ef68641ad52985c32557c964623b7ca0fe54c308db52e8f",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/lib/gpu_memory_service/integrations/vllm/worker.py"
+    },
+    {
+      "path": "tests/gpu_memory_service/common/gms.py",
+      "sha256": "91142576b9ff782b8d01075204e8df54d79ecc6c7f4bb5e9033235276a2e7e57",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/tests/gpu_memory_service/common/gms.py"
+    },
+    {
+      "path": "tests/gpu_memory_service/flow_assertions.py",
+      "sha256": "5a9bde7507b2c564cba10626ad07897fd5fd9b616188a25832803eabf6dac040",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/tests/gpu_memory_service/flow_assertions.py"
+    },
+    {
+      "path": "tests/gpu_memory_service/test_shadow_failover.py",
+      "sha256": "83f8f2c0361c10e4fa2a1261961edb8a24447fb80ee0ca43b8046833dce04e5d",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/tests/gpu_memory_service/test_shadow_failover.py"
+    }
+  ]
+}

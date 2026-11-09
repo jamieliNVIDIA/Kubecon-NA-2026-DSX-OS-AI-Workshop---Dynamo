@@ -1,0 +1,34 @@
+{
+  "kind": "gpu-dra-demo-upgrade",
+  "applied": false,
+  "releases": {
+    "gpu-operator": {
+      "release": "gpu-operator",
+      "namespace": "gpu-operator",
+      "chart": "gpu-operator-v26.7.0",
+      "before_revision": "1",
+      "chart_path": "results/20261014-gpu-dra-upgrade-review/gpu-operator-v26.7.0.tgz",
+      "chart_sha256": "6d1b282d74288be206c66dfe49073b7c85c209e92826c27f6507429055e2e102",
+      "values_path": "configs/cluster-upgrade/gpu-operator-values.yaml",
+      "values_sha256": "2a0178b74b1b39a58d2bc1b45c0c577287a2df9512fe7d738a290b1e4702f7d0",
+      "baseline_values_sha256": "d61b075e7afdf92a55392284a246fcf0219e0cabff5c6670a7d2c74ce8745338",
+      "dry_run": "passed",
+      "chart_source": "https://helm.ngc.nvidia.com/nvidia/charts/gpu-operator-v26.7.0.tgz"
+    },
+    "gpu-dra": {
+      "release": "nvidia-dra-driver-gpu",
+      "namespace": "nvidia-dra-driver",
+      "chart": "dra-driver-nvidia-gpu-0.5.0",
+      "before_revision": "1",
+      "chart_path": "results/20261014-gpu-dra-upgrade-review/dra-driver-nvidia-gpu-0.5.0.tgz",
+      "chart_sha256": "c7ca3dc31a6fa8b85c6fd5ee40948cf8d9162e32f20db9fc085113b4035e8b35",
+      "values_path": "configs/cluster-upgrade/gpu-dra-values.yaml",
+      "values_sha256": "b41238ff5a27ff22eae458c4508c0d3f509090b39bde7f9aca942b9c236cd77d",
+      "baseline_values_sha256": "a7384ceb24f0d03459876ccf6af4f4380c96f6bf650eb97b7dfe35bd2595c80d",
+      "dry_run": "passed",
+      "chart_source": "oci://registry.k8s.io/dra-driver-nvidia/charts/dra-driver-nvidia-gpu"
+    }
+  },
+  "review_run": "results/20261014-gpu-dra-upgrade-review",
+  "status": "server-dry-run-passed"
+}

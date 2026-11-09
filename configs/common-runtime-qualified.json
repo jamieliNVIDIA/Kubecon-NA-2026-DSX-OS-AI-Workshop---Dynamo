@@ -1,0 +1,94 @@
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+  "revision": "bee7596271d1495f6992ae224aefde4410e816b8",
+  "gated": false,
+  "architecture": [
+    "NemotronHForCausalLM"
+  ],
+  "dynamo_source_revision": "d48a9641f9754557815cd370c3154a2904ff569b",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "sources": [
+    {
+      "path": "recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml",
+      "sha256": "c39c79aec821dcda8d154ddb95e9d61c4792eee7ed7b35323982dfee5c15a813"
+    },
+    {
+      "path": "recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml",
+      "sha256": "1c56c9db495e84c0fdb39407c5cf3fabdc64ecb737ae95c88f90258e131bd0bd"
+    },
+    {
+      "path": "recipes/nemotron-3.5-lightning/vllm/check-efa-userspace.sh",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/check-efa-userspace.sh",
+      "sha256": "ae3d5b15b5bc4c43f136b285716e31390fbe3e9b08fc13bc38c573533610896e"
+    },
+    {
+      "path": "lib/sidecar/vllm/deploy/agg.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/lib/sidecar/vllm/deploy/agg.yaml",
+      "sha256": "db991cdbe92dcb5625eb344e71516e031ab7ebad084c85cad19fb420657c977d"
+    },
+    {
+      "path": "lib/sidecar/sglang/deploy/agg_kv_router.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/lib/sidecar/sglang/deploy/agg_kv_router.yaml",
+      "sha256": "cc2a2fe4588e76f2f4e40d8ea5611a7211c4cebd1a39e4da3fdb04fad54bcbfc"
+    }
+  ],
+  "runtime_version_override": "1.6.0",
+  "runtime_release": "1.6.0",
+  "common_runtime": true,
+  "image_pull_secret": "common-runtime-pull",
+  "runtime_source_revision": "ea23e5130c1bfbadec477b99449d0cee5598caa0",
+  "qualification": {
+    "status": "passed",
+    "scope": "Bounded vLLM/Nemotron TP1 feature matrix; not performance/capacity qualification",
+    "run": "results/20261013-common-runtime-features",
+    "packages": {
+      "ai-dynamo": "1.6.0",
+      "ai-dynamo-runtime": "1.6.0",
+      "vllm": "0.31.1rc1.dev23+g43b4aaea3",
+      "torch": "2.13.0+cu130",
+      "kvcr": "0.1.1",
+      "nixl": "1.5.0",
+      "modelexpress": "0.6.0",
+      "nvidia-nccl-cu13": "2.30.7",
+      "gpu-memory-service": "0.9.0"
+    },
+    "features": {
+      "common-runtime-probe": "passed",
+      "agg-inference": "passed",
+      "kv-routing": "passed",
+      "engine-sidecar": "passed",
+      "kvcr": "passed",
+      "kvcr-canary-stability": "passed",
+      "disaggregation": "passed",
+      "modelexpress": "passed",
+      "grove-kai": "passed",
+      "snapshot-runtime-preparation": "passed",
+      "snapshot-restore": "passed",
+      "snapshot-cleanup": "passed",
+      "common-cleanup": "passed",
+      "common-manifests": "passed"
+    },
+    "shadow_failover": {
+      "status": "blocked",
+      "infrastructure_status": "blocked",
+      "blockers": [
+        "NVIDIA DRA resources.gpus.enabled=false (ComputeDomain-only installation)",
+        "NVIDIA DRA gpuResourcesEnabledOverride=false; experimental GPU allocation is not enabled",
+        "Missing gpu.nvidia.com DeviceClass",
+        "No GPU devices advertised by gpu.nvidia.com ResourceSlices",
+        "No Ready H100 test node with a Ready GPU DRA plugin/inventory and without a competing NVIDIA device plugin"
+      ],
+      "fault_injected": false
+    },
+    "limits": [
+      "Snapshot TP1 same-node only",
+      "Sidecar vLLM aggregated only",
+      "KVCR peer reuse only",
+      "Grove basic gang admission/scaling only"
+    ],
+    "snapshot_artifact": "checkpoint-9d99f93beadbd362ed4b3cce212b7aef",
+    "snapshot_bytes": 35871594315
+  }
+}

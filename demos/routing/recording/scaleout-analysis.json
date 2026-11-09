@@ -1,0 +1,535 @@
+{
+  "at": "2026-11-04T21:53:38.498213+00:00",
+  "type": "scaleout",
+  "concurrency_session_trees": 4,
+  "paired_repetitions": 1,
+  "arms": [
+    {
+      "arm": "c4-r1-a1",
+      "spec": {
+        "sealed_at": "2026-11-03T22:51:23.878904+00:00",
+        "arm": "c4-r1-a1",
+        "replicas": 1,
+        "h100_gpus": 2,
+        "concurrency_session_trees": 4,
+        "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+        "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+        "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+        "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+        "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+        "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+        "dataset_pin_patch_sha256": "4230167ccd705a71860bae27a981655d4f23fcef499b27665fe09c9239745c95",
+        "profile_sha256": "d6bae50ed91ba2cb614de81b8da5282552c60302b1fa1f21eb20a2bb2c1b7098",
+        "client_preprocessor_workers": 1,
+        "client_mmap_environment": {
+          "AIPERF_DATASET_MMAP_BASE_PATH": "/tmp/workshop-rr/mmap",
+          "AIPERF_DATASET_MMAP_CACHE_DIR": "/tmp/workshop-rr/mmap-cache"
+        },
+        "client_resources": {
+          "requests": {
+            "cpu": "4",
+            "memory": "64Gi",
+            "ephemeral-storage": "40Gi"
+          },
+          "limits": {
+            "cpu": "8",
+            "memory": "96Gi",
+            "ephemeral-storage": "80Gi"
+          }
+        },
+        "router_mode": "round-robin",
+        "initial_gpu_cache": "fresh first worker before bounded smoke and canonical AgentX primer",
+        "native_max_model_len": 1048576,
+        "max_num_seqs_per_worker": 4,
+        "execution_helpers_sha256": {
+          "execute_pair.py": "a07b7d43a8a85732935fa3d64e165d1dedacceac1a58d6db8d6a07a85fcd8c76",
+          "execute_router_pair.py": "d946ab5138ddbcf9a119e49a2855088a8fbc2a2804a455a0e5a9d386f82eb191",
+          "cluster.py": "05aab96b4efa1bc561eacfdd5f097dcc1d0f48619dbd49110846dccc6acf056c",
+          "PLAN.md": "e6d982d5afa3fc08c58a989b3051218d9ffc3bb2c46f3d662f6ad3d4379aa338",
+          "KV_EXTENSION_PLAN.md": "885cea284a2d2c6d5d66ee318fc522e5811f5e7e0f79633add2a02e85300ed51"
+        },
+        "worker_pods": [
+          {
+            "name": "ft-agg-0-agg-w4859",
+            "uid": "66649d97-fd14-4054-be3f-7aa55d7f2215",
+            "node": "kubecon-nke-site-cp-0124",
+            "image_ids": [
+              "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+            ]
+          }
+        ]
+      },
+      "spec_sha256": "705ecb1d1aeb9c1a8898aa710c94511f799967dbd9bd8ac86d5ae8e457270508",
+      "accepted_export": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-c4-closeout-20261104-a1/verified/results/workshop-rr-20261103-resume02/c4-r1-a1/raw/c4-r1-a1/artifacts/profile_export_aiperf.json",
+      "benchmark_id": "a111b88b5f25",
+      "profile_seconds": 900.0,
+      "grace_seconds": 300.0,
+      "phase_window_seconds": 1200.001472204,
+      "benchmark_duration_metric_seconds": 902.686032896,
+      "canonical_throughput_denominator_seconds": 1200.001472204,
+      "requests": 122.0,
+      "request_error_count": 0,
+      "output_tokens": 97394.0,
+      "input_tokens": 20949158.0,
+      "output_tokens_per_second": 81.16156709468022,
+      "output_tokens_per_second_per_gpu": 40.58078354734011,
+      "record_span_output_tokens_per_second": 107.89354930810248,
+      "decode_tokens_per_second_per_user_mean": 139.7855206040956,
+      "decode_tokens_per_second_per_user_p50": 142.96007313449206,
+      "ttft_p50_ms": 306.187886,
+      "ttft_p99_ms": 2150.721189939998,
+      "itl_p50_ms": 6.99496027353955,
+      "itl_p99_ms": 11.415259595295785,
+      "input_tokens_mean": 171714.40983606558,
+      "output_tokens_mean": 798.311475409836,
+      "server_reported_cache_read_pct": 95.79489543207417,
+      "server_reported_cache_read_tokens": 20068224.0,
+      "structural_theoretical_prefix_hit_pct": 97.13318526460903,
+      "interactivity_metrics": {
+        "e2e_normalized_interactivity_p75": {
+          "unit": "tokens/sec/user",
+          "avg": 101.84838610927788
+        },
+        "e2e_normalized_interactivity_p90": {
+          "unit": "tokens/sec/user",
+          "avg": 80.5975172451693
+        }
+      },
+      "worker_generate_requests": [
+        {
+          "endpoint": "http://192.168.92.213:9090/metrics",
+          "worker_id": "150849249dd033",
+          "requests": 122.0
+        }
+      ],
+      "predicted_kv_hit_histogram_count": 0,
+      "predicted_kv_hit_histogram_sum": 0,
+      "branch_stats": {
+        "children_spawned": 6,
+        "children_completed": 2,
+        "children_errored": 0,
+        "children_truncated": 1,
+        "children_delayed": 5,
+        "parents_suspended": 2,
+        "parents_resumed": 1,
+        "parents_failed_due_to_child_error": 0,
+        "joins_suppressed": 0,
+        "graphs_admitted": 0,
+        "graphs_completed_to_end": 0
+      },
+      "record_phase_counts": {
+        "warmup": 4,
+        "profiling": 122
+      },
+      "cancelled_profile_records": 0,
+      "sampled_root_correlation_ids": [
+        "1137df18-ec06-4232-ad72-c7629892a9af",
+        "45fa1d7f-b85e-494b-a370-28e14d779597",
+        "4dc9f9d6-1d1a-4d1e-b31f-2c921ec19f05",
+        "80c2ca25-faaa-49dd-b55a-2516f6b22f04",
+        "9b4db1ea-62a4-4237-96b7-fe2eb62be35c"
+      ],
+      "source_trace_requests": {
+        "0196085d85d2075a50b74cd8795ffbdcea9a": {
+          "requests": 25,
+          "source_kinds": {
+            "weka_main": 24,
+            "weka_flat": 1
+          },
+          "source_outer_idx_min": 136,
+          "source_outer_idx_max": 160
+        },
+        "00ca01c4aaeccee751ae6285beb54dea262f": {
+          "requests": 23,
+          "source_kinds": {
+            "weka_main": 23
+          },
+          "source_outer_idx_min": 9,
+          "source_outer_idx_max": 31
+        },
+        "006c98de37d819e95b0840e25426bb7ca99d": {
+          "requests": 1,
+          "source_kinds": {
+            "weka_main": 1
+          },
+          "source_outer_idx_min": 32,
+          "source_outer_idx_max": 32
+        },
+        "02bc0afb13f7a2d9efa86c28511261d85c0e": {
+          "requests": 68,
+          "source_kinds": {
+            "weka_main": 11,
+            "weka_subagent": 57
+          },
+          "source_outer_idx_min": 0,
+          "source_outer_idx_max": 12
+        },
+        "03e110ac6921c2fe9ac7772a9654314a2beb": {
+          "requests": 5,
+          "source_kinds": {
+            "weka_main": 2,
+            "weka_subagent": 3
+          },
+          "source_outer_idx_min": 0,
+          "source_outer_idx_max": 2
+        }
+      },
+      "gpu_utilization_during_900s_admission_window": {
+        "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110": {
+          "samples": 180,
+          "mean_pct": 65.41666666666667
+        },
+        "GPU-75461e0d-6588-94c9-2517-dca859f5c68b": {
+          "samples": 180,
+          "mean_pct": 65.45555555555555
+        }
+      },
+      "metadata": {
+        "dataset": {
+          "source_type": "public_dataset",
+          "loader": "semianalysis_cc_traces_weka_062126",
+          "hf_dataset_name": "semianalysisai/cc-traces-weka-062126",
+          "hf_split": "train"
+        },
+        "metric_duration_coverage": [
+          {
+            "phase_name": "profiling",
+            "expected_duration_seconds": 900.0,
+            "required_ratio": 0.95,
+            "ttft_ratio": 0.9966509681777778,
+            "inter_token_latency_ratio": 1.0
+          }
+        ],
+        "scenario": "inferencex-agentx-mvp",
+        "submission_valid": true
+      },
+      "phase_completion_log_lines": [
+        "22:51:35.041 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=4, completed=0, in_flight=4 | sessions: sent=4, completed=0 (runner.py:1163)",
+        "22:52:36.780 NOTICE   Phase agentic.warmup (warmup) complete | completed=4, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=61.74s (runner.py:1286)",
+        "23:07:36.966 NOTICE   Phase profiling (profiling) sending complete | sent=122, completed=121, in_flight=1 | sessions: sent=5, completed=2 | timeout_triggered=True (runner.py:1163)",
+        "23:12:36.966 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=122, completed=122, cancelled=0, in_flight=0 (runner.py:1227)",
+        "23:12:36.967 NOTICE   Phase profiling (profiling) complete | completed=122, cancelled=0, errors=0 | sessions: completed=2, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+        "23:12:36.968 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793746356965296083, sent_end_ns=1793747256965986243, requests_end_ns=1793747556966768287, baseline_start_ns=1793746356965269123, baseline_end_ns=1793747556966794817, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=122, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=122, error_records=0) (records_manager.py:1480)"
+      ],
+      "closeout_source_kind_counts": {
+        "weka_main": 61,
+        "weka_flat": 1,
+        "weka_subagent": 60
+      },
+      "closeout_earlier_multimodal_capable_serving_profile": true
+    },
+    {
+      "arm": "c4-r2-a1",
+      "spec": {
+        "sealed_at": "2026-11-03T23:43:48.034608+00:00",
+        "arm": "c4-r2-a1",
+        "replicas": 2,
+        "h100_gpus": 4,
+        "concurrency_session_trees": 4,
+        "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+        "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+        "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+        "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+        "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+        "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+        "dataset_pin_patch_sha256": "4230167ccd705a71860bae27a981655d4f23fcef499b27665fe09c9239745c95",
+        "profile_sha256": "02f3e2ac24e89a91c6a25e2ffef638ab7bfd5b6c444e50f2a27957fa7c0551ed",
+        "client_preprocessor_workers": 1,
+        "client_mmap_environment": {
+          "AIPERF_DATASET_MMAP_BASE_PATH": "/tmp/workshop-rr/mmap",
+          "AIPERF_DATASET_MMAP_CACHE_DIR": "/tmp/workshop-rr/mmap-cache"
+        },
+        "client_resources": {
+          "requests": {
+            "cpu": "4",
+            "memory": "64Gi",
+            "ephemeral-storage": "40Gi"
+          },
+          "limits": {
+            "cpu": "8",
+            "memory": "96Gi",
+            "ephemeral-storage": "80Gi"
+          }
+        },
+        "router_mode": "round-robin",
+        "initial_gpu_cache": "retained first worker and fresh second worker before canonical AgentX primer",
+        "native_max_model_len": 1048576,
+        "max_num_seqs_per_worker": 4,
+        "execution_helpers_sha256": {
+          "execute_pair.py": "a07b7d43a8a85732935fa3d64e165d1dedacceac1a58d6db8d6a07a85fcd8c76",
+          "execute_router_pair.py": "d946ab5138ddbcf9a119e49a2855088a8fbc2a2804a455a0e5a9d386f82eb191",
+          "cluster.py": "05aab96b4efa1bc561eacfdd5f097dcc1d0f48619dbd49110846dccc6acf056c",
+          "PLAN.md": "e6d982d5afa3fc08c58a989b3051218d9ffc3bb2c46f3d662f6ad3d4379aa338",
+          "KV_EXTENSION_PLAN.md": "885cea284a2d2c6d5d66ee318fc522e5811f5e7e0f79633add2a02e85300ed51"
+        },
+        "worker_pods": [
+          {
+            "name": "ft-agg-0-agg-jnxt7",
+            "uid": "9ca3405c-f058-49d7-8372-9008aba80745",
+            "node": "kubecon-nke-site-cp-0198",
+            "image_ids": [
+              "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+            ]
+          },
+          {
+            "name": "ft-agg-0-agg-w4859",
+            "uid": "66649d97-fd14-4054-be3f-7aa55d7f2215",
+            "node": "kubecon-nke-site-cp-0124",
+            "image_ids": [
+              "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+            ]
+          }
+        ]
+      },
+      "spec_sha256": "b1d53cbdb947440b92d6aa6ddf289b77cde233d8559424e5957522b978767f01",
+      "accepted_export": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-c4-closeout-20261104-a1/verified/results/workshop-rr-20261103-resume02/c4-r2-a1/raw/c4-r2-a1/artifacts/profile_export_aiperf.json",
+      "benchmark_id": "7da28139933b",
+      "profile_seconds": 900.0,
+      "grace_seconds": 300.0,
+      "phase_window_seconds": 1200.001221504,
+      "benchmark_duration_metric_seconds": 899.7435829760001,
+      "canonical_throughput_denominator_seconds": 1200.0012215040001,
+      "requests": 114.0,
+      "request_error_count": 0,
+      "output_tokens": 90369.0,
+      "input_tokens": 19840052.0,
+      "output_tokens_per_second": 75.30742334306763,
+      "output_tokens_per_second_per_gpu": 18.826855835766906,
+      "record_span_output_tokens_per_second": 100.43861574549348,
+      "decode_tokens_per_second_per_user_mean": 151.51977056882174,
+      "decode_tokens_per_second_per_user_p50": 159.0395061474735,
+      "ttft_p50_ms": 477.58993749999996,
+      "ttft_p99_ms": 5238.6299109599995,
+      "itl_p50_ms": 6.287751725586367,
+      "itl_p99_ms": 8.82174077468384,
+      "input_tokens_mean": 174035.54385964913,
+      "output_tokens_mean": 792.7105263157895,
+      "server_reported_cache_read_pct": 90.71782674763152,
+      "server_reported_cache_read_tokens": 17998464.0,
+      "structural_theoretical_prefix_hit_pct": 97.57680251797747,
+      "interactivity_metrics": {
+        "e2e_normalized_interactivity_p75": {
+          "unit": "tokens/sec/user",
+          "avg": 105.07600043107277
+        },
+        "e2e_normalized_interactivity_p90": {
+          "unit": "tokens/sec/user",
+          "avg": 82.20158210411718
+        }
+      },
+      "worker_generate_requests": [
+        {
+          "endpoint": "http://192.168.100.20:9090/metrics",
+          "worker_id": "fccc845d74885",
+          "requests": 57.0
+        },
+        {
+          "endpoint": "http://192.168.92.213:9090/metrics",
+          "worker_id": "150849249dd033",
+          "requests": 57.0
+        }
+      ],
+      "predicted_kv_hit_histogram_count": 0,
+      "predicted_kv_hit_histogram_sum": 0,
+      "branch_stats": {
+        "children_spawned": 3,
+        "children_completed": 2,
+        "children_errored": 0,
+        "children_truncated": 0,
+        "children_delayed": 2,
+        "parents_suspended": 1,
+        "parents_resumed": 1,
+        "parents_failed_due_to_child_error": 0,
+        "joins_suppressed": 0,
+        "graphs_admitted": 0,
+        "graphs_completed_to_end": 0
+      },
+      "record_phase_counts": {
+        "warmup": 4,
+        "profiling": 114
+      },
+      "cancelled_profile_records": 0,
+      "sampled_root_correlation_ids": [
+        "3ab24133-0d32-4722-9ba4-6b00056d5feb",
+        "47824321-5fa3-4075-96a9-6ed656de7a06",
+        "61283a46-847e-407f-a1cf-79242ae593ff",
+        "fc4c576e-66c4-40e5-9bec-e797c8f0397a"
+      ],
+      "source_trace_requests": {
+        "0196085d85d2075a50b74cd8795ffbdcea9a": {
+          "requests": 24,
+          "source_kinds": {
+            "weka_main": 23,
+            "weka_flat": 1
+          },
+          "source_outer_idx_min": 136,
+          "source_outer_idx_max": 159
+        },
+        "00ca01c4aaeccee751ae6285beb54dea262f": {
+          "requests": 21,
+          "source_kinds": {
+            "weka_main": 21
+          },
+          "source_outer_idx_min": 9,
+          "source_outer_idx_max": 29
+        },
+        "006c98de37d819e95b0840e25426bb7ca99d": {
+          "requests": 1,
+          "source_kinds": {
+            "weka_main": 1
+          },
+          "source_outer_idx_min": 32,
+          "source_outer_idx_max": 32
+        },
+        "02bc0afb13f7a2d9efa86c28511261d85c0e": {
+          "requests": 68,
+          "source_kinds": {
+            "weka_main": 11,
+            "weka_subagent": 57
+          },
+          "source_outer_idx_min": 0,
+          "source_outer_idx_max": 12
+        }
+      },
+      "gpu_utilization_during_900s_admission_window": {
+        "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110": {
+          "samples": 180,
+          "mean_pct": 35.47222222222222
+        },
+        "GPU-75461e0d-6588-94c9-2517-dca859f5c68b": {
+          "samples": 180,
+          "mean_pct": 36.03888888888889
+        },
+        "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5": {
+          "samples": 180,
+          "mean_pct": 36.12222222222222
+        },
+        "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326": {
+          "samples": 180,
+          "mean_pct": 37.21666666666667
+        }
+      },
+      "metadata": {
+        "dataset": {
+          "source_type": "public_dataset",
+          "loader": "semianalysis_cc_traces_weka_062126",
+          "hf_dataset_name": "semianalysisai/cc-traces-weka-062126",
+          "hf_split": "train"
+        },
+        "metric_duration_coverage": [
+          {
+            "phase_name": "profiling",
+            "expected_duration_seconds": 900.0,
+            "required_ratio": 0.95,
+            "ttft_ratio": 0.9795596845511111,
+            "inter_token_latency_ratio": 0.9997269597866667
+          }
+        ],
+        "scenario": "inferencex-agentx-mvp",
+        "submission_valid": true
+      },
+      "phase_completion_log_lines": [
+        "23:43:56.457 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=4, completed=0, in_flight=4 | sessions: sent=4, completed=0 (runner.py:1163)",
+        "23:44:36.174 NOTICE   Phase agentic.warmup (warmup) complete | completed=4, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=39.72s (runner.py:1286)",
+        "23:59:36.359 NOTICE   Phase profiling (profiling) sending complete | sent=114, completed=114, in_flight=0 | sessions: sent=4, completed=1 | timeout_triggered=True (runner.py:1163)",
+        "00:04:36.359 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=114, completed=114, cancelled=0, in_flight=0 (runner.py:1227)",
+        "00:04:36.360 NOTICE   Phase profiling (profiling) complete | completed=114, cancelled=0, errors=0 | sessions: completed=1, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+        "00:04:36.361 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793749476358684099, sent_end_ns=1793750376359138523, requests_end_ns=1793750676359905603, baseline_start_ns=1793749476358652878, baseline_end_ns=1793750676359936504, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=114, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=114, error_records=0) (records_manager.py:1480)"
+      ],
+      "closeout_source_kind_counts": {
+        "weka_main": 56,
+        "weka_flat": 1,
+        "weka_subagent": 57
+      },
+      "closeout_earlier_multimodal_capable_serving_profile": true
+    }
+  ],
+  "second_over_first": {
+    "output_tokens_per_second": 0.9278704938658545,
+    "record_span_output_tokens_per_second": 0.9309047333189441,
+    "decode_tokens_per_second_per_user_mean": 1.083944674055049,
+    "ttft_p50_ms": 1.55979370620822,
+    "ttft_p99_ms": 2.435755008814578
+  },
+  "exact_remote_analysis_match_excluding_export_location": true,
+  "raw_archives": {
+    "c4-r1-a1": {
+      "files_verified": 14,
+      "archive_sha256": "49f1e10622ab49a572377b1867588a36e67b898544c4661a46264d90e77dc483"
+    },
+    "c4-r2-a1": {
+      "files_verified": 14,
+      "archive_sha256": "02a9e6abe3481adb7b1a29e4b4888ad4b859b9bbbee4cfccea8c90b5fad7ce06"
+    }
+  },
+  "source_kind_counts": [
+    {
+      "arm": "c4-r1-a1",
+      "requests": 122.0,
+      "main_requests": 61,
+      "subagent_requests": 60,
+      "flat_requests": 1,
+      "sampled_source_traces": 5,
+      "children_spawned": 6,
+      "children_completed": 2,
+      "children_truncated": 1,
+      "graphs_completed_to_end": 0,
+      "worker_request_counts": "122"
+    },
+    {
+      "arm": "c4-r2-a1",
+      "requests": 114.0,
+      "main_requests": 56,
+      "subagent_requests": 57,
+      "flat_requests": 1,
+      "sampled_source_traces": 4,
+      "children_spawned": 3,
+      "children_completed": 2,
+      "children_truncated": 0,
+      "graphs_completed_to_end": 0,
+      "worker_request_counts": "57 / 57"
+    }
+  ],
+  "gpu_admission_samples": [
+    {
+      "arm": "c4-r1-a1",
+      "gpu_uuid": "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110",
+      "samples": 180,
+      "mean_pct": 65.41666666666667
+    },
+    {
+      "arm": "c4-r1-a1",
+      "gpu_uuid": "GPU-75461e0d-6588-94c9-2517-dca859f5c68b",
+      "samples": 180,
+      "mean_pct": 65.45555555555555
+    },
+    {
+      "arm": "c4-r2-a1",
+      "gpu_uuid": "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110",
+      "samples": 180,
+      "mean_pct": 35.47222222222222
+    },
+    {
+      "arm": "c4-r2-a1",
+      "gpu_uuid": "GPU-75461e0d-6588-94c9-2517-dca859f5c68b",
+      "samples": 180,
+      "mean_pct": 36.03888888888889
+    },
+    {
+      "arm": "c4-r2-a1",
+      "gpu_uuid": "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5",
+      "samples": 180,
+      "mean_pct": 36.12222222222222
+    },
+    {
+      "arm": "c4-r2-a1",
+      "gpu_uuid": "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326",
+      "samples": 180,
+      "mean_pct": 37.21666666666667
+    }
+  ],
+  "original_worker_retained": [
+    "66649d97-fd14-4054-be3f-7aa55d7f2215"
+  ],
+  "scope": "Closeout of original C4 fixed-load observation, not a benchmark rerun or a routing-policy comparison"
+}

@@ -1,0 +1,77 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/overnight-kvcr-demo-20261105-a3
+
+Dynamo workshop · KVCR context movement
+LIVE CLUSTER / EXPERIMENTAL STACK
+Commands shown relative to the run directory. Preparation and startup should happen offstage.
+
+Next: 1/5  Let the context move
+
+================================================================
+1/5  Let the context move
+Keep the repository context; select a worker with spare compute.
+================================================================
+
+$ cat kvcr-settings.yaml
+workers:
+- name: A
+  GPUs: 2
+  node: cp-0198
+- name: B
+  GPUs: 2
+  node: cp-0942
+state_path:
+- source GPU
+- source host pool
+- peer host pool
+- receiver GPU
+kv_transfer:
+  connector: OffloadingConnector
+  tier: kvcr
+  host_pool_per_worker: 4 GiB
+  transport: NIXL / LIBFABRIC / EFA
+routing: Explicit A/B selection isolates transfer; automatic load balancing is separate.
+runtime: Experimental pinned Dynamo nightly + vLLM/KVCR adapter.
+
+Step finished in 0.0s
+
+Next: 2/5  Verify the prepared workers
+
+================================================================
+2/5  Verify the prepared workers
+Two TP2 engines, separate host pools and cross-node EFA.
+================================================================
+Startup timing: {
+  "simulated": false,
+  "apply_to_observed_ready_seconds": 1440.22363,
+  "scope": "Shared EFS/network can overlap other demos; not an isolated startup benchmark."
+}
+
+KIND  COMPONENT  STATUS
+Pod   frontend   1/1 Running
+Pod   worker     2/2 Running
+Pod   worker     2/2 Running
+
+Step finished in 1.7s
+
+Next: 3/5  Seed the repository context on A
+
+================================================================
+3/5  Seed the repository context on A
+A computes the prompt and commits reusable state to its host pool.
+================================================================
+
+$ kubectl port-forward -n dynamo-ft-r610-f079f468-kvcrdemo service/demo-kvcr-frontend 18007:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18007/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793895583,"owned_by":"nvidia","context_window":8192}]}
+Request: shared repository context, 12202 characters; new source instruction. Full JSON retained.
+
+$ curl --fail --silent --show-error --no-buffer http://127.0.0.1:18007/v1/chat/completions -H 'Content-Type: application/json' -H 'x-dynamo-worker-instance-id: 2080597504219142' -H 'x-dynamo-dp-rank: 0' --data-binary @source-request.json
+READY
+
+From the repository root:
+
+Resume: ./demos/07-kvcr/run.sh --run results/overnight-kvcr-demo-20261105-a3
+Cleanup: ./demos/07-kvcr/run.sh cleanup --run results/overnight-kvcr-demo-20261105-a3
+
+Demo stopped: Source-only committed host cache was not established.

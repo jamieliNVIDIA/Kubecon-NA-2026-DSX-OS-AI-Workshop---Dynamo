@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "proof_scope": "Metrics endpoint PodIP/role/UID and hexadecimal worker ID match original smoke response decimal IDs.",
+  "roles": [
+    {
+      "role": "prefill",
+      "pod_name": "ft-agg-0-prefill-595x8",
+      "pod_uid": "d12e2ab8-c1be-4efe-83c7-df1b214bde65",
+      "node": "kubecon-nke-site-cp-0198",
+      "metrics_url": "http://192.168.100.58:9090/metrics",
+      "worker_id_decimal": 4639121650719554,
+      "worker_id_hex": "107b41ae0f9b42",
+      "observed_transferred_bytes": 0,
+      "rank_transfer_observations": 0
+    },
+    {
+      "role": "decode",
+      "pod_name": "ft-agg-0-decode-b87rr",
+      "pod_uid": "9b059139-f2f2-4261-a410-58c2e9a94a9f",
+      "node": "kubecon-nke-site-cp-0942",
+      "metrics_url": "http://192.168.98.182:9090/metrics",
+      "worker_id_decimal": 7762439263630689,
+      "worker_id_hex": "1b93e5bae63561",
+      "observed_transferred_bytes": 37752668160.0,
+      "rank_transfer_observations": 624
+    }
+  ]
+}

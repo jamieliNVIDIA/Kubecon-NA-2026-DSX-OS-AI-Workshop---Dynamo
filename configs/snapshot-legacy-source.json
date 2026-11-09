@@ -1,0 +1,31 @@
+{
+  "release": "v1.4.2",
+  "revision": "2ecbdfdf192c69c02c6d21e931d20d3b4a0bb64a",
+  "sources": [
+    {
+      "path": "deploy/helm/charts/snapshot/Chart.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2ecbdfdf192c69c02c6d21e931d20d3b4a0bb64a/deploy/helm/charts/snapshot/Chart.yaml",
+      "sha256": "aaf08b3f5026f89ba34ea8f90016d9bb54f5ba9e9078e14dfbd7d3a9ecdd547e"
+    },
+    {
+      "path": "deploy/helm/charts/snapshot/values.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2ecbdfdf192c69c02c6d21e931d20d3b4a0bb64a/deploy/helm/charts/snapshot/values.yaml",
+      "sha256": "76d3f83dd74ccf55c6271306a997b16f8c622b00e0ddd4f96609d4ce2fbe0a9d"
+    },
+    {
+      "path": "deploy/helm/charts/snapshot/README.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2ecbdfdf192c69c02c6d21e931d20d3b4a0bb64a/deploy/helm/charts/snapshot/README.md",
+      "sha256": "a670af316280fbf32d351c6b152640d2bc86fd5634b5d850e0b4a2b29b1ef71e"
+    },
+    {
+      "path": "deploy/snapshot/Dockerfile",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2ecbdfdf192c69c02c6d21e931d20d3b4a0bb64a/deploy/snapshot/Dockerfile",
+      "sha256": "068c6d0f220ed41928a73f06d5a72ed27803920f038ef55db1450b75ba9a7479"
+    },
+    {
+      "path": "deploy/helm/charts/platform/values.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2ecbdfdf192c69c02c6d21e931d20d3b4a0bb64a/deploy/helm/charts/platform/values.yaml",
+      "sha256": "4163f5193dd2c00125295fd1ec71398166f0d23ae585784cd5fec96034b8a983"
+    }
+  ]
+}

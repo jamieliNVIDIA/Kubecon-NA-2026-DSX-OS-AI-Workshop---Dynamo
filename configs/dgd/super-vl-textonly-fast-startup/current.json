@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "run": "results/workshop-mx-startup-20261104-baseline03",
+  "spec_sha256": "e0efc532518c7cc3e9e8ad3907ed81f966ae114ca8f166cbdb141f040eb3f3e7",
+  "controller": "kubecon-workshop-baseline-20261104-a3",
+  "controller_id": "689c467d1dcdb12fd3633deb45686b705a2979553a4b8554d1817dff66160197",
+  "status": "qualified; collected; cleaned",
+  "scope": "Same serving controls; fresh namespace/cache identity. Frozen per-run manifests are in the run directory. Baseline01 failed probe representation validation and is retained.",
+  "completed_at": "2026-11-04T20:08:42.779888+00:00",
+  "ready_seconds": {
+    "storage": 492.7902293279767,
+    "weights": 280.10291744209826,
+    "artifacts": 173.6122264303267
+  },
+  "report": "reports/workshop-measurements-20261030/startup-optimization/MATCHED_BASELINE_RESULTS.md",
+  "verified_pullback": "results/workshop-baseline-pullback-20261104-a3/verification.json",
+  "independent_cleanup_receipt": "results/workshop-baseline-final-cleanup-20261104-a3/receipt.json"
+}

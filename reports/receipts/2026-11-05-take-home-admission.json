@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "observed_at": "2026-11-05T18:19:03.358854+00:00",
+  "status": "passed",
+  "scope": "Sequential client/server dry-run only; no resources created, no GPU or runtime/model serving qualification",
+  "source_sha256": "9efebcaf88e090c78e98f6595e961e737f6624147e0d11d86d67ca59f991194b",
+  "checks": [
+    {
+      "mode": "device-plugin",
+      "manifest": "deployment.yaml",
+      "dry_run": "client",
+      "returncode": 0
+    },
+    {
+      "mode": "device-plugin",
+      "manifest": "deployment.yaml",
+      "dry_run": "server",
+      "returncode": 0
+    },
+    {
+      "mode": "device-plugin",
+      "manifest": "download-job.yaml",
+      "dry_run": "client",
+      "returncode": 0
+    },
+    {
+      "mode": "device-plugin",
+      "manifest": "download-job.yaml",
+      "dry_run": "server",
+      "returncode": 0
+    },
+    {
+      "mode": "device-plugin",
+      "manifest": "frontend-service.yaml",
+      "dry_run": "client",
+      "returncode": 0
+    },
+    {
+      "mode": "device-plugin",
+      "manifest": "frontend-service.yaml",
+      "dry_run": "server",
+      "returncode": 0
+    },
+    {
+      "mode": "dra",
+      "manifest": "deployment.yaml",
+      "dry_run": "client",
+      "returncode": 0
+    },
+    {
+      "mode": "dra",
+      "manifest": "deployment.yaml",
+      "dry_run": "server",
+      "returncode": 0
+    },
+    {
+      "mode": "dra",
+      "manifest": "download-job.yaml",
+      "dry_run": "client",
+      "returncode": 0
+    },
+    {
+      "mode": "dra",
+      "manifest": "download-job.yaml",
+      "dry_run": "server",
+      "returncode": 0
+    },
+    {
+      "mode": "dra",
+      "manifest": "frontend-service.yaml",
+      "dry_run": "client",
+      "returncode": 0
+    },
+    {
+      "mode": "dra",
+      "manifest": "frontend-service.yaml",
+      "dry_run": "server",
+      "returncode": 0
+    },
+    {
+      "mode": "dra",
+      "manifest": "gpu-claim-template.yaml",
+      "dry_run": "client",
+      "returncode": 0
+    },
+    {
+      "mode": "dra",
+      "manifest": "gpu-claim-template.yaml",
+      "dry_run": "server",
+      "returncode": 0
+    }
+  ],
+  "public_runtime_selected": false,
+  "live_deployment_qualified": false,
+  "resources_created": false
+}

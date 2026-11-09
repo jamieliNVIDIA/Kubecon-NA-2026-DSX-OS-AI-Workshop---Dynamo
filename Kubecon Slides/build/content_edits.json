@@ -1,0 +1,1418 @@
+{
+ "titles": [
+  {
+   "slide": 3,
+   "deck": "fund",
+   "index": 0,
+   "title": "Coding-agent request flow"
+  },
+  {
+   "slide": 4,
+   "deck": "fund",
+   "index": 1,
+   "title": "LLM serving architecture"
+  },
+  {
+   "slide": 5,
+   "deck": "fund",
+   "index": 2,
+   "title": "Prefill and decode"
+  },
+  {
+   "slide": 6,
+   "deck": "fund",
+   "index": 3,
+   "title": "GPU memory allocation"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "title": "Memory tiers and bandwidth"
+  },
+  {
+   "slide": 8,
+   "deck": "fund",
+   "index": 5,
+   "title": "Prefix caching"
+  },
+  {
+   "slide": 9,
+   "deck": "fund",
+   "index": 6,
+   "title": "Cache locality and prefill latency"
+  },
+  {
+   "slide": 10,
+   "deck": "fund",
+   "index": 7,
+   "title": "Single-replica deployment"
+  },
+  {
+   "slide": 11,
+   "deck": "fund",
+   "index": 8,
+   "title": "DynamoGraphDeployment configuration"
+  },
+  {
+   "slide": 12,
+   "deck": "fund",
+   "index": 9,
+   "title": "Worker startup latency"
+  },
+  {
+   "slide": 13,
+   "deck": "fund",
+   "index": 10,
+   "title": "Inference performance metrics"
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "title": "Per-user token rate versus throughput"
+  },
+  {
+   "slide": 15,
+   "deck": "aiperf",
+   "index": 9,
+   "title": "AIPerf"
+  },
+  {
+   "slide": 16,
+   "deck": "extras",
+   "index": 4,
+   "title": "AIPerf demo"
+  },
+  {
+   "slide": 17,
+   "deck": "scaling",
+   "index": 0,
+   "title": "Agent concurrency and request queues"
+  },
+  {
+   "slide": 18,
+   "deck": "scaling",
+   "index": 2,
+   "title": "KV-cache capacity and CPU offloading"
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "title": "Replica startup latency"
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "title": "Prefill and decode resource contention"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "title": "Prefill and decode worker pools"
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "title": "Disaggregated request flow"
+  },
+  {
+   "slide": 37,
+   "deck": "scaling",
+   "index": 7,
+   "title": "Disaggregation performance"
+  },
+  {
+   "slide": 38,
+   "deck": "scaling",
+   "index": 9,
+   "title": "Dynamo disaggregation configuration"
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "title": "Dynamo Planner"
+  },
+  {
+   "slide": 41,
+   "deck": "planner",
+   "index": 4,
+   "title": "Planner scaling policies"
+  },
+  {
+   "slide": 42,
+   "deck": "extras",
+   "index": 5,
+   "title": "Break"
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "title": "Request admission and overload protection"
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "title": "Request-level routing and session memory"
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "title": "Session-aware admission"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "title": "Session utilization and admission thresholds"
+  },
+  {
+   "slide": 48,
+   "deck": "router",
+   "index": 34,
+   "title": "Session scheduling benchmark results"
+  }
+ ],
+ "replacements": [
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "One forward pass over every input token, all in parallel.",
+   "new": "Processes prompt tokens in parallel, possibly in chunks."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "<b>Compute-bound</b>: a long prompt can keep an H100&#8217;s 989 TFLOPS busy.",
+   "new": "Long prefills often saturate <b>arithmetic throughput</b>."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "Its duration is the <b>time to first token</b>.",
+   "new": "Prefill contributes to <b>TTFT</b>, along with queueing and other overhead."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "Likes a low tensor-parallel degree and batches measured in tokens.",
+   "new": "Tune tensor parallelism and token batch size for the prompt workload."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "<b>Memory-bound</b>: against 3.35 TB/s of HBM the compute units mostly wait.",
+   "new": "Small decode batches are often <b>memory-bandwidth-bound</b>."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "Its step time is the <b>inter-token latency</b>.",
+   "new": "Generation step time contributes to <b>inter-token latency</b>."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "Likes a high tensor-parallel degree and many requests per batch.",
+   "new": "Tune parallelism and batch size for context length and concurrency."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "prefill for request D · 8,000 tokens · one step",
+   "new": "unchunked prefill · request D · 8,000 tokens"
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "decode steps for A, B and C: one token each, every few milliseconds",
+   "new": "decode steps for A, B and C: one token per sequence"
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "A, B and C get no token until D&#8217;s prompt is done",
+   "new": "A, B and C wait for this prefill step"
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "Continuous batching runs both phases in one engine, so one long prompt stalls every active stream. And the hardware is mismatched either way: while decode runs the compute sits idle, while prefill runs the memory bandwidth does.",
+   "new": "Chunked prefill reduces decode stalls by interleaving smaller prefill chunks. Both phases still share GPU resources; disaggregation gives them separate scheduling and hardware budgets."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "GPU figures are H100 SXM numbers from the sources; the interference looks the same on any GPU.",
+   "new": "Illustration shows unchunked prefill. Actual interference depends on the scheduler and workload."
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "TP2 · big token batches · small KV pool",
+   "new": "Example: TP2 · large prompt batches"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "TP8 · many requests · large KV pool",
+   "new": "Example: TP8 · KV for active sequences"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "steps limited by memory bandwidth",
+   "new": "tuned for decode throughput and latency"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "KV cache over <b>NIXL</b><br>once per request",
+   "new": "KV cache over <b>NIXL</b>"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "Compute-heavy parts for prefill, bandwidth and capacity for decode, if your cluster has both.",
+   "new": "Different GPU types per pool, when supported by the backend and verified for the workload."
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "Picks a prefill worker by <b>cache overlap and load</b>, then a decode worker.",
+   "new": "Routes prefill and decode work; KV-aware routing balances <b>cache overlap and load</b>."
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "Runs the whole prompt once and builds the KV cache. Hands back <b>transfer metadata</b>: which blocks, where.",
+   "new": "Processes uncached prompt tokens. Returns <b>transfer metadata</b> identifying KV blocks and the remote worker."
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "<b>NIXL</b>: NVLink inside a node, RDMA across nodes. Non-blocking, other requests keep running.",
+   "new": "<b>NIXL</b>: configured GPU transfer backend. The cross-node demo uses LIBFABRIC over EFA."
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "vLLM and TensorRT-LLM finish the prefill before decode starts; SGLang can start decoding while the transfer is still in flight.",
+   "new": "Decode generation waits for the required KV. Transfer can overlap compute for other requests."
+  },
+  {
+   "slide": 37,
+   "deck": "scaling",
+   "index": 7,
+   "old": "A 32K-token prompt lands in the prefill pool and no stream in the decode pool skips a beat. Steadier inter-token latency, and a time to first token that does not depend on who else is generating.",
+   "new": "A long prompt runs on separate prefill GPUs, reducing interference with ongoing decode. Both pools still queue requests and use shared network resources."
+  },
+  {
+   "slide": 37,
+   "deck": "scaling",
+   "index": 7,
+   "old": "Prefill replicas follow prompt load, decode replicas follow concurrency and output length. Operators start around one prefill worker per two or three decode workers, one to one for 32K+ contexts, then profile. Later the Planner can move the counts on a timer.",
+   "new": "Prefill capacity follows uncached prompt work. Decode capacity follows active sequences, context lengths and output length. Profile both pools to choose their replica counts."
+  },
+  {
+   "slide": 37,
+   "deck": "scaling",
+   "index": 7,
+   "old": "On the frontier from slide 14 this is a shift up and to the right: more tokens per megawatt at the same speed per user, or more speed per user at the same cost. The gain is largest with long prompts, long outputs or high concurrency.",
+   "new": "Disaggregation can improve throughput at a latency target. The gain is largest with long prompts, long outputs or high concurrency."
+  },
+  {
+   "slide": 38,
+   "deck": "scaling",
+   "index": 9,
+   "old": "A third pool runs the vision encoder and ships <b>embeddings</b> over NIXL. With 10 images per request TTFT fell 50 to 58%; with mixed traffic, text requests stopped waiting behind image ones. Small gain or a loss for large dense models and long outputs.",
+   "new": "Encoder workers send <b>embeddings</b> over NIXL. In NVIDIA&#8217;s Qwen3.5 122B NVFP4 test, with 10 images and 1,024 output tokens, TTFT fell 50–58%, depending on encoder placement. Results depend on the workload."
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "Requests per second, prompt and output lengths, and from the engines: TTFT, ITL, queue depth and KV usage.",
+   "new": "Traffic metrics plus per-iteration engine data: queued tokens, batch composition and execution time."
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "A replica count for prefill and one for decode, recomputed every few seconds from your targets and a performance model.",
+   "new": "Separate prefill and decode counts, using load thresholds or SLA targets and a performance model."
+  },
+  {
+   "slide": 41,
+   "deck": "planner",
+   "index": 4,
+   "old": "Live check every 5 s",
+   "new": "Optional reactive loop: 5 s"
+  },
+  {
+   "slide": 41,
+   "deck": "planner",
+   "index": 4,
+   "old": "±1 on measured latency (enable_load_scaling)",
+   "new": "±1 using latency estimates (enable_load_scaling)"
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "old": "Dynamo&rsquo;s stock KvRouter places one request at a time: which worker has the most cache overlap. The right unit for a chat turn, the wrong unit for an agent at high concurrency.",
+   "new": "Dynamo&rsquo;s KV router places requests using cached-prefix overlap and worker load. Request-level placement does not reserve capacity for an agent session&rsquo;s future turns."
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "old": "working set = N &times; context<sub>k</sub>",
+   "new": "working set ≈ N &times; context<sub>k</sub>"
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "old": "While an agent runs a tool, its KV sits in HBM holding blocks. The router only ever sees one turn&rsquo;s context; it has no notion of the aggregate.",
+   "new": "Between turns, prefix blocks may remain in HBM for reuse or eviction. The estimate above assumes similar context lengths and excludes shared-prefix reuse."
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "old": "Once N &times; context outgrows HBM, then DRAM, the engine evicts live sessions&rsquo; cache, and every next turn pays a full re-prefill instead of a hit.",
+   "new": "When reusable context exceeds cache capacity, useful blocks can be evicted. Later turns must recompute the missing prefix; full eviction requires a full prefill."
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "old": "Over capacity, the only levers are to cancel or queue in-flight requests. Deferring a session right before its next turn, when it is about to be idle anyway, is cheaper than either.",
+   "new": "Request-level admission can hold or reject requests. Session-aware admission also tracks whether a session is between turns or still generating, so it can defer the next turn without interrupting decode."
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "The ThunderAgent scheduler (Kang et al., 2026), ported onto Dynamo&rsquo;s KV-aware router as a native Rust plugin. One <b>program</b> per session id, weighed by its real prompt and completion tokens.",
+   "new": "Dynamo&rsquo;s <b>experimental ThunderAgent plugin</b> adapts the paper&rsquo;s scheduler inside the frontend. It tracks sessions and token counts to estimate their logical context sizes."
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "a turn is in flight",
+   "new": "a model turn is pending or running"
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "between turns, running a tool",
+   "new": "between model turns"
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "Its blocks stay on the worker for the next turn.",
+   "new": "Its cached blocks remain subject to the engine&rsquo;s eviction policy."
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "Its KV blocks may be evicted. Resumes when there is room.",
+   "new": "The next model request waits. External tool work can continue."
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "Logical only. No decode preemption: the in-flight turn finishes, which frees the engine to evict that KV. Nothing acting left? Mark the smallest reasoning program instead.",
+   "new": "Hold the next request; let in-flight decode finish. If pausing ACTING programs is insufficient, mark running programs to pause after their current turn."
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "Smallest paused programs first, bin-packed back under the threshold.",
+   "new": "Select programs that fit, favoring smaller contexts within each admission group, then pack them onto workers."
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "U<sub>worker</sub> = &Sigma; tokens of ACTING programs on the worker &nbsp;&divide;&nbsp; KV pool capacity",
+   "new": "U<sub>worker</sub> = &Sigma; (active-program tokens + buffer) &nbsp;&divide;&nbsp; GPU KV capacity in tokens"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "soft-demote band: &minus;2.0 priority, nothing paused yet",
+   "new": "logical utilization estimate; not physical KV occupancy"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "0.85 · resume allowed below here",
+   "new": "0.85 · projected resume limit"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "U &ge; 0.95: pause",
+   "new": "U &gt; 0.95: pause"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "Over-subscribed. Pause the smallest ACTING programs first, until U is back at 0.80.",
+   "new": "Pause smaller ACTING programs first, aiming for 0.80. Running turns can be marked to pause after completion."
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "Nothing paused yet. Programs take a &minus;2.0 priority penalty as early back-pressure.",
+   "new": "Paused programs leave the active estimate. Their cached bytes may remain until the engine reuses the space."
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "U &le; 0.85: resume",
+   "new": "Projected U &lt; 0.85: resume"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "Only 0.10 below the pause line, so the loop does not flap at the threshold.",
+   "new": "Normal resume includes the candidate&rsquo;s token count and buffer. The 0.10 gap reduces repeated pause/resume cycles."
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "<b>Resume is a bin-packing pass:</b> smallest programs first, under the threshold, with a per-program buffer. Resumed turns get a one-second priority boost, and a 30-minute cap means nothing starves.",
+   "new": "<b>Resume:</b> select and pack programs across workers, accounting for token buffers and worker pinning. A 30-minute default timeout releases a waiting request if a worker is live; downstream queues and deadlines still apply."
+  },
+  {
+   "slide": 48,
+   "deck": "router",
+   "index": 34,
+   "old": "At low concurrency nothing needs to pause, so it matches plain KV routing. The gain appears as concurrency grows, and it is the re-prefill work that request-level routing cannot avoid.",
+   "new": "Reported results from Dynamo&rsquo;s October evaluation. At higher concurrency, retaining useful prefixes reduces repeated prefill. Results depend on the model, workload and cache capacity."
+  },
+  {
+   "slide": 48,
+   "deck": "router",
+   "index": 34,
+   "old": "Prefix-cache hit rate above <b>94.5%</b> across the whole sweep.",
+   "new": "Prefix-cache hit rate above <b>94.5%</b> across the RL sweep."
+  },
+  {
+   "slide": 3,
+   "deck": "fund",
+   "index": 0,
+   "old": "A coding agent is a loop around an HTTP endpoint",
+   "new": "Coding-agent request flow"
+  },
+  {
+   "slide": 4,
+   "deck": "fund",
+   "index": 1,
+   "old": "Performance depends on compute throughput and memory bandwidth.",
+   "new": "Performance depends on arithmetic throughput and memory bandwidth."
+  },
+  {
+   "slide": 6,
+   "deck": "fund",
+   "index": 3,
+   "old": "GPU memory is one finite budget",
+   "new": "GPU memory allocation"
+  },
+  {
+   "slide": 6,
+   "deck": "fund",
+   "index": 3,
+   "old": "<strong>Fixed, large</strong>Loaded once at startup. Nothing about the traffic changes it.",
+   "new": "<strong>Model weights</strong>Loaded at startup and shared across requests."
+  },
+  {
+   "slide": 6,
+   "deck": "fund",
+   "index": 3,
+   "old": "<strong>What is left</strong>Cache occupies real memory. One engine serves several active requests from different users at once, and their state shares this pool.",
+   "new": "<strong>KV cache pool</strong>KV-cache blocks for concurrent requests share the memory reserved by the engine."
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "Memory tiers: more capacity, less bandwidth",
+   "new": "Memory capacity and bandwidth"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "sideways over NVLink 6 · a neighbor, not a tier",
+   "new": "NVLink 6 peer access"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "Prefill-to-decode handoff, peer weights (ModelExpress): <b>GPU to GPU, no trip down the ladder</b>.",
+   "new": "<b>GPU-to-GPU transfers</b> for prefill-to-decode KV cache and ModelExpress weights."
+  },
+  {
+   "slide": 9,
+   "deck": "fund",
+   "index": 6,
+   "old": "The cost of a request depends on where it lands",
+   "new": "Cache locality and prefill latency"
+  },
+  {
+   "slide": 9,
+   "deck": "fund",
+   "index": 6,
+   "old": "everything, again",
+   "new": "full context"
+  },
+  {
+   "slide": 9,
+   "deck": "fund",
+   "index": 6,
+   "old": "<b>Identical replicas stop being interchangeable</b> once they hold different cached state.<small>Which server a request lands on now changes its cost, its latency, and the capacity left for everyone else.</small>",
+   "new": "<b>Workers cache different prefixes.</b><small>A matching cached prefix reduces prefill work. Queueing and worker load also affect latency.</small>"
+  },
+  {
+   "slide": 10,
+   "deck": "fund",
+   "index": 7,
+   "old": "Deploy, then keep talking",
+   "new": "Apply the deployment"
+  },
+  {
+   "slide": 10,
+   "deck": "fund",
+   "index": 7,
+   "old": "Keypress-controlled terminal demo. Resource/timing and worker-log panes alongside; the service stays up for 1.5.",
+   "new": "Deploy one worker, verify readiness and model discovery, then send a streaming request."
+  },
+  {
+   "slide": 11,
+   "deck": "fund",
+   "index": 8,
+   "old": "The smallest useful DynamoGraphDeployment",
+   "new": "DynamoGraphDeployment configuration"
+  },
+  {
+   "slide": 11,
+   "deck": "fund",
+   "index": 8,
+   "old": "Frontend · HTTP in, tokens out",
+   "new": "HTTP frontend"
+  },
+  {
+   "slide": 11,
+   "deck": "fund",
+   "index": 8,
+   "old": "The OpenAI-compatible endpoint, running <b>without a GPU</b>. Separated from the engine on purpose; the later experiments show why.",
+   "new": "The OpenAI-compatible endpoint runs <b>without a GPU</b>, separately from the inference worker."
+  },
+  {
+   "slide": 11,
+   "deck": "fund",
+   "index": 8,
+   "old": "Worker · the engine on GPUs",
+   "new": "vLLM worker"
+  },
+  {
+   "slide": 11,
+   "deck": "fund",
+   "index": 8,
+   "old": "One object for the operator",
+   "new": "Operator reconciliation"
+  },
+  {
+   "slide": 12,
+   "deck": "fund",
+   "index": 9,
+   "old": "Ready takes minutes, and weights are only part of it",
+   "new": "Worker startup latency"
+  },
+  {
+   "slide": 12,
+   "deck": "fund",
+   "index": 9,
+   "old": "Everything else",
+   "new": "Other startup"
+  },
+  {
+   "slide": 12,
+   "deck": "fund",
+   "index": 9,
+   "old": "<strong>Before and after</strong>",
+   "new": "<strong>Other startup tasks</strong>"
+  },
+  {
+   "slide": 12,
+   "deck": "fund",
+   "index": 9,
+   "old": "Reading the checkpoint from storage. The largest single phase. Its length depends on the storage path, which is the ModelExpress story in scaling.",
+   "new": "Reading the checkpoint, preparing its tensors and copying them to GPU memory. Storage bandwidth is one component of loading time."
+  },
+  {
+   "slide": 12,
+   "deck": "fund",
+   "index": 9,
+   "old": "<strong>The engine state from 1.2</strong>Compilation, warm-up, graph capture, KV-cache allocation. Comes back in recovery.",
+   "new": "<strong>Engine initialization</strong>Compilation, warm-up, graph capture and KV-cache allocation."
+  },
+  {
+   "slide": 13,
+   "deck": "fund",
+   "index": 10,
+   "old": "Five measurements, in the agent&#8217;s terms",
+   "new": "Inference performance metrics"
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "Faster for each agent, or more tokens per megawatt",
+   "new": "Per-user token rate versus throughput"
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "Run at the left end: the most tokens per megawatt",
+   "new": "Maximum throughput per megawatt"
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "Run at the right end: the fastest stream for each agent",
+   "new": "Maximum per-user token rate"
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "The lowest cost per token and the most sessions per rack. The batch is always full, so the hardware earns its keep.",
+   "new": "Higher aggregate token throughput for the same power budget."
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "Speed for each agent. Every token takes longer, so a forty-turn task stretches and tool loops close slowly.",
+   "new": "Lower per-user token rate increases generation time for each agent turn."
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "Work nobody is watching: RL rollouts, evaluations, overnight batch pipelines.",
+   "new": "Batch workloads: RL rollouts, evaluations and offline pipelines."
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "Turns come back fast. An interactive coding session feels live and its tool loops close quickly.",
+   "new": "Higher per-user token rate reduces generation time for each agent turn."
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "Ten to a hundred times fewer tokens per megawatt, so cost per token climbs and fewer sessions fit per rack.",
+   "new": "Lower aggregate token throughput per megawatt."
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "Humans in the loop and latency promises: interactive assistants, customer-facing chat.",
+   "new": "Interactive workloads with latency targets: coding assistants and customer-facing chat."
+  },
+  {
+   "slide": 17,
+   "deck": "scaling",
+   "index": 0,
+   "old": "Turn up the load and watch three numbers",
+   "new": "Agent concurrency and request queues"
+  },
+  {
+   "slide": 17,
+   "deck": "scaling",
+   "index": 0,
+   "old": "what AIPerf turns up",
+   "new": "concurrent sessions"
+  },
+  {
+   "slide": 17,
+   "deck": "scaling",
+   "index": 0,
+   "old": "8 agents, 7 requests in flight, 5 running and 2 waiting. AIPerf turns up the first number; the engine only ever feels the other two.<small>Tool calls and subagents are why the numbers drift apart, and a coding-agent workload has plenty of both.</small>",
+   "new": "8 agent sessions: 7 requests in flight, with 5 active and 2 queued.<small>Tool calls pause inference requests; parallel subagents can issue several requests per session.</small>"
+  },
+  {
+   "slide": 18,
+   "deck": "scaling",
+   "index": 2,
+   "old": "The KV pool fills up before anything else does",
+   "new": "KV-cache capacity and CPU offloading"
+  },
+  {
+   "slide": 18,
+   "deck": "scaling",
+   "index": 2,
+   "old": "New requests wait for a free slot, or the engine throws out someone&#8217;s working state (A4 here) and recomputes it later. Either way the curve bends.",
+   "new": "The engine can reclaim unused cached prefixes, queue new requests, or preempt running requests when KV-cache blocks are unavailable."
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "A second replica is one line, and then eight minutes",
+   "new": "Replica scale-out latency"
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "We scale by hand. Change the replica count, apply, and the operator starts a second worker. The agents notice nothing until it is Ready.<small>Automated scaling gets one overview slide later on; there is no Planner demo.</small>",
+   "new": "Increase the worker replica count and apply the DGD. The operator starts another worker.<small>Serving capacity increases after the worker becomes Ready and registers with the frontend.</small>"
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "Everything else",
+   "new": "Other startup"
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "<strong>Meanwhile</strong>",
+   "new": "<strong>Existing capacity</strong>"
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "<strong>The same read, again</strong>",
+   "new": "<strong>Checkpoint loading</strong>"
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "<strong>Still to come</strong>Compilation, warm-up, graph capture. ModelExpress can copy the compile caches too; Snapshot skips this part, in resiliency.",
+   "new": "<strong>Engine initialization</strong>Compilation, warm-up and graph capture. ModelExpress can copy the compile caches too; Snapshot skips this part, in resiliency."
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "You asked for capacity eight minutes ago and still don&#8217;t have it. That wait is what ModelExpress is about.",
+   "new": "Model loading accounted for 267 of the 493 seconds to Ready in this run. ModelExpress targets the weight-loading phase."
+  },
+  {
+   "slide": 4,
+   "deck": "fund",
+   "index": 1,
+   "old": "<p>Tokenizes prompts. Schedules active sequences with <b>continuous batching</b>. Launches GPU forward passes and allocates <b>KV-cache blocks</b>.</p>",
+   "new": "<p>The serving stack tokenizes prompts. The engine uses <b>continuous batching</b> to schedule GPU forward passes and allocates <b>KV-cache blocks</b>.</p>"
+  },
+  {
+   "slide": 5,
+   "deck": "fund",
+   "index": 2,
+   "old": "Decode step time determines <b>inter-token latency</b>.",
+   "new": "Decode step time, scheduling and response delivery affect <b>inter-token latency</b>."
+  },
+  {
+   "slide": 6,
+   "deck": "fund",
+   "index": 3,
+   "old": "<strong>Fixed</strong>Activation buffers and scratch space.",
+   "new": "<strong>Workspace</strong>Activation buffers, scratch space and compiled/captured execution graphs."
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "Log scale · memory rows: total bandwidth · link rows: one direction.",
+   "new": "Published architecture examples; workshop hardware: H100. Log scale. Memory bandwidth is total; link bandwidth is one direction."
+  },
+  {
+   "slide": 8,
+   "deck": "fund",
+   "index": 5,
+   "old": "Only this part needs prompt processing. Reuse shortens prefill; it does not speed up generating each new token.",
+   "new": "Prefill processes the uncached suffix, which still attends to the cached prefix. Reuse reduces prefill work."
+  },
+  {
+   "slide": 10,
+   "deck": "fund",
+   "index": 7,
+   "old": "Deployments, Pods and the frontend Service appear.",
+   "new": "Grove resources, Pods, Services and GPU claims appear."
+  },
+  {
+   "slide": 10,
+   "deck": "fund",
+   "index": 7,
+   "old": "Pod scheduling and model startup run continuously inside this step.",
+   "new": "Pod scheduling and engine initialization begin."
+  },
+  {
+   "slide": 11,
+   "deck": "fund",
+   "index": 8,
+   "old": "The Dynamo operator <b>reconciles</b> this single resource into the Deployments, Pods and Services that actually run.",
+   "new": "The Dynamo operator <b>reconciles</b> the DGD into Grove resources, Pods, Services and GPU claims on this cluster."
+  },
+  {
+   "slide": 18,
+   "deck": "scaling",
+   "index": 2,
+   "old": "With native CPU offloading, blocks the GPU had to drop go to host memory instead, including the prefixes of idle sessions. The next hit on that prefix copies them back rather than recomputing.",
+   "new": "Native KV offloading retains reusable blocks in host memory. If a GPU copy is evicted, an available host copy can be reloaded instead of recomputed."
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "Replica 1 keeps serving, still below target.",
+   "new": "Replica 1 continues serving during startup."
+  },
+  {
+   "slide": 19,
+   "deck": "scaling",
+   "index": 3,
+   "old": "Every new replica pulls the same checkpoint from the same storage. A replica that already holds the weights would be a faster source.",
+   "new": "Native loading reads the checkpoint from storage. A compatible peer replica can provide an alternative weight source."
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "Prefill and decode fight over the same GPU",
+   "new": "Prefill and decode resource contention"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "Give each phase its own pool of workers",
+   "new": "Separate prefill and decode worker pools"
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "One request, step by step",
+   "new": "Disaggregated request flow"
+  },
+  {
+   "slide": 37,
+   "deck": "scaling",
+   "index": 7,
+   "old": "What disaggregation buys you",
+   "new": "Disaggregation performance benefits"
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "The Planner is Dynamo&#8217;s autoscaler",
+   "new": "Dynamo Planner"
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "Prefill reads the prompt",
+   "new": "Prefill"
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "Decode writes the answer",
+   "new": "Decode"
+  },
+  {
+   "slide": 34,
+   "deck": "scaling",
+   "index": 4,
+   "old": "one aggregated engine, step by step →",
+   "new": "Aggregated engine execution →"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "when prompts pile up",
+   "new": "as prefill demand increases"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "when generation slows down",
+   "new": "as decode demand increases"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "Own engine settings",
+   "new": "Independent engine configuration"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "Own replica count",
+   "new": "Independent replica counts"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "Even different GPUs",
+   "new": "Heterogeneous GPUs"
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "② build the state",
+   "new": "② compute the KV cache"
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "④ pull, then ⑤ generate",
+   "new": "④ receive KV, ⑤ decode"
+  },
+  {
+   "slide": 37,
+   "deck": "scaling",
+   "index": 7,
+   "old": "The right shape for each phase",
+   "new": "Phase-specific parallelism"
+  },
+  {
+   "slide": 37,
+   "deck": "scaling",
+   "index": 7,
+   "old": "Sized and scaled separately",
+   "new": "Independent pool sizing"
+  },
+  {
+   "slide": 38,
+   "deck": "scaling",
+   "index": 9,
+   "old": "Also in the box: EPD for multimodal",
+   "new": "Encode, prefill and decode disaggregation"
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "<h3><small>what it watches</small>Traffic and engine metrics</h3>",
+   "new": "<h3>Traffic and engine metrics</h3>"
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "<h3><small>what it decides</small>How many engines to run</h3>",
+   "new": "<h3>Target replica counts</h3>"
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "<h3><small>what it writes</small>The replicas lines in your DGD</h3>",
+   "new": "<h3>DGD replica updates</h3>"
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "The operator and Grove take it from there and place whole instances.",
+   "new": "The Dynamo operator reconciles the updated replica counts."
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "It runs inside your deployment and decides, on a timer, how many prefill and decode engines to run.",
+   "new": "Planner adjusts prefill and decode replica counts from traffic, engine metrics and configured targets."
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "In this workshop we scale by hand. This is the one overview of automated scaling, and there is no Planner demo. The next two slides show what you set, and what the number it writes actually scales.",
+   "new": "Prefill and decode scale independently. Planner writes replica counts; the Dynamo operator reconciles the deployment."
+  },
+  {
+   "slide": 41,
+   "deck": "planner",
+   "index": 4,
+   "old": "Two ways to tell Planner when to scale",
+   "new": "Planner scaling modes"
+  },
+  {
+   "slide": 41,
+   "deck": "planner",
+   "index": 4,
+   "old": "“Add an engine when the current ones are busy.”",
+   "new": "Scale when queue or KV demand crosses a threshold."
+  },
+  {
+   "slide": 41,
+   "deck": "planner",
+   "index": 4,
+   "old": "“Keep TTFT ≤ 500 ms and ITL ≤ 50 ms.”",
+   "new": "Example targets: TTFT ≤ 500 ms; ITL ≤ 50 ms."
+  },
+  {
+   "slide": 41,
+   "deck": "planner",
+   "index": 4,
+   "old": "<text x=\"768\" y=\"446\" class=\"md b fp\">The mode the next slides explain →</text>",
+   "new": ""
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "old": "Stop overload at the router, not in the engine",
+   "new": "Request admission and overload protection"
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "old": "Admit everything, and past capacity <b>every</b> request gets slow. Admit only what fits, and the rest <b>waits</b> or gets a fast <b>529</b>.",
+   "new": "When offered load exceeds capacity, queueing increases latency. Admission policies can <b>defer</b> requests or return <b>529</b> to limit worker load."
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "old": "The four gates",
+   "new": "Admission policy mechanisms"
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "old": "<b>① Reject fast</b>",
+   "new": "<b>① Reject</b>"
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "old": "<b>② Hold</b>",
+   "new": "<b>② Queue</b>"
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "old": "<b>③ Order</b>",
+   "new": "<b>③ Schedule</b>"
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "old": "<b>④ Decide</b>",
+   "new": "<b>④ Classify</b>"
+  },
+  {
+   "slide": 44,
+   "deck": "router",
+   "index": 15,
+   "old": "your classifier",
+   "new": "request classifier"
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "old": "A request-level router can&rsquo;t see the agent behind the request",
+   "new": "Request-level routing and session memory"
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "old": "Between turns, the cache stays put",
+   "new": "KV cache between agent turns"
+  },
+  {
+   "slide": 45,
+   "deck": "router",
+   "index": 31,
+   "old": "Cache-occupancy blowup",
+   "new": "KV cache eviction"
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "Admit and pause whole sessions, at tool boundaries",
+   "new": "Session scheduling at tool boundaries"
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "Parked, KV warm",
+   "new": "Acting, cache reusable"
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "The natural pause point: the agent is about to be idle anyway.",
+   "new": "The scheduler can defer the next inference request while the agent runs a tool."
+  },
+  {
+   "slide": 46,
+   "deck": "router",
+   "index": 32,
+   "old": "Headroom &rarr; resume",
+   "new": "Capacity available &rarr; resume"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "One number per worker drives pause and resume",
+   "new": "Session utilization and scheduling thresholds"
+  },
+  {
+   "slide": 48,
+   "deck": "router",
+   "index": 34,
+   "old": "Where it pays: medium and high concurrency",
+   "new": "Session scheduling benchmark results"
+  },
+  {
+   "slide": 48,
+   "deck": "router",
+   "index": 34,
+   "old": "About even",
+   "new": "Similar throughput"
+  },
+  {
+   "slide": 48,
+   "deck": "router",
+   "index": 34,
+   "old": "nothing needed to pause",
+   "new": "low concurrency"
+  },
+  {
+   "slide": 48,
+   "deck": "router",
+   "index": 34,
+   "old": "Keeps scaling",
+   "new": "Higher throughput"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "the same ladder with smaller numbers",
+   "new": "the same memory types with different capacity and bandwidth"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "no tier is a free lunch",
+   "new": "each transfer path has latency and bandwidth limits"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "moves along this ladder",
+   "new": "transfers between memory locations"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "The top rung",
+   "new": "The SRAM row"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "the sideways option",
+   "new": "peer access"
+  },
+  {
+   "slide": 7,
+   "deck": "fund",
+   "index": 4,
+   "old": "tier below",
+   "new": "additional tier"
+  },
+  {
+   "slide": 11,
+   "deck": "fund",
+   "index": 8,
+   "old": "# HTTP in, tokens out · no GPU",
+   "new": "# HTTP frontend · no GPU"
+  },
+  {
+   "slide": 14,
+   "deck": "fund",
+   "index": 11,
+   "old": "tokens per second, per all-in megawatt",
+   "new": "Output tokens/s per all-in MW"
+  },
+  {
+   "slide": 35,
+   "deck": "scaling",
+   "index": 5,
+   "old": "Takes the request, picks a prefill worker and a decode worker for it.",
+   "new": "Routes work to prefill and decode workers."
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "One streaming request.",
+   "new": "Sends a request."
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "Routes prefill and decode work; KV-aware routing balances <b>cache overlap and load</b>.",
+   "new": "Preprocesses the request, then picks a prefill worker and a decode worker for it."
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "left:760px;top:455px;width:400px",
+   "new": "left:800px;top:486px;width:430px"
+  },
+  {
+   "slide": 36,
+   "deck": "scaling",
+   "index": 6,
+   "old": "③ the router forwards the request to the decode worker<small>with the prefill worker&#8217;s transfer metadata attached</small>",
+   "new": "③ Forward request and KV metadata"
+  },
+  {
+   "slide": 37,
+   "deck": "scaling",
+   "index": 7,
+   "old": "no interference",
+   "new": "scheduling isolation"
+  },
+  {
+   "slide": 40,
+   "deck": "scaling",
+   "index": 10,
+   "old": "Behaviour and defaults are from the Dynamo v1.5.1 Planner docs; the two slides that follow come from the Planner × Grove deck on ai-dynamo.org.",
+   "new": "Configuration and defaults: Dynamo v1.5.1 Planner documentation."
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "0.80 to 0.95: lean on it",
+   "new": "Paused-session accounting"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "<i class=\"soft\" style=\"width:50%\">logical utilization estimate; not physical KV occupancy</i>",
+   "new": "<i class=\"soft\" style=\"width:50%\"></i>"
+  },
+  {
+   "slide": 47,
+   "deck": "router",
+   "index": 33,
+   "old": "GPU KV capacity in tokens</span></div>",
+   "new": "GPU KV capacity in tokens</span><small style=\"display:block;font-size:14px;margin:2px 0;color:var(--dim)\">U estimates active-session demand, including token buffers.</small></div>"
+  },
+  {
+   "slide": 15,
+   "deck": "aiperf",
+   "index": 9,
+   "old": "<div class=\"ap-ub\">",
+   "new": "<div class=\"ap-ub\" style=\"grid-template-columns:minmax(0,750px);justify-content:center\">"
+  },
+  {
+   "slide": 15,
+   "deck": "aiperf",
+   "index": 9,
+   "old": "<a class=\"ap-u\" href=\"https://aws.amazon.com/blogs/machine-learning/amazon-sagemaker-ai-now-supports-optimized-generative-ai-inference-recommendations/\" target=\"_blank\"><div class=\"sx-h\">AWS · SageMaker AI</div><b>Powers inference recommendations</b><span>picked after evaluating tools, for detailed, consistent metrics; AWS contributed multi-run confidence and adaptive convergence upstream</span></a>",
+   "new": ""
+  }
+ ]
+}

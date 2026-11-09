@@ -1,0 +1,66 @@
+{
+  "updated_at": "2026-11-04T00:46:41.059009+00:00",
+  "observed_at": "2026-11-04T00:43:33.432893+00:00",
+  "evidence": "results/workshop-stable-controller-20261103/status-a1/status.json",
+  "stage": "C4 scaleout accepted/analyzed/cleaned; stable controller running matched routing C1",
+  "run": "results/workshop-rr-20261103-resume02",
+  "namespace": "dynamo-ft-r610-1ec4908b-rr",
+  "remote_host": "ip-172-31-10-102",
+  "container": "kubecon-workshop-controller-20261103",
+  "remote_stage_receipt": {
+    "at": "2026-11-04T00:43:25.269057+00:00",
+    "stage": "routing-c1",
+    "pid": 6466,
+    "started_at": "2026-11-04T00:37:10.256247+00:00"
+  },
+  "c4_snapshot_metrics": {
+    "type": "scaleout",
+    "concurrency_session_trees": 4,
+    "paired_repetitions": 1,
+    "second_over_first": {
+      "output_tokens_per_second": 0.9278704938658545,
+      "record_span_output_tokens_per_second": 0.9309047333189441,
+      "decode_tokens_per_second_per_user_mean": 1.083944674055049,
+      "ttft_p50_ms": 1.55979370620822,
+      "ttft_p99_ms": 2.435755008814578
+    },
+    "canonical_throughput_denominators_differ": false,
+    "arms": [
+      {
+        "arm": "c4-r1-a1",
+        "benchmark_id": "a111b88b5f25",
+        "requests": 122.0,
+        "request_error_count": 0,
+        "cancelled_profile_records": 0,
+        "output_tokens": 97394.0,
+        "output_tokens_per_second": 81.16156709468022,
+        "record_span_output_tokens_per_second": 107.89354930810248,
+        "decode_tokens_per_second_per_user_mean": 139.7855206040956,
+        "ttft_p50_ms": 306.187886,
+        "ttft_p99_ms": 2150.721189939998,
+        "server_reported_cache_read_pct": 95.79489543207417,
+        "predicted_kv_hit_histogram_count": 0,
+        "predicted_kv_hit_histogram_sum": 0
+      },
+      {
+        "arm": "c4-r2-a1",
+        "benchmark_id": "7da28139933b",
+        "requests": 114.0,
+        "request_error_count": 0,
+        "cancelled_profile_records": 0,
+        "output_tokens": 90369.0,
+        "output_tokens_per_second": 75.30742334306763,
+        "record_span_output_tokens_per_second": 100.43861574549348,
+        "decode_tokens_per_second_per_user_mean": 151.51977056882174,
+        "ttft_p50_ms": 477.58993749999996,
+        "ttft_p99_ms": 5238.6299109599995,
+        "server_reported_cache_read_pct": 90.71782674763152,
+        "predicted_kv_hit_histogram_count": 0,
+        "predicted_kv_hit_histogram_sum": 0
+      }
+    ]
+  },
+  "raw_remote_pullback_and_local_sealing": "pending",
+  "local_gpu_mutations_allowed": false,
+  "local_results_are_live_remote_state": false
+}

@@ -1,0 +1,132 @@
+{
+  "schema": 1,
+  "model_lock": {
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+    "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+    "gated": false,
+    "architecture": [
+      "NemotronH_Omni_Reasoning_V3"
+    ],
+    "dynamo_source_revision": "d48a9641f9754557815cd370c3154a2904ff569b",
+    "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+    "sources": [
+      {
+        "path": "recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml",
+        "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml",
+        "sha256": "c39c79aec821dcda8d154ddb95e9d61c4792eee7ed7b35323982dfee5c15a813"
+      },
+      {
+        "path": "recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml",
+        "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml",
+        "sha256": "1c56c9db495e84c0fdb39407c5cf3fabdc64ecb737ae95c88f90258e131bd0bd"
+      },
+      {
+        "path": "recipes/nemotron-3.5-lightning/vllm/check-efa-userspace.sh",
+        "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/check-efa-userspace.sh",
+        "sha256": "ae3d5b15b5bc4c43f136b285716e31390fbe3e9b08fc13bc38c573533610896e"
+      },
+      {
+        "path": "lib/sidecar/vllm/deploy/agg.yaml",
+        "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/lib/sidecar/vllm/deploy/agg.yaml",
+        "sha256": "db991cdbe92dcb5625eb344e71516e031ab7ebad084c85cad19fb420657c977d"
+      },
+      {
+        "path": "lib/sidecar/sglang/deploy/agg_kv_router.yaml",
+        "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/lib/sidecar/sglang/deploy/agg_kv_router.yaml",
+        "sha256": "cc2a2fe4588e76f2f4e40d8ea5611a7211c4cebd1a39e4da3fdb04fad54bcbfc"
+      }
+    ],
+    "runtime_version_override": "1.6.0",
+    "runtime_release": "1.6.0",
+    "common_runtime": true,
+    "image_pull_secret": "common-runtime-pull",
+    "runtime_source_revision": "ea23e5130c1bfbadec477b99449d0cee5598caa0",
+    "tensor_parallel_size": 2,
+    "gpu_allocation": "dra",
+    "manifest_directory": "super-vl-tp2",
+    "model_metadata_sha256": {
+      "config.json": "35189a8038d1b1f934e58cba50eb7e97b42a4da569424e35b9fd1048058bc7ea",
+      "tokenizer_config.json": "89fa70d31734c0c75ffdcee4114449f8cf8abd64bc233d420b58e25763f91aba",
+      "model.safetensors.index.json": "c368acdbcfe882236af1ec79df4a1fb6127e6ed9f742d59c01c21fe96ddc2741",
+      "README.md": "c3408047c2e42cae5c19c7c10f407c364b0926d5a523b34c40d0b55f80c8a807"
+    },
+    "checkpoint_weight_bytes": 75010189968,
+    "checkpoint_weight_files": 88
+  },
+  "namespace": "dynamo-ft-routing-overnight-20261105-a1",
+  "model_cache_run_id": "20261015-super-vl-tp2",
+  "checkpoint_weight_bytes": 75010188240,
+  "model_cache_reference_sha256": "9cb126cd898bd41cda7d7df8f20c7bd0f3d43ea0b37fbe3956598ec9c4d0fc6c",
+  "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+  "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+  "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+  "sequence": [
+    {
+      "configuration": "one-rr",
+      "concurrency": 16,
+      "arm": "one-rr-c16-a1"
+    },
+    {
+      "configuration": "two-rr",
+      "concurrency": 16,
+      "arm": "two-rr-c16-a1"
+    },
+    {
+      "configuration": "two-kv",
+      "concurrency": 16,
+      "arm": "two-kv-c16-a1"
+    },
+    {
+      "configuration": "one-rr",
+      "concurrency": 32,
+      "arm": "one-rr-c32-a1"
+    },
+    {
+      "configuration": "two-rr",
+      "concurrency": 32,
+      "arm": "two-rr-c32-a1"
+    },
+    {
+      "configuration": "two-kv",
+      "concurrency": 32,
+      "arm": "two-kv-c32-a1"
+    }
+  ],
+  "gpu_uuids_by_node": {
+    "kubecon-nke-site-cp-0198": [
+      "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5",
+      "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326"
+    ],
+    "kubecon-nke-site-cp-0942": [
+      "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8",
+      "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75"
+    ]
+  },
+  "cpu_node": "kubecon-nke-site-cp-0942",
+  "tp": 2,
+  "native_context": 1048576,
+  "max_num_seqs": 128,
+  "max_num_batched_tokens": 8192,
+  "gpu_memory_utilization": 0.85,
+  "text_only": true,
+  "compile": true,
+  "seed": 20261030,
+  "profile_seconds": 900,
+  "grace_seconds": 300,
+  "warmup": "unchanged canonical AgentX snapshot primer",
+  "repetitions": 1,
+  "routing_tuning": "defaults; no weight tuning; only frontend router mode differs",
+  "concurrent_work": "Disjoint exact GPU0+2 pairs on cp-0198/cp-0942; concurrent node CPU, EFS and network load from other demo tests",
+  "pull_secret_source_namespace": "dynamo-ft-r610-1ec4908b-rr",
+  "lease": ".local/overnight-routing-sweep.gpu-lease",
+  "lease_owner": "/root/routing_load_sweep",
+  "loads": [
+    16,
+    32
+  ],
+  "cache_history": "Fresh workers/private compiler caches per cell; bounded smoke and new canonical AgentX primer before each profile",
+  "parameter_authorization": "User authorized overnight testing and full cluster on 2026-11-04; parent selected fresh C16/C32 matched subset of original range",
+  "client_deadline_seconds": 86400,
+  "worker_deadline_seconds": 21600,
+  "measurement_class": "Topology-first C16 then C32 comparisons, N=1. Preserve overload/censoring as outcomes."
+}

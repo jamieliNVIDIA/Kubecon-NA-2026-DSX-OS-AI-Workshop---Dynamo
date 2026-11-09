@@ -1,0 +1,50 @@
+{
+  "profile": "super-vl-dgd-snapshot-upstream-kv-v1",
+  "source_sha256": "1998c2625b90f480541ed585ff3b2957de6ea86027cf380dde7435c47b795fc0",
+  "upstream_commit": "521225369330f2120f1676748057a692a24c2303",
+  "upstream_url": "https://github.com/ai-dynamo/dynamo/blob/521225369330f2120f1676748057a692a24c2303/components/src/dynamo/vllm/snapshot.py",
+  "upstream_module_sha256": "9e467ad95714a7979a778ad32631da0f40593c05b50f04c9a64df40168ca59b1",
+  "patched_sha256": "919766b39c7f240927ce5a8535e7e6ff21e5010e673de3c3c022ce2c7a7bc537",
+  "scope": "Exact merged PR #15887 module plus the v3 destination identity/offline bridge",
+  "pause_controller": "installed dynamo.vllm.handlers.VllmEnginePauseController",
+  "communicator_hooks": "Upstream detection and checkpoint_prepare/checkpoint_restore preserved",
+  "custom_pause_controller": false,
+  "remaining_custom_runtime_changes": [
+    "allowlisted restore proxy environment to restore-context.json",
+    "destination HF_HUB_OFFLINE policy restoration before registration"
+  ],
+  "status": "live capture, initial/replacement inference and cleanup passed",
+  "run": "results/workshop-snapshot-dgd-upstream-20261104-a1",
+  "reference_run": "results/workshop-snapshot-dgd-20261104-a3",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "storage": "EFS",
+  "scope_note": "Pinned-image backport of merged module; not a full runtime image upgrade",
+  "files": {
+    "deployment.yaml": "58e36b86237fac3b5bb35f0fd8e6d5fda05ab6feaddc023862a1a594edea17dd",
+    "runtime-patch.yaml": "b0515e4ac4e3a2d57aa9737e2c4583c4320a4cf5d0d5de317ddb274f9453b4b0",
+    "upstream-snapshot.py": "9e467ad95714a7979a778ad32631da0f40593c05b50f04c9a64df40168ca59b1"
+  },
+  "qualified_at": "2026-11-04T23:24:48.843191+00:00",
+  "initial_pod_to_ready_seconds": 334.0,
+  "replacement_pod_to_ready_seconds": 342.0,
+  "deletion_intent_to_observed_success_seconds": 360.9828,
+  "qualification_manifest": "demos/transcripts/live/04-snapshot-dgd-upstream/20261104-a1/qualification.json",
+  "observer_correction": "observer-attempt-01-exit.json",
+  "remaining": [
+    "Presenter runner wiring",
+    "Upstreaming or retaining destination identity/offline bridge"
+  ],
+  "nvme_qualification": {
+    "status": "live capture, initial/replacement inference and cleanup passed",
+    "run": "results/workshop-snapshot-dgd-upstream-nvme-20261104-a1",
+    "storage": "pre-staged node-local NVMe",
+    "report": "reports/workshop-snapshot-dgd-nvme.md",
+    "manifest": "demos/transcripts/live/04-snapshot-dgd-upstream-nvme/20261104-a1/qualification.json",
+    "initial_agent_restore_seconds": 34.053246449,
+    "replacement_agent_restore_seconds": 36.862565626,
+    "replacement_pod_to_ready_seconds": 59.0,
+    "deletion_intent_to_observed_success_seconds": 99.111868,
+    "initial_pod_clock_includes_staging": false,
+    "scope": "Same-node artifact-specific agent-private overlay; preparation excluded from agent/replacement clocks"
+  }
+}

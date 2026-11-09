@@ -1,0 +1,161 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/03-disaggregated
+
+Dynamo workshop · Disaggregated serving
+LIVE CLUSTER
+Run: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/03-disaggregated
+
+Preparation
+
+Next: 1/4  Specialize the workers
+
+================================================================
+1/4  Specialize the workers
+Prefill and decode have different resource demands; give each its own pool.
+================================================================
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/03-disaggregated/disagg-settings.yaml
+components:
+- type: frontend
+  router-mode: kv
+- type: prefill
+  replicas: 1
+  GPUs_per_replica: 2
+  args:
+    --disaggregation-mode: prefill
+    --kv-transfer-config: '{"kv_connector": "NixlConnector", "kv_role": "kv_producer",
+      "kv_connector_extra_config": {"backends": ["LIBFABRIC"]}}'
+  state_layout: DS
+- type: decode
+  replicas: 1
+  GPUs_per_replica: 2
+  args:
+    --disaggregation-mode: decode
+    --kv-transfer-config: '{"kv_connector": "NixlConnector", "kv_role": "kv_consumer",
+      "kv_connector_extra_config": {"backends": ["LIBFABRIC"]}}'
+  state_layout: DS
+
+Step finished in 0.0s
+
+Next: 2/4  Deploy both pools
+
+================================================================
+2/4  Deploy both pools
+Start one TP2 prefill worker and one TP2 decode worker, on separate nodes.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s apply -f /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/03-disaggregated/deployment.json
+Starting both pools continuously; per-worker phases update in the resource pane.
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s get dgd,deployments,services,pods,resourceclaims -n dynamo-ft-r610-a615039d-demo -o wide
+NAME                                           READY   BACKEND   AGE
+dynamographdeployment.nvidia.com/demo-disagg   True    vllm      12m
+
+NAME                           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE   SELECTOR
+service/demo-disagg-0          ClusterIP   None             <none>        <none>     12m   app.kubernetes.io/managed-by=grove-operator,app.kubernetes.io/part-of=demo-disagg,grove.io/podcliqueset-replica-index=0
+service/demo-disagg-decode     ClusterIP   10.100.88.221    <none>        9090/TCP   12m   nvidia.com/dynamo-component-type=decode,nvidia.com/dynamo-component=decode,nvidia.com/dynamo-namespace=dynamo-ft-r610-a615039d-demo-demo-disagg
+service/demo-disagg-frontend   ClusterIP   10.110.197.211   <none>        8000/TCP   12m   nvidia.com/dynamo-component-type=frontend,nvidia.com/dynamo-component=Frontend,nvidia.com/dynamo-namespace=dynamo-ft-r610-a615039d-demo-demo-disagg
+service/demo-disagg-prefill    ClusterIP   10.96.121.87     <none>        9090/TCP   12m   nvidia.com/dynamo-component-type=prefill,nvidia.com/dynamo-component=prefill,nvidia.com/dynamo-namespace=dynamo-ft-r610-a615039d-demo-demo-disagg
+
+NAME                               READY   STATUS    RESTARTS   AGE   IP               NODE                       NOMINATED NODE   READINESS GATES
+pod/demo-disagg-0-decode-cjqc8     1/1     Running   0          12m   192.168.100.58   kubecon-nke-site-cp-0198   <none>           <none>
+pod/demo-disagg-0-frontend-nsgwb   1/1     Running   0          12m   192.168.100.33   kubecon-nke-site-cp-0198   <none>           <none>
+pod/demo-disagg-0-prefill-jp592    1/1     Running   0          12m   192.168.92.219   kubecon-nke-site-cp-0124   <none>           <none>
+
+NAME                                                                       STATE                AGE
+resourceclaim.resource.k8s.io/demo-disagg-0-decode-cjqc8-gpu-main-29v85    allocated,reserved   12m
+resourceclaim.resource.k8s.io/demo-disagg-0-prefill-jp592-gpu-main-g65r7   allocated,reserved   12m
+
+Startup timing
+prefill
+  Pod startup      done       11.8s
+  Model loading    done      498.1s
+  Engine init      done      144.9s
+  Readiness        done       14.3s
+decode
+  Pod startup      done       12.8s
+  Model loading    done      497.9s
+  Engine init      done      144.4s
+  Readiness        done       43.8s
+Compiled 8k P/D profile. Concurrent worker phases overlap; do not sum them. Checkpoint staged; image pull and scheduling remain inside apply-to-Ready.
+
+Step finished in 773.6s
+
+Next: 3/4  Send a coding request
+
+================================================================
+3/4  Send a coding request
+The HTTP interface stays the same; request state travels between workers.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-a615039d-demo service/demo-disagg-frontend 18002:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18002/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793780725,"owned_by":"nvidia","context_window":8192}]}
+
+Request body:
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Request 5304653ef2074cdcae38b62d29471059. Repository context:\ndef subtract(a, b):\n    return a - b\n\ndef multiply(a, b):\n    return a * b\n\ndef divide(a, b):\n    if b == 0:\n        raise ValueError(\"zero divisor\")\n    return a / b\n\nAdd a matching short Python function add(a, b). Return code only."
+    }
+  ],
+  "max_completion_tokens": 64,
+  "temperature": 0,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "nvext": {
+    "extra_fields": [
+      "worker_id",
+      "timing"
+    ]
+  }
+}
+
+$ curl --fail --silent --show-error --no-buffer --max-time 180 http://127.0.0.1:18002/v1/chat/completions -H 'Content-Type: application/json' --data-binary @/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/03-disaggregated/active-request.json
+def add(a, b):
+    return a + b
+Worker IDs: {"prefill_worker_id": 8821638165760937, "prefill_dp_rank": 0, "decode_worker_id": 37163406967590, "decode_dp_rank": 0}
+
+Step finished in 11.4s
+
+Next: 4/4  Follow the KV handoff
+
+================================================================
+4/4  Follow the KV handoff
+Check distinct worker IDs and completed NIXL transfers for this request.
+================================================================
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/03-disaggregated/transfer-proof.json
+{
+  "simulated": false,
+  "worker": {
+    "prefill_worker_id": 8821638165760937,
+    "prefill_dp_rank": 0,
+    "decode_worker_id": 37163406967590,
+    "decode_dp_rank": 0
+  },
+  "decode_pod_uid": "7460c5ea-3684-42c6-96a7-87a70d206f24",
+  "metric_deltas": {
+    "vllm:nixl_bytes_transferred_sum": 103645184.0,
+    "vllm:nixl_bytes_transferred_count": 2.0,
+    "vllm:nixl_num_failed_transfers_total": 0.0,
+    "vllm:nixl_num_failed_notifications_total": 0.0
+  },
+  "scope": "One controlled request on an idle owned graph; functionality, not a performance comparison."
+}
+Prefill builds state; decode consumes transferred state and generates the answer.
+This establishes the handoff. A matched workload/GPU budget is needed to establish a speedup.
+
+Step finished in 0.9s
+
+Demo complete. The service stays running.
+
+Resume: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/03-disaggregated/run.sh --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/03-disaggregated
+Cleanup: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/03-disaggregated/run.sh cleanup --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/03-disaggregated

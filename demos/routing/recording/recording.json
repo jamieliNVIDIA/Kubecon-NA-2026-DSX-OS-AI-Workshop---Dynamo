@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "profile": "agentx-routing-recorded-c4-scaleout-c1-policy-v1",
+  "measurement_class": "historical-low-load-pilots",
+  "frozen_at": "2026-11-05T06:39:03.367118+00:00",
+  "sources": {
+    "scaleout-analysis.json": "results/workshop-c4-closeout-20261104-a1/analysis/recomputed-analysis.json",
+    "policy-analysis.json": "results/workshop-rrkv-stopped-pullback-20261104-a1/verified/results/workshop-rrkv-20261104-a1/routing-c1-a1-analysis.json",
+    "scaleout-verification.json": "results/workshop-c4-closeout-20261104-a1/verification.json",
+    "policy-verification.json": "results/workshop-rrkv-stopped-pullback-20261104-a1/verification.json",
+    "scaleout-arm1-aiperf.json": "results/workshop-c4-closeout-20261104-a1/verified/results/workshop-rr-20261103-resume02/c4-r1-a1/raw/c4-r1-a1/artifacts/profile_export_aiperf.json",
+    "scaleout-arm2-aiperf.json": "results/workshop-c4-closeout-20261104-a1/verified/results/workshop-rr-20261103-resume02/c4-r2-a1/raw/c4-r2-a1/artifacts/profile_export_aiperf.json",
+    "policy-arm1-aiperf.json": "results/workshop-rrkv-stopped-pullback-20261104-a1/verified/results/workshop-rrkv-20261104-a1/routing-c1-round-robin-a1/raw/routing-c1-round-robin-a1/artifacts/profile_export_aiperf.json",
+    "policy-arm2-aiperf.json": "results/workshop-rrkv-stopped-pullback-20261104-a1/verified/results/workshop-rrkv-20261104-a1/routing-c1-kv-a1/raw/routing-c1-kv-a1/artifacts/profile_export_aiperf.json",
+    "policy-round-robin-deployment.json": "results/workshop-rrkv-stopped-pullback-20261104-a1/verified/results/workshop-rrkv-20261104-a1/routing-c1-round-robin-a1/deployment.json",
+    "policy-kv-deployment.json": "results/workshop-rrkv-stopped-pullback-20261104-a1/verified/results/workshop-rrkv-20261104-a1/routing-c1-kv-a1/deployment.json",
+    "policy-kv-discovery.json": "results/workshop-rrkv-stopped-pullback-20261104-a1/verified/results/workshop-rrkv-20261104-a1/routing-c1-kv-a1/discovery-qualification.json"
+  },
+  "files_sha256": {
+    "scaleout-analysis.json": "b19811f43a2da2dec2e582fee0a8d63027cc5c458fb67f64072edeba8ad7847e",
+    "policy-analysis.json": "08b727ecda84f7249d72a4dca5d7040d2f462a0c02c88e0b4e535a8c72da04cf",
+    "scaleout-verification.json": "fafba7b5ba536ee66a4c51febe3735917eb99ffd2d1d848d67d5ac38b605582c",
+    "policy-verification.json": "35dcb254cadf76262e5c7cc63dc98a90749449041f5dcaf605529b96c42adeb1",
+    "scaleout-arm1-aiperf.json": "710fe2a25e0e07a7ebb2ed8ec9bb675b773a4b2b4f5bd3d5e2a8a4928bc7d5c0",
+    "scaleout-arm2-aiperf.json": "db864021db2425e0d67393d57c66aad98a4fb36c5d0fc0693a92cac59e73af1d",
+    "policy-arm1-aiperf.json": "8764f4d37caf49b834a2ea96c90ec7798e41ba05b7b3c89c247598b91ace367e",
+    "policy-arm2-aiperf.json": "154e86f608bfc172cc6335a891a40db6430f631c368f96e7923835d774285b83",
+    "policy-round-robin-deployment.json": "d39c9b9480e170be7cbc6ffb181794ceec210b9cc3210aac402e2eef2b8ab1cf",
+    "policy-kv-deployment.json": "529351ff05c15c2f262efd6f1a0de6f3dfcd7fec0424a4e89c856bc0eebc6c15",
+    "policy-kv-discovery.json": "aba187cf8763c7c4a2faad97ced71b749b22d810a24c3b47f515338982c6699a"
+  },
+  "scope": "C4 operational scale-out and separate C1 fresh-worker policy pair. N=1, low load. Not a capacity result, combined study, new benchmark, or latest load-sweep result.",
+  "higher_load_import": "Deliberately gated: a separate recording profile/importer must validate fresh 128-sequence experiments, overload/censoring and matched same-load pairs."
+}

@@ -1,0 +1,16 @@
+{
+  "a": {
+    "node": "kubecon-nke-site-cp-0198",
+    "gpu_uuids": [
+      "GPU-46608a07-1b00-810d-0d07-2fdf65a8e41f",
+      "GPU-23de81ec-c1e4-39a3-578a-ef7d7a3649cf"
+    ]
+  },
+  "b": {
+    "node": "kubecon-nke-site-cp-0942",
+    "gpu_uuids": [
+      "GPU-09ecbc64-ad4f-708b-6ca3-ba1ba5fd052f",
+      "GPU-e7ecf749-a1dc-bc9d-890c-f5376c5b995f"
+    ]
+  }
+}

@@ -1,0 +1,185 @@
+{
+  "status": "passed",
+  "mode": "live",
+  "run": "results/workshop-continuity-live-20261104-a2",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "model_lock_sha256": "1ec0db2144c73212ac71bf662f4f913412ebbff8712108984638751951467950",
+  "runtime": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "runtime_source_revision": "ea23e5130c1bfbadec477b99449d0cee5598caa0",
+  "profile": "super-vl-continuity-text-eager-v2",
+  "workers_per_case": 2,
+  "gpus_per_worker": 2,
+  "request_sha256": "bf633bfaf672cd217c01adf53326fca5e3e2f542077f4be03b825effd5c1213b",
+  "recording": "demos/transcripts/live/05-request-continuity/20261104-a2/main.txt",
+  "recording_sha256": "93e10d1788f58a49fac852755131790665d438d79e786f7241945fb7938d3bde",
+  "capture_sha256": "9729e2a5577371e15cc9c4924b5068dab3901467d71615dc3c8929016397dd65",
+  "source_sha256": {
+    "capture_workshop_demo.py": "defb0f25f6d899cae93a4180db11da2793a4f824049fb91dc1fc8d435ad2e878",
+    "workshop_demo.py": "364414bd2827ac0e0c6120349237285c7d060283c5f45f747e5a5e49431f34cf",
+    "workshop_demo_support.py": "2114e5f4528c65765f0f6733e5793f7873b918768440c0e0ad6e5798353fcf8e",
+    "workshop_disagg_demo.py": "3169f32f4a512c13fcf231b2e68600e67123966646581374cd2361106565cf0b",
+    "workshop_migration_demo.py": "a9f986c56ba5f8d66403a5c11638b33aae8b42f2081e9f04f3736909ac7f9d88",
+    "workshop_migration_evidence.py": "4afa7727be54ffe8835896eb0f44f4867cf4f66e5b78a633fb67c45b7fdd7af6",
+    "workshop_migration_probe.py": "9699cd97c9e996de74cb845daddc021915260b00bc382f4615f032b484b13555",
+    "workshop_modelexpress_demo.py": "da222740852bf8b72e23ed76d08c3b2edd88a170f9e94a25c05949b3e613457e",
+    "workshop_snapshot_demo.py": "ba93deb1aa25fcedc71209a5eec1a994fff192ec5355768b1096ffdb7783a090"
+  },
+  "immutable_capture_evidence_verified": true,
+  "capture_evidence_sha256": {
+    "comparison.json": "109b94e16195ab92fb61114a42c7b888074c9e791a29feb942533c0caaf6b5d5",
+    "demo.json": "66dd26c239e7927bacff6474416b8caf72e16c8dbcbee16e497f76bddb82fdc2",
+    "disabled/after-claims.json": "d1eeda381bdf69839c72053ed8dc94a56a9c0cf27dce7158c5025075b6eec4fe",
+    "disabled/after-demo-continuity-disabled-0-agg-f4wsz.log": "2d86f120124fba5572786e36f6b84c21ccd973d89caef87bcd782581ffa05304",
+    "disabled/after-demo-continuity-disabled-0-agg-gdqxb.log": "8deeb4316951e5623f9ef58b472a3cab0ce421293821d1aa9768ceb69abaaa7c",
+    "disabled/after-demo-continuity-disabled-0-frontend-slq9x.log": "227a1489d526f5c1c1f3dcfcbf7fb2bac93c6b35cbe07ec32be6c144663910ad",
+    "disabled/after-pods.json": "90e0c04ca7c3e16d1a495f92c31d76e48a5eba38d41dcde790472859e1aa950f",
+    "disabled/before-claims.json": "d1eeda381bdf69839c72053ed8dc94a56a9c0cf27dce7158c5025075b6eec4fe",
+    "disabled/before-demo-continuity-disabled-0-agg-f4wsz.log": "4d73d9ed2d98c157a94dd98af4e4040772e3f577d74154e07890067d8c17951d",
+    "disabled/before-demo-continuity-disabled-0-agg-gdqxb.log": "b5b7854cb6739ef884a7685b1e3fafc1f954bd9630473b71ec049d5869dfe618",
+    "disabled/before-demo-continuity-disabled-0-frontend-slq9x.log": "65ac00b4756303672e2ea6253458712caab81d2e0fbfbaba646bf0e75ac1383d",
+    "disabled/before-pods.json": "90e0c04ca7c3e16d1a495f92c31d76e48a5eba38d41dcde790472859e1aa950f",
+    "disabled/events.jsonl": "9c9bbf7c98cfd9524be06b9d3c7738df9c0cee39b44e5da0a5728fe9540354db",
+    "disabled/fault-intent.json": "788e14bceee4425a21649f25a9ba8391a189dc5986b50192e53f3b587671d515",
+    "disabled/fault-result.json": "297e43124970edbd9480cd7ba1d50c3859ff36b38da4f6d9ee1008e0e6fa4844",
+    "disabled/http.json": "1aa9c3b28773fba0d7ba17fe43d232d7717f4c3043a683019dfa0d6b9d344967",
+    "disabled/proof.json": "41615a05a2f933040180955d1cd519394e6a1d1c7a71be1f85841010ab8020d4",
+    "disabled/response.sse": "8d009267f6c69c244926c221274f3135f23f255b903a833ce25b313c7f114ca3",
+    "disabled/stream.json": "c0a61607083d2440cfe7b3faa90f76a893efb6c8b643cc977cba4bfa61834edf",
+    "disabled-claim.json": "16cc29705b175afffdbc312646700e8426ff24ace671a233457daa064856b566",
+    "disabled-deployment.json": "3d04935c177e9e88bef84e851a3a1da8433e4fcd6c8f517ac22b64ddc8281d33",
+    "disabled-deployment.yaml": "336fb77ea2a206e0ebcea53509d960fcaeb244a5b30bc91f8f6ae3b1a64063bf",
+    "disabled-ready-pods.json": "90e0c04ca7c3e16d1a495f92c31d76e48a5eba38d41dcde790472859e1aa950f",
+    "disabled-worker-metadata.json": "815ada1d7db69ff49fc2e68c597fcd42da05552eaad6cca10a7966eb951bbaae",
+    "enabled/after-claims.json": "d1eeda381bdf69839c72053ed8dc94a56a9c0cf27dce7158c5025075b6eec4fe",
+    "enabled/after-demo-continuity-enabled-0-agg-9sf4l.log": "89c0e3ab727b3feb888eece926312116d73b9cfb144a6a1d2a40bd8c46954c4d",
+    "enabled/after-demo-continuity-enabled-0-agg-tgzdn.log": "3e9a5fadb4a8e77024537d234aaf3726ace674d9be41733b7f44868536ab2229",
+    "enabled/after-demo-continuity-enabled-0-frontend-fb7wt.log": "990f8b265d90ed14827ac5ae17c164fd76419b3d85707308a26e7faae050d39e",
+    "enabled/after-pods.json": "2c51a4909f894fe4b130f330f531c765c51f3bac2e1fbc35fc0e15d149d49582",
+    "enabled/before-claims.json": "d1eeda381bdf69839c72053ed8dc94a56a9c0cf27dce7158c5025075b6eec4fe",
+    "enabled/before-demo-continuity-enabled-0-agg-9sf4l.log": "c94a6ecc008d6ea63d78b7880f24869d55da8f6bd03dc6b31e08ea3bda34bed0",
+    "enabled/before-demo-continuity-enabled-0-agg-tgzdn.log": "0ce64d455b739fa15e79b4918e00ee1049b54ff1dc0aa8ef8ce8d7527f2e07dc",
+    "enabled/before-demo-continuity-enabled-0-frontend-fb7wt.log": "099fbb306c468b735c28b0b4a070797101ea4012558b3bad321e4972e0a8a113",
+    "enabled/before-pods.json": "95c96c7e0f58ff2e9f55cbabd99186c2a918222ea2541d6c42f7ee295a708820",
+    "enabled/events.jsonl": "3b067fde0d5a27e808078f7d70686d115984c57621b9c9cb9fb1f4a89504aba5",
+    "enabled/fault-intent.json": "e78afe9d7212f3c8193fbf8e78311925a45664b8dd32b65174608e93fb52276a",
+    "enabled/fault-result.json": "d7ae83921bded95d62b87ce302a11b9c3472b7c9e2adc6086ae5af9f536c8fe5",
+    "enabled/http.json": "caeef620dc0a7f442fc404a955f5579225da78d73d866c85530a1137505b4036",
+    "enabled/proof.json": "aa7d0d4b7e44ab55203ac1dea66e591050dc20270a2ef3cd672e38f2624b88f4",
+    "enabled/response.sse": "69606b68ac01760f6cd96f8f2e187f68e674a997a890f94b2f73b7df7d8c5beb",
+    "enabled/stream.json": "0cb7fee000d40af0a38d854b75d55869e618423486c8f2c33e90534446d28440",
+    "enabled-claim.json": "b89be3526af1541ec419d8046074e94d53ba0104b14b6cdc9bac10ab30b359b6",
+    "enabled-deployment.json": "5d2f40c21d9d91ebac2885c7443b3e587160c75f9f67f76fa72cad000a13a962",
+    "enabled-deployment.yaml": "7dac006bc983fe7db2e71158f9e53c3cb6de406553612a05745c942e4b61f781",
+    "enabled-ready-pods.json": "95c96c7e0f58ff2e9f55cbabd99186c2a918222ea2541d6c42f7ee295a708820",
+    "enabled-worker-metadata.json": "815ada1d7db69ff49fc2e68c597fcd42da05552eaad6cca10a7966eb951bbaae",
+    "integrity.json": "cc7471fc83d22d3a5d64d7c7e21df6115375b4e8c23d731078f1d159ddf944ff",
+    "migration-settings.yaml": "b36fbd12456e86a3ac4e95275156c4674da88d44ff120885d370f746db4b2c33",
+    "model-lock.json": "0d97281bd76265c3c04dca5709e0f3f602fef8524449fd9bc35fb4f4c06e10af",
+    "request.json": "bf633bfaf672cd217c01adf53326fca5e3e2f542077f4be03b825effd5c1213b",
+    "state.json": "4445895d07b9c39f93691e9435b707b419dbe9432fa0794dc079e29b81f05ec7"
+  },
+  "cases": {
+    "disabled": {
+      "simulated": false,
+      "arm": "disabled",
+      "response_id": "chatcmpl-61419bde-3a10-458c-802f-3d2c907da79d",
+      "http_requests": 1,
+      "failed_worker": "4446967580483451",
+      "continuation_workers": [],
+      "worker_attribution": "sse",
+      "migration_trace": null,
+      "error_frames": [
+        {
+          "message": "Service temporarily unavailable",
+          "type": "service_unavailable",
+          "code": 503
+        }
+      ],
+      "read_error": null,
+      "finish_reasons": [],
+      "done": true,
+      "successful_completion": false,
+      "client_recovery_gap_seconds": null,
+      "max_client_inter_content_gap_seconds": 0.5098031249999995,
+      "scope": "One request, no client retries; gap spans last received old-worker content to first peer content.",
+      "signal_receipt": {
+        "submitted_at_seconds": 2.54990175,
+        "receipt": {
+          "pid": 1315,
+          "command": "VLLM::EngineCore",
+          "start_ticks": "244327746",
+          "signal": "SIGKILL",
+          "signal_sent": true,
+          "sent_at_unix_ns": 1793832087424425669,
+          "worker_id": "4446967580483451",
+          "pod_uid": "44cf7a0b-15c2-41e6-a9b1-3d558c00d718"
+        },
+        "acknowledged_at_seconds": 4.306796083
+      }
+    },
+    "enabled": {
+      "simulated": false,
+      "arm": "enabled",
+      "response_id": "chatcmpl-94659c9d-eb97-4a46-8666-f8c30d746c2b",
+      "http_requests": 1,
+      "failed_worker": "7594699037439315",
+      "continuation_workers": [
+        "7809818136875612"
+      ],
+      "worker_attribution": "correlated_frontend_trace_sse_sticky",
+      "migration_trace": {
+        "http_request_id": "bc77cb33-267f-4b36-98e1-30bf4fa218b4",
+        "response_id": "chatcmpl-94659c9d-eb97-4a46-8666-f8c30d746c2b",
+        "failed_worker": "7594699037439315",
+        "continuation_worker": "7809818136875612",
+        "retained_output_tokens": 31,
+        "attempt": 1,
+        "source": "Response-correlated frontend retry and decode-worker selection logs",
+        "lines": [
+          "2026-11-04T22:41:42.995124972Z 2026-11-04T22:41:42.992968Z  WARN http-request:router.route_request: request_span: route request failed request.outcome=\"worker_disconnected\" error.type=\"disconnected\" method=POST uri=/v1/chat/completions version=HTTP/1.1 request_id=bc77cb33-267f-4b36-98e1-30bf4fa218b4 model=\"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4\" otel.kind=\"client\" request_id=94659c9d-eb97-4a46-8666-f8c30d746c2b router_mode=RoundRobin worker_id=7594699037439315 request.attempt=0 migration.is_retry=false migration.tokens_completed=0 request.outcome=\"worker_disconnected\" error.type=\"disconnected\" otel.status_code=\"error\" otel.status_description=\"disconnected\"",
+          "2026-11-04T22:41:42.995159423Z 2026-11-04T22:41:42.993049Z  INFO http-request: request_span: migration retry scheduled request.attempt=1 migration.is_retry=true migration.reason=\"disconnected\" migration.from_worker_id=7594699037439315 migration.tokens_completed=31 method=POST uri=/v1/chat/completions version=HTTP/1.1 request_id=bc77cb33-267f-4b36-98e1-30bf4fa218b4 model=\"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4\"",
+          "2026-11-04T22:41:42.997171292Z 2026-11-04T22:41:42.997095Z ERROR http-request: dynamo_llm::protocols::common::timing: Conflicting request tracker write field=\"decode_worker_id\" existing=7594699037439315 new=7809818136875612 method=POST uri=/v1/chat/completions version=HTTP/1.1 request_id=bc77cb33-267f-4b36-98e1-30bf4fa218b4 model=\"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4\""
+        ]
+      },
+      "error_frames": [],
+      "read_error": null,
+      "finish_reasons": [
+        "stop"
+      ],
+      "done": true,
+      "successful_completion": true,
+      "client_recovery_gap_seconds": null,
+      "max_client_inter_content_gap_seconds": 0.5111186249999982,
+      "scope": "One request, no client retries. SSE worker ID is first-write-wins; trace proves retry to peer. Exact handoff gap unavailable. Maximum adjacent client content gap spans the whole response.",
+      "signal_receipt": {
+        "submitted_at_seconds": 2.665569083000001,
+        "receipt": {
+          "pid": 1313,
+          "command": "VLLM::EngineCore",
+          "start_ticks": "244327943",
+          "signal": "SIGKILL",
+          "signal_sent": true,
+          "sent_at_unix_ns": 1793832102854896921,
+          "worker_id": "7594699037439315",
+          "pod_uid": "332b43e6-60b7-4d44-99f5-73ae05199466"
+        },
+        "acknowledged_at_seconds": 4.307942625000003
+      }
+    }
+  },
+  "cleanup": {
+    "status": "passed",
+    "observed_at": "2026-11-04T22:46:25.842567+00:00",
+    "namespace": "dynamo-ft-r610-3e8c91ea-demo",
+    "items": [],
+    "scope": "Independent namespace-scoped audit: zero owned Pods, ResourceClaims and DGDs. No global-idle claim; another workshop run may start after lease release.",
+    "cleaned_at": "2026-11-04T22:45:09.151878+00:00",
+    "continuity_lease_released": true,
+    "subsequent_lease_owner": {
+      "agent": "workshop-snapshot-dgd",
+      "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1",
+      "acquired_at": "2026-11-04T22:45:09.363608+00:00"
+    }
+  },
+  "scope": "Standalone plain-text coding response, one generation POST per case, no client retry. No load/SLO or exact handoff-gap claim."
+}

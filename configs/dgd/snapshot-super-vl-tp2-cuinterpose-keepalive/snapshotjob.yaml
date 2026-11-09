@@ -1,0 +1,118 @@
+apiVersion: nvidia.com/v1alpha1
+kind: SnapshotJob
+metadata:
+  name: super-vl-tp2-cuinterpose
+  namespace: dynamo-ft-20261022t173026z
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-20261022t173026z
+spec:
+  activeDeadlineSeconds: 7200
+  podSnapshotTemplate:
+    targetContainers:
+    - main
+  podTemplate:
+    metadata:
+      annotations:
+        nvidia.com/snapshot-multi-gpu: enabled
+      labels:
+        app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+        feature-test-run: dynamo-ft-20261022t173026z
+    spec:
+      terminationGracePeriodSeconds: 30
+      runtimeClassName: nvidia
+      nodeSelector:
+        kubernetes.io/hostname: kubecon-nke-site-cp-0124
+      containers:
+      - name: main
+        image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+        imagePullPolicy: IfNotPresent
+        command:
+        - python3
+        - /snapshot-app/app.py
+        args:
+        - '{"model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4", "revision":
+          "8a115b9d966adce8c059a7bcf47f49a1e57957d8", "tokenizer_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+          "trust_remote_code": true, "tensor_parallel_size": 2, "max_model_len": 8192,
+          "max_num_seqs": 2, "max_num_batched_tokens": 8192, "gpu_memory_utilization":
+          0.65, "limit_mm_per_prompt": {"image": 1, "video": 0}, "enable_prefix_caching":
+          true, "block_size": 64, "mamba_backend": "flashinfer", "mamba_ssm_cache_dtype":
+          "float16", "mamba_cache_mode": "align", "enforce_eager": false}'
+        env:
+        - name: HF_HOME
+          value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+        - name: HF_HUB_OFFLINE
+          value: '1'
+        - name: HF_HUB_DISABLE_XET
+          value: '1'
+        - name: HF_MODULES_CACHE
+          value: /tmp/hf_modules
+        - name: VLLM_CACHE_ROOT
+          value: /tmp/vllm
+        - name: TRITON_CACHE_DIR
+          value: /tmp/triton
+        - name: VLLM_WORKER_MULTIPROC_METHOD
+          value: spawn
+        - name: NCCL_IB_DISABLE
+          value: '1'
+        - name: NCCL_RAS_ENABLE
+          value: '0'
+        - name: TORCH_NCCL_ENABLE_MONITORING
+          value: '0'
+        - name: TORCH_NCCL_DUMP_ON_TIMEOUT
+          value: '0'
+        - name: VLLM_NO_USAGE_STATS
+          value: '1'
+        ports:
+        - name: api
+          containerPort: 8000
+        resources:
+          requests:
+            cpu: '8'
+            memory: 256Gi
+          limits:
+            memory: 512Gi
+          claims:
+          - name: gpu-main
+        volumeMounts:
+        - name: cache
+          mountPath: /model-cache
+          readOnly: true
+        - name: shm
+          mountPath: /dev/shm
+        - name: app
+          mountPath: /snapshot-app
+          readOnly: true
+      - name: capture-keepalive
+        image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+        command:
+        - /bin/sh
+        - -c
+        - trap "exit 0" TERM INT; while :; do sleep 3600 & wait $!; done
+        env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: void
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
+      volumes:
+      - name: cache
+        persistentVolumeClaim:
+          claimName: feature-cache
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 16Gi
+      - name: app
+        configMap:
+          name: snapshot-cuinterpose-app
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: common-runtime-pull
+      resourceClaims:
+      - name: gpu-main
+        resourceClaimTemplateName: super-vl-tp2-cuinterpose-main-gpus

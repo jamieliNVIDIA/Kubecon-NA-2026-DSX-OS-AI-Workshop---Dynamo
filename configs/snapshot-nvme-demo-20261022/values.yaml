@@ -1,0 +1,66 @@
+dynamo-operator:
+  checkpoint:
+    enabled: true
+  controllerManager:
+    tolerations:
+    - operator: Exists
+  discoveryBackend: kubernetes
+  dynamo:
+    metrics:
+      prometheusEndpoint: http://kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+  upgradeCRD: true
+global:
+  etcd:
+    install: false
+  grove:
+    enabled: true
+    install: false
+  kai-scheduler:
+    enabled: true
+    install: false
+  snapshot:
+    install: true
+snapshot:
+  daemonset:
+    nodeSelector:
+      kubernetes.io/hostname: kubecon-nke-site-cp-0124
+      nvidia.com/gpu.present: 'true'
+    resources:
+      limits:
+        cpu: '8'
+        memory: 384Gi
+      requests:
+        cpu: '2'
+        memory: 16Gi
+    snapshotLogLevel: debug
+  image:
+    agent:
+      repository: ghcr.io/ai-dynamo/snapshot/agent
+      tag: v0.0.0-gd752d982@sha256:559dcb629a1a351972572ac1cae8dcaccd45e4d3e1bc6ac8c4a91621fe519dce
+    operator:
+      repository: ghcr.io/ai-dynamo/snapshot/operator
+      tag: v0.0.0-gd752d982@sha256:a050ff9c0568b2bd4ca53d89954ed8b9c834e5a2ec7558c7d8b63623fdf5eece
+    pageBroker:
+      digest: sha256:d8f08dd8110fbaf01a10176429b31c268c816bb91bdf0ba6806f435e258a1498
+      pullPolicy: IfNotPresent
+      repository: ghcr.io/ai-dynamo/snapshot/pagebroker
+  pageBroker:
+    resources:
+      limits:
+        cpu: '16'
+        memory: 384Gi
+      requests:
+        cpu: '4'
+        memory: 40Gi
+    restoreMode: direct
+    staging:
+      sizeLimit: 320Gi
+  storage:
+    pvc:
+      create: false
+      name: snapshot-artifacts-nvme-cp0124
+      basePath: /checkpoints
+    type: pvc
+  operator:
+    nodeSelector:
+      kubernetes.io/hostname: kubecon-nke-site-cp-0124

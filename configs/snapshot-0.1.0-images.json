@@ -1,0 +1,58 @@
+[
+  {
+    "tag": "ghcr.io/ai-dynamo/snapshot/operator:v0.1.0",
+    "image": "ghcr.io/ai-dynamo/snapshot/operator@sha256:67aeb508f5b396c1615d3d782d10930cd74749333d739fa44c1643eea69b1722",
+    "digest": "sha256:67aeb508f5b396c1615d3d782d10930cd74749333d739fa44c1643eea69b1722",
+    "platforms": [
+      {
+        "digest": "sha256:3867f8853ce01d36614da51c98c4b8fdf35fe51f604a2172378d5f738da72a8a",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:a1660097e948b11bfd10176847a704853c7aca5ae58270fd27143e04a1f142c5",
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        }
+      }
+    ]
+  },
+  {
+    "tag": "ghcr.io/ai-dynamo/snapshot/agent:v0.1.0",
+    "image": "ghcr.io/ai-dynamo/snapshot/agent@sha256:973e93dfd2388f3bcba6099de8c4c806262690d23077fd1042b87391bcdd80ff",
+    "digest": "sha256:973e93dfd2388f3bcba6099de8c4c806262690d23077fd1042b87391bcdd80ff",
+    "platforms": [
+      {
+        "digest": "sha256:5164de8ccf95471a3ce72e8ff4c6208c54d296b11de693a2391ce73e6901f919",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:5164de8ccf95471a3ce72e8ff4c6208c54d296b11de693a2391ce73e6901f919",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:24edeaaf31631b9f0018ea2d05440c8365f9f2dadd52913f65999c7c02afa03c",
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        }
+      },
+      {
+        "digest": "sha256:24edeaaf31631b9f0018ea2d05440c8365f9f2dadd52913f65999c7c02afa03c",
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        }
+      }
+    ]
+  }
+]

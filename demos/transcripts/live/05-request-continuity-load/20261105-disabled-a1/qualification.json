@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "exported_at": "2026-11-05T16:05:38.725760+00:00",
+  "simulated": false,
+  "kind": "actual-live-main-console",
+  "mode": "migration-disabled",
+  "run": "results/overnight-migration-disabled-20261104-a1",
+  "source_console": "qualification-console-recovered-from-tool.log",
+  "source_console_sha256": "948607fb96ce1c8415e0b28d9e30635f3e1ee79646c2ed136967a2da8a79223b",
+  "main_txt_sha256": "948607fb96ce1c8415e0b28d9e30635f3e1ee79646c2ed136967a2da8a79223b",
+  "redactions": 0,
+  "outcomes": {
+    "baseline_complete": 4,
+    "fault_complete": 2,
+    "requests_per_batch": 4,
+    "faults": 1,
+    "client_retries": 0
+  },
+  "verification_receipts": {
+    "results/overnight-migration-disabled-20261104-a1/console-recovery-supplemental-verification.json": "b1861445970c162da6c1be2f9a00272cf25fe7d318cee865ed6b23e3e3d20738",
+    "results/overnight-migration-disabled-20261104-a1/independent-local-verification.json": "d4cfece3ff2270252d38b4e342ed260a87d0f2f5a1db0163529667025a08698c",
+    "results/overnight-migration-disabled-20261104-a1/cleanup-verification.json": "d30295d154b1bac14aec5093cbad1ea33ec916a358eaa11da82b7b8301b31fda"
+  },
+  "recording_provenance": "Verbatim successful console recovered from frozen same-chat actual tool output after accidental overwrite; separately byte-verified. Original failed sandbox attempt and all raw SSE remain retained.",
+  "scope": "Controlled coding-stream integration qualification; not AgentX replay, throughput comparison or SLO proof. Enabled comparison pending."
+}

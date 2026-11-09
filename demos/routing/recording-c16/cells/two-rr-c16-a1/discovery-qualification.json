@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "errors": [],
+  "router_mode": "round-robin",
+  "expected_worker_pod_ips": [
+    "192.168.100.46",
+    "192.168.98.189"
+  ],
+  "registered_worker_ids": [],
+  "smoke_worker_ids": [
+    "3133804229537097",
+    "5190135006380379"
+  ],
+  "kv_event_source_hosts": [],
+  "zmq_endpoints_by_topic": {
+    "kv_metrics": [
+      "tcp://192.168.100.46:44135",
+      "tcp://192.168.98.189:40843"
+    ]
+  },
+  "connection_records": [
+    {
+      "topic": "kv_metrics",
+      "endpoint": "tcp://192.168.100.46:44135",
+      "host": "192.168.100.46",
+      "line": "2026-11-05T07:48:39.244508Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.100.46:44135\" topic=\"kv_metrics\" rcvhwm=100000"
+    },
+    {
+      "topic": "kv_metrics",
+      "endpoint": "tcp://192.168.98.189:40843",
+      "host": "192.168.98.189",
+      "line": "2026-11-05T07:48:46.584968Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.98.189:40843\" topic=\"kv_metrics\" rcvhwm=100000"
+    }
+  ],
+  "scope": "Current frontend log and current worker Pod IPs; connection proof is separate from positive prefix-overlap/performance evidence",
+  "frontend_uid": "aa95e1a1-5a1c-4bd4-85f1-2002a5eb200e",
+  "current_frontend_log": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-20261105-a1/two-rr-c16-a1/ft-agg-0-frontend-r4pkw.log",
+  "log_sha256": "a4de737a6fca8fb8ca17c08f25a69fff0876a6788df77145bb56970f41a9f277"
+}

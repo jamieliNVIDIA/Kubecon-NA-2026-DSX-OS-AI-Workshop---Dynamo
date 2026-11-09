@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dynamo-workshop-snapshot-artifacts
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-20261013t061837z
+spec:
+  capacity:
+    storage: 256Gi
+  accessModes:
+  - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  claimRef:
+    namespace: dynamo-system
+    name: snapshot-artifacts
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-07acea4e27fbda414:/feature-tests/20261013-snapshot-install-review/snapshot-artifacts
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: snapshot-artifacts
+  namespace: dynamo-system
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-20261013t061837z
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: ''
+  volumeName: dynamo-workshop-snapshot-artifacts
+  resources:
+    requests:
+      storage: 256Gi

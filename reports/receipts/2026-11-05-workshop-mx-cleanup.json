@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "namespace": "dynamo-ft-r610-e969b3c7-demo",
+  "cleaned_at": "2026-11-05T18:18:58.068554+00:00",
+  "graphs_deleted": [
+    "demo-inference",
+    "demo-mx-source"
+  ],
+  "ownership_metadata_verified": true,
+  "owned_pods_remaining": 0,
+  "owned_resourceclaims_remaining": 0,
+  "scoped_lease_released": true,
+  "namespace_and_model_cache_retained": true,
+  "cleanup_evidence": "results/overnight-baseline-mx-control/mx-cleanup-evidence-20261105-a1",
+  "evidence_sha256": {
+    "command-0727-1793902708033256000.json": "019bd1ed4dbc90efddc1422ae990e6105dbcfccec6a48169e7b27f03e5ab6fc4",
+    "command-0728-1793902709087746000.json": "a8a8eb1f803ff6299e3e9a031fa791e403390528a85f328fe93f42b548fa39f2",
+    "command-0732-1793902720260696000.json": "7a5e639d1d7b9ad2f745f477bf5692eb86b92e05c4ff19b1b02454d5b4ecc26f",
+    "command-0733-1793902721223694000.json": "46bfbfc11fb95d34f74ef4a0ee999b8edecd22a60fcfd7ada7898f825cb2faa4",
+    "command-0737-1793902737414765000.json": "6352eb48b12b48adc5d927251c69114c594d4e72b7cbf9afb3864517259c9106",
+    "command-0738-1793902738065594000.json": "e74a6574d5135af2f41d1cb382cee5037b8c1c1a0a27bdb3495d96199a44d829"
+  },
+  "scope": "Independent local verification of successful owned-graph deletion, subsequent empty Pod/ResourceClaim API results and absent exact scoped lease. No fresh peer or benchmark run occurred."
+}

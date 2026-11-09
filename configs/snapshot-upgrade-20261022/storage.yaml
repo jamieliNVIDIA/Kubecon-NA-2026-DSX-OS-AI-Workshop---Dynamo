@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dynamo-workshop-snapshot-cuinterpose
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-20261022t165916z
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+  - ReadWriteMany
+  storageClassName: ''
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: dynamo-system
+    name: snapshot-artifacts-cuinterpose
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-07acea4e27fbda414:/feature-tests/20261022-snapshot-cuinterpose-upgrade/snapshot-artifacts
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: snapshot-artifacts-cuinterpose
+  namespace: dynamo-system
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-20261022t165916z
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: ''
+  volumeName: dynamo-workshop-snapshot-cuinterpose
+  resources:
+    requests:
+      storage: 1Ti

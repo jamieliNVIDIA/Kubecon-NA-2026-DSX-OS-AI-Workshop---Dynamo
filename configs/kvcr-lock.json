@@ -1,0 +1,28 @@
+{
+  "kvcr_revision": "f6b9387b9e838ee9196a5d22b107e4c95f6f1dfb",
+  "dynamo_revision": "ea23e5130c1bfbadec477b99449d0cee5598caa0",
+  "vllm_adapter_revision": "08567505b09324f891797f4a13c1bd73fc75a827",
+  "vllm_image": "docker.io/vllm/vllm-openai:nightly-43b4aaea3e40e20ef53ce2bfecfa1b72060bf2b5@sha256:f8696a5176c1fb61e025b0772505674a3e092c25597eb26117003945b5121e8d",
+  "sources": [
+    {
+      "path": "Dockerfile.quick-start",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/kvcr/f6b9387b9e838ee9196a5d22b107e4c95f6f1dfb/Dockerfile.quick-start",
+      "sha256": "7cce5247cd838214e1e89e778722b1771889893f05e2356c1a282690d9c14f76"
+    },
+    {
+      "path": "docs/quick-start.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/kvcr/f6b9387b9e838ee9196a5d22b107e4c95f6f1dfb/docs/quick-start.md",
+      "sha256": "cd93cad13ef3b5e34ff92b99b1f0de9ecf7518ca4fa8dc8459fd166c0f28abf2"
+    },
+    {
+      "path": "docs/dev-guide.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/kvcr/f6b9387b9e838ee9196a5d22b107e4c95f6f1dfb/docs/dev-guide.md",
+      "sha256": "c4f86974231ee187affad343f15046b513e9d2402344435ab77b3d73c8b7966b"
+    },
+    {
+      "path": "pyproject.toml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/kvcr/f6b9387b9e838ee9196a5d22b107e4c95f6f1dfb/pyproject.toml",
+      "sha256": "97020728603c4327dbac27a01eaaf251d4e266f54d6fce3395b9652fe36dae25"
+    }
+  ]
+}

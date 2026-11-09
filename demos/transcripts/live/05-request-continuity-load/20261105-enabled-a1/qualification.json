@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "simulated": false,
+  "kind": "actual-live-main-console",
+  "mode": "migration-enabled",
+  "source_exit_code": 0,
+  "source": {
+    "exported_at": "2026-11-05T18:14:11.796328+00:00",
+    "source": "results/overnight-migration-enabled-20261105-a1/qualification-console.log",
+    "source_sha256": "d31b2e98c30265e9bd9bf3273385aa27b28fa94f627e44dcc1ca095750eb7579",
+    "source_bytes": 7536,
+    "main_txt_sha256": "d31b2e98c30265e9bd9bf3273385aa27b28fa94f627e44dcc1ca095750eb7579",
+    "ready_excerpt_sha256": "346ba65b209abb2767e1444b89f101cfd8652bcf656c52b373517bddee348b23",
+    "redactions": 0,
+    "ready_excerpt": "Exact actual console suffix beginning after offstage preparation; no reconstructed text.",
+    "source_exit_code": 0,
+    "source_exit_attestation": "Root polled the owning execution session77305 and reported EXIT0."
+  },
+  "outcome": {
+    "baseline_completed": 4,
+    "fault_completed": 4,
+    "affected_client_indices": [
+      "0",
+      "1"
+    ],
+    "affected_response_retries": {
+      "0": {
+        "http_request_id": "dba2f9f2-05cb-40bb-a155-ad04c078eff6",
+        "response_id": "chatcmpl-436efb8a-5689-4d2a-9fd6-b5eb9ea1de86",
+        "failed_worker": "4230309658068301",
+        "continuation_worker": "6964303482617617",
+        "retained_output_tokens": 32,
+        "attempt": 1,
+        "source": "Response-correlated frontend retry and decode-worker selection logs"
+      },
+      "1": {
+        "http_request_id": "6a324792-655f-40cc-9087-9ffb97486df9",
+        "response_id": "chatcmpl-f46178b6-f256-4dc2-8efe-0a0bada93e20",
+        "failed_worker": "4230309658068301",
+        "continuation_worker": "6964303482617617",
+        "retained_output_tokens": 32,
+        "attempt": 1,
+        "source": "Response-correlated frontend retry and decode-worker selection logs"
+      }
+    },
+    "fault_batch_http_statuses": [
+      200,
+      200,
+      200,
+      200
+    ],
+    "fault_batch_max_adjacent_content_gap_seconds": {
+      "0": 0.5879452919998585,
+      "1": 0.5874943329999951,
+      "2": 0.21582450000005338,
+      "3": 0.22332741600007466
+    },
+    "exact_handoff_gap_seconds": null,
+    "run": "results/overnight-migration-enabled-20261105-a1",
+    "capture": "demos/transcripts/live/05-request-continuity-load/20261105-enabled-a1/",
+    "cleanup_passed": true
+  },
+  "paired_receipt": "reports/receipts/2026-11-05-migration-load.json",
+  "paired_receipt_sha256": "a474ac221b75c0a45a3113cd956ad13f1687294df16f16c643550726a1ad477c",
+  "cleanup_verification_sha256": "91922d678359305d126e8a2bdee5efd34e16ea7ff94f4b7a59c4489d4453f8ba",
+  "scope": "Functional continuity under four concurrent coding-stream clients; fixed-order N=1.",
+  "limitations": [
+    "Fixed-order N=1; shared EFS/CPU/network traffic may overlap.",
+    "Controlled coding streams, not AgentX replay or a capacity benchmark.",
+    "Fault target follows actual foreground routing; disabled cp0942, enabled cp0124.",
+    "SSE worker attribution is sticky; correlated frontend traces identify the retry peer.",
+    "Largest adjacent content gaps are not isolated handoff times.",
+    "No SLO threshold, capacity-recovery, tool-call or compound Snapshot/GMS/KVCR claim."
+  ]
+}

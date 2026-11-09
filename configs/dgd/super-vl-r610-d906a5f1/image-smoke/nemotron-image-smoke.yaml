@@ -1,0 +1,213 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceClaimTemplate
+  metadata:
+    name: ft-image-agg-main-gpus
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-r610-d906a5f1-image-smoke
+    namespace: dynamo-ft-r610-d906a5f1-image-smoke
+  spec:
+    spec:
+      devices:
+        requests:
+        - name: gpu
+          exactly:
+            deviceClassName: gpu.nvidia.com
+            count: 2
+- apiVersion: nvidia.com/v1beta1
+  kind: DynamoGraphDeployment
+  metadata:
+    name: ft-image
+    namespace: dynamo-ft-r610-d906a5f1-image-smoke
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-r610-d906a5f1-image-smoke
+  spec:
+    backendFramework: vllm
+    components:
+    - name: Frontend
+      type: frontend
+      replicas: 1
+      podTemplate:
+        spec:
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            imagePullPolicy: IfNotPresent
+            command:
+            - python3
+            - -m
+            - dynamo.frontend
+            args:
+            - --router-mode
+            - kv
+            - --kv-cache-block-size
+            - '64'
+            - --trust-remote-code
+            env:
+            - name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - name: PYTHONHASHSEED
+              value: '0'
+            - name: NCCL_IB_DISABLE
+              value: '1'
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            resources:
+              requests:
+                cpu: '1'
+                memory: 4Gi
+              limits:
+                memory: 8Gi
+            startupProbe:
+              httpGet:
+                path: /health
+                port: 8000
+              periodSeconds: 10
+              timeoutSeconds: 60
+              failureThreshold: 60
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: dshm
+              mountPath: /dev/shm
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 16Gi
+          imagePullSecrets:
+          - name: common-runtime-pull
+          activeDeadlineSeconds: 3600
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+            feature-test-run: dynamo-ft-r610-d906a5f1-image-smoke
+      runtimeVersionOverride: 1.6.0
+    - name: agg
+      type: worker
+      replicas: 1
+      sharedMemorySize: 16Gi
+      podTemplate:
+        spec:
+          tolerations:
+          - key: nvidia.com/gpu
+            operator: Equal
+            value: 'true'
+            effect: NoSchedule
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 16Gi
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            imagePullPolicy: IfNotPresent
+            workingDir: /workspace/
+            command:
+            - python3
+            - -m
+            - dynamo.vllm
+            args:
+            - --model
+            - nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+            - --revision
+            - 8a115b9d966adce8c059a7bcf47f49a1e57957d8
+            - --served-model-name
+            - nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+            - --trust-remote-code
+            - --tensor-parallel-size
+            - '2'
+            - --max-model-len
+            - '8192'
+            - --max-num-seqs
+            - '4'
+            - --max-num-batched-tokens
+            - '8192'
+            - --gpu-memory-utilization
+            - '0.85'
+            - --enable-prefix-caching
+            - --block-size
+            - '64'
+            - --mamba-backend
+            - flashinfer
+            - --mamba-ssm-cache-dtype
+            - float16
+            - --mamba-cache-mode
+            - align
+            - --reasoning-parser
+            - nemotron_v3
+            - --kv-events-config
+            - '{"publisher":"zmq","topic":"kv-events","endpoint":"tcp://*:20080","enable_kv_cache_events":true}'
+            - --disaggregation-mode
+            - agg
+            - --limit-mm-per-prompt
+            - '{"image":1,"video":0}'
+            - --enable-multimodal
+            env:
+            - name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - name: PYTHONHASHSEED
+              value: '0'
+            - name: NCCL_IB_DISABLE
+              value: '1'
+            - name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+              value: '180'
+            resources:
+              requests:
+                cpu: '8'
+                memory: 128Gi
+              limits:
+                memory: 256Gi
+              claims:
+              - name: gpu-main
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+            startupProbe:
+              httpGet:
+                path: /live
+                port: 9090
+              periodSeconds: 30
+              timeoutSeconds: 20
+              failureThreshold: 120
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: dshm
+              mountPath: /dev/shm
+          imagePullSecrets:
+          - name: common-runtime-pull
+          activeDeadlineSeconds: 3600
+          nodeSelector:
+            kubernetes.io/hostname: kubecon-nke-site-cp-0124
+          resourceClaims:
+          - name: gpu-main
+            resourceClaimTemplateName: ft-image-agg-main-gpus
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+            feature-test-run: dynamo-ft-r610-d906a5f1-image-smoke
+            feature-test-role: agg
+      runtimeVersionOverride: 1.6.0

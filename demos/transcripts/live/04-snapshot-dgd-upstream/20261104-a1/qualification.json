@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "kind": "snapshot_dgd_upstream_controller_qualification",
+  "mode": "live",
+  "status": "live_passed",
+  "packaged_at": "2026-11-04T23:25:49.473759+00:00",
+  "run": "results/workshop-snapshot-dgd-upstream-20261104-a1",
+  "transcript": "qualification.txt",
+  "transcript_sha256": "fb9350e321fc42394adddeda93cb1c80789f88b5253b4bb3d591b649ffda8495",
+  "raw_sha256": "fb9350e321fc42394adddeda93cb1c80789f88b5253b4bb3d591b649ffda8495",
+  "raw_path": "results/workshop-snapshot-dgd-upstream-20261104-a1/qualification-console.log",
+  "redaction_count": 0,
+  "scope": "Actual deploy/verify/replace/cleanup CLI stdout/stderr; not the demo 4 presenter main-panel program or PTY recording.",
+  "storage": "EFS",
+  "node_scope": "same node and exact physical GPU UUID pair",
+  "runtime": {
+    "patch_configmap": "snapshot-dgd-upstream-kv-v1",
+    "patch_sha256": "919766b39c7f240927ce5a8535e7e6ff21e5010e673de3c3c022ce2c7a7bc537",
+    "module_path": "/usr/local/lib/python3.12/dist-packages/dynamo/vllm/snapshot.py",
+    "gpu_uuids": [
+      "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110",
+      "GPU-75461e0d-6588-94c9-2517-dca859f5c68b"
+    ],
+    "node": "kubecon-nke-site-cp-0124",
+    "cache_home": "/model-cache/feature-tests/20261015-super-vl-tp2/hf"
+  },
+  "adapter_provenance": {
+    "profile": "super-vl-dgd-snapshot-upstream-kv-v1",
+    "source_sha256": "1998c2625b90f480541ed585ff3b2957de6ea86027cf380dde7435c47b795fc0",
+    "upstream_commit": "521225369330f2120f1676748057a692a24c2303",
+    "upstream_url": "https://github.com/ai-dynamo/dynamo/blob/521225369330f2120f1676748057a692a24c2303/components/src/dynamo/vllm/snapshot.py",
+    "upstream_module_sha256": "9e467ad95714a7979a778ad32631da0f40593c05b50f04c9a64df40168ca59b1",
+    "patched_sha256": "919766b39c7f240927ce5a8535e7e6ff21e5010e673de3c3c022ce2c7a7bc537",
+    "scope": "Exact merged PR #15887 module plus the v3 destination identity/offline bridge",
+    "pause_controller": "installed dynamo.vllm.handlers.VllmEnginePauseController",
+    "communicator_hooks": "Upstream detection and checkpoint_prepare/checkpoint_restore preserved",
+    "custom_pause_controller": false,
+    "remaining_custom_runtime_changes": [
+      "allowlisted restore proxy environment to restore-context.json",
+      "destination HF_HUB_OFFLINE policy restoration before registration"
+    ]
+  },
+  "timing": {
+    "fault_requested_at": "2026-11-04T23:18:23.940655+00:00",
+    "pod_created_at": "2026-11-04T23:18:24Z",
+    "restored_at": "2026-11-04T23:23:54Z",
+    "ready_at": "2026-11-04T23:24:06Z",
+    "first_success_at": "2026-11-04T23:24:24.923455+00:00",
+    "fault_to_first_success_seconds": 360.9828,
+    "pod_to_ready_seconds": 342.0,
+    "scope": "Same-node replacement through unchanged Dynamo frontend; no in-flight request or prefix-cache recovery."
+  },
+  "observation_resume": {
+    "original_error_receipt": "observer-attempt-01-exit.json",
+    "reason": "Removed incorrect observer guard: source exit 137 at successful CRIU dump is expected",
+    "deployment_or_capture_replayed": false,
+    "source_receipts": [
+      "source-snapshot.json",
+      "source-snapshot-resume.json"
+    ]
+  },
+  "private_evidence_snapshot": "results/workshop-snapshot-dgd-upstream-20261104-a1/qualification-package-evidence",
+  "evidence_sha256": {
+    "model-lock.json": "f348241d54b05f77c6c9fe5e7a52e4af4aff6030aa0301c2a88a2f25fb469fad",
+    "snapshot-dgd-spec.json": "c302b952cfa96437ec53cf0989301ae8099ce83aa0e3f7caeaaea80598388d24",
+    "initial-identity.json": "f9421d31000907d36c50484615834bc521fefb0245148376276fd12e69ca8b7a",
+    "initial-request.json": "1d803ee36a8cf92609ae3715bf9d6a293ecdcd9618586f85b9bf7da1b7554cf4",
+    "replacement-identity.json": "0a6accdb8d7ff68a2e7a82e6b24f979e5790e7c2fe134d49e25b5a2cf4c574a6",
+    "replacement-request.json": "1de3605ba04a71f4aa4c53b359a904b0882ed79a77fa7b2799ab69c566a2cf5a",
+    "replacement-timing.json": "6e1992eb377ca0576a0e1359c3cd51ce7c6120045a80da53d541452bbac1669b",
+    "qualification-exit.json": "d0727ea2e687320681e21de1000450701aa53425a0d6c3f7cd6751ef4d8ada09",
+    "final-cleanup-proof.json": "3f9aa5b3d3001ebefba84cf6a50d88cf88b02f1b5159789b5569c86d5e625dce",
+    "captured-snapshot.json": "8f1e9a9590c3c0050267486107638acdfd728fc8182356c0967440e5cdbbe322",
+    "captured-content.json": "a3222b69fc8ff94bb89e5ffbf157c345ecebb194365112dbe1b3ee57336bdd40",
+    "deployment.yaml": "58e36b86237fac3b5bb35f0fd8e6d5fda05ab6feaddc023862a1a594edea17dd",
+    "patch.json": "68de22ac63c997b0c382010fe07318926a6a68a91fa29e7f406297daea71158b",
+    "runtime-inspection.json": "1688c44261a5d2c0fa4409cb9811aac196724a8980de4e95be60232660c9187f",
+    "source-snapshot.json": "a3f615b242b7e1fc5ea0e2cf36d47d6419fe011e676fe52a0fdae5afc4fbfd38",
+    "source-snapshot-resume.json": "8acf0bd55fefcc751f737bbe4845cbe4efce469a7e66272d57ad7e1ea3c0db10",
+    "observer-attempt-01-exit.json": "e006d22d72166eb26695a71acf46c41e0d89eb9b5521b5a12d14db996b5b95bc",
+    "comparison-controls.json": "c7b61688374a321e10e21bf0ede6772b7e108e0c23492f9f37f6e542996c8587",
+    "native-controller-evidence.json": "719ef255454253fd46256c2a7295946ab18e1429bcd8c983d7cdd63d74761093"
+  },
+  "limits": [
+    "Experimental pinned-runtime overlay and offline cache preparation required",
+    "No NVMe DGD timing or matched cold-start speedup",
+    "No cross-node restoration",
+    "No in-flight request migration or KV preservation",
+    "Presenter UI not yet wired to DGD qualification"
+  ]
+}

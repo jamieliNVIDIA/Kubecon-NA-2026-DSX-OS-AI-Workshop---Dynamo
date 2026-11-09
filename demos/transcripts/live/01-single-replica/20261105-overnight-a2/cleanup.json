@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "namespace": "dynamo-ft-r610-49088d2e-demo",
+  "cleaned_at": "2026-11-05T15:49:16.875416+00:00",
+  "owned_pods_remaining": 0,
+  "owned_gpu_claims_remaining": 0,
+  "resource_scope": "Only the recorded intro DGD in its owned namespace; namespace/model-cache storage retained.",
+  "cleanup_evidence": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/overnight-baseline-mx-control/intro-cleanup-evidence",
+  "evidence_sha256": {
+    "command-0089-1793893742081631000.json": "af316c05cd6d74e036a52d08cc6d1bcb3eb5a09ee1ea5173df70e445764d2493",
+    "command-0094-1793893756239966000.json": "03663a8eea830522ba0e92e843fbf9c4f2ca4769530f9307abd9b8d526ae2a89",
+    "command-0095-1793893756872582000.json": "7e74d33ff5a193e71d88cd4b19bc62efb4ec648a4344c37d034c478fda95886c"
+  },
+  "capture_before_cleanup": "20261105-overnight-a2",
+  "scope": "Independent local review of successful scoped deletion and subsequent empty Pod/ResourceClaim API receipts; no remote action by this validator."
+}

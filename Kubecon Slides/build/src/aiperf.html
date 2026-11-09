@@ -1,0 +1,1302 @@
+<meta charset="utf-8">
+<title>NVIDIA AIPerf</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 16:9 full-viewport slides; one visual per slide; right-arrow walks build steps before advancing. Light by default, dark via T. */
+:root{
+  color-scheme:light;
+  --bg:#eef2f1; --surface:#ffffff; --surface2:#f1f4f3; --line:rgba(16,24,28,.13);
+  --text:#12191c; --dim:#56636a;
+  --req:#c27400; --disc:#4a74e8; --evt:#8a5cf0; --gpu:#4a7a00; --cpu:#1597b3;
+  --warn:#b08400; --bad:#e0353b; --ok:#4a7a00;
+  --green:#5e9a00; --green-fill:#76b900; --green-ink:#4a7a00; --tint:rgba(118,185,0,.12);
+  --shadow:0 1px 2px rgba(16,24,28,.06),0 8px 24px rgba(16,24,28,.08);
+  --slidebg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.12),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.10),transparent 45%),linear-gradient(180deg,#f9fbfa,#eef2f1);
+  --herobg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.18),transparent 50%),radial-gradient(ellipse at 65% 72%,rgba(62,199,224,.16),transparent 50%),linear-gradient(180deg,#f9fbfa,#eef2f1);
+  --display:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --body:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:JetBrains Mono,ui-monospace,Menlo,Consolas,monospace;
+}
+html.dark{
+  color-scheme:dark;
+  --bg:#07090a; --surface:#11171a; --surface2:#172025; --line:rgba(255,255,255,.12);
+  --text:#e8eef0; --dim:#8f9ca3;
+  --req:#f5a623; --disc:#7aa2ff; --evt:#b48cff; --gpu:#76b900; --cpu:#3ec7e0;
+  --warn:#ffd166; --bad:#ff5a5f; --ok:#76b900;
+  --green:#76b900; --green-fill:#76b900; --green-ink:#9fd44a; --tint:rgba(118,185,0,.14);
+  --shadow:0 2px 4px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.22);
+  --slidebg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.10),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.08),transparent 45%),linear-gradient(180deg,#080b0c,#06080a);
+  --herobg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.14),transparent 50%),radial-gradient(ellipse at 65% 72%,rgba(62,199,224,.12),transparent 50%),linear-gradient(180deg,#080b0c,#06080a);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--body)}
+body{padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+.deck{position:relative;width:100%;height:100%}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(10px,2.2cqh,26px);
+  padding:clamp(18px,5cqh,64px) max(16px,clamp(18px,5cqw,88px)) clamp(54px,9cqh,90px);
+  opacity:0;pointer-events:none;transition:opacity .45s ease,transform .45s ease;transform:translateX(30px);overflow:hidden}
+.slide.active{opacity:1;pointer-events:auto;transform:none}
+@media (prefers-reduced-motion:reduce){.slide,[data-s],[data-only],.anim{transition:none!important;animation:none!important}}
+
+/* type */
+.kicker{font-family:var(--mono);font-size:clamp(11px,1.4cqh,14px);letter-spacing:.16em;text-transform:uppercase;color:var(--cpu)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,8.5cqh,104px);line-height:.98;letter-spacing:-.025em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,5cqh,54px);line-height:1.05;letter-spacing:-.015em;text-wrap:balance}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(16px,2.4cqh,26px)}
+p,li{font-size:clamp(14px,2.2cqh,22px);line-height:1.45}
+.dim{color:var(--dim)}
+.mono,code{font-family:var(--mono)}
+code{font-size:.9em;background:var(--surface2);padding:1px 6px;border-radius:4px}
+.head{display:flex;flex-direction:column;gap:6px;max-width:1500px}
+.body{flex:0 1 auto;min-height:0;display:flex;gap:clamp(14px,2.5cqw,36px);align-items:center;max-width:1600px;width:100%}
+.body.col{flex-direction:column;align-items:stretch}
+
+/* svg */
+.viz{width:100%;min-width:0;flex:1 1 auto}
+.viz svg{display:block;width:100%;height:auto;max-height:60cqh}
+svg text{font-family:var(--body);fill:var(--text)}
+svg .h{font-family:var(--display);font-weight:700;font-size:20px}
+svg .hs{font-family:var(--display);font-weight:700;font-size:17px}
+svg .s{font-size:14px;fill:var(--dim)}
+svg .m{font-family:var(--mono);font-size:12.5px;fill:var(--dim)}
+svg .lb{font-size:13.5px;font-weight:600}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .cpu{fill:color-mix(in srgb,var(--cpu) 12%,var(--surface));stroke:var(--cpu);stroke-width:1.8}
+svg .gpu{fill:color-mix(in srgb,var(--gpu) 12%,var(--surface));stroke:var(--gpu);stroke-width:1.8}
+svg .py{fill:color-mix(in srgb,var(--warn) 9%,var(--surface));stroke:var(--warn);stroke-width:1.5}
+svg .hot{fill:color-mix(in srgb,var(--bad) 20%,var(--surface));stroke:var(--bad);stroke-width:1.8}
+svg .disc-f{fill:color-mix(in srgb,var(--disc) 12%,var(--surface));stroke:var(--disc);stroke-width:1.6}
+svg .evt-f{fill:color-mix(in srgb,var(--evt) 12%,var(--surface));stroke:var(--evt);stroke-width:1.6}
+svg .pod{fill:none;stroke:var(--dim);stroke-width:1.4;stroke-dasharray:7 6}
+svg .a-req{stroke:var(--req);stroke-width:3.2;fill:none}
+svg .a-disc{stroke:var(--disc);stroke-width:2.2;fill:none;stroke-dasharray:6 5}
+svg .a-evt{stroke:var(--evt);stroke-width:2.2;fill:none;stroke-dasharray:6 5}
+svg .a-ink{stroke:var(--text);stroke-width:2;fill:none}
+svg .a-gpu{stroke:var(--gpu);stroke-width:3.2;fill:none}
+svg .a-dim{stroke:var(--dim);stroke-width:1.3;fill:none}
+svg .flow{stroke-dasharray:11 8;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-19}}
+svg .c-req{fill:var(--req)} svg .c-disc{fill:var(--disc)} svg .c-evt{fill:var(--evt)} svg .c-gpu{fill:var(--gpu)}
+svg .c-cpu{fill:var(--cpu)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-ok{fill:var(--ok)} svg .c-ink{fill:var(--text)}
+
+/* build steps */
+[data-s],[data-only]{opacity:0;transition:opacity .35s ease}
+[data-s].on,[data-only].on{opacity:1}
+.stack{display:grid}.stack>*{grid-area:1/1}
+
+/* controls */
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.modes button{font:600 clamp(13px,1.8cqh,17px) var(--body);color:var(--text);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:7px 16px;cursor:pointer}
+.modes button[aria-pressed="true"]{border-color:var(--req);background:color-mix(in srgb,var(--req) 16%,var(--surface))}
+.modes button:focus-visible,.navbtn:focus-visible{outline:2px solid var(--cpu);outline-offset:2px}
+
+/* cards & chips */
+.cards{display:grid;gap:clamp(10px,1.6cqw,20px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(12px,2cqh,22px);display:flex;flex-direction:column;gap:6px;min-width:0}
+.card p{font-size:clamp(13px,1.9cqh,19px);color:var(--dim)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:clamp(11px,1.6cqh,15px);padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);white-space:nowrap}
+.yes{color:var(--ok)} .no{color:var(--bad)} .part{color:var(--warn)}
+
+/* stats row */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat{border-top:2px solid var(--line);padding-top:8px;min-width:0}
+.stat b{display:block;font-family:var(--display);font-size:clamp(18px,3cqh,32px)}
+.stat span{font-size:clamp(12px,1.7cqh,17px);color:var(--dim)}
+
+/* split slide */
+.split{display:grid;grid-template-columns:1fr 0px 1fr;width:100%;max-width:1400px;margin:0 auto;transition:grid-template-columns .6s ease}
+.slide[data-step="1"] .split{grid-template-columns:1fr clamp(120px,14cqw,220px) 1fr}
+.half{border:2px solid var(--warn);padding:clamp(14px,2.4cqh,26px);display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .5s,border-radius .5s,background .5s;background:var(--surface)}
+.half.l{border-right:none;border-radius:14px 0 0 14px}
+.half.r{border-left:none;border-radius:0 14px 14px 0}
+.slide[data-step="1"] .half.l{border:2px solid var(--cpu);border-radius:14px;background:color-mix(in srgb,var(--cpu) 8%,var(--surface))}
+.slide[data-step="1"] .half.r{border:2px solid var(--gpu);border-radius:14px;background:color-mix(in srgb,var(--gpu) 8%,var(--surface))}
+.half .chips{display:flex;flex-direction:column;gap:8px}
+.half .chip{white-space:normal;font-size:clamp(12px,1.9cqh,18px);padding:7px 12px;border-radius:8px}
+.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;gap:6px;text-align:center}
+.mid .line{width:100%;height:3px;background:var(--text);position:relative}
+.mid .line::before,.mid .line::after{content:"";position:absolute;top:-6px;border:7.5px solid transparent}
+.mid .line::before{left:-4px;border-right-color:var(--text)}
+.mid .line::after{right:-4px;border-left-color:var(--text)}
+.mid small{font-family:var(--mono);font-size:clamp(11px,1.6cqh,15px);color:var(--dim)}
+.splitlabel{font-family:var(--mono);font-size:clamp(12px,1.7cqh,16px);color:var(--dim)}
+
+/* lifecycle grid */
+.lanes{display:grid;grid-template-columns:clamp(90px,10cqw,150px) repeat(6,1fr);gap:6px;width:100%}
+.lanes .ln{font-family:var(--mono);font-size:clamp(11px,1.6cqh,15px);color:var(--dim);display:flex;align-items:center}
+.lanes .hd{font-family:var(--mono);font-size:clamp(11px,1.5cqh,14px);color:var(--dim);text-align:center;padding-bottom:4px}
+.lanes .cell{min-height:clamp(46px,8cqh,84px);border-radius:8px;background:color-mix(in srgb,var(--surface) 60%,transparent);border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;padding:6px}
+.lanes .ev{font-size:clamp(11px,1.65cqh,16px);line-height:1.25;text-align:center;padding:6px 8px;border-radius:7px;background:var(--surface2);border:1px solid var(--line);width:100%}
+.lanes .ev.now{border-color:var(--req);box-shadow:0 0 0 2px color-mix(in srgb,var(--req) 35%,transparent)}
+.ev.k{color:var(--dim)} .ev.sc{border-left:3px solid var(--cpu)} .ev.en{border-left:3px solid var(--gpu)} .ev.rt{border-left:3px solid var(--disc)}
+.caption{font-size:clamp(15px,2.3cqh,24px);min-height:2.6em}
+
+/* failure slide */
+.slide[data-step="1"] .eng-box{stroke:var(--bad);fill:color-mix(in srgb,var(--bad) 14%,var(--surface))}
+.slide[data-step="2"] .sc-box{stroke:var(--bad);fill:color-mix(in srgb,var(--bad) 14%,var(--surface))}
+.slide[data-step="3"] .eng-box{stroke:var(--warn);fill:color-mix(in srgb,var(--warn) 12%,var(--surface))}
+.slide[data-step="1"] .route,.slide[data-step="2"] .route,.slide[data-step="3"] .route{stroke:var(--bad);stroke-dasharray:4 6}
+.outcome{list-style:none;display:flex;flex-direction:column;gap:10px}
+.outcome li{padding-left:22px;position:relative;font-size:clamp(14px,2.1cqh,21px)}
+.outcome li::before{content:"";position:absolute;left:0;top:.5em;width:10px;height:10px;border-radius:50%;background:var(--dim)}
+.outcome li.g::before{background:var(--ok)} .outcome li.b::before{background:var(--bad)} .outcome li.w::before{background:var(--warn)}
+
+/* perf sim */
+.sim{display:flex;flex-direction:column;gap:10px;width:100%}
+.simctl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:clamp(13px,1.9cqh,18px)}
+.simctl input{width:min(380px,60cqw);accent-color:var(--req)}
+.badge{font-family:var(--mono);font-size:clamp(11px,1.5cqh,14px);padding:3px 9px;border-radius:6px;border:1px solid var(--warn);color:var(--warn)}
+
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(13px,2cqh,20px)}
+th,td{padding:clamp(6px,1.2cqh,12px) 12px;border-bottom:1px solid var(--line);text-align:left}
+th{font-family:var(--mono);font-size:clamp(11px,1.5cqh,14px);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:500}
+td:first-child{font-family:var(--display);font-weight:700}
+td.c{text-align:center;font-family:var(--mono);font-weight:600}
+
+pre{font-family:var(--mono);font-size:clamp(11px,1.75cqh,17px);line-height:1.55;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:clamp(10px,1.8cqh,20px);overflow:auto;color:var(--text)}
+pre .cm{color:var(--dim)} pre .k{color:var(--cpu)} pre .g{color:var(--gpu)}
+
+.phases{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.phase{border-top:4px solid var(--line);padding-top:8px;font-size:clamp(12px,1.8cqh,17px)}
+.phase b{display:block;font-family:var(--mono);font-size:clamp(11px,1.5cqh,14px);color:var(--dim)}
+.phase.cur{border-top-color:var(--req)}
+
+/* chrome */
+.progress{position:fixed;left:0;bottom:0;height:4px;background:var(--req);transition:width .4s ease;z-index:50}
+.chrome{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;align-items:center;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));z-index:60;pointer-events:none}
+.chrome>*{pointer-events:auto}
+.hint{font-family:var(--mono);font-size:12px;color:var(--dim);opacity:.7}
+.navs{display:flex;gap:6px;align-items:center}
+.navbtn{font:500 13px var(--mono);height:34px;min-width:34px;padding:0 10px;color:var(--dim);background:color-mix(in srgb,var(--surface) 80%,transparent);border:1px solid var(--line);border-radius:7px;cursor:pointer}
+.navbtn:hover{color:var(--text)}
+.pg{font-family:var(--mono);font-size:12px;color:var(--dim);min-width:58px;text-align:center}
+.stepdots{display:flex;gap:4px;margin-right:6px}
+.stepdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.stepdots i.on{background:var(--req)}
+.notes-panel{visibility:hidden;position:fixed;left:50%;transform:translate(-50%,calc(100% + 80px));bottom:56px;width:min(960px,calc(100% - 32px));max-height:38cqh;overflow:auto;
+  background:color-mix(in srgb,var(--surface2) 96%,transparent);border:1px solid var(--line);border-radius:12px;padding:16px 20px;z-index:70;transition:transform .3s ease;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.notes-panel.open{transform:translate(-50%,0);visibility:visible}
+.notes-panel h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cpu);margin-bottom:8px}
+.notes-panel li,.notes-panel p{font-size:15px;line-height:1.5;color:var(--text)}
+.notes-panel ul{padding-left:18px;display:flex;flex-direction:column;gap:4px}
+aside.notes{display:none}
+
+@container (max-width:900px){
+  .body{flex-direction:column;align-items:stretch}
+  .stats{grid-template-columns:1fr}
+  .hint{display:none}
+  .lanes{grid-template-columns:70px repeat(6,minmax(70px,1fr));overflow-x:auto}
+}
+
+/* ===== Unified Dynamo deck look (matches the slides on ai-dynamo.github.io) ===== */
+html,body{background:var(--bg)}
+.slide{background:var(--slidebg)}
+.slide:first-child{background:var(--herobg)}
+h1{font-weight:800;letter-spacing:-.035em}
+h2{font-weight:700;letter-spacing:-.025em}
+h3{font-weight:700;letter-spacing:-.01em}
+.kicker{color:var(--green-ink);font-weight:500;display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--green-fill);flex:none}
+code{background:var(--tint);color:var(--green-ink);border-radius:6px}
+.card{border-radius:16px;box-shadow:var(--shadow)}
+.chip{background:var(--surface)}
+.modes button{border-width:1px;box-shadow:0 1px 2px rgba(16,24,28,.05)}
+.modes button:hover{border-color:var(--green)}
+.modes button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 0 0 0 1px var(--green)}
+.half{box-shadow:var(--shadow)}
+.lanes .ev{background:var(--surface);box-shadow:0 1px 2px rgba(16,24,28,.06)}
+.lanes .ev.now{border-color:var(--green);box-shadow:0 0 0 2px color-mix(in srgb,var(--green) 35%,transparent)}
+pre{background:#0d1316;color:#cdd6d3;border-color:rgba(255,255,255,.08);box-shadow:var(--shadow)}
+pre .cm{color:#7a878d} pre .k{color:#3ec7e0} pre .g{color:#9fd44a}
+.phase.cur{border-top-color:var(--green-fill)}
+.simctl input{accent-color:var(--green)}
+.stepdots i.on{background:var(--green-fill)}
+td.c,.stat b{font-variant-numeric:tabular-nums}
+.progress{height:3px;background:linear-gradient(90deg,#76b900,#3ec7e0)}
+.pg{font-size:13px;opacity:.8}
+.navbtn{height:40px;min-width:40px;padding:0 12px;border-radius:10px;font:500 13px var(--body);background:rgba(255,255,255,.88);border-color:rgba(16,24,28,.18);backdrop-filter:blur(8px)}
+.navbtn:hover{border-color:var(--green)}
+html.dark .navbtn{background:rgba(20,28,32,.75);border-color:rgba(255,255,255,.16)}
+.notes-panel{background:var(--surface);box-shadow:var(--shadow)}
+.notes-panel h4{color:var(--green-ink)}
+.modes button:focus-visible,.navbtn:focus-visible{outline-color:var(--green)}
+
+/* ===== Fill the screen: title at the top, content uses the space below it ===== */
+.slide{justify-content:flex-start;padding-top:clamp(28px,6.5cqh,76px);padding-bottom:clamp(64px,10cqh,96px);gap:clamp(14px,2.6cqh,30px)}
+.slide>.head{flex:none}
+.slide>.body{flex:1 1 auto;min-height:0;max-width:none;align-items:center;justify-content:center}
+.slide>.body.col{justify-content:center}
+.viz{align-self:stretch;display:flex;align-items:center;justify-content:center;min-height:0}
+.viz svg{height:100%;max-height:none}
+.body.col>.viz{flex:1 1 0}
+/* text-led slides: larger type so cards fill the screen without empty boxes */
+.card{padding:clamp(16px,2.8cqh,32px);gap:clamp(8px,1.3cqh,14px)}
+.card h3{font-size:clamp(18px,3cqh,32px)}
+.card p,.card li{font-size:clamp(15px,2.35cqh,24px)}
+.card .chip{font-size:clamp(12px,1.8cqh,17px)}
+table{font-size:clamp(14px,2.4cqh,24px)}
+th{font-size:clamp(12px,1.7cqh,16px)}
+pre{font-size:clamp(12px,2.1cqh,20px)}
+.phase{font-size:clamp(13px,2.1cqh,20px)}
+.caption{font-size:clamp(16px,2.6cqh,26px)}
+.outcome li{font-size:clamp(15px,2.4cqh,24px)}
+.lanes .cell{min-height:clamp(54px,10cqh,104px)}
+.lanes .ev{font-size:clamp(12px,1.9cqh,18px)}
+/* card rows: equal-height cards at natural height, centred in the space below the title */
+.slide>.body[style*="align-items:stretch"]{flex:0 0 auto;margin:auto 0}
+/* slide 14: keep the phase strip right under the tables; centre the pair */
+.slide>.body[style*="align-items:stretch"]:has(+.phases){margin-bottom:0}
+.slide>.phases{margin-bottom:auto}
+/* slides 12-15: text-led, so type scales up to fill the screen at natural height */
+.slide.txt{gap:clamp(18px,4cqh,48px)}
+.slide.txt>.body{gap:clamp(16px,2cqw,32px)}
+.slide.txt .card{padding:clamp(20px,3.6cqh,44px) clamp(20px,2.2cqw,40px);gap:clamp(10px,1.8cqh,20px)}
+.slide.txt .card h3{font-size:clamp(20px,4cqh,42px)}
+.slide.txt .card p{font-size:clamp(16px,2.9cqh,30px)}
+.slide.txt .outcome{gap:clamp(10px,2cqh,22px)}
+.slide.txt .outcome li{font-size:clamp(16px,2.9cqh,30px);padding-left:28px}
+.slide.txt .outcome li::before{width:12px;height:12px}
+.slide.txt .chip{font-size:clamp(13px,2.2cqh,22px);padding:6px 14px}
+.slide.txt table{font-size:clamp(16px,3.2cqh,32px)}
+.slide.txt th{font-size:clamp(12px,2cqh,19px)}
+.slide.txt th,.slide.txt td{padding:clamp(8px,2cqh,20px) 14px}
+.slide.txt pre{font-size:clamp(14px,2.8cqh,28px);padding:clamp(16px,3.4cqh,40px)}
+.slide.txt .phases{gap:16px}
+.slide.txt .phase{font-size:clamp(14px,2.6cqh,26px);padding-top:12px}
+.slide.txt .phase b{font-size:clamp(12px,1.9cqh,18px)}
+.slide.txt p.dim{font-size:clamp(13px,2cqh,19px)!important}
+.slide.txt td:first-child{white-space:nowrap}
+.slide.txt pre{font-size:clamp(12px,2.25cqh,23px);flex:1.9 1 0!important;min-width:0}
+.slide.txt pre+.card{flex:1 1 0!important}
+/* perf slide: Python roofline chart */
+.body.pl{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(16px,2cqw,32px);align-items:stretch}
+.pl-chart{gap:10px!important;justify-content:center}
+.pl-top{display:flex;align-items:center;gap:16px;font-size:clamp(15px,2.2cqh,22px)}
+.pl-k{font-weight:600}
+.pl-top input{flex:1;accent-color:var(--green)}
+.pl-top b{font:700 clamp(22px,3.6cqh,36px) var(--display);color:var(--gpu);min-width:3.4em;text-align:right;font-variant-numeric:tabular-nums}
+.pl-leg{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:clamp(13px,1.9cqh,18px);color:var(--dim)}
+.pl-leg i{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:8px;vertical-align:4px}
+.pl-leg i.sc{background:var(--gpu)}.pl-leg i.ip{background:var(--req)}
+.pl-side{display:flex;flex-direction:column;gap:clamp(14px,2cqh,24px)}
+.pl-c{flex:1;justify-content:center}
+.pl-c h3{font-size:clamp(18px,3cqh,30px)}
+.pl-c .outcome li{font-size:clamp(15px,2.4cqh,24px)}
+.pl-minor{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
+.pl-minor span{font:600 clamp(11px,1.6cqh,14px) var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.pl-minor i,.pl-gate i{font-style:normal;font-size:clamp(12px,1.9cqh,18px);padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);color:var(--dim)}
+.pl-chk{list-style:none;display:flex;flex-direction:column;gap:clamp(6px,1.2cqh,12px)}
+.pl-chk li{font-size:clamp(15px,2.3cqh,23px);padding-left:34px;position:relative}
+.pl-chk li::before{content:"";position:absolute;left:0;top:.15em;width:22px;height:22px;border-radius:6px;border:2px solid var(--disc)}
+/* slide 13 legend */
+.ct-leg{display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,2cqw,40px);align-items:start;font-size:clamp(14px,2.2cqh,22px)}
+.ct-leg>div{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.ct-leg i{display:inline-block;width:26px;height:4px;border-radius:2px}
+.ct-leg i.ink{background:var(--text)}.ct-leg i.evt{background:var(--evt)}
+.ct-leg span{color:var(--dim)}
+.ct-leg em{font-style:normal;font:500 clamp(12px,1.8cqh,17px) var(--mono);padding:4px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--evt) 40%,transparent);background:color-mix(in srgb,var(--evt) 8%,var(--surface));color:var(--evt)}
+/* slide 14 timeline */
+.tl4{display:grid;grid-template-columns:repeat(4,1fr);position:relative;width:100%;padding-top:12px}
+.tl4::before{content:"";position:absolute;left:12px;right:12px;top:20px;height:3px;background:var(--line)}
+.tl4-i{position:relative;display:flex;flex-direction:column;gap:4px;padding-right:12px}
+.tl4-i i{width:19px;height:19px;border-radius:50%;background:var(--surface);border:3px solid var(--line);margin-bottom:6px;z-index:1}
+.tl4-i.now i{background:var(--green-fill);border-color:var(--green-fill);box-shadow:0 0 0 5px var(--tint)}
+.tl4-i b{font-size:clamp(15px,2.5cqh,25px)}
+.tl4-i span{font-size:clamp(13px,1.9cqh,19px);color:var(--dim)}
+.gp-l{font:600 clamp(11px,1.6cqh,15px) var(--mono);letter-spacing:.12em;text-transform:uppercase;margin-top:6px}
+/* ===== Vertical balance: content sits centred between the title and the footer ===== */
+.slide{gap:clamp(18px,3.6cqh,40px);padding-bottom:clamp(40px,5cqh,52px)}
+.slide>.body{flex:0 1 auto;margin-top:auto;margin-bottom:auto;padding-top:clamp(0px,3.4cqh,32px)}
+.slide>.body:has(+.tl4){margin-bottom:0}
+.slide>.tl4{margin-bottom:auto}
+.viz svg{height:auto;max-height:64cqh}
+.body.col>.viz{flex:0 1 auto}
+/* mode buttons: clear separation from the title, sized like the rest of the controls */
+.head>.modes{margin-top:clamp(14px,3cqh,30px);gap:10px}
+.head>.modes button{font-size:clamp(14px,2cqh,19px);padding:9px 20px}
+/* diagrams that share the slide with a row below them stay shorter */
+.body.col:has(>.stack) .viz svg,.body.col:has(>.ct-leg) .viz svg{max-height:52cqh}
+/* ---------- AIPerf deck ---------- */
+.ap-cmp{display:flex;flex-direction:column;gap:clamp(12px,2.2cqh,22px);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(16px,2.8cqh,30px);box-shadow:var(--shadow)}
+.ap-cmp>div{display:grid;grid-template-columns:8em auto;gap:6px 14px;align-items:baseline}
+.ap-cmp span{font:700 clamp(11px,1.5cqh,14px) var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
+.ap-cmp b{font:800 clamp(34px,6cqh,60px) var(--display);color:var(--green-ink);line-height:1;transition:color .3s}
+.ap-cmp b.bad{color:var(--bad)}
+.ap-cmp .sx-bar{grid-column:1/-1;height:clamp(12px,2cqh,18px)}
+.ap-cmp .sx-bar i{transition:width .6s ease,background .3s}
+.ap-cmp .sx-bar i.bad{background:var(--bad)}
+.ap-pr{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(10px,1.7cqh,16px) 16px}
+.ap-pr i,.ap-out i{font-style:normal;font-size:clamp(22px,3.4cqh,32px);line-height:1}
+.ap-pr b,.ap-out b{display:block;font:800 clamp(15px,2.2cqh,21px) var(--display)}
+.ap-pr span,.ap-out span{font-size:clamp(13px,1.8cqh,17px);color:var(--dim);line-height:1.4}
+.viz svg .ap-svc rect{transition:stroke .2s,fill .2s}
+.slide[data-step="1"] .ap-svc[data-k="tm"] rect,.slide[data-step="1"] .ap-svc[data-k="w"]>rect:first-child,
+.slide[data-step="2"] .ap-svc[data-k="dm"] rect,.slide[data-step="2"] .ap-svc[data-k="w"]>rect:first-child,
+.slide[data-step="3"] .ap-svc[data-k="w"]>rect:first-child,.slide[data-step="3"] .ap-svc[data-k="srv"] rect,
+.slide[data-step="4"] .ap-svc[data-k="tm"] rect,.slide[data-step="5"] .ap-svc[data-k="rp"] rect,
+.slide[data-step="6"] .ap-svc[data-k="rm"] rect,.slide[data-step="6"] .ap-svc[data-k="gpu"] rect,.slide[data-step="6"] .ap-svc[data-k="sm"] rect{stroke:var(--green)!important;stroke-width:3!important;fill:var(--tint)!important}
+.ap-flow{position:relative;min-height:9em}
+.ap-flow p{position:absolute;inset:0;margin:0;font-size:clamp(16px,2.4cqh,23px);line-height:1.5}
+.ap-kv{display:grid;grid-template-columns:auto 1fr;gap:clamp(8px,1.5cqh,14px) 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(14px,2.4cqh,24px);align-items:baseline}
+.ap-kv b{font:700 clamp(14px,2cqh,19px) var(--display)}
+.ap-kv code{font-size:clamp(12px,1.7cqh,16px)}
+.ap-wl{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.4cqw,18px);width:100%}
+.ap-wc{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--line);border-radius:14px;padding:clamp(14px,2.4cqh,24px);display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow)}
+.ap-wc.hot{border-top-color:var(--green);background:var(--tint)}
+.ap-wc b{font:800 clamp(18px,2.7cqh,26px) var(--display)}
+.ap-wc span{font-size:clamp(13px,1.85cqh,17px);color:var(--dim);line-height:1.4;flex:1}
+.ap-wc code{font-size:clamp(11px,1.5cqh,14px);align-self:flex-start}
+.ap-f{display:grid;grid-template-columns:auto 1fr;gap:clamp(8px,1.4cqh,12px) 16px;align-items:baseline}
+.ap-f b{font:700 clamp(14px,2cqh,19px) var(--mono);color:var(--green-ink)}
+.ap-f code{font-size:clamp(13px,1.85cqh,17px)}
+.ap-gp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ap-gp div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.4cqh,14px) 14px;display:flex;flex-direction:column}
+.ap-gp div.g{background:var(--tint);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+.ap-gp span{font:700 clamp(10px,1.4cqh,13px) var(--mono);text-transform:uppercase;color:var(--dim)}
+.ap-gp b{font:800 clamp(22px,3.6cqh,34px) var(--display)}
+.ap-gp .g b{color:var(--green-ink)}
+pre.ap-term{font-size:clamp(11px,1.6cqh,15px);line-height:1.6}
+pre.ap-term .hd{color:#fff;font-weight:700}
+.ap-out{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(10px,1.7cqh,16px) 16px}
+.ap-ub{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2cqw,28px);width:100%}
+.ap-u{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--green);border-radius:16px;padding:clamp(18px,3cqh,32px);display:flex;flex-direction:column;gap:8px;color:inherit;text-decoration:none;box-shadow:var(--shadow)}
+.ap-u:hover{border-color:var(--green)}
+.ap-u b{font:800 clamp(20px,3.2cqh,31px) var(--display)}
+.ap-u span{font-size:clamp(14px,2cqh,19px);color:var(--dim);line-height:1.45}
+.ap-contrib{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:center;font-size:clamp(13px,1.9cqh,18px)}
+.ap-contrib span{font:700 clamp(11px,1.5cqh,14px) var(--mono);text-transform:uppercase;color:var(--dim)}
+.ap-contrib i{font-style:normal;color:var(--dim);margin-right:10px}
+.sx-call{margin:0;background:var(--tint);border-left:4px solid var(--green);border-radius:10px;padding:clamp(8px,1.5cqh,14px) 16px;font-size:clamp(14px,2cqh,19px);line-height:1.45;min-height:3.2em}
+#apGsv{max-height:30cqh}.ap-gc{font-size:clamp(11px,1.5cqh,14px);align-self:flex-start}
+.slide[data-title="Metrics"] .viz svg{max-height:30cqh}
+
+.ap-st{display:grid!important;grid-template-columns:repeat(4,auto);justify-content:center;gap:clamp(24px,4cqw,64px)!important;width:100%}.ap-st .stat b{font-size:clamp(26px,4.6cqh,46px)}.ap-st .stat:first-child b,.ap-st .stat:nth-child(2) b{color:var(--green-ink)}
+a.ap-lk{color:inherit;text-decoration:none}a.ap-lk:hover{border-color:var(--green)}a.ap-lk b::after{content:" →";color:var(--green-ink)}
+.ap-ol .ap-out{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.ap-ol .ap-out:hover{border-color:var(--green)}
+.ap-ol .ap-out[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 4px 0 0 var(--green)}
+.ap-exp{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;background:var(--tint);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line));border-radius:12px;padding:clamp(8px,1.4cqh,12px) 14px}
+.ap-exp b{font:700 clamp(13px,1.9cqh,17px) var(--display)}
+.ap-exp code{font-size:clamp(11px,1.5cqh,14px);background:none;padding:0}
+.ap-vw{display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,12px);animation:atIn .3s ease both}
+.ap-vw[hidden]{display:none}
+@keyframes atIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ap-vw .viz svg{max-height:46cqh}
+pre.ap-tui{font-size:clamp(11px,1.6cqh,15px);line-height:1.55;min-height:40cqh}
+pre.ap-tui .g{color:#9bd65a}pre.ap-tui .b{color:#86c8ff}pre.ap-tui .o{color:#ffbb5c}pre.ap-tui .w{color:#fff;font-weight:700}
+.viz svg .ap-pt{cursor:pointer}
+.ap-mx{display:flex;flex-direction:column;gap:clamp(10px,2cqh,22px);width:100%}
+.ap-mtop{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(8px,1.6cqh,16px) 18px;box-shadow:var(--shadow)}
+.ap-mtop .viz svg{max-height:22cqh}
+.ap-mbot{display:grid;grid-template-columns:1.25fr .75fr;gap:clamp(14px,2cqw,28px);align-items:center}
+.ap-mbot .viz svg{max-height:40cqh;background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.ap-gp small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim)}
+.ap-cmp2{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(16px,2.8cqh,30px);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:clamp(12px,2.4cqh,24px)}
+.ap-ch,.ap-cr{display:grid;grid-template-columns:7.5em 1fr 1fr;gap:18px;align-items:end}
+.ap-ch b{font:800 clamp(15px,2.2cqh,21px) var(--display);color:var(--green-ink)}.ap-ch b.ap-tr{color:var(--bad)}
+.ap-cr span{font:700 clamp(11px,1.5cqh,14px) var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--dim);align-self:center}
+.ap-cr em{display:block;font:800 clamp(30px,5.4cqh,54px) var(--display);font-style:normal;color:var(--green-ink);line-height:1;margin-bottom:6px}
+.ap-cr em.bad{color:var(--bad)}
+.ap-cr .sx-bar{height:clamp(12px,2cqh,18px)}.ap-cr .sx-bar i.bad{background:var(--bad)}
+.ap-cf{margin:0;font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim);text-align:right}
+.ap-expt{margin:0 0 clamp(8px,1.6cqh,16px);font-size:clamp(14px,2cqh,19px);color:var(--dim)}
+.ap-expt b{color:var(--text)}.ap-expt code{font-size:clamp(12px,1.75cqh,16px)}
+.ap-og{align-items:stretch!important}
+.ap-ol{justify-content:space-between}.ap-ol .ap-out{flex:1}
+.ap-vws{display:grid;align-items:center}
+.ap-vws>.ap-vw{grid-area:1/1;visibility:hidden;opacity:0;transition:opacity .3s;animation:none}
+.ap-vws>.ap-vw.on{visibility:visible;opacity:1}
+.ap-vw pre.ap-term,.ap-vw pre.ap-tui{margin:0}
+.ap-expt{align-self:flex-start;text-align:left}
+.ap-og{height:clamp(300px,54cqh,520px)}
+.ap-vws{height:100%;min-height:0;align-items:stretch}
+.ap-vws>.ap-vw{height:100%;min-height:0;justify-content:center}
+.ap-vws>.ap-vw>pre.sx{flex:none}
+.ap-vws>.ap-vw .viz{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center}
+.ap-vws>.ap-vw .viz svg{max-height:100%;height:100%;width:auto;max-width:100%}
+.ap-ol{height:100%;min-height:0}
+.ap-box{--surface:#0d1316;--surface2:#1b2329;--line:rgba(255,255,255,.12);--text:#e6edf0;--dim:#8b989e;--green-ink:#9bd65a;
+  height:100%;min-height:0;display:flex;flex-direction:column;background:#0d1316;border:1px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;color:#e6edf0}
+.ap-bh{flex:none;display:flex;align-items:center;gap:7px;padding:10px 14px;background:#141c21;border-bottom:1px solid rgba(255,255,255,.08)}
+.ap-bh i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.ap-bh i:nth-child(2){background:#febc2e}.ap-bh i:nth-child(3){background:#28c840;margin-right:8px}
+.ap-bh span{font:600 clamp(12px,1.7cqh,15px) var(--mono);color:#e6edf0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-bh small{margin-left:auto;font:600 clamp(10px,1.4cqh,13px) var(--mono);color:#8b989e;white-space:nowrap}
+.ap-box .ap-vws{flex:1 1 0;min-height:0;height:auto;padding:clamp(10px,1.8cqh,18px) clamp(14px,1.6cqw,22px)}
+.ap-box .ap-vw{justify-content:center}
+.ap-box pre.sx{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0}
+.ap-bf{flex:none;display:grid;border-top:1px solid rgba(255,255,255,.08);background:#141c21;min-height:clamp(40px,6cqh,54px)}
+.ap-bfi{grid-area:1/1;display:flex;align-items:center;padding:6px 14px;visibility:hidden;opacity:0;transition:opacity .3s;font-size:clamp(12px,1.6cqh,14px);color:#8b989e}
+.ap-bfi.on{visibility:visible;opacity:1}
+.ap-bfi code{background:rgba(255,255,255,.08);color:#9bd65a}
+.ap-bf .sx-tg>span{color:#8b989e;min-width:auto}
+.ap-bf .sx-tg button{background:#1b2329;color:#e6edf0;border-color:rgba(255,255,255,.14);padding:3px 12px;font-size:clamp(12px,1.6cqh,14px)}
+.ap-bf .sx-tg button[aria-pressed="true"]{background:rgba(118,185,0,.22);border-color:#76b900;box-shadow:none}
+.ap-bfi.ap-2l{flex-direction:column;align-items:flex-start;justify-content:center;gap:3px}.ap-bfi.ap-2l b{display:inline-block;min-width:5.5em;font:700 clamp(10px,1.35cqh,12px) var(--mono);text-transform:uppercase;color:#8b989e}
+.ap-gs{align-items:stretch!important}
+.ap-gs>.sx-col{justify-content:flex-start!important;gap:clamp(8px,1.4cqh,12px)}
+.ap-gs>.sx-col:first-child{justify-content:stretch!important}
+.ap-gs>.sx-col:first-child>pre{flex:1;margin:0;display:flex;flex-direction:column;justify-content:center}
+.ap-qs code{display:block;background:none;padding:0;font:inherit;color:inherit;white-space:pre}
+.ap-gs .ap-lk{flex:1;align-items:center}
+</style>
+
+<style>
+/* ===== KVCR deck ===== */
+.body.col:has(>.stack) .viz svg{max-height:60cqh}
+.slide:first-child h1{font-size:clamp(34px,6.6cqh,78px);line-height:1.06}
+.slide:last-child{background:var(--herobg)}
+.rq-c{gap:10px!important}.rq-c svg{width:100%;height:auto;max-height:24cqh}
+.rq-c h3{font-size:clamp(17px,2.8cqh,28px)}.rq-c p{font-size:clamp(13px,2cqh,19px);margin:0}
+.rq-n{display:grid;place-items:center;width:clamp(30px,4.6cqh,44px);height:clamp(30px,4.6cqh,44px);border-radius:50%;background:var(--green-fill);color:#12191c;font:800 clamp(16px,2.6cqh,24px) var(--display)}
+.tiers{display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,14px);width:100%}
+.tr{display:grid;grid-template-columns:1.1fr 2.4fr .7fr 1.2fr;align-items:center;gap:20px;padding:clamp(12px,2cqh,22px) 22px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.tr.fut{border-style:dashed;box-shadow:none;background:transparent}
+.tr.th{background:none;border:0;box-shadow:none;padding-top:0;padding-bottom:0;font:600 clamp(11px,1.6cqh,15px) var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.tn b{display:block;font-size:clamp(17px,2.8cqh,28px)}.tn span{font-size:clamp(13px,1.9cqh,18px);color:var(--dim)}
+.tn em{font-style:normal;font:500 clamp(11px,1.6cqh,14px) var(--mono);color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 10px;margin-left:10px}
+.tb{display:flex;gap:5px;flex-wrap:wrap}.tb i{width:clamp(14px,2.4cqh,24px);height:clamp(14px,2.4cqh,24px);border-radius:5px;background:var(--line)}.tb i.on{background:var(--green-fill)}
+.own-kvcr,.own-eng{display:inline-block;font-weight:700;font-size:clamp(14px,2.2cqh,21px);padding:6px 16px;border-radius:10px}
+.own-kvcr{background:var(--green-fill);color:#12191c}.own-eng{border:1.5px solid var(--text)}
+.ts{font-size:clamp(14px,2.1cqh,20px);color:var(--dim)}.ts.g{color:var(--green-ink);font-weight:600}
+svg .kvb{fill:var(--green-fill)}svg .kvbt{fill:#12191c}
+.slide[data-step="1"] .kvb,.slide[data-step="2"] .kvb{fill:var(--surface2);stroke:var(--line)}.slide[data-step="1"] .kvbt,.slide[data-step="2"] .kvbt{fill:var(--dim)}
+.slide[data-step="1"] .eng-b,.slide[data-step="2"] .eng-b{stroke:var(--bad);stroke-width:2}
+svg .bk{fill:none;stroke:var(--green);stroke-width:2;stroke-dasharray:6 5}
+.slide[data-step="2"] .bk{fill:var(--green-fill);stroke-dasharray:none}
+.body.res{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:clamp(14px,1.8cqw,28px);align-items:stretch;width:100%}
+.res-g{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.6cqw,22px)}
+.rc{gap:6px!important}.rc b{font:800 clamp(30px,6cqh,62px) var(--display);letter-spacing:-.03em;line-height:1.05}
+.rc h3{font-size:clamp(14px,2.2cqh,21px)}.rc p{margin:0;font-size:clamp(12px,1.7cqh,16px)}
+.res-sub{margin:4px 0 0;font-size:clamp(14px,2.1cqh,20px)}
+.rmg{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,1.8cqw,26px);width:100%}
+.rm{gap:clamp(6px,1cqh,10px)!important;padding:clamp(14px,2.2cqh,24px) clamp(16px,1.6cqw,28px)!important}
+.rm-setup{font:500 clamp(12px,1.8cqh,17px) var(--mono);color:var(--dim)}
+.rm-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:1px solid var(--line);padding-top:clamp(4px,.9cqh,10px)}
+.rm-row span{font-size:clamp(14px,2.2cqh,21px)}
+.rm-row b{font:800 clamp(20px,3.6cqh,36px) var(--display);letter-spacing:-.02em;color:var(--green-ink);white-space:nowrap}
+.rm-row b small{font:600 clamp(12px,1.8cqh,17px) var(--body);color:var(--dim);margin-left:6px;letter-spacing:0}
+.rm-row b i{font-style:normal;margin-right:2px}
+.simwrap{flex:1 1 auto!important;min-height:0;width:100%;margin:0!important;padding-top:0!important}
+.sim-box{position:relative;flex:1 1 auto;min-height:clamp(380px,62cqh,760px);width:100%}
+#simFrame{position:absolute;top:0;left:0;width:1240px;height:660px;border:0;transform-origin:top left;background:transparent}
+html.dark .sim-box{background:#f3f6f5;border-radius:16px;box-shadow:var(--shadow)}
+html.dark #simFrame{padding:0}
+.prim .pfoot{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;width:100%}
+.prim .caption{flex:1;min-height:2.8em}
+.pleg{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:flex-end;max-width:46%;font-size:clamp(12px,1.7cqh,16px);color:var(--dim)}
+.pleg span{display:flex;align-items:center;gap:6px}.pleg i{width:16px;height:16px;border-radius:4px;display:inline-block}
+.pleg i.h{background:var(--green-fill)}.pleg i.d{background:color-mix(in srgb,var(--green-fill) 45%,var(--surface))}.pleg i.t{border:2px dashed var(--green)}.pleg i.f{border:2px dashed var(--bad)}.pleg i.o{background:var(--line)}
+.tag{align-self:flex-start;font:600 clamp(10px,1.5cqh,13px) var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:3px 12px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.tag.prod{background:var(--green-fill);border-color:var(--green-fill);color:#12191c}.tag.rep{border-color:var(--req);color:var(--req)}
+.rchart{gap:10px!important}.rchart h3{font-size:clamp(16px,2.6cqh,26px)}
+.seg2{display:inline-flex;align-self:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg2 button{font:600 clamp(13px,1.9cqh,17px) var(--body);color:var(--dim);background:none;border:0;border-radius:9px;padding:6px 14px;cursor:pointer}
+.seg2 button.on{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--green)}
+.body.gd{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);gap:clamp(14px,1.8cqw,28px);align-items:stretch;width:100%}
+.gtop{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.gtop h3{font-size:clamp(16px,2.6cqh,26px);margin:0}
+.gnote{font-size:clamp(14px,2.2cqh,21px)}.gnote b{color:var(--green-ink)}
+.gsetup{margin:4px 0 0;font:500 clamp(12px,1.8cqh,16px) var(--mono)}
+.gpre{font:500 clamp(12px,1.7cqh,15px) var(--mono);color:var(--dim)}
+.gstats{display:flex!important;flex-direction:column;justify-content:space-around!important;gap:0!important}
+.gstats .stat{border-top:0;padding:0}
+.gstats .stat+.stat{border-top:1px solid var(--line);padding-top:clamp(8px,1.4cqh,14px)}
+.gchart{gap:10px!important}
+.gstats .stat b{color:var(--green-ink);font-size:clamp(20px,3.6cqh,36px)}.gstats .stat span{display:block}
+.tiny-setup{font:500 clamp(11px,1.6cqh,14px) var(--mono);color:var(--dim);text-align:center}
+/* slide 10: size the chart by height so it never runs past the footer */
+#gdSvg{width:auto!important;max-width:100%;height:auto;max-height:44cqh;align-self:center}
+.body.gd{align-items:start!important}
+.gchart{gap:6px!important;padding:clamp(12px,2cqh,22px) clamp(16px,1.6cqw,26px)!important}
+.gstats .stat b{font-size:clamp(18px,3.2cqh,32px)!important}
+/* section divider: center the title on the whole slide */
+.slide.sect{justify-content:center;padding-top:0;padding-bottom:0}
+.slide.sect>.body{flex:0 0 auto}
+/* ---------- setup deck ---------- */
+.sx-g2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2.4cqw,34px);width:100%;align-items:stretch;min-height:0}
+.sx-g2.l{grid-template-columns:1.15fr .85fr}
+.sx-g2.r{grid-template-columns:.85fr 1.15fr}
+.sx-col{display:flex;flex-direction:column;gap:clamp(10px,1.8cqh,18px);min-width:0;min-height:0}
+.sx-col.c{justify-content:center}
+.sx-tg{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sx-tg>span{font:700 clamp(10px,1.4cqh,13px) var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);min-width:6.5em}
+.sx-tg button,.sx-btn{font:600 clamp(13px,1.8cqh,17px) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 15px;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,28,.05)}
+.sx-tg button:hover,.sx-btn:hover{border-color:var(--green)}
+.sx-tg button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 0 0 0 1px var(--green)}
+.sx-btn.warn{border-color:color-mix(in srgb,var(--req) 50%,var(--line))}
+pre.sx{margin:0;white-space:pre;overflow:hidden;font-size:clamp(12px,2cqh,20px);line-height:1.5}
+pre.sx.sm{font-size:clamp(11px,1.75cqh,17px)}
+pre .k{color:#9bd65a}
+pre .s{color:#86c8ff}
+pre .p{color:#ffbb5c}
+pre .w{color:#fff;font-weight:700}
+pre .yk{border-radius:4px;transition:background .2s;cursor:default}
+pre .yk.hl{background:rgba(118,185,0,.32)}
+.sx-note{font-size:clamp(12px,1.7cqh,16px);color:var(--dim);line-height:1.45}
+.sx-note b{color:var(--text)}
+.sx-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sx-chips .chip{font-size:clamp(11px,1.5cqh,14px)}
+.sx-h{font:700 clamp(10px,1.4cqh,13px) var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--green-ink)}
+.viz svg [data-k]{transition:opacity .25s}
+.viz svg [data-k].hl rect,.viz svg [data-k].hl path{stroke:var(--green)!important;stroke-width:3.5!important}
+.sx-fade{transition:opacity .35s}
+.sx-off{opacity:.18}
+/* path cards */
+.sx-paths{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.6cqw,22px);width:100%}
+.sx-path{display:flex;flex-direction:column;gap:10px;text-align:left;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--pc,var(--green));border-radius:14px;padding:clamp(14px,2.4cqh,26px);cursor:pointer;box-shadow:var(--shadow);font:inherit;color:inherit;transition:transform .15s,border-color .15s}
+.sx-path:hover{transform:translateY(-3px);border-color:var(--pc,var(--green))}
+.sx-path i{font-style:normal;font-size:clamp(26px,4.4cqh,44px);line-height:1}
+.sx-path b{font:800 clamp(17px,2.6cqh,26px) var(--display)}
+.sx-path em{font:600 clamp(11px,1.5cqh,14px) var(--mono);font-style:normal;color:var(--green-ink)}
+.sx-path span{font-size:clamp(13px,1.8cqh,17px);color:var(--dim);line-height:1.45}
+.sx-path small{margin-top:auto;font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim)}
+/* requirement list */
+.sx-req{display:grid;grid-template-columns:auto 1fr;gap:clamp(6px,1.1cqh,12px) 14px;font-size:clamp(13px,1.8cqh,17px);align-items:baseline}
+.sx-req dt{font:700 clamp(10px,1.4cqh,13px) var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.sx-req dd{margin:0}
+/* recipe browser */
+.sx-tbl{width:100%;border-collapse:collapse;font-size:clamp(12px,1.65cqh,16px)}
+.sx-tbl th{font:700 clamp(10px,1.35cqh,12px) var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)}
+.sx-tbl td{padding:clamp(3px,.7cqh,7px) 8px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.sx-tbl tr.r{cursor:pointer}
+.sx-tbl tr.r:hover td{background:color-mix(in srgb,var(--green) 7%,transparent)}
+.sx-tbl tr.r.sel td{background:var(--tint)}
+.sx-tbl tr.r.sel td:first-child{box-shadow:inset 3px 0 0 var(--green)}
+.sx-tbl td:first-child{font-weight:700}
+.sx-tag{font:700 clamp(10px,1.3cqh,12px) var(--mono);padding:2px 8px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);white-space:nowrap}
+.sx-tag.d{background:color-mix(in srgb,var(--req) 14%,var(--surface));border-color:color-mix(in srgb,var(--req) 45%,var(--line))}
+.sx-tag.a{background:var(--tint);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+/* result cards */
+.sx-res{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.8cqw,24px);width:100%}
+.sx-rc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(14px,2.4cqh,26px);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,14px);color:inherit;text-decoration:none}
+.sx-rc:hover{border-color:var(--green)}
+.sx-rc b{font:800 clamp(16px,2.3cqh,23px) var(--display)}
+.sx-rc small{font:600 clamp(11px,1.45cqh,13px) var(--mono);color:var(--dim)}
+.sx-m{display:flex;flex-direction:column;gap:5px}
+.sx-m>div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:clamp(12px,1.6cqh,15px);color:var(--dim)}
+.sx-m em{font:800 clamp(22px,3.6cqh,36px) var(--display);font-style:normal;color:var(--green-ink)}
+.sx-bar{height:clamp(8px,1.3cqh,12px);border-radius:999px;background:var(--surface2);overflow:hidden}
+.sx-bar i{display:block;height:100%;border-radius:999px}
+.sx-bar i.o{background:color-mix(in srgb,var(--dim) 55%,var(--surface))}
+.sx-bar i.g{background:var(--green-fill)}
+/* symptom explorer */
+.sx-sym{display:flex;flex-direction:column;gap:8px}
+.sx-sym button{display:flex;gap:12px;align-items:center;text-align:left;font:600 clamp(13px,1.85cqh,18px) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.4cqh,14px) 14px;cursor:pointer}
+.sx-sym button i{font-style:normal;font-size:1.2em;width:1.4em;text-align:center}
+.sx-sym button:hover{border-color:var(--green)}
+.sx-sym button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 3px 0 0 var(--green)}
+.sx-det{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(16px,2.8cqh,30px);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:clamp(10px,1.8cqh,16px);min-height:0}
+.sx-det h3{margin:0;font:800 clamp(20px,3cqh,30px) var(--display)}
+.sx-det p{margin:0;font-size:clamp(14px,1.95cqh,19px);line-height:1.5}
+.sx-det .sx-go{align-self:flex-start}
+/* router sim */
+.sx-sl{display:grid;grid-template-columns:auto 1fr auto;gap:8px 14px;align-items:center;font-size:clamp(13px,1.8cqh,17px)}
+.sx-sl code{font-size:.9em}
+.sx-sl input{accent-color:var(--green);width:100%}
+.sx-sl b{font:700 clamp(13px,1.8cqh,17px) var(--mono);min-width:3.2em;text-align:right}
+.sx-wk{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,1.2cqw,16px)}
+.sx-w{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:clamp(10px,1.8cqh,18px);display:flex;flex-direction:column;gap:8px;transition:border-color .2s,box-shadow .2s}
+.sx-w.win{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 25%,transparent)}
+.sx-w b{font:800 clamp(15px,2.2cqh,21px) var(--display);display:flex;justify-content:space-between}
+.sx-w b span{font:700 clamp(10px,1.3cqh,12px) var(--mono);color:var(--green-ink);align-self:center}
+.sx-w .bl{display:flex;gap:2px;flex-wrap:wrap}
+.sx-w .bl i{width:clamp(9px,1.3cqh,13px);height:clamp(9px,1.3cqh,13px);border-radius:2px;background:var(--surface2);border:1px solid var(--line)}
+.sx-w .bl i.h{background:var(--green-fill);border-color:var(--green-fill)}
+.sx-w .bl i.d{background:color-mix(in srgb,var(--req) 60%,var(--surface));border-color:transparent}
+.sx-w small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim)}
+.sx-cost{font:800 clamp(18px,2.8cqh,28px) var(--mono);color:var(--text)}
+.sx-w.win .sx-cost{color:var(--green-ink)}
+/* offload cards */
+.sx-ol{display:flex;flex-direction:column;gap:8px}
+.sx-o{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--oc,var(--green));border-radius:10px;padding:clamp(8px,1.3cqh,12px) 14px;display:flex;flex-direction:column;gap:3px}
+.sx-o b{font:700 clamp(14px,1.95cqh,18px) var(--display);display:flex;gap:8px;align-items:center}
+.sx-o code{font-size:clamp(10px,1.35cqh,13px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.sx-o .sx-tag{font-size:clamp(9px,1.2cqh,11px)}
+/* rollout */
+.sx-ro{display:flex;gap:8px;align-items:stretch}
+.sx-ro div{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.4cqh,14px);display:flex;flex-direction:column;gap:4px;position:relative}
+.sx-ro div b{font:800 clamp(14px,2cqh,19px) var(--display)}
+.sx-ro div span{font-size:clamp(12px,1.6cqh,15px);color:var(--dim)}
+.sx-ro div em{font:700 clamp(10px,1.3cqh,12px) var(--mono);font-style:normal;color:var(--green-ink)}
+/* skill panel */
+.sx-sk{display:flex;flex-direction:column;gap:8px}
+.sx-sk li{list-style:none;display:flex;flex-direction:column;gap:2px}
+.sx-sk ul{margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(6px,1.1cqh,10px)}
+.sx-sk code{font-size:clamp(12px,1.65cqh,16px);color:var(--green-ink);font-weight:700;background:none;padding:0}
+.sx-sk span{font-size:clamp(13px,1.75cqh,17px);color:var(--text);line-height:1.4}
+.viz svg .sk{cursor:pointer}
+.viz svg .sk rect{transition:fill .2s,stroke-width .2s}
+.viz svg .sk rect{fill:var(--surface)}
+.viz svg .sk.on rect{fill:color-mix(in srgb,var(--green) 16%,var(--surface));stroke:var(--green);stroke-width:3}
+/* cheat sheet */
+.sx-cs{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.5cqw,20px);width:100%}
+.sx-c{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(12px,2cqh,20px);display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);text-decoration:none;color:inherit;min-width:0}
+.sx-c:hover{border-color:var(--green)}
+.sx-c b{font:800 clamp(15px,2.2cqh,21px) var(--display);display:flex;gap:8px;align-items:center}
+.sx-c pre{margin:0;font-size:clamp(11px,1.75cqh,16px);padding:clamp(8px,1.2cqh,12px);white-space:pre;overflow:hidden}
+.sx-c small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--green-ink);margin-top:auto}
+/* dgdr toggle panel */
+.sx-st{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sx-st div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.4cqh,14px);display:flex;flex-direction:column;gap:3px;transition:opacity .25s,border-color .25s}
+.sx-st div b{font:800 clamp(15px,2.2cqh,21px) var(--display)}
+.sx-st div em{font:800 clamp(18px,2.8cqh,28px) var(--display);font-style:normal;color:var(--green-ink)}
+.sx-st div span{font-size:clamp(12px,1.6cqh,15px);color:var(--dim)}
+@container (max-width:900px){.sx-g2,.sx-g2.l,.sx-g2.r,.sx-paths,.sx-res,.sx-cs,.sx-wk{grid-template-columns:1fr}}
+.sx-stack{display:grid}.sx-stack>*{grid-area:1/1}
+.sx-path b{font-size:clamp(19px,3cqh,30px)}.sx-path span{font-size:clamp(14px,2.1cqh,20px)}.sx-path{padding:clamp(18px,3.2cqh,34px);gap:14px}
+.sx-rc b{font-size:clamp(18px,2.7cqh,27px)}.sx-rc{padding:clamp(18px,3cqh,32px)}
+.sx-note{font-size:clamp(13px,1.95cqh,18px)}
+.sx-req{font-size:clamp(14px,2cqh,19px)}
+.sx-tbl{font-size:clamp(12px,1.8cqh,17px)}
+.viz svg .sx-stop{cursor:pointer}
+.viz svg .sx-stop circle{transition:stroke-width .15s,filter .15s}
+.viz svg .sx-stop:hover circle,.viz svg .sx-stop:focus circle{stroke-width:6;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--green) 60%,transparent))}
+.viz svg .sx-stop:focus{outline:none}
+.sx-hint{margin:0;font:600 clamp(13px,1.9cqh,18px) var(--body);color:var(--green-ink);background:var(--tint);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line));border-radius:999px;padding:7px 16px;align-self:flex-start;animation:sxPulse 2.4s ease-in-out infinite}
+@keyframes sxPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--green) 30%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+.sx-rb{display:grid;grid-template-columns:minmax(150px,.62fr) 1.45fr 1.05fr;gap:clamp(14px,2cqw,28px);width:100%;align-items:start}
+.sx-pv{display:flex;flex-direction:column;gap:3px;border-right:1px solid var(--line);padding-right:clamp(8px,1cqw,14px)}
+.sx-pv button{display:flex;justify-content:space-between;gap:8px;text-align:left;font:600 clamp(12px,1.7cqh,16px) var(--body);color:var(--text);background:none;border:0;border-radius:8px;padding:clamp(3px,.55cqh,6px) 10px;cursor:pointer}
+.sx-pv button small{font:600 clamp(10px,1.3cqh,12px) var(--mono);color:var(--dim)}
+.sx-pv button:hover{background:color-mix(in srgb,var(--green) 8%,transparent)}
+.sx-pv button[aria-pressed="true"]{background:var(--tint);box-shadow:inset 3px 0 0 var(--green);color:var(--green-ink)}
+.sx-ms{display:flex;flex-wrap:wrap;gap:6px}
+.sx-ms button{font:600 clamp(12px,1.7cqh,16px) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 13px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.sx-ms button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 0 0 0 1px var(--green)}
+.sx-ms button i{font:700 clamp(9px,1.15cqh,11px) var(--mono);font-style:normal;color:var(--dim)}
+.sx-tw{max-height:46cqh;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.sx-tw th{position:sticky;top:0;background:var(--surface);z-index:1}
+.sx-perf{background:var(--tint);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line));border-radius:12px;padding:clamp(10px,1.8cqh,18px);font-size:clamp(13px,1.85cqh,17px);line-height:1.5;display:flex;flex-direction:column;gap:4px}
+.sx-perf.none{background:var(--surface2);border-color:var(--line);color:var(--dim)}
+.sx-res.q{grid-template-columns:repeat(4,1fr)}
+.sx-hb{display:grid;grid-template-columns:auto 1fr auto;gap:8px 10px;align-items:center;font-size:clamp(12px,1.6cqh,15px);color:var(--dim)}
+.sx-hb b{font:700 clamp(12px,1.7cqh,16px) var(--mono);color:var(--text)}
+@container (max-width:900px){.sx-rb,.sx-res.q,.sx-pd,.sx-vds{grid-template-columns:1fr}.sx-pv{flex-direction:row;flex-wrap:wrap;border-right:0;padding-right:0}}
+#sxRecCmd{white-space:pre-wrap;word-break:break-all}
+.sx-res.q{grid-template-rows:repeat(4,auto)}.sx-res.q .sx-rc{display:grid;grid-row:span 4;grid-template-rows:subgrid;align-content:start}.sx-res.q .sx-hb{align-self:start}
+.sx-vds{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,1.4cqw,18px)}
+.sx-vd{border-radius:16px;padding:clamp(14px,2.4cqh,26px);display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,14px);border:2px solid}
+.sx-vd b{font:800 clamp(20px,3.2cqh,32px) var(--display)}
+.sx-vd ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:clamp(4px,.9cqh,10px)}
+.sx-vd li{font:700 clamp(16px,2.5cqh,25px) var(--body);line-height:1.25}
+.sx-vd.ok{background:color-mix(in srgb,var(--green) 13%,var(--surface));border-color:var(--green)}
+.sx-vd.ok b{color:var(--green-ink)}
+.sx-vd.no{background:color-mix(in srgb,var(--bad) 9%,var(--surface));border-color:color-mix(in srgb,var(--bad) 70%,var(--line))}
+.sx-vd.no b{color:var(--bad)}
+.sx-ais{background:var(--surface);border:1px dashed color-mix(in srgb,var(--disc) 60%,var(--line));border-radius:14px;padding:clamp(12px,2cqh,20px);display:flex;flex-direction:column;gap:clamp(8px,1.3cqh,12px)}
+a.sx-btn{text-decoration:none;display:inline-block}
+.sx-knob{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:clamp(8px,1.3cqh,12px) 14px}
+.sx-knob code{font-size:clamp(12px,1.7cqh,16px);color:var(--green-ink);background:none;padding:0;font-weight:700}
+.sx-knob span{font-size:clamp(13px,1.85cqh,17px)}
+.sx-leg{display:flex;flex-wrap:wrap;gap:6px 16px;font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim);align-items:center}
+.sx-leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#sxRw{display:flex;flex-direction:column;gap:clamp(6px,1.1cqh,10px)}
+.sx-rw{display:grid;grid-template-columns:7.2em auto auto 1fr auto 4.6em;gap:12px;align-items:center;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:clamp(8px,1.5cqh,14px) 16px;transition:border-color .2s,box-shadow .2s}
+.sx-rw.win{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 22%,transparent)}
+.sx-rw>div:first-child{display:flex;flex-direction:column}
+.sx-rw b{font:800 clamp(15px,2.2cqh,21px) var(--display)}
+.sx-rw small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim);text-transform:uppercase}
+.sx-rw .bk{display:flex;gap:4px;flex-wrap:wrap}
+.sx-rw .bk i{width:clamp(16px,2.6cqh,26px);height:clamp(16px,2.6cqh,26px);border-radius:5px}
+.sx-rw .pl{font:700 clamp(16px,2.2cqh,20px) var(--body);color:var(--dim)}
+.sx-rw .eq{font:700 clamp(14px,2cqh,19px) var(--mono);text-align:right;white-space:nowrap}
+.sx-rw .eq em{font-style:normal}
+.sx-rw .eq b{font-size:clamp(18px,2.8cqh,27px)}
+.sx-rw .pk{font:700 clamp(10px,1.35cqh,12px) var(--mono);color:var(--green-ink)}
+.sx-rw.win .pk{background:var(--tint);border:1px solid var(--green);border-radius:999px;padding:2px 8px;text-align:center}
+.sx-call{margin:0;background:var(--tint);border-left:4px solid var(--green);border-radius:10px;padding:clamp(8px,1.5cqh,14px) 16px;font-size:clamp(13px,1.9cqh,18px);line-height:1.45;min-height:3.2em}
+.sx-pd{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.6cqw,22px);align-content:center}
+.sx-pd .sx-toy{grid-column:1/-1;margin:0;font-size:clamp(11px,1.5cqh,14px)}
+.sx-step{display:flex;align-items:center;gap:10px}
+.sx-step span{flex:1;font:700 clamp(14px,2cqh,19px) var(--display)}
+.sx-step button{width:clamp(28px,4cqh,38px);height:clamp(28px,4cqh,38px);border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--text);font:700 clamp(16px,2.4cqh,22px) var(--body);cursor:pointer;line-height:1}
+.sx-step button:hover{border-color:var(--green)}
+.sx-step b{font:800 clamp(20px,3cqh,30px) var(--mono);min-width:1.4em;text-align:center}
+.sx-gpus{display:flex;gap:5px;min-height:clamp(18px,2.8cqh,26px)}
+.sx-gpus i{width:clamp(18px,2.8cqh,26px);height:clamp(18px,2.8cqh,26px);border-radius:5px}
+.sx-gpus i.p{background:var(--req)}.sx-gpus i.d{background:var(--green-fill)}
+.sx-met{display:flex;flex-direction:column;gap:4px}
+.sx-mh{display:flex;justify-content:space-between;align-items:baseline}
+.sx-mh span{font:700 clamp(12px,1.7cqh,16px) var(--mono);color:var(--dim)}
+.sx-mh b{font:800 clamp(16px,2.4cqh,23px) var(--mono);color:var(--green-ink)}
+.sx-mh b.bad,.sx-mb i.bad{color:var(--bad)}
+.sx-mb{position:relative;height:clamp(10px,1.6cqh,14px);border-radius:999px;background:var(--surface2)}
+.sx-mb i{display:block;height:100%;border-radius:999px;background:var(--green-fill);transition:width .3s}
+.sx-mb i.bad{background:var(--bad)}
+.sx-mb u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--text);opacity:.6}
+.sx-met small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim)}
+.sx-gp{background:var(--tint);border:1px solid color-mix(in srgb,var(--green) 45%,var(--line));border-radius:14px;padding:clamp(8px,1.4cqh,14px) 16px;display:flex;flex-direction:column}
+.sx-gp span{font:700 clamp(11px,1.5cqh,14px) var(--mono);color:var(--green-ink);text-transform:uppercase;letter-spacing:.06em}
+.sx-gp b{font:800 clamp(24px,4cqh,40px) var(--display);color:var(--green-ink)}
+.sx-gp small{font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim)}
+.sx-hm{display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr auto;gap:4px 6px}
+.sx-hmy{writing-mode:vertical-rl;transform:rotate(180deg);font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim);text-align:center}
+.sx-hmx{grid-column:2;font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim);text-align:center}
+#sxHm{display:grid;grid-template-columns:auto repeat(6,1fr);gap:3px;max-width:clamp(200px,30cqh,280px);align-items:center}
+#sxHm span{font:600 clamp(10px,1.3cqh,12px) var(--mono);color:var(--dim);text-align:center;padding:0 3px}
+.sx-hm{justify-content:center}
+.sx-hml{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim);text-align:center}
+#sxHm button{aspect-ratio:1;border:1px solid var(--line);border-radius:5px;cursor:pointer;font:700 clamp(11px,1.6cqh,15px) var(--body);color:#12191c;padding:0}
+#sxHm button.cur{outline:3px solid var(--text);outline-offset:-1px}
+.sx-sim{display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,14px);min-width:0}
+.sx-simc{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.sx-simc .sx-step span{display:flex;align-items:center;gap:8px}
+.sx-simc .sx-step span i{width:12px;height:12px;border-radius:3px;display:inline-block}
+#sxSimCv{width:100%;aspect-ratio:640/300;max-height:33cqh;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.sx-gauges{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(8px,1.2cqw,16px)}
+.sx-ga{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.3cqh,12px) 14px;display:flex;flex-direction:column;gap:4px}
+.sx-ga span{font:700 clamp(10px,1.4cqh,13px) var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.sx-ga b{font:800 clamp(18px,2.8cqh,27px) var(--mono);color:var(--green-ink)}
+.sx-ga b.bad{color:var(--bad)}
+.sx-ga small{font:600 clamp(10px,1.3cqh,12px) var(--mono);color:var(--dim)}
+.sx-ga.gp{background:var(--tint);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+.sx-sim .sx-toy{margin:0;font-size:clamp(11px,1.45cqh,14px)}
+@container (max-width:900px){.sx-gauges{grid-template-columns:1fr}}
+.sx-best{font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim)}.sx-best b{color:var(--green-ink)}
+@container (max-width:900px){.sx-g2{grid-template-columns:1fr!important}.sx-vd b{font-size:clamp(18px,2.6cqh,26px)}}
+@container (max-width:900px){.slide{overflow-y:auto;overflow-x:hidden;justify-content:flex-start}.slide>.head{flex:none}.slide>.body,.slide>.body.col{flex:none!important;justify-content:flex-start!important;margin-top:0!important;margin-bottom:0!important;padding-bottom:90px;min-height:auto}}
+.sx-ais.tp{border-color:color-mix(in srgb,var(--cpu) 60%,var(--line))}
+.sx-ais{gap:clamp(6px,1cqh,10px)}
+.sx-vd{padding:clamp(10px,1.7cqh,18px) clamp(12px,1.6cqh,18px);gap:clamp(4px,.8cqh,8px)}
+.sx-vd b{font-size:clamp(18px,2.7cqh,27px)}.sx-vd li{font-size:clamp(14px,2.1cqh,21px)}
+.sx-ais{padding:clamp(10px,1.5cqh,16px)}
+
+/* fixed design canvas, scaled uniformly to the window */
+html,body{width:100%;height:100%;overflow:hidden}
+#stage{position:fixed;left:0;top:0;width:100cqw;height:100cqh;container-type:size;transform-origin:0 0;overflow:hidden;background:var(--bg)}
+#stage .slide{background:var(--slidebg,var(--bg))}
+
+</style>
+<!-- shared markers -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="mr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--req)"/></marker>
+    <marker id="md" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--disc)"/></marker>
+    <marker id="me" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--evt)"/></marker>
+    <marker id="mk" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--text)"/></marker>
+    <marker id="mg" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--gpu)"/></marker>
+  </defs>
+</svg>
+
+<div id="stage"><main class="deck" id="deck">
+
+<section class="slide" data-title="Title">
+  <div class="body" style="align-items:center">
+    <div class="head" style="flex:1 1 42%;gap:18px">
+      <span class="kicker">NVIDIA Dynamo · AIPerf</span>
+      <h1>AIPerf</h1>
+      <p class="dim" style="max-width:30ch;font-size:clamp(18px,3cqh,30px)">Benchmark any inference endpoint with production-shaped traffic, and get the metrics that decide your SLA.</p>
+      <div class="sx-chips"><span class="chip">pip install aiperf</span><span class="chip">Apache 2.0</span><span class="chip">successor to GenAI-Perf</span></div>
+    </div>
+    <div class="viz" style="flex:1 1 58%">
+      <svg viewBox="0 0 640 360" role="img" aria-label="Traffic from AIPerf to an endpoint, metrics back">
+        <rect x="0" y="80" width="200" height="200" rx="18" style="fill:var(--tint);stroke:var(--green);stroke-width:2.5"/>
+        <text class="h" x="100" y="130" text-anchor="middle">AIPerf</text>
+        <text class="m" x="100" y="156" text-anchor="middle">traces · sessions</text><text class="m" x="100" y="176" text-anchor="middle">rates · sweeps</text>
+        <g id="apTicks"></g>
+        <rect x="440" y="110" width="200" height="140" rx="18" class="box"/><text class="hs" x="540" y="160" text-anchor="middle">your endpoint</text><text class="m" x="540" y="184" text-anchor="middle">Dynamo · vLLM · SGLang</text><text class="m" x="540" y="204" text-anchor="middle">TRT-LLM · any OpenAI API</text>
+        <path class="a-req flow" d="M202,150 L436,150" marker-end="url(#mr)"/>
+        <path class="a-gpu flow" d="M436,212 L206,212" marker-end="url(#mg)"/>
+        <text class="m" x="320" y="138" text-anchor="middle">requests on a schedule</text><text class="m" x="320" y="236" text-anchor="middle">streamed tokens, timed</text>
+        <g><rect x="40" y="300" width="560" height="44" rx="12" style="fill:var(--surface);stroke:var(--line)"/>
+          <text class="lb" x="320" y="328" text-anchor="middle">TTFT · ITL · tok/s/user · tok/s/GPU · goodput · GPU telemetry</text></g>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>AIPerf (github.com/ai-dynamo/aiperf) is a benchmarking tool that measures the performance of generative AI models served by any inference solution. It is a ground-up rewrite and successor to GenAI-Perf (NVIDIA developer blog, Sep 2026); docs/migrating.md calls it a drop-in replacement for currently supported features.</li><li>Latest release v0.13.0 (Sep 24 2026): native Kubernetes execution (beta), speculative-decoding metrics, richer workload control.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="The problem">
+  <div class="head"><span class="kicker">Why it's hard</span><h2>A benchmark that doesn't look like production tells you the wrong answer</h2></div>
+  <div class="body">
+    <div class="sx-g2" style="grid-template-columns:1.1fr .9fr">
+      <div class="sx-col c">
+        <div class="ap-cmp2">
+          <div class="ap-ch"><span></span><b>Synthetic load</b><b class="ap-tr">Mooncake trace</b></div>
+          <div class="ap-cr"><span>success rate</span><div><em>100%</em><div class="sx-bar"><i class="g" style="width:100%"></i></div></div><div><em class="bad">96%</em><div class="sx-bar"><i class="bad" style="width:96%"></i></div></div></div>
+          <div class="ap-cr"><span>tokens / s</span><div><em>22.5K</em><div class="sx-bar"><i class="g" style="width:100%"></i></div></div><div><em class="bad">4.7K</em><div class="sx-bar"><i class="bad" style="width:20.9%"></i></div></div></div>
+          <p class="ap-cf">same server · same config</p>
+        </div>
+        <p class="sx-call"><b>Same server, two answers.</b> Real prompt lengths and bursts cut throughput ~5× and exposed context-window failures that uniform synthetic prompts hide.</p>
+      </div>
+      <div class="sx-col c">
+        <div class="ap-pr"><i>🧵</i><div><b>The client is the bottleneck</b><span>ad-hoc scripts are GIL-bound; AIPerf has to saturate a real server without slowing itself down</span></div></div>
+        <div class="ap-pr"><i>🎯</i><div><b>Throughput isn't goodput</b><span>high tokens/s can hide that most requests missed their SLA</span></div></div>
+        <div class="ap-pr"><i>🧊</i><div><b>Cold starts lie</b><span>first requests warm caches and compile; they must not count</span></div></div>
+        <div class="ap-pr"><i>🤖</i><div><b>Agents aren't chats</b><span>multi-turn sessions, subagents and tool pauses change KV reuse and load</span></div></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From docs/comprehensive-llm-benchmarking.md (written against AIPerf v0.5.0): the same deployment ran synthetic load at 100% success and 22.5K tokens/s, while replaying the Mooncake trace gave 96% success and 4.7K tokens/s and revealed context-window issues. "Trace-based testing exposes real-world challenges that synthetic benchmarks hide." "A system can have high throughput but low goodput if most requests miss SLAs."</li><li>Client bottleneck framing from the NVIDIA developer blog "Benchmarking LLM Inference at Scale with AIPerf"; warm-up from docs/tutorials/warmup.md.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Architecture" data-steps="6">
+  <div class="head"><span class="kicker">Architecture</span><h2>Three planes, so measuring never gets in the way of sending</h2></div>
+  <div class="body">
+    <div class="sx-g2" style="grid-template-columns:1.35fr .65fr">
+      <div class="viz"><svg viewBox="0 0 760 420" role="img" aria-label="AIPerf control, data and analytic planes">
+        <rect x="0" y="0" width="760" height="120" rx="16" style="fill:color-mix(in srgb,var(--disc) 7%,var(--surface));stroke:var(--disc)"/><text class="lb" x="16" y="24" style="fill:var(--disc)">CONTROL PLANE · what, when, how many</text>
+        <g class="ap-svc" data-k="sc"><rect x="16" y="40" width="168" height="62" rx="10" class="box"/><text class="lb" x="100" y="68" text-anchor="middle">System Controller</text><text class="m" x="100" y="88" text-anchor="middle">phases · lifecycle</text></g>
+        <g class="ap-svc" data-k="tm"><rect x="200" y="40" width="168" height="62" rx="10" class="box"/><text class="lb" x="284" y="68" text-anchor="middle">Timing Manager</text><text class="m" x="284" y="88" text-anchor="middle">issues credits</text></g>
+        <g class="ap-svc" data-k="dm"><rect x="384" y="40" width="168" height="62" rx="10" class="box"/><text class="lb" x="468" y="68" text-anchor="middle">Dataset Manager</text><text class="m" x="468" y="88" text-anchor="middle">prompts · traces</text></g>
+        <g class="ap-svc" data-k="wm"><rect x="568" y="40" width="176" height="62" rx="10" class="box"/><text class="lb" x="656" y="68" text-anchor="middle">Worker Manager</text><text class="m" x="656" y="88" text-anchor="middle">health · scale</text></g>
+        <rect x="0" y="140" width="760" height="120" rx="16" style="fill:color-mix(in srgb,var(--req) 7%,var(--surface));stroke:var(--req)"/><text class="lb" x="16" y="164" style="fill:var(--req)">DATA PLANE · the request / response cycle</text>
+        <g class="ap-svc" data-k="w"><rect x="16" y="180" width="380" height="62" rx="10" class="box"/><text class="lb" x="40" y="208">Workers × N</text><text class="m" x="40" y="228">async HTTP · SSE · sticky</text>
+          <rect x="300" y="194" width="24" height="34" rx="5" style="fill:var(--req)"/><rect x="330" y="194" width="24" height="34" rx="5" style="fill:var(--req)"/><rect x="360" y="194" width="24" height="34" rx="5" style="fill:var(--req)"/></g>
+        <g class="ap-svc" data-k="srv"><rect x="520" y="180" width="224" height="62" rx="10" style="fill:var(--surface);stroke:var(--text);stroke-width:2"/><text class="lb" x="632" y="208" text-anchor="middle">Inference server</text><text class="m" x="632" y="228" text-anchor="middle">your endpoint</text></g>
+        <rect x="0" y="280" width="760" height="140" rx="16" style="fill:var(--tint);stroke:var(--green)"/><text class="lb" x="16" y="304" style="fill:var(--green-ink)">ANALYTIC PLANE · metrics and telemetry</text>
+        <g class="ap-svc" data-k="rp"><rect x="16" y="320" width="196" height="62" rx="10" class="box"/><text class="lb" x="114" y="348" text-anchor="middle">Record Processors × N</text><text class="m" x="114" y="368" text-anchor="middle">per-request metrics</text></g>
+        <g class="ap-svc" data-k="rm"><rect x="228" y="320" width="176" height="62" rx="10" class="box"/><text class="lb" x="316" y="348" text-anchor="middle">Records Manager</text><text class="m" x="316" y="368" text-anchor="middle">aggregate · export</text></g>
+        <g class="ap-svc" data-k="gpu"><rect x="420" y="320" width="156" height="62" rx="10" class="box"/><text class="lb" x="498" y="348" text-anchor="middle">GPU Telemetry</text><text class="m" x="498" y="368" text-anchor="middle">DCGM · NVML</text></g>
+        <g class="ap-svc" data-k="sm"><rect x="592" y="320" width="152" height="62" rx="10" class="box"/><text class="lb" x="668" y="348" text-anchor="middle">Server Metrics</text><text class="m" x="668" y="368" text-anchor="middle">Prometheus</text></g>
+        <g data-s="1" class="sx-fade"><path class="a-req flow" d="M284,104 L180,176" marker-end="url(#mr)"/><circle cx="232" cy="140" r="12" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="lb" x="232" y="145" text-anchor="middle">1</text></g>
+        <g data-s="2" class="sx-fade"><path class="a-dim" d="M468,104 L360,176" style="stroke-dasharray:5 4" marker-end="url(#md)"/><circle cx="414" cy="140" r="12" style="fill:var(--surface);stroke:var(--dim);stroke-width:2"/><text class="lb" x="414" y="145" text-anchor="middle">2</text></g>
+        <g data-s="3" class="sx-fade"><path class="a-req flow" d="M398,202 L516,202" marker-end="url(#mr)"/><path class="a-gpu flow" d="M516,226 L398,226" marker-end="url(#mg)"/><circle cx="457" cy="214" r="12" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="lb" x="457" y="219" text-anchor="middle">3</text></g>
+        <g data-s="4" class="sx-fade"><path class="a-gpu" d="M120,178 L250,104" style="stroke-dasharray:5 4" marker-end="url(#mg)"/><circle cx="150" cy="140" r="12" style="fill:var(--surface);stroke:var(--green);stroke-width:2"/><text class="lb" x="150" y="145" text-anchor="middle">4</text></g>
+        <g data-s="5" class="sx-fade"><path class="a-gpu flow" d="M110,244 L110,316" marker-end="url(#mg)"/><circle cx="110" cy="280" r="12" style="fill:var(--surface);stroke:var(--green);stroke-width:2"/><text class="lb" x="110" y="285" text-anchor="middle">5</text></g>
+        <g data-s="6" class="sx-fade"><path class="a-gpu flow" d="M214,351 L224,351" marker-end="url(#mg)"/><circle cx="219" cy="396" r="12" style="fill:var(--surface);stroke:var(--green);stroke-width:2"/><text class="lb" x="219" y="401" text-anchor="middle">6</text></g>
+      </svg></div>
+      <div class="sx-col c">
+        <div class="ap-flow">
+          <p data-only="0"><b>~10 services in separate processes</b>, talking over ZMQ. Press → to follow one request.</p>
+          <p data-only="1"><b>① Credit.</b> The Timing Manager sends a credit, permission to send exactly one request, to a worker.</p>
+          <p data-only="2"><b>② Data.</b> The worker reads its prompt from memory-mapped dataset files. No copies, no waiting.</p>
+          <p data-only="3"><b>③ Request.</b> The worker sends it to your server and timestamps every streamed chunk.</p>
+          <p data-only="4"><b>④ Return.</b> The credit goes back to the Timing Manager. A slow server means fewer free credits: natural backpressure.</p>
+          <p data-only="5"><b>⑤ Records.</b> Raw results go to Record Processors, which scale with load and compute per-request metrics.</p>
+          <p data-only="6"><b>⑥ Results.</b> The Records Manager aggregates and exports, alongside GPU and server metrics.</p>
+        </div>
+        <div class="sx-chips"><span class="chip">ZMQ pub/sub + ROUTER/DEALER</span><span class="chip">warm-up discarded</span><span class="chip">single node or Kubernetes</span></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From docs/architecture.md. Control plane: SystemController, Timing Manager, Dataset Manager, Worker Manager ("decides what, when, and how many requests to send"). Data plane: Workers and the inference server. Analytic plane: Record Processors, Records Manager, GPU Telemetry Manager, Server Metrics Manager. A telemetry sidecar streams to OTel and MLflow.</li><li>Why ZMQ: decoupling orchestration from execution keeps measurement accurate; workers spend their time on I/O and timing. Credits dispatch over ROUTER/DEALER with sticky sessions or least-loaded selection; returns come back on a PUSH/PULL fan-in.</li><li>README says 10 services; the plugin registry now lists 12 including an optional API service, network-latency probe and a Kubernetes worker-group manager.</li><li>Lifecycle: initialization → warm-up (discarded) → profiling → collection → processing → aggregation.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Load">
+  <div class="head"><span class="kicker">Load control</span><h2>Shape the traffic exactly: closed loop, open loop, or replay a trace</h2></div>
+  <div class="body">
+    <div class="sx-g2" style="grid-template-columns:1.2fr .8fr">
+      <div class="sx-col c">
+        <div class="sx-tg" data-sx="lm"><span>Mode</span><button data-v="conc">Concurrency</button><button data-v="rate" aria-pressed="true">Request rate</button><button data-v="sched">Trace replay</button></div>
+        <div class="sx-tg" data-sx="ar" id="apArRow"><span>Arrivals</span><button data-v="constant">constant</button><button data-v="poisson" aria-pressed="true">poisson</button><button data-v="gamma">gamma</button></div>
+        <div class="sx-sl" id="apSmRow"><code>--arrival-smoothness</code><input type="range" id="apSm" min="0.2" max="4" step="0.1" value="0.4"><b id="apSmV">0.4</b></div>
+        <div class="viz"><svg viewBox="0 0 700 170" role="img" aria-label="Request arrivals over ten seconds" id="apArr">
+          <line x1="0" y1="130" x2="700" y2="130" class="a-dim"/><g id="apArrG"></g>
+          <text class="m" x="0" y="160">0 s</text><text class="m" x="700" y="160" text-anchor="end">10 s</text>
+        </svg></div>
+        <pre class="sx sm" id="apLmCode"></pre>
+      </div>
+      <div class="sx-col c">
+        <p class="sx-call" id="apLmMsg"></p>
+        <div class="ap-kv"><b>Ramp</b><code>--concurrency-ramp-duration</code><b>Warm-up</b><code>--warmup-request-count</code><b>Cap prefill</b><code>--prefill-concurrency</code><b>Users</b><code>--user-centric-rate --num-users</code><b>Cancel</b><code>--request-cancellation-rate</code></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From docs/cli-options.md. Concurrency (closed loop) issues a new request as soon as one completes; request rate (open loop) sends on a schedule and can be combined with --concurrency as a cap. Arrival patterns: constant, poisson (default), gamma, concurrency_burst; --arrival-smoothness (alias --vllm-burstiness) below 1 is burstier, above 1 smoother.</li><li>Fixed schedule replays traces at their timestamps (automatic for trace datasets), with --replay-speedup. User-centric timing gives each simulated user a gap of num_users / qps between turns, designed for KV-cache benchmarking.</li><li>The arrival strip is generated live from each distribution at 5 req/s; it shows shape, not a measurement.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Search">
+  <div class="head"><span class="kicker">Find the limit</span><h2>Don't guess the operating point. Sweep it, or let AIPerf search for it.</h2></div>
+  <div class="body">
+    <div class="sx-g2" style="grid-template-columns:1fr 1fr">
+      <div class="viz"><svg viewBox="0 0 520 380" role="img" aria-label="Throughput versus latency as load rises, with an SLA line">
+        <rect x="0" y="0" width="520" height="380" rx="16" style="fill:var(--surface);stroke:var(--line)"/>
+        <line x1="60" y1="320" x2="500" y2="320" class="a-dim"/><line x1="60" y1="30" x2="60" y2="320" class="a-dim"/>
+        <text class="m" x="500" y="350" text-anchor="end">concurrency →</text><text class="m" x="16" y="24">tok/s/GPU ↑ · TTFT p99 (orange)</text>
+        <line id="apSla" x1="60" x2="500" y1="0" y2="0" style="stroke:var(--bad);stroke-width:2;stroke-dasharray:6 4"/><text class="m" id="apSlaT" x="496" y="0" text-anchor="end" style="fill:var(--bad)"></text>
+        <path id="apTp" style="fill:none;stroke:var(--green);stroke-width:3"/><path id="apLat" style="fill:none;stroke:var(--req);stroke-width:3"/>
+        <g id="apProbes"></g>
+      </svg></div>
+      <div class="sx-col c">
+        <div class="sx-tg" data-sx="se"><span>Method</span><button data-v="grid" aria-pressed="true">Sweep</button><button data-v="bo">Adaptive search</button></div>
+        <div class="sx-sl"><code>TTFT SLA (ms)</code><input type="range" id="apSlaR" min="200" max="1200" step="50" value="600"><b id="apSlaV">600</b></div>
+        <pre class="sx sm" id="apSeCode"></pre>
+        <p class="sx-call" id="apSeMsg"></p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Sweeps: comma lists on --concurrency, --request-rate, --isl and others, grid (default) or zip; YAML sweeps add scenarios plus Sobol / Latin-hypercube sampling (docs/tutorials/sweeps.md).</li><li>Adaptive search: --search-space, --search-metric, --search-direction, --search-max-iterations; planners bayesian (default; BoTorch, falling back to Optuna TPE), monotonic_sla, smooth_isotonic, optuna. Recipes include max-throughput-ttft-sla, max-concurrency-under-sla and pareto-sweep. Adaptive scale (YAML only) holds load near the edge where an SLA starts failing.</li><li>The curves are a toy model to show how the two methods probe; dots are probes, not measurements.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Workloads">
+  <div class="head"><span class="kicker">Workloads</span><h2>From synthetic prompts to real agent sessions, byte for byte</h2></div>
+  <div class="body">
+    <div class="ap-wl">
+      <div class="ap-wc"><div class="sx-h">Synthetic</div><b>Shape it</b><span>ISL/OSL distributions, shared prefixes, cache busting</span><code>--isl 4000 --osl 500</code></div>
+      <div class="ap-wc"><div class="sx-h">Public datasets</div><b>Grab one</b><span>ShareGPT, AIMO, MMStar, VisionArena, SPEED-Bench, ASR sets</span><code>--public-dataset sharegpt</code></div>
+      <div class="ap-wc hot"><div class="sx-h">Production traces</div><b>Replay it</b><span>Mooncake · Bailian · Baseten · BurstGPT · SageMaker Data Capture</span><code>--custom-dataset-type mooncake_trace</code></div>
+      <div class="ap-wc hot"><div class="sx-h">Agentic</div><b>Agents, for real</b><span>Weka Claude Code sessions · TraceLab · H CUA · DAG sessions with subagents and tool pauses</span><code>--scenario inferencex-agentx-mvp</code></div>
+      <div class="ap-wc"><div class="sx-h">Multimodal</div><b>Beyond text</b><span>vision, audio/ASR, image generation and edit, video generation</span><code>--endpoint-type image_generation</code></div>
+      <div class="ap-wc"><div class="sx-h">Endpoints</div><b>19 types</b><span>chat, completions, responses, messages, embeddings, rankings, raw, template · HTTP or SageMaker</span><code>--endpoint-type chat --streaming</code></div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From docs/benchmark-datasets.md, the README tutorial index and docs/cli-options.md (--public-dataset, --custom-dataset-type and --endpoint-type choices). Trace sources are data formats, not adopters.</li><li>The InferenceX AgentX MVP uses the Weka corpus that records real Claude Code sessions byte for byte (prompt text synthetic; sizes, prefix sharing and timing real).</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Metrics">
+  <div class="head"><span class="kicker">Metrics</span><h2>Every token is timed. Goodput counts only the requests that met the SLA.</h2></div>
+  <div class="body">
+    <div class="ap-mx">
+      <div class="ap-mtop">
+        <div class="viz"><svg viewBox="0 0 900 150" role="img" aria-label="Token timeline of the selected request against the SLOs" id="apTl"></svg></div>
+      </div>
+      <div class="ap-mbot">
+        <div class="viz"><svg viewBox="0 0 560 300" role="img" aria-label="All requests by TTFT and ITL; the SLO box marks goodput" id="apGsv"><g id="apGg"></g></svg></div>
+        <div class="sx-col c">
+          <div class="sx-sl"><code>TTFT SLO (ms)</code><input type="range" id="apGT" min="200" max="1500" step="50" value="600"><b id="apGTv">600</b><code>ITL SLO (ms)</code><input type="range" id="apGI" min="10" max="60" step="1" value="30"><b id="apGIv">30</b></div>
+          <div class="ap-gp"><div><span>throughput</span><b id="apTh">–</b><small>all 60 requests</small></div><div class="g"><span>goodput</span><b id="apGp">–</b><small id="apGpn"></small></div></div>
+          <code id="apGcode" class="ap-gc"></code>
+          <p class="sx-note" style="margin:0">👆 Click any dot to see that request above. Drag the SLOs to move the box.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Top: the selected request, token by token. TTFT is the wait for the first token; ITL is the average gap after it; both are checked against the SLOs. Click any dot below to load that request.</li><li>Bottom: every request in the run, placed by TTFT and ITL. The green box is the SLO; requests inside it count toward goodput (requests meeting all SLOs / duration, the DistServe definition in docs/metrics-reference.md). Throughput counts all of them.</li><li>Goodput needs --goodput with metric tags, e.g. "time_to_first_token:600 inter_token_latency:30". Streaming metrics need --streaming.</li><li>The 60 requests are a toy population to show the idea, not measurements.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Output" data-steps="3">
+  <div class="head"><span class="kicker">Output</span><h2>One run: a console table, exports, plots, and live telemetry</h2></div>
+  <div class="body col" style="justify-content:center">
+    <p class="ap-expt"><b>Every run exports</b> <code>artifacts/&lt;run&gt;/profile_export_aiperf.csv · .json · per-request .jsonl · parquet · timeslices</code></p>
+    <div class="sx-g2 ap-og" style="grid-template-columns:.62fr 1.38fr">
+      <div class="sx-col ap-ol" id="apOl">
+        <button class="ap-out" data-goto="0" data-v="term"><i>🧾</i><div><b>Console table</b><span>every metric, avg to p99, printed at the end of the run</span></div></button>
+        <button class="ap-out" data-goto="1" data-v="plot"><i>📈</i><div><b>aiperf plot</b><span>Pareto: tok/s/GPU vs interactivity and vs latency</span></div></button>
+        <button class="ap-out" data-goto="2" data-v="dash"><i>🖥️</i><div><b>Live dashboard</b><span>terminal UI while the run is going</span></div></button>
+        <button class="ap-out" data-goto="3" data-v="tel"><i>🔌</i><div><b>Telemetry</b><span>DCGM GPU · server Prometheus · OTel · MLflow · W&amp;B</span></div></button>
+      </div>
+      <div class="ap-box">
+        <div class="ap-bh"><i></i><i></i><i></i><span id="apBhT"></span><small id="apBhS"></small></div>
+        <div class="ap-vws">
+          <div class="ap-vw" data-v="term"><pre class="sx ap-term" id="apTerm"></pre></div>
+          <div class="ap-vw" data-v="plot"><div class="viz"><svg viewBox="0 0 640 360" role="img" aria-label="aiperf plot: Pareto curve, token throughput per GPU vs interactivity, two models"><text x="16" y="22" style="font:700 15px var(--body);fill:#e6edf0">Pareto Curve: Token Throughput per GPU vs Interactivity</text><text x="16" y="40" style="font:600 10.5px var(--body);fill:#b8c2c7">Optimal: upper-right quadrant (high Output Token Throughput Per User ↑, high Output Token Throughput Per GPU ↑)</text><rect x="70" y="50" width="554" height="256" style="fill:#161c20"/><line x1="70.0" y1="50" x2="70.0" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="70.0" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">0</text><line x1="137.5" y1="50" x2="137.5" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="137.5" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">100</text><line x1="205.0" y1="50" x2="205.0" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="205.0" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">200</text><line x1="272.5" y1="50" x2="272.5" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="272.5" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">300</text><line x1="340.0" y1="50" x2="340.0" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="340.0" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">400</text><line x1="407.5" y1="50" x2="407.5" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="407.5" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">500</text><line x1="475.0" y1="50" x2="475.0" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="475.0" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">600</text><line x1="542.5" y1="50" x2="542.5" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="542.5" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">700</text><line x1="610.0" y1="50" x2="610.0" y2="306" style="stroke:rgba(255,255,255,.09)"/><text x="610.0" y="320" text-anchor="middle" style="font:500 10px var(--mono);fill:#8b989e">800</text><line x1="70" y1="300.0" x2="624" y2="300.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="303.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">47</text><line x1="70" y1="272.0" x2="624" y2="272.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="275.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">48</text><line x1="70" y1="244.0" x2="624" y2="244.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="247.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">49</text><line x1="70" y1="216.0" x2="624" y2="216.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="219.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">50</text><line x1="70" y1="188.0" x2="624" y2="188.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="191.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">51</text><line x1="70" y1="160.0" x2="624" y2="160.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="163.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">52</text><line x1="70" y1="132.0" x2="624" y2="132.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="135.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">53</text><line x1="70" y1="104.0" x2="624" y2="104.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="107.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">54</text><line x1="70" y1="76.0" x2="624" y2="76.0" style="stroke:rgba(255,255,255,.09)"/><text x="62" y="79.5" text-anchor="end" style="font:500 10px var(--mono);fill:#8b989e">55</text><text x="340.0" y="340" text-anchor="middle" style="font:500 11px var(--mono);fill:#b8c2c7">output_token_throughput_per_gpu ↑</text><text transform="translate(18 181.0) rotate(-90)" text-anchor="middle" style="font:500 11px var(--mono);fill:#b8c2c7">output_token_throughput_per_user ↑</text><text x="622" y="66" text-anchor="end" style="font:600 12px var(--body);fill:#76b900">★ Optimal</text><path d="M86.9,73.8 L102.4,99.8 L135.5,102.6 L204.3,107.4 L283.3,288.8 L577.6,277.0" style="fill:none;stroke:rgba(0,0,0,.45);stroke-width:7"/><path d="M86.9,73.8 L102.4,99.8 L135.5,102.6 L204.3,107.4 L283.3,288.8 L577.6,277.0" style="fill:none;stroke:#2b6cff;stroke-width:3.2"/><circle class="ap-pt" cx="86.9" cy="73.8" r="5.5" data-t="Llama-3-8B · concurrency 1 · 25 tok/s/GPU · 55.08 tok/s/user" style="fill:#2b6cff;stroke:#0d1316;stroke-width:1.5"/><text x="86.9" y="87.8" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">1</text><circle class="ap-pt" cx="102.4" cy="99.8" r="5.5" data-t="Llama-3-8B · concurrency 2 · 48 tok/s/GPU · 54.15 tok/s/user" style="fill:#2b6cff;stroke:#0d1316;stroke-width:1.5"/><text x="102.4" y="113.8" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">2</text><circle class="ap-pt" cx="135.5" cy="102.6" r="5.5" data-t="Llama-3-8B · concurrency 4 · 97 tok/s/GPU · 54.05 tok/s/user" style="fill:#2b6cff;stroke:#0d1316;stroke-width:1.5"/><text x="135.5" y="116.6" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">4</text><circle class="ap-pt" cx="204.3" cy="107.4" r="5.5" data-t="Llama-3-8B · concurrency 8 · 199 tok/s/GPU · 53.88 tok/s/user" style="fill:#2b6cff;stroke:#0d1316;stroke-width:1.5"/><text x="204.3" y="121.4" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">8</text><circle class="ap-pt" cx="283.3" cy="288.8" r="5.5" data-t="Llama-3-8B · concurrency 16 · 316 tok/s/GPU · 47.4 tok/s/user" style="fill:#2b6cff;stroke:#0d1316;stroke-width:1.5"/><text x="283.3" y="302.8" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">16</text><circle class="ap-pt" cx="577.6" cy="277.0" r="5.5" data-t="Llama-3-8B · concurrency 32 · 752 tok/s/GPU · 47.82 tok/s/user" style="fill:#2b6cff;stroke:#0d1316;stroke-width:1.5"/><text x="577.6" y="291.0" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">32</text><path d="M86.9,73.8 L103.8,104.0 L135.5,99.0 L200.3,91.7 L347.4,136.2 L586.4,220.2" style="fill:none;stroke:rgba(0,0,0,.45);stroke-width:7"/><path d="M86.9,73.8 L103.8,104.0 L135.5,99.0 L200.3,91.7 L347.4,136.2 L586.4,220.2" style="fill:none;stroke:#76b900;stroke-width:3.2"/><circle class="ap-pt" cx="86.9" cy="73.8" r="5.5" data-t="Qwen3-0.6B · concurrency 1 · 25 tok/s/GPU · 55.08 tok/s/user" style="fill:#76b900;stroke:#0d1316;stroke-width:1.5"/><text x="86.9" y="64.8" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">1</text><circle class="ap-pt" cx="103.8" cy="104.0" r="5.5" data-t="Qwen3-0.6B · concurrency 2 · 50 tok/s/GPU · 54.0 tok/s/user" style="fill:#76b900;stroke:#0d1316;stroke-width:1.5"/><text x="103.8" y="95.0" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">2</text><circle class="ap-pt" cx="135.5" cy="99.0" r="5.5" data-t="Qwen3-0.6B · concurrency 4 · 97 tok/s/GPU · 54.18 tok/s/user" style="fill:#76b900;stroke:#0d1316;stroke-width:1.5"/><text x="135.5" y="90.0" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">4</text><circle class="ap-pt" cx="200.3" cy="91.7" r="5.5" data-t="Qwen3-0.6B · concurrency 8 · 193 tok/s/GPU · 54.44 tok/s/user" style="fill:#76b900;stroke:#0d1316;stroke-width:1.5"/><text x="200.3" y="82.7" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">8</text><circle class="ap-pt" cx="347.4" cy="136.2" r="5.5" data-t="Qwen3-0.6B · concurrency 16 · 411 tok/s/GPU · 52.85 tok/s/user" style="fill:#76b900;stroke:#0d1316;stroke-width:1.5"/><text x="347.4" y="127.2" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">16</text><circle class="ap-pt" cx="586.4" cy="220.2" r="5.5" data-t="Qwen3-0.6B · concurrency 32 · 765 tok/s/GPU · 49.85 tok/s/user" style="fill:#76b900;stroke:#0d1316;stroke-width:1.5"/><text x="586.4" y="211.2" text-anchor="middle" style="font:600 9.5px var(--mono);fill:#d0d6d9">32</text><rect x="320" y="210" width="242" height="44" rx="-56" style="fill:#1b2329;stroke:rgba(255,255,255,.12)"/><line x1="330" y1="224" x2="350" y2="224" style="stroke:#76b900;stroke-width:3"/><circle cx="340" cy="224" r="3.5" style="fill:#76b900"/><text x="356" y="227.5" style="font:500 9.5px var(--mono);fill:#d0d6d9">Qwen_Qwen3-0.6B-openai-chat</text><line x1="330" y1="242" x2="350" y2="242" style="stroke:#2b6cff;stroke-width:3"/><circle cx="340" cy="242" r="3.5" style="fill:#2b6cff"/><text x="356" y="245.5" style="font:500 9.5px var(--mono);fill:#d0d6d9">meta-llama_Meta-Llama-3-8B-Instruct</text><g id="apPtTip" style="display:none"><rect id="apPtBg" rx="5" height="22" style="fill:#e6edf0"/><text id="apPtT" y="0" style="font:600 10.5px var(--mono);fill:#0d1316"></text></g></svg></div></div>
+          <div class="ap-vw" data-v="dash"><pre class="sx ap-tui" id="apTui"></pre></div>
+          <div class="ap-vw" data-v="tel"><div class="viz"><svg viewBox="0 0 640 360" role="img" aria-label="GPU and server telemetry over a run"><g id="apTel"></g></svg></div></div>
+        </div>
+        <div class="ap-bf">
+          <div class="ap-bfi" data-v="term"><div class="sx-tg" data-sx="pc"><span>Percentile</span><button data-v="1">avg</button><button data-v="4">p99</button><button data-v="5">p90</button><button data-v="6" aria-pressed="true">p50</button></div></div>
+          <div class="ap-bfi" data-v="plot"><span>real <code>aiperf plot --theme dark</code> example from the docs · numbers = concurrency · hover a point</span></div>
+          <div class="ap-bfi" data-v="dash"><span><code>--ui-type dashboard</code> · default in interactive terminals · live while the run is going</span></div>
+          <div class="ap-bfi ap-2l" data-v="tel"><span><b>collect</b> <code>--gpu-telemetry</code> DCGM · <code>--server-metrics</code> on by default</span><span><b>stream to</b> <code>--otel-url</code> · <code>--mlflow-tracking-uri</code> · <code>--wandb-project</code></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Press → to step through the four outputs (or click one). Exports are written on every run. The Pareto plot is redrawn from the dark-theme example in docs/tutorials/plot.md (Qwen3-0.6B vs Llama-3-8B, concurrency 1–32, values read from the image); the GPU telemetry chart is redrawn after the docs' dark-theme "Output Token Throughput with GPU Utilization" example (synthetic data with the same shape); the live dashboard values and telemetry curves on this slide are illustrative; the console table is the README example.</li><li>Console table from the README example (CPU-only Ollama granite4:350m, concurrency 5, 10 requests; the README notes it is not an official benchmark). Real output has columns avg / min / max / p99 / p90 / p50 / std.</li><li>Exports: profile_export_aiperf.csv and .json plus per-request JSONL; --export-level summary, records (default) or raw. aiperf plot writes PNG charts including Pareto curves of throughput per GPU vs latency and vs interactivity (--auto-plot). --ui-type dashboard is the default in interactive terminals. GPU telemetry via DCGM (or pynvml / amdsmi); server metrics scraped from /metrics by default; OTel, MLflow and W&amp;B extras.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Kubernetes">
+  <div class="head"><span class="kicker">At cluster scale</span><h2>Run it in the cluster, next to the model, as a Kubernetes job</h2></div>
+  <div class="body">
+    <div class="sx-g2" style="grid-template-columns:.9fr 1.1fr">
+      <div class="sx-col c">
+<pre class="sx sm">helm install aiperf-operator \
+  oci://ghcr.io/ai-dynamo/charts/aiperf-operator \
+  -n aiperf-system --create-namespace
+
+<span class="cm"># one benchmark, or an in-cluster search</span>
+aiperf kube profile ...
+aiperf kube sweep ...
+aiperf kube dashboard</pre>
+        <p class="sx-note" style="margin:0"><b>Beta</b> in v0.13.0. CRDs: <code>AIPerfJob</code>, <code>AIPerfSweep</code>.</p>
+      </div>
+      <div class="viz"><svg viewBox="0 0 560 340" role="img" aria-label="AIPerf operator running a JobSet next to the model">
+        <rect x="0" y="0" width="560" height="340" rx="18" style="fill:none;stroke:var(--line);stroke-width:2;stroke-dasharray:7 5"/><text class="lb" x="16" y="26">Kubernetes cluster</text>
+        <rect x="20" y="44" width="160" height="60" rx="12" style="fill:var(--tint);stroke:var(--green);stroke-width:2"/><text class="lb" x="100" y="72" text-anchor="middle">AIPerf operator</text><text class="m" x="100" y="92" text-anchor="middle">AIPerfJob CR</text>
+        <path class="a-gpu" d="M100,106 L100,136" marker-end="url(#mg)"/>
+        <rect x="20" y="140" width="300" height="180" rx="14" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="lb" x="36" y="164">JobSet</text>
+        <rect x="36" y="176" width="268" height="54" rx="10" class="box"/><text class="lb" x="170" y="200" text-anchor="middle">controller pod</text><text class="m" x="170" y="218" text-anchor="middle">control-plane services</text>
+        <rect x="36" y="242" width="80" height="62" rx="10" class="box"/><text class="m" x="76" y="278" text-anchor="middle">workers</text><rect x="130" y="242" width="80" height="62" rx="10" class="box"/><text class="m" x="170" y="278" text-anchor="middle">workers</text><rect x="224" y="242" width="80" height="62" rx="10" class="box"/><text class="m" x="264" y="270" text-anchor="middle">record</text><text class="m" x="264" y="286" text-anchor="middle">processors</text>
+        <rect x="380" y="140" width="160" height="180" rx="14" style="fill:var(--surface);stroke:var(--text);stroke-width:2"/><text class="lb" x="460" y="190" text-anchor="middle">model</text><text class="m" x="460" y="212" text-anchor="middle">Dynamo · any server</text>
+        <path class="a-req flow" d="M322,272 L376,240" marker-end="url(#mr)"/><text class="m" x="350" y="232" text-anchor="middle">in-cluster</text>
+      </svg></div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From docs/kubernetes/getting-started.md and the v0.13.0 release notes (beta). The operator chart installs the AIPerfJob and AIPerfSweep CRDs; aiperf kube profile builds an AIPerfJob and the operator creates a JobSet with a controller pod and worker pods. Control-plane services run as sibling containers in the controller pod.</li><li>Dynamo's own docs recommend benchmarking inside the cluster rather than through a port-forward.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Used by">
+  <div class="head"><span class="kicker">Who uses it</span><h2>The harness behind public benchmarks and cloud recommendations</h2></div>
+  <div class="body col" style="justify-content:center">
+    <div class="ap-ub">
+      <a class="ap-u" href="https://inferencex.semianalysis.com/glossary/aiperf" target="_blank"><div class="sx-h">SemiAnalysis · InferenceX</div><b>Runs the AgentX benchmark</b><span>the vendor-neutral client that sends the benchmark traffic: real Claude Code sessions replayed as DAGs, same harness version for every submission</span></a>
+      <a class="ap-u" href="https://aws.amazon.com/blogs/machine-learning/amazon-sagemaker-ai-now-supports-optimized-generative-ai-inference-recommendations/" target="_blank"><div class="sx-h">AWS · SageMaker AI</div><b>Powers inference recommendations</b><span>picked after evaluating tools, for detailed, consistent metrics; AWS contributed multi-run confidence and adaptive convergence upstream</span></a>
+    </div>
+    <div class="ap-contrib"><span>Also contributing</span><b>CoreWeave</b><i>W&amp;B export, sweep reliability</i><b>Baseten</b><i>trace replay</i><b>Pinterest</b><i>DAG benchmarking</i></div>
+    <div class="stats ap-st"><div class="stat"><b>1.75M+</b><span>pip installs · last 6 months</span></div><div class="stat"><b>152K</b><span>pip installs · last 30 days</span></div><div class="stat"><b>818</b><span>GitHub stars</span></div><div class="stat"><b>v0.13</b><span>latest release · Sep 2026</span></div></div>
+  </div>
+  <aside class="notes"><ul><li>SemiAnalysis InferenceX glossary: AIPerf is "the vendor-neutral client that sends the benchmark traffic"; agent sessions are rebuilt as DAGs (main turns, parallel subagent branches, tool-use pauses); all submissions for a model use the same harness minor version.</li><li>AWS ML blog (Apr 22 2026): SageMaker AI inference recommendations use AIPerf to benchmark each optimized configuration on real GPUs; AWS contributed multi-run confidence reporting and adaptive convergence / early stopping.</li><li>CoreWeave, Baseten and Pinterest are credited contributors in the NVIDIA developer blog acknowledgements, not stated production adopters. Stars as of Oct 25 2026. pip installs from pypistats.org (PyPI downloads, mirrors excluded): 1,752,895 from Apr 8 to Oct 24 2026 (the 180 days pypistats keeps), 152,180 in the last 30 days. Downloads include CI and repeat installs, so they overstate unique users.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Get started">
+  <div class="head"><span class="kicker">Get started</span><h2>One install, one command</h2></div>
+  <div class="body">
+    <div class="sx-g2 ap-gs" style="grid-template-columns:1.15fr .85fr">
+      <div class="sx-col c">
+<div class="sx-h">Quick start</div>
+<pre class="sx ap-qs"><code>pip install aiperf
+
+aiperf profile \
+  --model Qwen/Qwen3-0.6B \
+  --url localhost:8000 \
+  --endpoint-type chat --streaming \
+  --concurrency 8,16,32,64 \
+  --goodput "time_to_first_token:600" \
+  --auto-plot</code></pre>
+      </div>
+      <div class="sx-col c">
+        <div class="sx-h">Next steps</div>
+        <a class="ap-out ap-lk" href="https://github.com/ai-dynamo/aiperf/blob/main/docs/comprehensive-llm-benchmarking.md" target="_blank"><i>📚</i><div><b>Comprehensive guide</b><span>five real-world benchmarking use cases</span></div></a>
+        <a class="ap-out ap-lk" href="https://github.com/ai-dynamo/aiperf/blob/main/docs/benchmark-modes/trace-replay.md" target="_blank"><i>🧪</i><div><b>Trace replay</b><span>bring a production trace and replay it</span></div></a>
+        <a class="ap-out ap-lk" href="https://github.com/ai-dynamo/aiperf" target="_blank"><i>🐙</i><div><b>GitHub</b><span>ai-dynamo/aiperf · source, issues, releases</span></div></a>
+        <a class="ap-out ap-lk" href="https://docs.nvidia.com/aiperf/" target="_blank"><i>📖</i><div><b>Docs</b><span>docs.nvidia.com/aiperf · CLI, metrics, tutorials</span></div></a>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Links: Comprehensive LLM benchmarking guide (docs/comprehensive-llm-benchmarking.md), Trace replay (docs/benchmark-modes/trace-replay.md), GitHub repo, docs.nvidia.com/aiperf.</li><li>Flags from docs/cli-options.md: a comma list on --concurrency runs a sweep; --goodput takes metric tags (time_to_first_token, inter_token_latency, request_latency); --auto-plot runs aiperf plot after the profile.</li><li>Extras: aiperf[mlflow,otel,wandb], aiperf[tdigest].</li></ul></aside>
+</section>
+
+</main>
+
+<div class="notes-panel" id="notes" aria-live="polite"><h4>Speaker notes</h4><div id="notesBody"></div></div>
+<div class="progress" id="progress"></div>
+<div class="chrome">
+  <span class="hint">← → step · N notes · F fullscreen</span>
+  <div class="navs">
+    <span class="stepdots" id="dots"></span>
+    <button class="navbtn" id="bPrev" aria-label="Previous">◀</button>
+    <span class="pg" id="pg"></span>
+    <button class="navbtn" id="bNext" aria-label="Next">▶</button>
+    <button class="navbtn" id="bNotes" aria-label="Toggle speaker notes">Notes</button>
+    <button class="navbtn" id="bTheme" aria-label="Toggle dark mode">Dark</button>
+    <button class="navbtn" id="bFs" aria-label="Toggle fullscreen">⛶</button>
+  </div>
+</div>
+
+</div>
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var cur=0, step=0;
+  var $=function(id){return document.getElementById(id)};
+  function maxS(s){return +(s.dataset.steps||0)}
+  var hooks={};
+
+  function render(){
+    slides.forEach(function(s,i){s.classList.toggle('active',i===cur)});
+    var s=slides[cur]; s.dataset.step=step;
+    s.querySelectorAll('[data-s]').forEach(function(e){var k=+e.dataset.s;e.classList.toggle('on',step>=k);e.classList.toggle('now',step===k)});
+    s.querySelectorAll('[data-only]').forEach(function(e){e.classList.toggle('on',e.dataset.only.split(' ').indexOf(String(step))>-1)});
+    s.querySelectorAll('[data-goto]').forEach(function(b){b.setAttribute('aria-pressed',(+b.dataset.goto===step)?'true':'false')});
+    $('progress').style.width=((cur+1)/slides.length*100)+'%';
+    $('pg').textContent=(cur+1)+' / '+slides.length;
+    var n=s.querySelector('aside.notes'); $('notesBody').innerHTML=n?n.innerHTML:'';
+    var d=$('dots'); d.innerHTML=''; var m=maxS(s);
+    if(m){for(var i=0;i<=m;i++){var x=document.createElement('i');if(i<=step)x.className='on';d.appendChild(x)}}
+    if(s.dataset.hook&&hooks[s.dataset.hook]) hooks[s.dataset.hook]();
+    try{history.replaceState(null,'','#'+(cur+1))}catch(e){}
+  }
+  function next(){var m=maxS(slides[cur]); if(step<m){step++}else if(cur<slides.length-1){cur++;step=0} render()}
+  function prev(){if(step>0){step--}else if(cur>0){cur--;step=maxS(slides[cur])} render()}
+  window.__deckGo = i => goto(i);
+  function goto(i){cur=Math.max(0,Math.min(i,slides.length-1));step=0;render()}
+
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-goto]'); if(b){step=+b.dataset.goto; render()}});
+  $('bNext').onclick=next; $('bPrev').onclick=prev;
+  function toggleNotes(){$('notes').classList.toggle('open')}
+  $('bNotes').onclick=toggleNotes;
+  function toggleFs(){
+    try{
+      if(document.fullscreenElement){document.exitFullscreen()}
+      else{var p=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); if(p&&p.catch)p.catch(function(){})}
+    }catch(e){}
+  }
+  $('bFs').onclick=toggleFs;
+  function setTheme(d){document.documentElement.classList.toggle('dark',d);$('bTheme').textContent=d?'Light':'Dark';try{localStorage.setItem('aiperf-theme',d?'dark':'light')}catch(e){}if(slides[cur].dataset.hook&&hooks[slides[cur].dataset.hook])hooks[slides[cur].dataset.hook]()}
+  function toggleTheme(){setTheme(!document.documentElement.classList.contains('dark'))}
+  $('bTheme').onclick=toggleTheme;
+  (function(){var t=null;try{t=localStorage.getItem('aiperf-theme')}catch(e){}if(t==='dark')document.documentElement.classList.add('dark');$('bTheme').textContent=t==='dark'?'Light':'Dark';})();
+  document.addEventListener('keydown',function(e){
+    var t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&e.key!=='Escape'){ if(e.key!=='PageDown'&&e.key!=='PageUp')return }
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev()}
+    else if(e.key==='Home'){goto(0)} else if(e.key==='End'){goto(slides.length-1)}
+    else if(e.key==='n'||e.key==='N'){toggleNotes()}
+    else if(e.key==='f'||e.key==='F'){toggleFs()}
+    else if(e.key==='t'||e.key==='T'){toggleTheme()}
+  });
+  var tx=0;
+  document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',function(e){if(e.target.closest('input'))return;var d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)(d<0?next:prev)()});
+
+
+  var h=parseInt((location.hash||'').slice(1),10);
+  if(h>0&&h<=slides.length)cur=h-1;
+  render();
+})();
+</script>
+
+<script>
+/* Fit each static diagram's viewBox to what it actually draws, so it centres in its space */
+(function(){
+  function fit(){
+    document.querySelectorAll('.viz svg').forEach(function(svg){
+      if(svg.id==='simsvg'||svg.id==='plSvg'||svg.dataset.fitted)return;
+      try{var b=svg.getBBox();if(!b.width||!b.height)return;var m=14;
+        svg.setAttribute('viewBox',[b.x-m,b.y-m,b.width+2*m,b.height+2*m].map(function(v){return Math.round(v)}).join(' '));svg.dataset.fitted='1';}catch(e){}
+    });
+  }
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);else window.addEventListener('load',fit);
+})();
+</script>
+<script>
+/* the stage takes the window's shape: scale by height (min 810 logical px tall, 720 wide) and reflow the width */
+(function(){var st=document.getElementById('stage');
+  function fit(){var s=Math.min(innerHeight/810,innerWidth/720);st.style.width=(innerWidth/s)+'px';st.style.height=(innerHeight/s)+'px';st.style.transform='scale('+s+')';}
+  fit();addEventListener('resize',fit);
+  /* keep deck-tools' buttons in the scaled control bar on any window shape */
+  addEventListener('load',function(){setTimeout(function(){var bar=document.querySelector('#stage .chrome .navs'),ref=document.getElementById('bNotes');if(!bar)return;
+    ['dtFs','dtAll'].forEach(function(id){var b=document.getElementById(id);if(!b||bar.contains(b))return;var box=b.parentElement;b.className=ref.className+' dt-in';b.removeAttribute('style');bar.insertBefore(b,bar.firstElementChild);if(box&&box.classList.contains('dt-float')&&!box.children.length)box.remove()});
+    var fs=document.getElementById('dtFs');if(fs&&document.getElementById('bFs'))fs.remove()},60)});
+})();
+</script>
+
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+var TG={};
+function tg(key,cb){var g=document.querySelector('[data-sx="'+key+'"]');if(!g)return;TG[key]=g.querySelector('[aria-pressed="true"]').dataset.v;
+  g.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.stopPropagation();g.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});TG[key]=b.dataset.v;cb()});cb()}
+function rng(seed){var s=seed;return function(){s=(s*16807)%2147483647;return (s-1)/2147483646}}
+
+// ---- slide 4: arrival patterns (generated live, 5 req/s over 10 s)
+function gamma(k,r){if(k<1){return gamma(k+1,r)*Math.pow(r(),1/k)}var d=k-1/3,c=1/Math.sqrt(9*d);for(;;){var x,v;do{var u1=r(),u2=r();x=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);v=1+c*x}while(v<=0);v=v*v*v;var u=r();if(u<1-.0331*x*x*x*x||Math.log(u)<.5*x*x+d*(1-v+Math.log(v)))return d*v}}
+function arr(){var g=$('apArrG');if(!g)return;var m=TG.lm,a=TG.ar,k=+$('apSm').value,r=rng(11),ev=[],t=0,R=5,code,msg;$('apSmV').textContent=k.toFixed(1);
+  $('apArRow').style.visibility=m==='rate'?'visible':'hidden';$('apSmRow').style.visibility=(m==='rate'&&a==='gamma')?'visible':'hidden';
+  if(m==='rate'){while(t<10){t+=a==='constant'?1/R:a==='poisson'?-Math.log(1-r())/R:gamma(k,r)/(k*R);if(t<10)ev.push(t)}
+    code='aiperf profile ... --request-rate 5 \\\n  --arrival-pattern '+a+(a==='gamma'?' --arrival-smoothness '+k.toFixed(1):'');
+    msg='<b>Open loop:</b> requests arrive on schedule whether or not the server keeps up, like real users. '+(a==='constant'?'Constant spacing is the easiest case.':a==='poisson'?'Poisson (default) adds natural randomness.':(k<1?'Gamma below 1: <b>bursty</b>, the hardest on schedulers.':'Gamma above 1: smoother than Poisson.'))}
+  else if(m==='conc'){var C=4,busy=[];for(var i=0;i<C;i++){busy.push(0);ev.push(0)}while(true){busy.sort(function(x,y){return x-y});var f=busy.shift()+0.5+r()*1.4;if(f>=10)break;ev.push(f);busy.push(f)}
+    code='aiperf profile ... --concurrency 4';msg='<b>Closed loop:</b> a new request goes out the moment one finishes. The server sets the pace, so it never sees more than 4 in flight.'}
+  else{[0.2,0.25,0.3,0.32,1.9,2.0,2.05,2.1,2.15,2.2,4.6,5.8,5.85,5.9,7.4,7.45,9.1,9.15,9.2,9.25,9.3].forEach(function(x){ev.push(x)});
+    code='aiperf profile ... --input-file trace.jsonl \\\n  --custom-dataset-type mooncake_trace --fixed-schedule';msg='<b>Trace replay:</b> every request at its recorded timestamp, bursts and lulls included. Speed it up with <code>--replay-speedup</code>.'}
+  g.innerHTML=ev.map(function(x){return '<line x1="'+(x*70)+'" x2="'+(x*70)+'" y1="40" y2="128" style="stroke:var(--green);stroke-width:3;opacity:.85"/>'}).join('')+'<text class="m" x="700" y="24" text-anchor="end">'+ev.length+' requests</text>';
+  $('apLmCode').textContent=code;$('apLmMsg').innerHTML=msg}
+if($('apSm')){$('apSm').addEventListener('input',arr);tg('ar',arr);tg('lm',arr)}
+
+// ---- slide 5: sweep vs adaptive search (toy curves)
+var CX=function(c){return 60+Math.log2(c)/8*440},TPY=function(v){return 320-v/1400*280},LY=function(ms){return 320-ms/1600*280};
+var TP=function(c){return 1300*c/(c+24)},LAT=function(c){return 140+0.55*Math.pow(c,1.45)};
+function search(){var el=$('apProbes');if(!el)return;var sla=+$('apSlaR').value,m=TG.se;$('apSlaV').textContent=sla;
+  var pts=[];for(var i=0;i<=80;i++){var c=Math.pow(2,i/10);pts.push(c)}
+  $('apTp').setAttribute('d','M'+pts.map(function(c){return CX(c)+','+TPY(TP(c))}).join(' L'));$('apLat').setAttribute('d','M'+pts.map(function(c){return CX(c)+','+Math.max(30,LY(LAT(c)))}).join(' L'));
+  var y=LY(sla);$('apSla').setAttribute('y1',y);$('apSla').setAttribute('y2',y);$('apSlaT').setAttribute('y',y-6);$('apSlaT').textContent='TTFT SLA '+sla+' ms';
+  var lim=Math.pow((sla-140)/0.55,1/1.45),probes;
+  if(m==='grid')probes=[1,2,4,8,16,32,64,128,256];
+  else{var lo=1,hi=256;probes=[16,64];var c0=16;for(var k=0;k<5;k++){var mid=Math.sqrt(lo*hi);if(LAT(mid)<=sla)lo=mid;else hi=mid;probes.push(Math.round(mid))}}
+  var best=probes.filter(function(c){return LAT(c)<=sla}).sort(function(a,b){return b-a})[0];
+  el.innerHTML=probes.map(function(c){var ok=LAT(c)<=sla;return '<circle cx="'+CX(c)+'" cy="'+TPY(TP(c))+'" r="'+(c===best?10:6)+'" style="fill:'+(ok?'var(--green)':'var(--surface)')+';stroke:'+(ok?'var(--green-ink)':'var(--bad)')+';stroke-width:2"/>'}).join('')+
+    (best?'<text class="lb" x="'+(CX(best))+'" y="'+(TPY(TP(best))-16)+'" text-anchor="middle" style="fill:var(--green-ink)">c='+best+'</text>':'');
+  $('apSeCode').textContent=m==='grid'?'aiperf profile ... \\\n  --concurrency 1,2,4,8,16,32,64,128,256':'aiperf profile ... \\\n  --search-recipe max-concurrency-under-sla';
+  $('apSeMsg').innerHTML=(m==='grid'?'<b>Sweep</b> measures every point: '+probes.length+' runs.':'<b>Adaptive search</b> homes in on the SLA edge: '+probes.length+' runs.')+(best?' Highest concurrency under '+sla+' ms: <b>'+best+'</b>.':' No point meets the SLA.')}
+if($('apSlaR')){$('apSlaR').addEventListener('input',search);tg('se',search)}
+
+// ---- slide 7: one connected view: pick a request, see its timeline vs SLOs (toy population)
+var RQ=(function(){var r=rng(5),a=[];for(var i=0;i<60;i++){var t=200+Math.pow(r(),1.8)*1300,it=12+Math.pow(r(),1.5)*45,n=10+Math.floor(r()*8);a.push([t,it,n,r()])}return a})();
+var GX=function(t){return 60+(t-150)/1400*470},GY=function(i){return 260-(i-8)/55*240},sel=-1;
+function good(){var g=$('apGg');if(!g)return;var T=+$('apGT').value,I=+$('apGI').value;$('apGTv').textContent=T;$('apGIv').textContent=I;
+  var ok=RQ.filter(function(q){return q[0]<=T&&q[1]<=I}).length,dur=10;
+  if(sel<0){var b=0;RQ.forEach(function(q,i){if(q[0]>T&&q[1]<=I&&q[0]<T*1.6)b=i});sel=b}
+  g.innerHTML='<rect x="60" y="'+GY(I)+'" width="'+(GX(T)-60)+'" height="'+(260-GY(I))+'" rx="6" style="fill:var(--green);opacity:.1;stroke:var(--green);stroke-width:2;stroke-dasharray:6 4"/>'+
+    '<text class="m" x="'+(GX(T)+6)+'" y="252" style="fill:var(--green-ink);font-weight:700">◀ meets SLO</text>'+
+    '<line x1="60" y1="260" x2="540" y2="260" class="a-dim"/><line x1="60" y1="14" x2="60" y2="260" class="a-dim"/><text class="m" x="540" y="288" text-anchor="end">TTFT →</text><text class="m" x="64" y="12">ITL ↑</text>'+
+    RQ.map(function(q,i){var y=q[0]<=T&&q[1]<=I;return '<circle class="ap-rq" data-i="'+i+'" cx="'+GX(q[0])+'" cy="'+GY(q[1])+'" r="'+(i===sel?10:6)+'" style="fill:'+(y?'var(--green)':'color-mix(in srgb,var(--bad) 70%,var(--surface))')+';stroke:'+(i===sel?'var(--text)':'var(--surface)')+';stroke-width:'+(i===sel?3:1.5)+';cursor:pointer"/>'}).join('');
+  $('apTh').textContent=(RQ.length/dur).toFixed(1)+' req/s';$('apGp').textContent=(ok/dur).toFixed(1)+' req/s';$('apGpn').textContent=ok+' of 60 inside the box';
+  $('apGcode').textContent='--goodput "time_to_first_token:'+T+' inter_token_latency:'+I+'"';tline(T,I)}
+function tline(T,I){var q=RQ[sel],sv=$('apTl');if(!q)return;var X0=30,SC=(840)/(1500+60*18);var x=function(ms){return X0+ms*SC};
+  var tOk=q[0]<=T,iOk=q[1]<=I,h='';
+  h+='<line x1="'+X0+'" y1="80" x2="880" y2="80" class="a-dim"/><circle cx="'+X0+'" cy="80" r="8" style="fill:var(--text)"/><text class="m" x="'+X0+'" y="112" text-anchor="middle">sent</text>';
+  h+='<rect x="'+X0+'" y="66" width="'+(x(q[0])-X0)+'" height="28" rx="6" style="fill:'+(tOk?'color-mix(in srgb,var(--green) 22%,transparent)':'color-mix(in srgb,var(--bad) 22%,transparent)')+'"/>';
+  h+='<line x1="'+x(T)+'" y1="44" x2="'+x(T)+'" y2="104" style="stroke:var(--green);stroke-width:2;stroke-dasharray:5 4"/><text class="m" x="'+x(T)+'" y="38" text-anchor="middle" style="fill:var(--green-ink)">TTFT SLO '+T+' ms</text>';
+  var t=q[0];for(var k=0;k<q[2];k++){var gap=q[1]*(0.7+0.6*((k*37%10)/10));h+='<rect x="'+(x(t)-3)+'" y="68" width="6" height="24" rx="2" style="fill:'+(iOk?'var(--green-fill)':'var(--bad)')+'"/>';t+=gap*3}
+  h+='<text class="lb" x="'+((X0+x(q[0]))/2)+'" y="60" text-anchor="middle" style="fill:'+(tOk?'var(--green-ink)':'var(--bad)')+'">TTFT '+Math.round(q[0])+' ms '+(tOk?'✓':'✗')+'</text>';
+  h+='<text class="lb" x="'+Math.min(860,(x(q[0])+x(t))/2)+'" y="130" text-anchor="middle" style="fill:'+(iOk?'var(--green-ink)':'var(--bad)')+'">ITL '+q[1].toFixed(1)+' ms vs '+I+' ms SLO '+(iOk?'✓':'✗')+'</text>';
+  h+='<text class="hs" x="880" y="20" text-anchor="end" style="fill:'+(tOk&&iOk?'var(--green-ink)':'var(--bad)')+'">request #'+(sel+1)+' · '+(tOk&&iOk?'counts toward goodput':'misses the SLA')+'</text>';
+  sv.innerHTML=h}
+if($('apGT')){['apGT','apGI'].forEach(function(id){$(id).addEventListener('input',good)});
+  $('apGg').addEventListener('click',function(e){var c=e.target.closest('.ap-rq');if(!c)return;e.stopPropagation();sel=+c.dataset.i;good()});good()}
+
+// ---- slide 8: console table (README example, CPU-only, not an official benchmark)
+var TB=[['Time to First Token (ms)','7,463.28','7,125.81','9,484.24','9,295.48','7,596.62','7,240.23'],['Time to Second Token (ms)','68.73','32.01','102.86','102.55','99.80','67.37'],
+ ['Request Latency (ms)','13,829.40','9,029.36','27,905.46','27,237.77','21,228.48','11,338.31'],['Inter Token Latency (ms)','65.31','53.06','81.31','81.24','80.64','63.79'],
+ ['Output Token Throughput/User','15.60','12.30','18.85','18.77','18.08','15.68'],['Output Sequence Length','95.20','29.00','295.00','283.12','176.20','63.00'],
+ ['Output Token Throughput','6.85','N/A','N/A','N/A','N/A','N/A'],['Request Throughput (req/s)','0.07','N/A','N/A','N/A','N/A','N/A']];
+var HD=['Metric','avg','min','max','p99','p90','p50'];
+function pad(s,n,l){s=String(s);while(s.length<n)s=l?s+' ':' '+s;return s}
+function term(){var el=$('apTerm');if(!el)return;var c=+TG.pc;
+  var row=function(r,hd){return pad(r[0],30,true)+'  '+pad(r[c],10)+(hd?'':'')};
+  el.innerHTML='<span class="cm">$ aiperf profile --model granite4:350m --streaming --concurrency 5</span>\n<span class="hd">                NVIDIA AIPerf | LLM Metrics</span>\n<span class="hd">'+pad('Metric',30,true)+'  '+pad(HD[c],10)+'</span>\n'+
+    TB.map(function(r){return pad(r[0],30,true)+'  <span class="k">'+pad(r[c],10)+'</span>'}).join('\n')+'\n<span class="cm">CSV/JSON export: artifacts/.../profile_export_aiperf.{csv,json}</span>'}
+if($('apTerm'))tg('pc',term);
+// ---- slide 8: output views (plot points, dashboard and telemetry are illustrative)
+(function(){var ol=$('apOl');if(!ol)return;var cur='',timer=null,t0=0,sl=ol.closest('.slide');
+  function show(v){cur=v;document.querySelectorAll('.ap-vw,.ap-bfi').forEach(function(w){w.classList.toggle('on',w.dataset.v===v)});var HT={term:['aiperf profile','end of run · console table'],plot:['pareto_curve_throughput_per_gpu_vs_interactivity.png','aiperf plot --theme dark'],dash:['aiperf · live dashboard','during the run'],tel:['gpu_utilization_and_throughput_over_time.png','aiperf plot · GPU telemetry']}[v];$('apBhT').textContent=HT[0];$('apBhS').textContent=HT[1];clearInterval(timer);if(v==='dash'&&sl.classList.contains('active')){t0=0;dash();timer=setInterval(dash,400)}if(v==='tel')tel()}
+  var V=['term','plot','dash','tel'];new MutationObserver(function(){var v=V[+(sl.dataset.step||0)];if(v!==cur||!sl.classList.contains('active'))show(v)}).observe(sl,{attributes:true,attributeFilter:['data-step','class']});
+  // pareto hover (points from the aiperf docs dark-theme example)
+  var pl=document.querySelector('.ap-vw[data-v="plot"] svg');
+  pl.addEventListener('mouseover',function(e){var c=e.target.closest('.ap-pt');if(!c)return;var tip=$('apPtTip'),t=$('apPtT');t.textContent=c.dataset.t;tip.style.display='';
+    var w=t.getComputedTextLength()+16,x=Math.min(632-w,Math.max(8,+c.getAttribute('cx')-w/2)),y=+c.getAttribute('cy')-34;$('apPtBg').setAttribute('x',x);$('apPtBg').setAttribute('y',y);$('apPtBg').setAttribute('width',w);t.setAttribute('x',x+8);t.setAttribute('y',y+15)});
+  pl.addEventListener('mouseout',function(e){if(e.target.closest('.ap-pt'))$('apPtTip').style.display='none'});
+  // live dashboard mock
+  function bar(f,n){var k=Math.round(f*n);return '█'.repeat(k)+'░'.repeat(n-k)}
+  function dash(){t0++;var done=Math.min(500,t0*18),f=done/500,ttft=(612+40*Math.sin(t0/2)).toFixed(0),itl=(24.6+1.3*Math.sin(t0/3)).toFixed(1),u=Math.min(97,62+t0*3),pw=Math.min(690,420+t0*24);
+    $('apTui').innerHTML='<span class="w"> NVIDIA AIPerf · profiling</span>  <span class="cm">phase: '+(f<1?'profiling':'complete')+'</span>\n\n'+
+    ' Requests  <span class="g">'+bar(f,32)+'</span>  '+done+' / 500\n Elapsed   '+(t0*0.4).toFixed(1)+' s     in flight <span class="o">'+(f<1?32:0)+'</span>\n\n'+
+    '<span class="w"> Live metrics            p50        p99</span>\n'+
+    ' TTFT (ms)        <span class="b">'+String(ttft).padStart(10)+'</span>  <span class="b">'+String(+ttft*1.6|0).padStart(9)+'</span>\n'+
+    ' ITL (ms)         <span class="b">'+String(itl).padStart(10)+'</span>  <span class="b">'+(itl*1.4).toFixed(1).padStart(9)+'</span>\n'+
+    ' tok/s/user       <span class="b">'+(1000/itl).toFixed(1).padStart(10)+'</span>\n\n'+
+    '<span class="w"> GPU (DCGM)</span>\n GPU0 util  <span class="g">'+bar(u/100,24)+'</span> '+u+'%\n GPU0 power <span class="o">'+bar(pw/700,24)+'</span> '+pw+' W\n GPU1 util  <span class="g">'+bar(Math.max(0,u-4)/100,24)+'</span> '+Math.max(0,u-4)+'%'}
+  // telemetry chart: redrawn after the aiperf plot dark-theme example "Output Token Throughput with GPU Utilization"
+  function tel(){var X0=58,X1=596,Y0=300,Y1=52,T=400,TK=3500;var fx=function(t){return X0+t/T*(X1-X0)},fy=function(v){return Y0-v/TK*(Y0-Y1)},fu=function(u){return Y0-u/95*(Y0-Y1)};
+    var r=rng(3),tp=[],gu=[],h='';
+    for(var t=0;t<=T;t+=0.8){var ph=(t-24)%36.5,dip=ph>=0&&ph<9?(1-Math.abs(ph-3.5)/5.5)*(1300+r()*400):0,base=t<1?0:3300-Math.max(0,t-310)*9-dip+(r()-.5)*140;
+      if(t>378)base=Math.max(0,2300-(t-378)*105+(r()-.5)*120);if(t>340&&t<348)base-=700;tp.push([t,Math.max(0,Math.min(3490,base))]);
+      var u=t<1.2?92:86+(t>300?3:0)+(r()-.5)*7-(dip>900?2:0);gu.push([t,Math.max(70,Math.min(93,u))])}
+    h+='<text x="16" y="24" style="font:700 15px var(--body);fill:#e6edf0">Output Token Throughput with GPU Utilization</text>';
+    h+='<rect x="'+X0+'" y="'+(Y1-10)+'" width="'+(X1-X0)+'" height="'+(Y0-Y1+18)+'" style="fill:#161c20"/>';
+    for(var v=0;v<=3500;v+=500)h+='<line x1="'+X0+'" y1="'+fy(v)+'" x2="'+X1+'" y2="'+fy(v)+'" style="stroke:rgba(255,255,255,.08)"/><text x="'+(X0-6)+'" y="'+(fy(v)+3.5)+'" text-anchor="end" style="font:500 9.5px var(--mono);fill:#8b989e">'+v+'</text>';
+    for(var u=0;u<=90;u+=10)h+='<text x="'+(X1+6)+'" y="'+(fu(u)+3.5)+'" style="font:500 9.5px var(--mono);fill:#8b989e">'+u+'</text>';
+    for(var x=0;x<=400;x+=50)h+='<line x1="'+fx(x)+'" y1="'+(Y1-10)+'" x2="'+fx(x)+'" y2="'+(Y0+8)+'" style="stroke:rgba(255,255,255,.08)"/><text x="'+fx(x)+'" y="'+(Y0+22)+'" text-anchor="middle" style="font:500 9.5px var(--mono);fill:#8b989e">'+x+'</text>';
+    var pg=function(a,f){return a.map(function(p,i){return (i?'L':'M')+fx(p[0]).toFixed(1)+','+f(p[1]).toFixed(1)}).join('')};
+    h+='<path d="'+pg(gu,fu)+'L'+fx(T)+','+Y0+'L'+X0+','+Y0+'Z" style="fill:rgba(245,222,179,.22)"/>';
+    h+='<path d="'+pg(tp,fy)+'" style="fill:none;stroke:#8fd400;stroke-width:1.6"/>';
+    h+='<path d="'+pg(gu,fu)+'" style="fill:none;stroke:#f5deb3;stroke-width:1.2"/>';
+    h+='<text x="'+((X0+X1)/2)+'" y="'+(Y0+40)+'" text-anchor="middle" style="font:500 11px var(--body);fill:#b8c2c7">Time (s)</text>';
+    h+='<text transform="translate(14 '+((Y0+Y1)/2)+') rotate(-90)" text-anchor="middle" style="font:500 11px var(--body);fill:#b8c2c7">Output Tokens/sec</text>';
+    h+='<text transform="translate(630 '+((Y0+Y1)/2)+') rotate(90)" text-anchor="middle" style="font:500 11px var(--body);fill:#b8c2c7">GPU Utilization (%)</text>';
+    h+='<rect x="'+(X0+10)+'" y="'+(Y0-46)+'" width="138" height="38" rx="3" style="fill:#1b2329;stroke:rgba(255,255,255,.12)"/>'+
+      '<line x1="'+(X0+18)+'" y1="'+(Y0-34)+'" x2="'+(X0+34)+'" y2="'+(Y0-34)+'" style="stroke:#8fd400;stroke-width:2"/><text x="'+(X0+40)+'" y="'+(Y0-30.5)+'" style="font:500 9.5px var(--body);fill:#d0d6d9">Output Tokens/sec</text>'+
+      '<line x1="'+(X0+18)+'" y1="'+(Y0-19)+'" x2="'+(X0+34)+'" y2="'+(Y0-19)+'" style="stroke:#f5deb3;stroke-width:2"/><text x="'+(X0+40)+'" y="'+(Y0-15.5)+'" style="font:500 9.5px var(--body);fill:#d0d6d9">GPU Utilization (%)</text>';
+    $('apTel').innerHTML=h}
+  show('term')})();
+
+})();
+
+/* shrink a slide body to fit when the window is too small for it */
+(function(){
+  function fit(sl){var b=sl.querySelector(':scope>.body');if(!b)return;b.style.zoom='';
+    var stg=document.getElementById('stage');if(stg&&stg.offsetWidth<900)return; /* narrow stage: the slide scrolls instead */
+    var nav=document.querySelector('.chrome'),limit=(nav?nav.getBoundingClientRect().top:innerHeight)-14;
+    var r=b.getBoundingClientRect(),bottom=0;b.querySelectorAll('*').forEach(function(e){var q=e.getBoundingClientRect();if(q.height)bottom=Math.max(bottom,q.bottom)});
+    var avail=limit-r.top,need=bottom-r.top;if(need>avail&&avail>50)b.style.zoom=Math.max(.6,avail/need).toFixed(3);}
+  function all(){document.querySelectorAll('.slide.active').forEach(fit)}
+  addEventListener('resize',all);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(all);setTimeout(all,300);
+  new MutationObserver(function(){setTimeout(all,30)}).observe(document.getElementById('deck'),{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+</script>
+<script src="deck-tools.js" defer></script>

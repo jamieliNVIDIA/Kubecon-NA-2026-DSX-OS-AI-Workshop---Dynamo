@@ -1,0 +1,14 @@
+{
+  "transport-role-binding.json": "148677aaa6f905d02078b477a73e1f65140a9d158dd9574d4cd0406e60b53969",
+  "comparison.md": "aca58f424b7d3ed96f0a398b5e7903308ea7e191f0e9057775003bb74a3a7fb7",
+  "provenance.json": "908a8e5fc04181056ad1426b6f67a87d6e00e534d5ffdb2bab4c3338bf232d31",
+  "acceptance.json": "a882173c34572e98a9f0688f315f54242058e8d8516ccd903de692673ff31f0f",
+  "aggregate-main.txt": "ec0421cc1007f3061d01bc4fc8e4b27ceb38ea1ba2c29fa40b98a7435e38c141",
+  "comparison.json": "1bcf5084a3b0bc435894a0aeca835e7398e6ea0f7ec29fe4d6d0b29f9a1f49b3",
+  "main.txt": "648ef7bd7b028b83b155d3809cf89161203261ceb09bb42111706d56acb3239e",
+  "README.md": "a509b5f0d57527af2e5054d4174460c6fed8217f560fa5e8fcd4391b1cae72a8",
+  "cleanup.json": "ab45bcec81c9cae4d2b48e3c4aacef0518538baa896ef43528c88b8513a010a3",
+  "profile-aggregate.yaml": "7635a039a6637e296c4861806197e83e44fafa2a2a55e56af3e9f498c6bc4852",
+  "profile-disaggregated.yaml": "a78876924dbd9f97df92d432d96a7da230c3108ac2eaea79453a97bc9c907412",
+  "canary-source-review.json": "6a68a908bd3eb4a30d9c69435aa617cc70919dd9fd802c4c702c274d047a4aa1"
+}

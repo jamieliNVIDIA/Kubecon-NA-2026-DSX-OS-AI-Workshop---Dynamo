@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "acknowledged_at": "2026-11-05T16:00:34.044563+00:00",
+  "status": "exclusive_cpu_client_use_handed_off",
+  "from_agent": "/root/routing_load_sweep",
+  "to_agent": "/root/disagg_comparison",
+  "live_executor": "/root",
+  "authorization": "Root explicitly authorized internal handoff under the user whole-cluster workshop task. This receipt performs no network or cluster action.",
+  "client": {
+    "namespace": "dynamo-ft-routing-overnight-20261105-a1",
+    "pod": "rr-loadgen",
+    "uid": "4385c581-2c2c-446a-8f7d-123617386cf8",
+    "node": "kubecon-nke-site-cp-0942"
+  },
+  "source_campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df",
+  "cache_key": "42d97db1b0977336274f9bb686585572",
+  "qualified_data_files": 13,
+  "qualified_source_members": 3517,
+  "active_benchmark_processes_at_root_probe": [],
+  "root_probe": {
+    "directory": "results/workshop-disagg-client-handoff-probe-20261105-a1",
+    "qualification_sha256": "b96961c9e0e0b02b9dd9c5d0067d7d1b408174bda18c9d1d6f10419565dcc6d3",
+    "spec_sha256": "c2bb46a29933732d10805093a0d4de28ecc0b4a7105ae69af536d9df3bbca9ae",
+    "pod_identity_sha256": "c90b6490823ce76a986277d649b4e284ab0438bf41e176e1f6925564c990356a",
+    "source_preparation_receipt": "results/workshop-routing-overnight-collection-recovered-20261105-0739/verified/results/workshop-routing-overnight-20261105-a1/cpu-qualification-a1/receipt-c1.json",
+    "source_preparation_receipt_sha256": "d839205d0e9c497253b670656142b22cabd600523e725f480c23e40f489b571a"
+  },
+  "old_routing_controller": {
+    "name": "kubecon-workshop-routing-overnight-20261105-a1",
+    "terminal_exit_code": 1,
+    "exit_receipt_sha256": "6c501fd7c9e38d262df088ca726a07ef2730d9aee4fd6393f9c67d6ca3d5438d",
+    "gpu_cleanup_receipt_sha256": "07b271db5a8acfc071c1197fed48c4ac51ca07b441abc2404aa33b082676e51c",
+    "local_reservation_release_sha256": "dad983bc53f3ca52679d170c5c0a7d3ffe7ad0c9f0fdeabde323b9fcf154fe24",
+    "retired_for_future_execution": true
+  },
+  "new_remote_arms": [
+    "aggregate-c16-a1",
+    "disaggregated-c16-a1"
+  ],
+  "preservation_requirements": [
+    "Do not relaunch the old routing controller or schedule any old-routing benchmark process on this client.",
+    "No routing-owned CPU client cleanup is planned while the handoff is active.",
+    "Use a fresh immutable P/D campaign with separately frozen provenance and new remote arm paths; never relabel or overwrite old routing runs.",
+    "Retain the borrowed CPU Pod, cache, source, model/tokenizer data, PVC and namespace during P/D cleanup.",
+    "Preserve old routing evidence archives, receipts and failed attempts.",
+    "Root is the sole live executor; any later handback or deletion requires explicit coordinated ownership transfer."
+  ],
+  "routing_acknowledgement": "I release exclusive future use of this exact retained CPU client to the fresh matched P/D campaign. The old routing controller is terminal and no new routing work or client cleanup is planned."
+}

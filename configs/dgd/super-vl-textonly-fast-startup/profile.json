@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "run": "results/workshop-mx-startup-20261104-baseline01",
+  "namespace": "dynamo-ft-mxstartup-5f18cca583",
+  "spec_sha256": "3de14f7d210c46811271db28e38042ac746091762e6c40d139d428da15530593",
+  "scope": "One fixed-order matched storage / peer weights / peer weights-plus-artifacts trial",
+  "status": "frozen; not yet deployed"
+}

@@ -1,0 +1,154 @@
+{
+  "receipt-c1.json": {
+    "path": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-rr-20261030-prep-1705/cpu-qualification-a3/receipt-c1.json",
+    "sha256": "4491b645ff0e99c9eaf5b306a05bb959b10ce6b7e9fb944ab8e330386208de3f"
+  },
+  "shared-prefix-inspection.json": {
+    "path": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-rr-20261030-prep-1705/cpu-qualification-a3/shared-prefix-inspection.json",
+    "sha256": "b05712cf509a4ca3694aad35059e493e93d9e4131b3197d6f765743e6140a006",
+    "inspection": {
+      "purpose": "CPU-only existing-cache equality inspection; no tokenizer or inference",
+      "cache_key": "42d97db1b0977336274f9bb686585572",
+      "conversation_ids": [
+        "085aacf44ac5428ad3c6b4f6cd431e083832::fa:005",
+        "085aacf44ac5428ad3c6b4f6cd431e083832::fa:006"
+      ],
+      "turn_index": 0,
+      "message_roles": [
+        [
+          "user"
+        ],
+        [
+          "user"
+        ]
+      ],
+      "message_counts": [
+        1,
+        1
+      ],
+      "identical_leading_messages": 1,
+      "whole_message_arrays_equal": true,
+      "canonical_json_characters": [
+        2317081,
+        2317081
+      ],
+      "canonical_json_lcp_characters": 2317081,
+      "canonical_json_utf8_bytes": [
+        2318143,
+        2318143
+      ],
+      "canonical_json_lcp_utf8_bytes": 2318143,
+      "canonical_json_lcp_sha256": "8793c6833283ac0df32cc5015ccf7d4732ffe2edc88ccbe316c56dff2a25e0c8",
+      "canonical_json_sha256": [
+        "8793c6833283ac0df32cc5015ccf7d4732ffe2edc88ccbe316c56dff2a25e0c8",
+        "8793c6833283ac0df32cc5015ccf7d4732ffe2edc88ccbe316c56dff2a25e0c8"
+      ],
+      "message_comparisons": [
+        {
+          "index": 0,
+          "roles": [
+            "user",
+            "user"
+          ],
+          "messages_equal": true,
+          "content": {
+            "types": [
+              "str",
+              "str"
+            ],
+            "characters": [
+              2209072,
+              2209072
+            ],
+            "utf8_bytes": [
+              2210134,
+              2210134
+            ],
+            "lcp_characters": 2209072,
+            "lcp_utf8_bytes": 2210134,
+            "lcp_sha256": "f5fcc314b6cc2fd22e58afc88a6f8232a7da69740e3b02ccfd5a7a50940285d7",
+            "sha256": [
+              "f5fcc314b6cc2fd22e58afc88a6f8232a7da69740e3b02ccfd5a7a50940285d7",
+              "f5fcc314b6cc2fd22e58afc88a6f8232a7da69740e3b02ccfd5a7a50940285d7"
+            ]
+          }
+        }
+      ],
+      "inspection_source_sha256": "f2c3f76ad1d6259ab10d7d7902d20e1ada4ecf6100a5d2daff2046882c40b6b7"
+    }
+  },
+  "named-subagent-prefix-inspection.json": {
+    "path": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-rr-20261030-prep-1705/cpu-qualification-a3/named-subagent-prefix-inspection.json",
+    "sha256": "141a3f36bee21ea2677cbc2114061b70404ff3e507214c46d7b6ee7925cf0d19",
+    "inspection": {
+      "purpose": "CPU-only existing-cache equality inspection; no tokenizer or inference",
+      "cache_key": "42d97db1b0977336274f9bb686585572",
+      "conversation_ids": [
+        "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_006_80c02286",
+        "208d6e28928b0b3d3b33db3c690173d15be3::sa:subagent_007_069d8a89"
+      ],
+      "turn_index": 0,
+      "message_roles": [
+        [
+          "user"
+        ],
+        [
+          "user"
+        ]
+      ],
+      "message_counts": [
+        1,
+        1
+      ],
+      "identical_leading_messages": 0,
+      "whole_message_arrays_equal": false,
+      "canonical_json_characters": [
+        278529,
+        277872
+      ],
+      "canonical_json_lcp_characters": 259879,
+      "canonical_json_utf8_bytes": [
+        278719,
+        278042
+      ],
+      "canonical_json_lcp_utf8_bytes": 260047,
+      "canonical_json_lcp_sha256": "6436d5935f625de47cb6e6b4ecd467bde81de9ba841ae2354d23c52a6f5c926b",
+      "canonical_json_sha256": [
+        "56d6ab14e392805e4034e030d70fd1cb3e5e1a2ebbfec0c243d5fc7ff307e309",
+        "a47bbdd3a107eda5382555b7995ada0c21afa9930f6b5989be2e3379782265ad"
+      ],
+      "message_comparisons": [
+        {
+          "index": 0,
+          "roles": [
+            "user",
+            "user"
+          ],
+          "messages_equal": false,
+          "content": {
+            "types": [
+              "str",
+              "str"
+            ],
+            "characters": [
+              265424,
+              264675
+            ],
+            "utf8_bytes": [
+              265614,
+              264845
+            ],
+            "lcp_characters": 247583,
+            "lcp_utf8_bytes": 247751,
+            "lcp_sha256": "63dddb99cd8196f91263f6811e2eb262d60008163a27cff785b6e3304a86cae4",
+            "sha256": [
+              "8ad9f45fcb88ecf57764a83214625d9c997e75cdfc655db028846b84624d8f28",
+              "73060451ed1ee7d1007228ce7a9fa273873b0726eb9126e9d91e1d112361a6f7"
+            ]
+          }
+        }
+      ],
+      "inspection_source_sha256": "2076e34eaa28b8078145eeb170a8401806164ffb6c335f2514fdaa0a151b9328"
+    }
+  }
+}

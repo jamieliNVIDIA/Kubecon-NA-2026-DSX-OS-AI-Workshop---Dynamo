@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "image": "nvcr.io/nvidia/ai-dynamo/vllm-runtime-nightly@sha256:c186817f4669d615d2b14bee5a6119d35d4d0fe186fdfab69920da8de9d09337",
+  "anonymous_token_used": true,
+  "local_credentials_used": false,
+  "manifest_sha256": "sha256:c186817f4669d615d2b14bee5a6119d35d4d0fe186fdfab69920da8de9d09337",
+  "config_sha256": "sha256:dab5e1d6bec8615c83b94b5271db5a63c050794aa121deb68818d20bf3e8f1dc",
+  "manifest_bytes": 15891,
+  "config_bytes": 75192,
+  "layer_count": 82,
+  "scope": "Anonymous access to exact manifest/config metadata; layers are not downloaded by this probe. No registry credential or bearer token is printed.",
+  "independently_audited_at": "2026-11-05T20:02:54.344714+00:00",
+  "source_result_sha256": "1c3d5c853ae19bca6f5aeeb3e584302df4e3cefa4e3758341bc4f6f9d121cc30",
+  "probe_source_sha256": "ca192bced5272b18e13fdb4f0c2b5be6b88398beb1d03201cc5b78c0200b03d4",
+  "unmodified_cpu_image_matches": true,
+  "all_layers_anonymously_downloaded": false,
+  "gpu_serving_qualified": false
+}

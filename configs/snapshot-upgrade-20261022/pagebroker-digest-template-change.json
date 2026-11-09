@@ -1,0 +1,5 @@
+{
+  "source_sha": "d752d982738883e3575de7bbce0689e2443fa2c2",
+  "before": "image: \"{{ .Values.image.pageBroker.repository }}:{{ .Values.image.agent.tag | default .Chart.AppVersion }}\"",
+  "after": "image: \"{{ .Values.image.pageBroker.repository }}@{{ .Values.image.pageBroker.digest }}\""
+}

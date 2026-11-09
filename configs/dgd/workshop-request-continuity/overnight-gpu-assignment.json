@@ -1,0 +1,13 @@
+{
+  "owner": "overnight-migration",
+  "nodes": {
+    "kubecon-nke-site-cp-0124": [
+      "GPU-b0ee6c73-bb3a-38e9-0546-30279eca76f5",
+      "GPU-aca1caa2-27c5-8591-6e84-fa0203889f51"
+    ],
+    "kubecon-nke-site-cp-0942": [
+      "GPU-58272147-35f4-6125-0810-25497aee2a1a",
+      "GPU-e4f59982-2d2b-0692-84bd-ca6c7d709c1e"
+    ]
+  }
+}

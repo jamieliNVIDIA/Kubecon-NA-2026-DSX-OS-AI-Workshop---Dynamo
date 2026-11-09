@@ -1,0 +1,131 @@
+{
+  "status": "component-qualified-with-controlled-routing",
+  "checked_at": "2026-11-05T03:04:04.323782+00:00",
+  "run": "results/workshop-kvcr-guard-20261104-a4",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "base_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "dynamo_runtime": {
+    "version": "1.7.0.dev20261103",
+    "dynamo_source_revision": "e37f0b91f841e12715e412b375a40842ec6010b6",
+    "required_fix": "8bf042187a8f3f4224e608b1045db14e5f712f30",
+    "wheels": [
+      {
+        "package": "ai-dynamo",
+        "filename": "ai_dynamo-1.7.0.dev20261103-py3-none-any.whl",
+        "url": "https://pypi.nvidia.com/ai-dynamo/ai_dynamo-1.7.0.dev20261103-py3-none-any.whl",
+        "sha256": "2d086a92bbd6c0ace3f120716d52786458e0b20ba9011b3ebb8a6981126f67d6",
+        "bytes": 4671367
+      },
+      {
+        "package": "ai-dynamo-runtime",
+        "filename": "ai_dynamo_runtime-1.7.0.dev20261103-cp311-abi3-manylinux_2_28_x86_64.whl",
+        "url": "https://pypi.nvidia.com/ai-dynamo-runtime/ai_dynamo_runtime-1.7.0.dev20261103-cp311-abi3-manylinux_2_28_x86_64.whl",
+        "sha256": "9698cfa82642d1a404af46213d8b7798f7d42e36440d048ef410ea79dbce2690",
+        "bytes": 83977319
+      }
+    ],
+    "scope": "Official matching nightly Dynamo wheels in private overlay; existing Super VL/vLLM/NIXL 1.5.0 binaries retained; no global runtime promotion."
+  },
+  "release_tags_containing_fix": [],
+  "kvcr_revision": "dd5df02c076dfee4bb2cdc39bef11164f9dcaec5",
+  "adapter_revision": "a5db4c9ff58a0ec4dc20594ba5cea9f776dcd693",
+  "topology": "Two independent Super VL TP2 engines on separate GPU pairs on cp-0124; four H100 GPUs, same node, text only.",
+  "ordinary_peer_reuse": {
+    "status": "passed",
+    "cached_input_tokens": 4224,
+    "blocks": 6,
+    "bytes": 103809024
+  },
+  "original_unpinned_post_fault_request": {
+    "status": "failed",
+    "http_status": 503,
+    "reason": "Selected dead A before Kubernetes discovery removed its endpoint; migration explicitly disabled.",
+    "request_migration_limit": 0
+  },
+  "controlled_guard_retrieval": {
+    "status": "passed",
+    "routing": "Explicitly pinned surviving B",
+    "blocks": 6,
+    "bytes": 103809024,
+    "external_kv_tokens": 4224.0,
+    "source_engine_absent": true,
+    "source_main_container_restarts": 1,
+    "guards_and_pods_unchanged": true,
+    "survivor_container_unchanged": true,
+    "failed_or_partial_deliveries": 0,
+    "transport": "LIBFABRIC/EFA source and target receipts matched on wire handle, blocks and bytes."
+  },
+  "warm_source_handback": {
+    "status": "passed",
+    "routing": "Explicitly pinned replacement A",
+    "local_deliver_blocks": 6.0,
+    "read_bytes": 103809024,
+    "remote_deliver_blocks": 0.0,
+    "cached_input_tokens": 4224,
+    "external_kv_tokens": 4224.0,
+    "worker_id_stable": true,
+    "original_engine": {
+      "pid": 1372,
+      "command": "VLLM::EngineCore",
+      "start_ticks": "245784469"
+    },
+    "replacement_engine": {
+      "pid": 1412,
+      "command": "VLLM::EngineCore",
+      "start_ticks": "245935829"
+    },
+    "failed_or_partial_deliveries": 0
+  },
+  "not_qualified": [
+    "automatic HTTP failover",
+    "in-flight stream migration with Guard cache reuse",
+    "cross-node recovery",
+    "GMS or same-GPU shadow composition",
+    "vision/video requests",
+    "unmodified official nightly container",
+    "global workshop runtime promotion"
+  ],
+  "offline_tests": {
+    "status": "passed",
+    "count": 14,
+    "command": ".local/venv/bin/python -B -m unittest discover -s tests -p test_workshop_kvcr_guard.py"
+  },
+  "cleanup": {
+    "status": "passed",
+    "at": "2026-11-05T03:02:41.746048+00:00",
+    "namespace": "dynamo-ft-r610-35a2d338-kvcrguard",
+    "owned_resource_counts": {
+      "pods": 0,
+      "resourceclaims": 0,
+      "dgd": 0
+    },
+    "cp0124_gpu_claims": [],
+    "guard_lease_released": true,
+    "foreign_load_sweep_lease_exists": true,
+    "foreign_load_sweep_lease_sha256": "d12773010b441ec37f73ea2adc5e8176c91ef2ee9e446f6b43d3b1882d27313a",
+    "scope": "Independent read-only audit after owned cleanup; no foreign resources mutated."
+  },
+  "selection_receipt_sha256": "af231f1fb90115fecb0db24bf91552b5658cec65878aae6744f9c6594c765247",
+  "evidence_sha256": {
+    "controlled-guard-recovery-proof.json": "a6d8048bca368993b380a7404c7061fc6c7eaea69359e9f412f5d29f0c0c6149",
+    "controlled-handback-proof.json": "0e415efbfa7f577167e116a2dd81ff948252bfc5fca138d57841d6542605459b",
+    "guard-target-retrieval/response.json": "cc866e528fb8311325bc93877473f2050ee81f11549530842c7059a9bc4df8cc",
+    "controlled-guard-target/response.json": "303e8dc38768028350cccc0950abd377c6edd6ed76d56ce0323dd591e8424fb0",
+    "controlled-source-handback/response.json": "8a4d69b7245d2fca4d315f4ff39f02cffa9079eca824abbdfc6681bf9a6a6002",
+    "qualification-identities.json": "639bca26e1b1309ead344d66182b28f2bfdbe3a367ed578fab9d5d9e35cb4239",
+    "controlled-diagnostic-identities.json": "d26bd43e1cea81efc7c6b92a28c233102d85a434d6915172308833746d32cc2a",
+    "cleanup-proof.json": "ca3ab54196d4ece8b28054b0a3cfafac20fbf077c0e9f55f6519c6ccc75cce9b",
+    "final-cleanup-proof.json": "993057fbc4b4bdbdbdba08a48d83f7347b0a707ee02fd82a95f84e6831b33975",
+    "nightly-module-paths.json": "a6c145939605a20a8cb2a48b450d2dff6d04f28ecce5abb01e5cc03a5098ea75",
+    "native-runtime-compatibility.json": "279abcad012b80f683ab43505c0b08ab8ff083f5236b0346b1b9e6a359b6a9a8",
+    "finish-handback-controller.py": "c8815de0374a037e1ace233440bee1927fcb6e9a8f9f6b6baab9843a145ea9a7",
+    "finish-handback-console.log": "de3097092966d0a7b3ecef6067832688e332d1caa26d1c6a658566b7b85e21c1"
+  },
+  "checked_in_configuration_sha256": {
+    "configs/kvcr-guard-nightly-runtime.json": "bb2629f3b607e311d465ce5eaa6022124fe2fd194790507032c4a97f8fddc797",
+    "scripts/workshop_kvcr_guard.py": "5c071e8c472dd543de85cceab6cad3fd90b23045b3f6879f736905eadb3d4d31",
+    "scripts/kvcr_guard_bootstrap.py": "bcf4fcbcedf3eb922196eb044c4d918e0028be86ae7d1218a98b4e8a1ed9c54e",
+    "tests/test_workshop_kvcr_guard.py": "483ac3aa7bfad5d13a8c7cbec3f839f349030327aad12ffd300ca315c62045fc"
+  }
+}

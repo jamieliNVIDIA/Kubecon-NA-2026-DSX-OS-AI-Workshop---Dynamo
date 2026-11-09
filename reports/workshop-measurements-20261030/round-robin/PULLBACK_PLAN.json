@@ -1,0 +1,65 @@
+{
+  "prepared_at": "2026-11-04T00:47:25.819702+00:00",
+  "remote_host": "ip-172-31-10-102",
+  "remote_physical_workspace": "/home/ubuntu/workshop-measurements/20261103-stable-controller/workspace",
+  "logical_root": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop",
+  "run_relative": "results/workshop-rr-20261103-resume02",
+  "success_gates": [
+    "continuation-stable-a2/exit.json.exit_code == 0",
+    "continuation-stable-a2/final-owned-client-proof.json.client_absent == true",
+    "continuation-stable-a2/final-owned-client-proof.json.gpu_lease_present == false",
+    "final-rr-cleanup-proof/cleanup-proof.json verified with zero GPU Pods, ResourceClaims and graphs",
+    "all six arm integrity-final.json inventories and all three analysis outputs present"
+  ],
+  "fixed_top_files": [
+    "state.json",
+    "model-lock.json",
+    "upstream-c1-prerequisite.json",
+    "rr-1-replica.yaml",
+    "rr-2-replica.yaml",
+    "pair-c4-a1-intent.json",
+    "scaleout-c4-a1-analysis.json",
+    "scaleout-c4-a1-REPORT.md",
+    "routing-c1-a1-analysis.json",
+    "routing-c1-a1-REPORT.md",
+    "routing-c4-a1-analysis.json",
+    "routing-c4-a1-REPORT.md"
+  ],
+  "arm_final_inventories": [
+    "c4-r1-a1/integrity-final.json",
+    "c4-r2-a1/integrity-final.json",
+    "routing-c1-round-robin-a1/integrity-final.json",
+    "routing-c1-kv-a1/integrity-final.json",
+    "routing-c4-round-robin-a1/integrity-final.json",
+    "routing-c4-kv-a1/integrity-final.json"
+  ],
+  "inventory_expansion_rule": "For each arm, include integrity-final.json and every regular file explicitly named in its sha256 mapping. Validate each hash before packaging. Do not omit a named archive and claim that full arm inventory passed. Keep old integrity.json alongside final append-only inventory.",
+  "controller_evidence_directories": [
+    "resume-c4-r2-stable-a1",
+    "continuation-stable-a2"
+  ],
+  "controller_selection_rule": "Include only regular files under these fixed owned directories: JSON receipts/proofs/raw Pod+claim+graph snapshots, console.log/analysis.log. Expand resume-c4-r2-stable-a1/integrity.json exactly and validate it. Include final continuation stage plan, STATUS, exit, client identity, command/process/exit receipts, final client cleanup proof, all cleanup snapshots and MX outcome. Hash after controller/container has stopped.",
+  "root_check_receipts": "Include regular check-rr-*.json receipts from this run to retain pass/failure chronology; do not collect arbitrary command-*.json or other namespaces.",
+  "known_local_sha256_anchors": {
+    "results/workshop-rr-20261103-resume02/c4-r1-a1/spec.json": "705ecb1d1aeb9c1a8898aa710c94511f799967dbd9bd8ac86d5ae8e457270508",
+    "results/workshop-rr-20261103-resume02/c4-r1-a1/profile.yaml": "d6bae50ed91ba2cb614de81b8da5282552c60302b1fa1f21eb20a2bb2c1b7098",
+    "results/workshop-rr-20261103-resume02/recovery-c4-r1-a1/remote-completion.json": "910d6cd3d34bbb9a26bc2291a6815580d239568e7e3bd0e80810e484599d5e9b",
+    "results/workshop-rr-20261103-resume02/upstream-c1-prerequisite.json": "4ad9179af589b220abaeca885f01ab23debc82eaf906cc37990c58d3754f5b9d",
+    "results/workshop-rr-20261103-resume02/continuation-a1/plan.json": "2aa9d50b382c1f0582a6a68bc53421b06bb58cee2a871587dd17810f6bff200f",
+    "results/workshop-stable-controller-20261103/bundle-manifest.json": "8caf2014b8814c71f2537fb067e71baf5d7ed61cc7e7e947389a440b7d093a09",
+    "results/workshop-stable-controller-20261103/status-a1/status.json": "372120dc94317530a84cd79ce23d2baab9da4c4bddd1067f8bb579a8bcdf7326"
+  },
+  "original_r1_export_sha256": "710fe2a25e0e07a7ebb2ed8ec9bb675b773a4b2b4f5bd3d5e2a8a4928bc7d5c0",
+  "hashes_still_pending": "Remote final inventories, r2 and routing artifact hashes, all completed analysis SHA256s, final controller/global evidence inventory. The status summary does not provide these hashes; do not invent them.",
+  "already_local_reference_scope": "Accepted C1 run, original r1 recovery and transport snapshots, CPU qualification and original stable bundle remain unchanged local references. Verify their recorded hashes; no wholesale duplicate transfer needed. MX raw artifact04 files belong to its separate allowlist.",
+  "exclusions": [
+    ".local credentials or kubeconfig",
+    "model weights",
+    "AgentX source corpus or mmap/venv caches",
+    "arbitrary runtime source",
+    "unrelated namespaces or runs",
+    "all unfiltered root command receipts"
+  ],
+  "transfer_and_merge_rule": "Root builds exact path/bytes/SHA256 manifest from read-only remote files after final stop, copies allowlisted archive plus manifest, validates compressed archive hash and every extracted path/hash in fresh local staging before merging. Existing differing local partial files must be preserved rather than overwritten; root reconciles the local delegation sentinel only after final remote cleanup proof.",
+  "scope": "Plan only; no remote hash collection, packaging, transfer, cleanup or execution performed by this preparation."
+}

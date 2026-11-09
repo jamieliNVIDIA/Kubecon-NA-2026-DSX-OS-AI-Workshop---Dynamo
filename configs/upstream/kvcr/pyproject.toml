@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kvcr"
+version = "0.1.1"
+description = "Framework-neutral KV Cache Runner"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3",
+  "Operating System :: POSIX :: Linux",
+]
+dependencies = [
+  "msgspec>=0.21.0,<1",
+  "pyzmq>=25.0.0,<28",
+  "nixl==1.5.0",
+]
+# Not installable from here: KVCR's recovery journal loads the system libatomic
+# (Debian/Ubuntu "libatomic1", RHEL "libatomic") for 8-byte acquire/release
+# cursor operations. It is loaded on first use, so importing kvcr without it
+# works; running a KVCR-Service or claiming one of its pools does not.
+
+[dependency-groups]
+dev = [
+  "pytest>=8,<9",
+  "ruff>=0.16.3,<0.17",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kvcr"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+# Illustrative pseudo-code in design docs is laid out for readability, not for
+# the formatter; keep `ruff format .` from rewriting it.
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.uv]
+# nSpect reads uv.lock only when the project is marked uv-managed.
+managed = true

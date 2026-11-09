@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "audited_at": "2026-11-05T20:15:48.865128+00:00",
+  "image": "nvcr.io/nvidia/ai-dynamo/vllm-runtime-nightly@sha256:c186817f4669d615d2b14bee5a6119d35d4d0fe186fdfab69920da8de9d09337",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "runtime_override": "1.7.0",
+  "installed_dynamo_package_version": "1.7.0.dev20261103",
+  "run_as_user": 0,
+  "gpu_mode": "dra",
+  "gpu_proof": {
+    "assignment_id": "takehome-take-home-live-public-20261105-a4",
+    "role": "intro",
+    "node": "kubecon-nke-site-cp-0942",
+    "gpu_uuids": [
+      "GPU-58272147-35f4-6125-0810-25497aee2a1a",
+      "GPU-e4f59982-2d2b-0692-84bd-ca6c7d709c1e"
+    ],
+    "pod_uid": "c0d2b22c-cdeb-4072-9456-857f8ed79ab2",
+    "claim_uid": "b9d92d26-48b1-4038-a2d7-5436a05ce2aa",
+    "scope": "Observed placement, not utilization or inference proof."
+  },
+  "namespace": "dynamo-ft-takehome-9812d1b965",
+  "namespace_uid": "6ebf8c2c-b3da-4700-a770-b5ff1a695a9b",
+  "serving_receipt_sha256": "bdc53db8ef2b6d361d3a42c2345a849222b8941ba59aec435abaa3a34e026d8f",
+  "anonymous_metadata_receipt_sha256": "b153c49a6c8e2bb32e55a5bb8e5597614934cce2eaca2f74c94a51521b34e9d3",
+  "preparation_receipt_sha256": "99ae71353160128c96207de3213d2162898526781a6c477d8c03f9d67e934f19",
+  "cleanup": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:13:29.798678+00:00",
+    "scope": "Owned DGD/Service/Job/Pods/claims/template gone; namespace/PV/PVC/cache/evidence retained."
+  },
+  "cleanup_empty_object_receipts": [
+    {
+      "name": "command-0398-1793909606705828000.json",
+      "args": [
+        "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl",
+        "--kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig",
+        "--request-timeout=30s",
+        "get",
+        "pods",
+        "-n",
+        "dynamo-ft-takehome-9812d1b965",
+        "-o",
+        "json"
+      ],
+      "sha256": "d04238fdd4f1d432c35600c5d63ed460e8ef6a0862756b64d6ab5dfc52e4c528"
+    },
+    {
+      "name": "command-0399-1793909607363944000.json",
+      "args": [
+        "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl",
+        "--kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig",
+        "--request-timeout=30s",
+        "get",
+        "resourceclaims",
+        "-n",
+        "dynamo-ft-takehome-9812d1b965",
+        "-o",
+        "json"
+      ],
+      "sha256": "4faa7a33898a03788222246d88647b1bfb44bc8c4c001ee9e6e89555404025f6"
+    }
+  ],
+  "local_gpu_lease_absent": true,
+  "original_scientific_evidence_unchanged": true,
+  "corrected_renderer_sha256": "e84c843b65c901fd4b365513f8386da01f85f910e27fadd72f6f942f92150183",
+  "focused_tests": 15,
+  "original_attempt": "results/take-home-live-public-20261105-a4",
+  "service_selector_revision": "results/take-home-service-selector-20261105-a1",
+  "scope": "Cached DRA baseline serving with unmodified public nightly, exact H100 pair, explicit UID0, strict compatibility version, corrected application-only Service selector, one completed original coding request and scoped cleanup. Fresh network weight download, device-plugin serving, other GPU/driver/platform combinations, performance, production/SLO and advanced feature compositions remain unqualified."
+}

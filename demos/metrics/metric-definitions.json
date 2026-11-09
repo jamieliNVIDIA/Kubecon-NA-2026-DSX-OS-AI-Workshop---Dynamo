@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "verified_at": "2026-11-05T06:52:27.305374+00:00",
+  "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+  "source_archive": "results/20261030-agentx-workload-prep-000329/aiperf-agentx-pinned-source.tar.gz",
+  "source_archive_sha256": "4e7f3a2ed15276a5252200e4d4772bf4d10e182edf2cbff4a9606794822d4699",
+  "source_files_sha256": {
+    "src/aiperf/metrics/types/output_token_throughput_metrics.py": "c41f300ad9c69ff70de2924a4f55c51582c607ae533fd92075686791b293e36d",
+    "src/aiperf/metrics/types/inter_token_latency_metric.py": "d521c2f640de39b7b1201b7c067eca22c4a8bf66aa4de533aa4dbfdff0aab90f",
+    "src/aiperf/metrics/types/ttft_metric.py": "c7387399f5bcef3e2be6b066756dee0fcface22d6d1211817ed0f3986bfaad3c",
+    "src/aiperf/metrics/types/request_latency_metric.py": "c79db67c59e90650a31aaaa09cc2d65ccc8db07c085e9b200355bce7b06d610b",
+    "src/aiperf/metrics/types/benchmark_duration_metric.py": "474a6b8f72d8f1489949f9c97fa08413049b05c6953016bd227c1940f258472f",
+    "src/aiperf/metrics/metric_dicts.py": "16bc2fb211c9e224e80ea563bcd9a40d6b82bdfa42e485f73a94de853269726f",
+    "src/aiperf/config/endpoint.py": "9440846d0be42c70da324e543f5011d8045899bc6e5245e47f3d0a53eafe7969",
+    "src/aiperf/records/inference_result_parser.py": "02c6c232f97a9167ccf9362c4668e9d47b503e7103188fe96c2b11790a45bcea"
+  },
+  "definitions": {
+    "ttft": "first content timestamp - request start timestamp",
+    "request_latency": "last content timestamp - request start timestamp; usage-only trailer excluded",
+    "itl_general": "(request_latency - ttft) / (output_sequence_length - first_content_chunk_tokens)",
+    "itl_this_run": "(request_latency - ttft) / (output_sequence_length - 1)",
+    "first_chunk_convention": "per_chunk_usage is False in this run; parser leaves first_content_chunk_tokens=None and ITL falls back to OSL-1. This assumes one token in the first content chunk. With opt-in per-chunk usage, a valid reported first-chunk count is subtracted; inconsistent counts fall back with a warning.",
+    "per_request_rate": "1 / ITL_seconds; mean is the arithmetic average of per-record rates",
+    "itl_percentiles": "percentiles of one mean-interval value per request, not pooled individual token gaps",
+    "canonical_output_rate": "total_osl / observation_duration; explicit analysis-window duration when set, otherwise BenchmarkDurationMetric",
+    "benchmark_duration": "maximum response timestamp - minimum request timestamp",
+    "cache_read_percentage": "100 * total server-reported cache-read prompt tokens / total server-reported prompt tokens"
+  },
+  "record_formula_check": {
+    "source": "results/workshop-c4-closeout-20261104-a1/verified/results/workshop-rr-20261103-resume02/c4-r1-a1/raw/c4-r1-a1/artifacts/profile_export.jsonl",
+    "source_sha256": "d28e5c54140b6c8b7501994d83f24a2cedbd6cf7847329d04e354b0e8d5bfb50",
+    "records": 122,
+    "formula_mismatches": 0,
+    "mean_per_request_rate": 139.7855206040956,
+    "mean_request_itl_ms": 7.3439285804467085,
+    "inverse_mean_itl_tokens_per_second": 136.16690154946647
+  },
+  "scope": "Source definitions and offline reproduction of existing measured records; no new benchmark or GPU use."
+}

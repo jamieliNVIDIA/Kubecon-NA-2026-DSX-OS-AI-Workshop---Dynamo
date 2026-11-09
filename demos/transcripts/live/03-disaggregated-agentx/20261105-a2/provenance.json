@@ -1,0 +1,74 @@
+{
+  "created_at": "2026-11-05T20:50:40.719235+00:00",
+  "kind": "Actual original AIPerf console output; not a presenter PTY recording or reconstructed demo",
+  "campaign": "results/workshop-disagg-agentx-20261105-a2",
+  "campaign_sha256": "0c11f986a428c46baddc2d123dc2f4bf00720251ba1064565250ecc5e770d0e7",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+  "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+  "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+  "gpu_uuids_by_node": {
+    "kubecon-nke-site-cp-0198": [
+      "GPU-c22769a2-282c-de40-459e-261999971cd9",
+      "GPU-7338f39e-745f-e46a-7ef6-cc8cc155d7af"
+    ],
+    "kubecon-nke-site-cp-0942": [
+      "GPU-7b0cff01-e024-1e7f-5c2e-53c85b3835e4",
+      "GPU-bd8b4452-af4b-12ab-237d-63d32996835c"
+    ]
+  },
+  "concurrency_live_trees": 16,
+  "admission_seconds": 900,
+  "bounded_drain_seconds": 300,
+  "original_profile_replayed": false,
+  "controller_receipt_preserved_as_blocked": true,
+  "files": {
+    "aggregate-main.txt": {
+      "source": "results/workshop-disagg-agentx-20261105-a2/disagg-a2-aggregate-c16-a1/raw/disagg-a2-aggregate-c16-a1/console.log",
+      "sha256": "ec0421cc1007f3061d01bc4fc8e4b27ceb38ea1ba2c29fa40b98a7435e38c141",
+      "byte_for_byte_original": true,
+      "benchmark_id": "faeaa83833dd"
+    },
+    "main.txt": {
+      "source": "results/workshop-disagg-agentx-20261105-a2/disagg-a2-disaggregated-c16-a1/raw/disagg-a2-disaggregated-c16-a1/console.log",
+      "sha256": "648ef7bd7b028b83b155d3809cf89161203261ceb09bb42111706d56acb3239e",
+      "byte_for_byte_original": true,
+      "benchmark_id": "0f1eb92542bb"
+    },
+    "comparison.md": {
+      "source": "results/workshop-disagg-agentx-20261105-a2/comparison.md",
+      "sha256": "aca58f424b7d3ed96f0a398b5e7903308ea7e191f0e9057775003bb74a3a7fb7"
+    },
+    "comparison.json": {
+      "source": "results/workshop-disagg-agentx-20261105-a2/comparison.json",
+      "sha256": "1bcf5084a3b0bc435894a0aeca835e7398e6ea0f7ec29fe4d6d0b29f9a1f49b3"
+    },
+    "acceptance.json": {
+      "source": "results/workshop-disagg-agentx-20261105-a2/independent-pair-acceptance.json",
+      "sha256": "a882173c34572e98a9f0688f315f54242058e8d8516ccd903de692673ff31f0f"
+    },
+    "cleanup.json": {
+      "source": "results/workshop-disagg-agentx-20261105-a2/cleanup-final.json",
+      "sha256": "ab45bcec81c9cae4d2b48e3c4aacef0518538baa896ef43528c88b8513a010a3",
+      "byte_for_byte_original": true
+    },
+    "canary-source-review.json": {
+      "source": "results/workshop-disagg-agentx-20261105-a2/canary-expiry-source-review.json",
+      "sha256": "6a68a908bd3eb4a30d9c69435aa617cc70919dd9fd802c4c702c274d047a4aa1",
+      "byte_for_byte_original": true
+    },
+    "transport-role-binding.json": {
+      "source": "results/workshop-disagg-agentx-20261105-a2/transport-role-binding.json",
+      "sha256": "148677aaa6f905d02078b477a73e1f65140a9d158dd9574d4cd0406e60b53969",
+      "byte_for_byte_original": true
+    }
+  },
+  "raw_sse_bodies_retained": false,
+  "generated_answer_text_retained": false,
+  "source_review": "results/workshop-disagg-agentx-20261105-a2/installed-source-inspection-r2/proof.json",
+  "source_review_sha256": "093e759079400e97f9f880cdfeab03f0640509163e375e6514b2b8e406471223",
+  "scoped_gpu_cleanup_passed": true,
+  "borrowed_cpu_and_cache_retained": true
+}

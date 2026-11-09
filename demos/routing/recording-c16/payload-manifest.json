@@ -1,0 +1,199 @@
+{
+  "files": {
+    "reports/workshop-measurements-20261030/rr-kv/campaign.py": {
+      "sha256": "93086ca2da3c6fa101b845bfe990a6ff78b1344f38ad628e7c35c266d84c1f6a",
+      "bytes": 25631
+    },
+    "reports/workshop-measurements-20261030/rr-kv/discovery.py": {
+      "sha256": "6e9b2b7fedf6210c53e640f65be5fbd77c5685e4017fde47f2ab4395b175fc7c",
+      "bytes": 2430
+    },
+    "reports/workshop-measurements-20261030/rr-kv/PLAN.md": {
+      "sha256": "6c33a0aeb8949df93a5939300dfbf7adcdd35bcb36b8863466c1fadd75f51a92",
+      "bytes": 5499
+    },
+    "tests/test_rrkv_discovery.py": {
+      "sha256": "9a9da527619c109bbf5031664462079bf1a7c973c7bc2dd43770a8a91fddb9e0",
+      "bytes": 2548
+    },
+    "configs/super-vl-tp2-lock.json": {
+      "sha256": "1ec0db2144c73212ac71bf662f4f913412ebbff8712108984638751951467950",
+      "bytes": 2874
+    },
+    "reports/workshop-measurements-20261030/agentx-workload/source-location.json": {
+      "sha256": "68e338686075f90ffd22c296eaf9725021d1a33d819e52cb4fab15df5b041373",
+      "bytes": 1108
+    },
+    "reports/workshop-measurements-20261030/agentx-workload/aiperf-dataset-revision.patch": {
+      "sha256": "4230167ccd705a71860bae27a981655d4f23fcef499b27665fe09c9239745c95",
+      "bytes": 311
+    },
+    "reports/workshop-measurements-20261030/agentx-workload/prepare_agentx_cache.py": {
+      "sha256": "ba9fcbbaae7678c24dc18b2d30a6cf7c7ef170c4fb4ddbb514a1a5f9aebca49f",
+      "bytes": 6874
+    },
+    "reports/workshop-measurements-20261030/agentx-workload/profile-c1.yaml": {
+      "sha256": "92482582e9175d4161e10bf4e8a28f06d0765564721110111af3dce06ddf6b2f",
+      "bytes": 1242
+    },
+    "reports/workshop-measurements-20261030/agentx-workload/profile-c4.yaml": {
+      "sha256": "506495de0772b5d5682e8ab44e4d21bf22a85bc3f846e8263866b82efc6ffa37",
+      "bytes": 1242
+    },
+    "reports/workshop-measurements-20261030/round-robin/execute_pair.py": {
+      "sha256": "a07b7d43a8a85732935fa3d64e165d1dedacceac1a58d6db8d6a07a85fcd8c76",
+      "bytes": 26171
+    },
+    "reports/workshop-measurements-20261030/round-robin/execute_router_pair.py": {
+      "sha256": "d946ab5138ddbcf9a119e49a2855088a8fbc2a2804a455a0e5a9d386f82eb191",
+      "bytes": 6932
+    },
+    "reports/workshop-measurements-20261030/round-robin/cluster.py": {
+      "sha256": "05aab96b4efa1bc561eacfdd5f097dcc1d0f48619dbd49110846dccc6acf056c",
+      "bytes": 5292
+    },
+    "reports/workshop-measurements-20261030/round-robin/qualify_client.py": {
+      "sha256": "ef685e6292e57e4aac92ce69292473d66ca9bebe425752bc20b8ad1af4a75e88",
+      "bytes": 8608
+    },
+    "reports/workshop-measurements-20261030/round-robin/analyze.py": {
+      "sha256": "e6238fbfe0d0e51c9ba36b072f8f99416c969a63b294569234b8db9233cde104",
+      "bytes": 14591
+    },
+    "reports/workshop-measurements-20261030/round-robin/PLAN.md": {
+      "sha256": "e6d982d5afa3fc08c58a989b3051218d9ffc3bb2c46f3d662f6ad3d4379aa338",
+      "bytes": 5976
+    },
+    "reports/workshop-measurements-20261030/round-robin/KV_EXTENSION_PLAN.md": {
+      "sha256": "885cea284a2d2c6d5d66ee318fc522e5811f5e7e0f79633add2a02e85300ed51",
+      "bytes": 2614
+    },
+    "reports/workshop-measurements-20261030/round-robin/router-extension-candidates/two-worker-kv-template.yaml": {
+      "sha256": "774db0b34def97ebc56bcaba1fa39ba3c1dde929ed78ab05619ca99ccfb41f2e",
+      "bytes": 7197
+    },
+    "reports/workshop-measurements-20261030/round-robin/router-extension-candidates/two-worker-round-robin-template.yaml": {
+      "sha256": "e80718040f8e864e162249f9b96b594383f5d55d54ae6d10d8b02bb41d97a213",
+      "bytes": 7206
+    },
+    "scripts/testlib.py": {
+      "sha256": "8e30db085473a7658ca0a1c909c5f028a748ba646939f16796e1482a95ebb317",
+      "bytes": 9508
+    },
+    "scripts/storage_tests.py": {
+      "sha256": "bbfe51f3d050c12a68ad0b35041a90675c64d16b65f016c037e710cbed1eec12",
+      "bytes": 6225
+    },
+    "scripts/serving_tests.py": {
+      "sha256": "2c104fbbbf2697841f4a82e4fc8a0cf1d1bd7ce7529130d0335ca1b934934456",
+      "bytes": 19397
+    },
+    "scripts/feature_tests.py": {
+      "sha256": "b22cc35dbf858d3f56837a0e27cd8a7ccf7ab89004a9035fc6c6ea6c476cc6db",
+      "bytes": 4862
+    },
+    "scripts/common_runtime_tests.py": {
+      "sha256": "05d5d2e5d270738ee45931c4e3d3f4b3194d5cf11f30bf62221db540bf2dd051",
+      "bytes": 16056
+    },
+    "scripts/common_runtime_build.py": {
+      "sha256": "ed2ae918adaeaef9d8717eb0cf10d278722f6d1df0a11a450773c0f6a73d98cb",
+      "bytes": 23687
+    },
+    "scripts/gpu_claims.py": {
+      "sha256": "64a6ed1a115f932b0234f721c80bf7ab3ba08b437ba6b928acdc7b7223dbe4f1",
+      "bytes": 3132
+    },
+    "results/20261030-agentx-workload-prep-000329/aiperf-agentx-pinned-source.tar.gz": {
+      "sha256": "4e7f3a2ed15276a5252200e4d4772bf4d10e182edf2cbff4a9606794822d4699",
+      "bytes": 18919952
+    },
+    "reports/overnight-2026-11-04/routing-sweep/campaign.py": {
+      "sha256": "4af5f93370e5b1b027b74eff25d6e0ec2befae595e20d8fc0c8df26bb6e831fb",
+      "bytes": 22504
+    },
+    "reports/overnight-2026-11-04/routing-sweep/controller.py": {
+      "sha256": "efcdf7219efe0188c103df81b8ca25dc9159fdf772f42ee67e3761c497d48dfa",
+      "bytes": 13522
+    },
+    "reports/overnight-2026-11-04/routing-sweep/PLAN.md": {
+      "sha256": "170cb76e2065f39c0b331bd29fb442506aef4b4651ecb7076014798bab85a612",
+      "bytes": 1899
+    },
+    "results/workshop-rrkv-20261104-a1/campaign.json": {
+      "sha256": "f67faf343c3d8730ca1a43157f2fdcfbae22f8993d0e7c7b2a5aad1dd5242b9a",
+      "bytes": 4981
+    },
+    "results/workshop-rrkv-stopped-pullback-20261104-a1/verification.json": {
+      "sha256": "35dcb254cadf76262e5c7cc63dc98a90749449041f5dcaf605529b96c42adeb1",
+      "bytes": 1392
+    },
+    "results/workshop-routing-overnight-20261105-a1/campaign.json": {
+      "sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df",
+      "bytes": 5671
+    },
+    "results/workshop-routing-overnight-20261105-a1/model-lock.json": {
+      "sha256": "1ec0db2144c73212ac71bf662f4f913412ebbff8712108984638751951467950",
+      "bytes": 2874
+    },
+    "results/workshop-routing-overnight-20261105-a1/deployment-two-rr.json": {
+      "sha256": "3b42a6f1412b938ed28efd86c965195275dfd8917e547fe2d4bfe2b29dfc9657",
+      "bytes": 14650
+    },
+    "results/workshop-routing-overnight-20261105-a1/deployment-kv.json": {
+      "sha256": "5c39e6ce7465bcc6303a5af487ddbdb759529166cb8191f639dd71eaa4a25015",
+      "bytes": 14641
+    },
+    "results/workshop-routing-overnight-20261105-a1/deployment-round-robin.json": {
+      "sha256": "3b42a6f1412b938ed28efd86c965195275dfd8917e547fe2d4bfe2b29dfc9657",
+      "bytes": 14650
+    },
+    "results/workshop-routing-overnight-20261105-a1/profile-c16.yaml": {
+      "sha256": "5aa70f573d3e173741bed6ce1154e73dda06ca5e584ececa313f48b790457075",
+      "bytes": 1244
+    },
+    "results/workshop-routing-overnight-20261105-a1/deployment-two-kv.json": {
+      "sha256": "5c39e6ce7465bcc6303a5af487ddbdb759529166cb8191f639dd71eaa4a25015",
+      "bytes": 14641
+    },
+    "results/workshop-routing-overnight-20261105-a1/expected-probes.json": {
+      "sha256": "c19131d552786387d83fc74745133391e44bc7305f2ee108077b23147ea1d0ed",
+      "bytes": 671
+    },
+    "results/workshop-routing-overnight-20261105-a1/profile-c32.yaml": {
+      "sha256": "de2db9b00af0a087feb4fd533279d5b3fc72b5cadc0547ce26a564dd4ddc1887",
+      "bytes": 1244
+    },
+    "results/workshop-routing-overnight-20261105-a1/deployment-one-rr.json": {
+      "sha256": "262bda20de321cc9709939ddcd4ec3415ddc967cc12d6c476742192051750c73",
+      "bytes": 14590
+    },
+    "results/workshop-routing-overnight-20261105-a1/inputs-sha256.json": {
+      "sha256": "f56fda759bb9e0c8388a33fe2da6f97cefbb4caf7bf4b102687d68a5d92205ca",
+      "bytes": 5578
+    },
+    "results/workshop-routing-overnight-20261105-a1/campaign.sha256": {
+      "sha256": "3ea4d0582c6033d5b3f993e9485693cab812d160dcc380c12c00351857740722",
+      "bytes": 65
+    },
+    "results/workshop-routing-overnight-20261105-a1/state.json": {
+      "sha256": "8114ef6d9b4af4912b75df915d1531d05ce1951a42d7a8e4137435756f85ec68",
+      "bytes": 15090
+    },
+    "results/workshop-routing-overnight-20261105-a1/offline-validation.json": {
+      "sha256": "80fdc5b5a4840ce4712f933b712aaca7ee4f16a81b546b3dd7532a3607efff05",
+      "bytes": 381
+    },
+    "results/workshop-routing-overnight-controller-prep-20261105-a1/plan.json": {
+      "sha256": "78b74d4e044d990bddf6451219133d0f0ebf320bfa4f2f7b6b5c18dadff4e67b",
+      "bytes": 7120
+    }
+  },
+  "logical_root": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop",
+  "workspace": "/home/ubuntu/workshop-measurements/20261103-stable-controller/workspace",
+  "name": "kubecon-workshop-routing-overnight-20261105-a1",
+  "image": "docker.io/library/python@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337",
+  "controller": "reports/overnight-2026-11-04/routing-sweep/controller.py",
+  "plan": "results/workshop-routing-overnight-controller-prep-20261105-a1/plan.json",
+  "plan_sha256": "78b74d4e044d990bddf6451219133d0f0ebf320bfa4f2f7b6b5c18dadff4e67b"
+}

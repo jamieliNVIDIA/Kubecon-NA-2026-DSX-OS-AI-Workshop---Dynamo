@@ -1,0 +1,121 @@
+Demo files: /home/ubuntu/dynamo-kubecon-workshop/results/demo-07-kvcr-workshop_kvcr_demo-1794185581490546380
+
+Dynamo workshop · KVCR: reuse another worker's context
+LIVE CLUSTER / EXPERIMENTAL STACK
+
+Next: 1/5  One repository, two agents
+
+================================================================
+1/5  One repository, two agents
+The main agent read a large repository on A; its subagent lands on B, which has spare compute.
+================================================================
+The main agent has read a whole repository on A. It forks a subagent with the same context and a
+new task. The subagent lands on B, which has spare compute but has never seen the repository.
+
+$ cat kvcr-settings.yaml
+workers:
+- name: A
+  GPUs: 2
+  node: cp-0198
+- name: B
+  GPUs: 2
+  node: cp-0942
+agents:
+  main agent: on A, reads the whole repository
+  subagent: on B, same repository plus its own task
+context_window_tokens: 65536
+state_path:
+- A GPU
+- A host pool
+- B host pool
+- B GPU
+kv_transfer:
+  connector: OffloadingConnector
+  tier: kvcr
+  host_pool_per_worker: 4 GiB
+  transport: NIXL / LIBFABRIC / EFA
+routing: Requests pinned to A and B by hand; choosing B automatically is the router's
+  job.
+runtime: Experimental pinned Dynamo nightly + vLLM/KVCR adapter.
+
+Next: 2/5  Check the warm workers
+
+================================================================
+2/5  Check the warm workers
+Two TP2 engines, started and warmed offstage, with separate host pools and cross-node EFA.
+================================================================
+Workers ready: two TP2 engines and separate host pools; startup and warm-up ran offstage.
+KIND  COMPONENT  STATUS
+Pod   frontend   1/1 Running
+Pod   worker     2/2 Running
+Pod   worker     2/2 Running
+Warm-up: each engine has served a request, and B has already fetched 8,448 tokens of another context from A.
+
+Next: 3/5  Main agent reads the repository on A
+
+================================================================
+3/5  Main agent reads the repository on A
+A computes the whole context and keeps it in its host pool.
+================================================================
+
+$ kubectl port-forward -n dynamo-ft-r610-b88667d1-kvcrdemo service/demo-kvcr-frontend 18007:8000 \
+  --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18007/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1794187823,"owned_by":"nvidia","context_window":65536}]}
+Request to A: the main agent's repository (199,658 characters) + "which file defines rotate_signing_keys?". Full JSON retained.
+
+$ curl --fail --silent --show-error --no-buffer http://127.0.0.1:18007/v1/chat/completions -H \
+  'Content-Type: application/json' -H 'x-dynamo-worker-instance-id: 8489219550147921' -H \
+  'x-dynamo-dp-rank: 0' --data-binary @main-request.json
+Answer: repository/catalog/housekeeping.py   ✓ the planted file
+First token after 2,436 ms · 58,390 prompt tokens, 0 reused
+A kept 0.29 GiB of this context in its host pool. B has never seen the repository.
+
+Next: 4/5  Subagents land on B
+
+================================================================
+4/5  Subagents land on B
+A repository nobody has read is computed from scratch; the main agent's repository comes from A.
+================================================================
+
+First, a subagent from another session: a repository of the same size that nobody has read.
+Request to B: a repository nobody has read (199,723 characters) + "which file defines replay_dead_letters?". Full JSON retained.
+
+$ curl --fail --silent --show-error --no-buffer http://127.0.0.1:18007/v1/chat/completions -H \
+  'Content-Type: application/json' -H 'x-dynamo-worker-instance-id: 3920969730949746' -H \
+  'x-dynamo-dp-rank: 0' --data-binary @control-request.json
+Answer: repository/auth/maintenance.py   ✓ the planted file
+First token after 2,559 ms · 58,399 prompt tokens, 0 reused
+
+Now the main agent's subagent: the repository A already holds, plus its own task.
+Request to B: the main agent's repository (199,658 characters) + "which file defines replay_dead_letters?". Full JSON retained.
+
+$ curl --fail --silent --show-error --no-buffer http://127.0.0.1:18007/v1/chat/completions -H \
+  'Content-Type: application/json' -H 'x-dynamo-worker-instance-id: 3920969730949746' -H \
+  'x-dynamo-dp-rank: 0' --data-binary @sub-request.json
+Answer: repository/telemetry/maintenance.py   ✓ the planted file
+First token after 305 ms · 58,400 prompt tokens, 54,912 reused
+
+Next: 5/5  Compare the first token
+
+=[REDACTED]
+5/5  Compare the first token
+Same worker, same prompt size: recompute versus KVCR reuse.
+================================================================
+
+                                          prompt  reused  first token
+A · main agent · its repository           58,390       0     2,436 ms  ████████████████████████████████
+B · subagent · unseen repository          58,399       0     2,559 ms  ██████████████████████████████████
+B · subagent · main agent's repository    58,400  54,912       305 ms  ████
+
+On B, the first token arrived 8.38x sooner with A's context: 54,912 tokens in 18 blocks, 0.29 GiB over EFA, matched on both ends.
+Tailored to show the mechanism: warm idle workers, one long shared prefix, requests pinned by hand.
+Under real agent traffic the gain depends on load and reuse; benchmark results follow in the slides.
+
+Demo complete. The service stays running.
+
+From the repository root:
+
+Resume: /home/ubuntu/dynamo-kubecon-workshop/.venv/bin/python -m demos kvcr --run results/demo-07-kvcr-workshop_kvcr_demo-1794185581490546380
+Cleanup: /home/ubuntu/dynamo-kubecon-workshop/.venv/bin/python -m demos kvcr cleanup --run results/demo-07-kvcr-workshop_kvcr_demo-1794185581490546380

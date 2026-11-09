@@ -1,0 +1,44 @@
+{
+  "applied": false,
+  "node": "kubecon-nke-site-cp-0124",
+  "candidate_device": {
+    "name": "nvme0n1",
+    "size": 3800000000000,
+    "type": "disk",
+    "fstype": null,
+    "mountpoints": [
+      null
+    ],
+    "model": "Amazon EC2 NVMe Instance Storage        ",
+    "serial": "AWS135BFFA82D334433D"
+  },
+  "mount_path_prerequisite": "/mnt/dynamo-snapshot must already be a verified NVMe filesystem mount",
+  "formatting_authorized": false,
+  "topology": "Experimental single-node RWO variant of shared-RWX chart",
+  "changed_snapshot_resources": [
+    [
+      "ConfigMap",
+      "dynamo-system",
+      "dynamo-platform-snapshot-config"
+    ],
+    [
+      "DaemonSet",
+      "dynamo-system",
+      "dynamo-platform-snapshot-agent"
+    ],
+    [
+      "Deployment",
+      "",
+      "dynamo-platform-snapshot-operator"
+    ]
+  ],
+  "schema_dry_run": "StorageClass/PV/PVC server dry-run passed; no host-path or runtime qualification",
+  "chart": "configs/snapshot-upgrade-20261022/dynamo-platform-1.5.1-snapshot-dev.tgz",
+  "chart_sha256": "67dabc00785ec61476042fb1e4381e94b122ea73eb48b1beba997064d4bbd1d9",
+  "files": {
+    "rollback-values.yaml": "2a70571c51ddffc5776a9cfa4bce99da59ed3897f47a9b3d1e6fb721cbebf418",
+    "storage.yaml": "0a9170e92e4145ee6914476f65439db0c0ac9953ad0eefa8aaab565ff2eaa34c",
+    "values.yaml": "eb520da4497968d4356784c2a131531efe29f23a277200ecf19d4418f946586e"
+  },
+  "evidence": "results/20261022-snapshot-nvme-review"
+}

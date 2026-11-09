@@ -1,0 +1,36 @@
+{
+  "mx_server": {
+    "repository": "nvcr.io/nvidia/ai-dynamo/modelexpress-server",
+    "tag": "0.6.0",
+    "index_digest": null,
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "digest": "sha256:0f8456cfc29c02547d6c62d1e640f98dc691e0326523c15fa05987d8bc491a77",
+    "image": "nvcr.io/nvidia/ai-dynamo/modelexpress-server@sha256:0f8456cfc29c02547d6c62d1e640f98dc691e0326523c15fa05987d8bc491a77",
+    "architecture": "amd64",
+    "os": "linux",
+    "entrypoint": null,
+    "command": [
+      "./modelexpress-server"
+    ],
+    "user": null,
+    "compressed_layer_bytes": 80503848
+  },
+  "redis": {
+    "repository": "registry-1.docker.io/library/redis",
+    "tag": "7.4.2-alpine",
+    "index_digest": null,
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "digest": "sha256:519f0189dfdee3bc0bad61fb265fe73d864b5c64020e6579ad48a45c49965635",
+    "image": "registry-1.docker.io/library/redis@sha256:519f0189dfdee3bc0bad61fb265fe73d864b5c64020e6579ad48a45c49965635",
+    "architecture": "amd64",
+    "os": "linux",
+    "entrypoint": [
+      "docker-entrypoint.sh"
+    ],
+    "command": [
+      "redis-server"
+    ],
+    "user": null,
+    "compressed_layer_bytes": 17217477
+  }
+}

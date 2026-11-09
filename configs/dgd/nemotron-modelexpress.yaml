@@ -1,0 +1,228 @@
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+metadata:
+  name: ft-mx
+  namespace: dynamo-ft-20261013t051307z
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-20261013t051307z
+spec:
+  backendFramework: vllm
+  components:
+  - name: Frontend
+    type: frontend
+    replicas: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          image: nvcr.io/nvidia/ai-dynamo/vllm-runtime@sha256:2b224a823d52a198ec0eeb0e3e4f5cf26cd8a7fc2e9812ee16204b6b1e974870
+          imagePullPolicy: IfNotPresent
+          command:
+          - python3
+          - -m
+          - dynamo.frontend
+          args:
+          - --router-mode
+          - kv
+          - --kv-cache-block-size
+          - '64'
+          - --trust-remote-code
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261013t023201z-features/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: PYTHONHASHSEED
+            value: '0'
+          - name: NCCL_IB_DISABLE
+            value: '1'
+          resources:
+            requests:
+              cpu: '1'
+              memory: 4Gi
+            limits:
+              memory: 8Gi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 60
+            failureThreshold: 60
+          volumeMounts:
+          - name: shared-model-cache
+            mountPath: /model-cache
+          - name: dshm
+            mountPath: /dev/shm
+        volumes:
+        - name: shared-model-cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        activeDeadlineSeconds: 3600
+    runtimeVersionOverride: 1.5.1
+  - name: source
+    type: worker
+    replicas: 1
+    sharedMemorySize: 16Gi
+    podTemplate:
+      spec:
+        tolerations:
+        - key: nvidia.com/gpu
+          operator: Equal
+          value: 'true'
+          effect: NoSchedule
+        volumes:
+        - name: shared-model-cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        - name: efa
+          configMap:
+            name: efa-userspace
+        containers:
+        - name: main
+          image: nvcr.io/nvidia/ai-dynamo/vllm-runtime@sha256:2b224a823d52a198ec0eeb0e3e4f5cf26cd8a7fc2e9812ee16204b6b1e974870
+          imagePullPolicy: IfNotPresent
+          workingDir: /workspace/
+          command:
+          - bash
+          - /efa/entrypoint.sh
+          args:
+          - python3
+          - -m
+          - dynamo.vllm
+          - --model
+          - nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
+          - --revision
+          - bee7596271d1495f6992ae224aefde4410e816b8
+          - --served-model-name
+          - nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
+          - --trust-remote-code
+          - --tensor-parallel-size
+          - '1'
+          - --max-model-len
+          - '4096'
+          - --max-num-seqs
+          - '8'
+          - --max-num-batched-tokens
+          - '8192'
+          - --gpu-memory-utilization
+          - '0.65'
+          - --enable-prefix-caching
+          - --block-size
+          - '64'
+          - --mamba-backend
+          - flashinfer
+          - --mamba-ssm-cache-dtype
+          - float16
+          - --mamba-cache-mode
+          - align
+          - --reasoning-parser
+          - nemotron_v3
+          - --kv-events-config
+          - '{"publisher":"zmq","topic":"kv-events","endpoint":"tcp://*:20080","enable_kv_cache_events":true}'
+          - --disaggregation-mode
+          - agg
+          - --load-format
+          - modelexpress
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261013t023201z-features/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: PYTHONHASHSEED
+            value: '0'
+          - name: NCCL_IB_DISABLE
+            value: '1'
+          - name: MX_METADATA_BACKEND
+            value: k8s-service
+          - name: MX_K8S_SERVICE_PATTERN
+            value: mx-source:6555
+          - name: MX_MODEL_REVISION
+            value: bee7596271d1495f6992ae224aefde4410e816b8
+          - name: MX_NIXL_BACKEND
+            value: LIBFABRIC
+          - name: MX_P2P_METADATA
+            value: '1'
+          - name: MX_WORKER_GRPC_PORT
+            value: '6555'
+          - name: MX_METADATA_PORT
+            value: '5555'
+          - name: MX_ARTIFACT_TRANSFER
+            value: '0'
+          - name: MX_ARTIFACT_READY_URL
+            value: http://127.0.0.1:9090/health
+          - name: FI_PROVIDER
+            value: efa
+          - name: FI_EFA_USE_DEVICE_RDMA
+            value: '1'
+          - name: FI_EFA_FORK_SAFE
+            value: '1'
+          - name: FI_EFA_ENABLE_SHM_TRANSFER
+            value: '0'
+          - name: FI_HMEM_CUDA_USE_DMABUF
+            value: '1'
+          - name: NIXL_LIBFABRIC_USE_DEVICE_RDMA
+            value: '1'
+          - name: NIXL_LOG_LEVEL
+            value: INFO
+          - name: NIXL_TELEMETRY_ENABLE
+            value: y
+          - name: NIXL_TELEMETRY_EXPORTER
+            value: prometheus
+          - name: NIXL_TELEMETRY_PROMETHEUS_PORT
+            value: '19090'
+          - name: MX_WORKER_HOST
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          resources:
+            requests:
+              cpu: '4'
+              memory: 64Gi
+              nvidia.com/gpu: '1'
+              vpc.amazonaws.com/efa: '4'
+            limits:
+              memory: 128Gi
+              nvidia.com/gpu: '1'
+              vpc.amazonaws.com/efa: '4'
+          securityContext:
+            runAsUser: 0
+            capabilities:
+              add:
+              - IPC_LOCK
+              - SYS_RESOURCE
+          startupProbe:
+            httpGet:
+              path: /live
+              port: 9090
+            periodSeconds: 30
+            timeoutSeconds: 20
+            failureThreshold: 120
+          volumeMounts:
+          - name: shared-model-cache
+            mountPath: /model-cache
+          - name: dshm
+            mountPath: /dev/shm
+          - name: efa
+            mountPath: /efa
+            readOnly: true
+        activeDeadlineSeconds: 3600
+        nodeSelector:
+          kubernetes.io/hostname: kubecon-nke-site-cp-0124
+      metadata:
+        labels:
+          mx-role: source
+    runtimeVersionOverride: 1.5.1

@@ -1,0 +1,147 @@
+retest-cache-check: Pending [('probe', 'ContainerCreating')]
+retest-cache-check: Succeeded [('probe', None)]
+{
+  "model-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T15:54:14.470667+00:00",
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+    "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+    "weight_files": 88,
+    "weight_bytes": 75010188240,
+    "snapshot_path": "/model-cache/feature-tests/20261015-super-vl-tp2/hf/hub/models--nvidia--NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4/snapshots/8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+    "image_id": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+    "cache_source": "20261015-super-vl-tp2",
+    "scope": "Fresh size/metadata-hash validation of exact cached revision; no download"
+  }
+}
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s apply --dry-run=client -f /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/overnight-migration-enabled-20261105-a1/enabled-deployment.json
+dynamographdeployment.nvidia.com/demo-continuity-enabled created (dry run)
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s apply --dry-run=server -f /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/overnight-migration-enabled-20261105-a1/enabled-deployment.json
+dynamographdeployment.nvidia.com/demo-continuity-enabled created (server dry run)
+enabled: waiting for prepared workers (1s)
+enabled: waiting for prepared workers (14s)
+enabled: waiting for prepared workers (28s)
+enabled: waiting for prepared workers (41s)
+enabled: waiting for prepared workers (54s)
+enabled: waiting for prepared workers (67s)
+enabled: waiting for prepared workers (80s)
+enabled: waiting for prepared workers (93s)
+enabled: waiting for prepared workers (105s)
+enabled: waiting for prepared workers (119s)
+enabled: waiting for prepared workers (132s)
+enabled: waiting for prepared workers (144s)
+enabled: waiting for prepared workers (165s)
+enabled: waiting for prepared workers (178s)
+enabled: waiting for prepared workers (190s)
+enabled: waiting for prepared workers (203s)
+enabled: waiting for prepared workers (215s)
+enabled: waiting for prepared workers (228s)
+enabled: waiting for prepared workers (241s)
+enabled: waiting for prepared workers (253s)
+enabled: waiting for prepared workers (266s)
+enabled: waiting for prepared workers (278s)
+enabled: waiting for prepared workers (291s)
+enabled: waiting for prepared workers (304s)
+enabled: waiting for prepared workers (317s)
+enabled: waiting for prepared workers (330s)
+enabled: waiting for prepared workers (342s)
+enabled: waiting for prepared workers (355s)
+enabled: waiting for prepared workers (367s)
+enabled: waiting for prepared workers (380s)
+enabled: waiting for prepared workers (393s)
+enabled: waiting for prepared workers (405s)
+enabled: waiting for prepared workers (418s)
+enabled: waiting for prepared workers (431s)
+enabled: waiting for prepared workers (443s)
+enabled: waiting for prepared workers (456s)
+enabled: waiting for prepared workers (468s)
+enabled: waiting for prepared workers (481s)
+enabled: waiting for prepared workers (494s)
+enabled: waiting for prepared workers (506s)
+enabled: waiting for prepared workers (519s)
+enabled: waiting for prepared workers (531s)
+enabled: waiting for prepared workers (544s)
+enabled: waiting for prepared workers (556s)
+enabled: waiting for prepared workers (569s)
+enabled: waiting for prepared workers (582s)
+enabled: waiting for prepared workers (595s)
+enabled: waiting for prepared workers (607s)
+enabled: waiting for prepared workers (620s)
+enabled: waiting for prepared workers (633s)
+enabled: waiting for prepared workers (646s)
+enabled: waiting for prepared workers (658s)
+enabled: waiting for prepared workers (671s)
+enabled: waiting for prepared workers (684s)
+enabled: waiting for prepared workers (696s)
+enabled: waiting for prepared workers (709s)
+enabled: waiting for prepared workers (722s)
+enabled: waiting for prepared workers (734s)
+enabled: waiting for prepared workers (747s)
+enabled: waiting for prepared workers (759s)
+enabled: waiting for prepared workers (772s)
+enabled: waiting for prepared workers (785s)
+enabled: waiting for prepared workers (798s)
+enabled: waiting for prepared workers (810s)
+enabled: waiting for prepared workers (823s)
+enabled: waiting for prepared workers (836s)
+enabled: waiting for prepared workers (848s)
+enabled: waiting for prepared workers (861s)
+enabled: waiting for prepared workers (873s)
+enabled: waiting for prepared workers (886s)
+enabled: waiting for prepared workers (899s)
+enabled: waiting for prepared workers (911s)
+enabled: waiting for prepared workers (924s)
+enabled: waiting for prepared workers (937s)
+enabled: waiting for prepared workers (949s)
+enabled: waiting for prepared workers (961s)
+enabled: waiting for prepared workers (974s)
+enabled: waiting for prepared workers (987s)
+enabled: waiting for prepared workers (1000s)
+enabled: waiting for prepared workers (1012s)
+enabled: waiting for prepared workers (1025s)
+enabled: waiting for prepared workers (1038s)
+enabled: waiting for prepared workers (1050s)
+enabled: waiting for prepared workers (1063s)
+enabled: waiting for prepared workers (1076s)
+enabled: waiting for prepared workers (1088s)
+enabled: waiting for prepared workers (1101s)
+enabled: waiting for prepared workers (1114s)
+enabled: waiting for prepared workers (1127s)
+enabled: waiting for prepared workers (1139s)
+enabled: waiting for prepared workers (1152s)
+enabled: waiting for prepared workers (1165s)
+enabled: waiting for prepared workers (1178s)
+enabled: waiting for prepared workers (1191s)
+enabled: waiting for prepared workers (1204s)
+enabled: waiting for prepared workers (1216s)
+enabled: waiting for prepared workers (1229s)
+enabled: waiting for prepared workers (1242s)
+enabled: waiting for prepared workers (1255s)
+enabled: waiting for prepared workers (1268s)
+enabled: waiting for prepared workers (1281s)
+enabled: waiting for prepared workers (1294s)
+enabled: waiting for prepared workers (1307s)
+enabled: waiting for prepared workers (1320s)
+enabled: waiting for prepared workers (1333s)
+enabled: waiting for prepared workers (1346s)
+enabled: waiting for prepared workers (1359s)
+enabled: two workers and frontend Ready; EngineCore identities recorded.
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-3bef380e-demo service/demo-continuity-enabled-frontend 18154:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18154/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793895453,"owned_by":"nvidia","context_window":1048576}]}
+
+Baseline: four concurrent coding streams, no fault.
+
+Fault: four identical concurrent coding streams, one observed EngineCore SIGKILL.
+
+[fault] SIGKILL EngineCore on worker 4230309658068301 (demo-continuity-enabled-0-agg-chcd9)
+{
+  "mode": "enabled",
+  "baseline_completed": 4,
+  "fault_completed": 4,
+  "scope": "Controlled coding-stream integration qualification; not AgentX replay or an SLO benchmark."
+}

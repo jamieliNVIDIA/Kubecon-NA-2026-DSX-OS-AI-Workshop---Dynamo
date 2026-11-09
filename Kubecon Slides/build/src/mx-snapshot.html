@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVIDIA Dynamo · ModelExpress + Snapshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== Engine: fixed 16:9 stage (1920×1080) scaled to fit the window ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+.deck{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center;overflow:hidden;border-radius:2px}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 96px 84px;opacity:0;pointer-events:none;transition:opacity .5s ease,transform .5s ease;transform:translateX(40px);overflow:hidden}
+.slide.active{opacity:1;pointer-events:auto;transform:translateX(0)}
+.slide:not(.active) *{pointer-events:none}
+.slide.active *{pointer-events:auto}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.2s!important}}
+[data-enter]{opacity:0;transform:translateY(20px)}
+.slide.active [data-enter]{animation:_enter .5s cubic-bezier(.16,1,.3,1) forwards;animation-delay:calc(var(--i,0)*.12s)}
+@keyframes _enter{to{opacity:1;transform:translateY(0)}}
+.nav{position:fixed;bottom:18px;right:24px;display:flex;gap:8px;z-index:100}
+.nav button{width:40px;height:40px;border-radius:9px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s}
+.progress{position:fixed;bottom:0;left:0;height:3px;transition:width .4s ease;z-index:100}
+.page-num{position:fixed;bottom:28px;left:24px;font-size:13px;font-family:var(--mono);z-index:100}
+
+/* ===== Design system (dark tokens; light overrides at the bottom) ===== */
+:root{
+  --bg:#07090a;--surface:#11171a;--surface2:#172025;--line:rgba(255,255,255,.10);
+  --text:#e8eef0;--dim:#8f9ca3;--accent:#76b900;
+  --me:#76b900;--snap:#3ec7e0;--stor:#f5a623;--warn:#ffd166;--bad:#ff5a5f;--kv:#7aa2ff;--wt:#e6c37a;--pu:#b48cff;
+  --ink:#0a0d0b;--well:#0d1316;--chipbg:#121a1e;--reqc:#ffffff;--tile:#172024;--tileb:#222d31;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+html,body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.slide{background:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.10),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.08),transparent 45%),linear-gradient(180deg,#080b0c,#06080a)}
+.slide.center{justify-content:center}
+.slide.sec-me{background:radial-gradient(ellipse at 25% 45%,rgba(118,185,0,.22),transparent 55%),linear-gradient(180deg,#080b0c,#06080a)}
+.slide.sec-snap{background:radial-gradient(ellipse at 25% 45%,rgba(62,199,224,.20),transparent 55%),linear-gradient(180deg,#080b0c,#06080a)}
+.slide.sec-both{background:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.18),transparent 50%),radial-gradient(ellipse at 45% 70%,rgba(62,199,224,.16),transparent 50%),linear-gradient(180deg,#080b0c,#06080a)}
+h1{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-weight:800;letter-spacing:-.035em;font-size:100px;line-height:1.02}
+h2{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-weight:700;letter-spacing:-.025em;font-size:50px;line-height:1.12;margin-bottom:26px}
+h3{font-size:28px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+p,li{font-size:23px;line-height:1.5;color:#c8d2d6}
+b,strong{color:var(--text)}
+small{font-size:19px;color:var(--dim);display:block}
+.eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.16em;font-size:20px;color:var(--accent);margin-bottom:10px}
+.eyebrow.snap{color:var(--snap)}
+.lead{font-size:34px;color:var(--dim);max-width:1150px;line-height:1.45}
+.ic{font-family:var(--mono);font-size:.86em;background:#1b252a;border:1px solid var(--line);border-radius:6px;padding:.05em .35em;color:#d9f2a8}
+.c-me{color:var(--me)}.c-snap{color:var(--snap)}.c-stor{color:var(--stor)}.c-bad{color:var(--bad)}.c-dim{color:var(--dim)}.c-wt{color:var(--wt)}.c-pu{color:var(--pu)}
+.fill{flex:1;min-height:0}
+.card{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--line);border-radius:18px;padding:26px 30px;box-shadow:0 2px 4px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.22)}
+.card.me{border-top:4px solid var(--me)}.card.snap{border-top:4px solid var(--snap)}.card.stor{border-top:4px solid var(--stor)}.card.wt{border-top:4px solid var(--wt)}
+.card.good{border-left:5px solid var(--me)}.card.bad{border-left:5px solid var(--bad)}.card.warn{border-left:5px solid var(--warn)}
+.two{display:grid;gap:36px;grid-template-columns:1fr 1fr}
+.stack{display:flex;flex-direction:column;gap:20px;min-height:0}
+.tag{display:inline-block;font-family:var(--mono);font-size:19px;padding:5px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);margin:4px 6px 4px 0}
+.tag.me{border-color:rgba(118,185,0,.5);color:#bfe57a}.tag.snap{border-color:rgba(62,199,224,.5);color:#9fe6f3}.tag.warn{border-color:rgba(255,209,102,.5);color:var(--warn)}.tag.bad{border-color:rgba(255,90,95,.5);color:#ff9a9d}
+/* hero + sections */
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:60px;align-items:center;flex:1}
+.pills{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.pill{border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:16px;padding:22px 26px}
+.pill b{display:block;font-family:var(--mono);font-size:22px;margin-bottom:6px}
+.pill span{font-size:21px;color:var(--dim)}
+.pill.me{border-color:rgba(118,185,0,.5)}.pill.snap{border-color:rgba(62,199,224,.5)}.pill.both{border-color:rgba(255,255,255,.28)}
+.foot{margin-top:36px;font-size:19px;color:var(--dim);font-family:var(--mono)}
+.secnum{font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;font-size:260px;font-weight:800;line-height:.85;opacity:.16;letter-spacing:-.05em}
+.sec-me h1{color:var(--me)}.sec-snap h1{color:var(--snap)}
+.sec-both h1 .a{color:var(--me)}.sec-both h1 .b{color:var(--snap)}
+/* svg diagram vocabulary (theme-aware) */
+svg{display:block}
+.dg{width:100%;height:100%}
+.s-card{fill:var(--surface);stroke:var(--line);stroke-width:2}
+.s-well{fill:var(--well);stroke:var(--line);stroke-width:1.5}
+.s-row{fill:var(--chipbg);stroke:var(--line);stroke-width:1.5}
+.st-me{stroke:var(--me)}.st-snap{stroke:var(--snap)}.st-stor{stroke:var(--stor)}.st-wt{stroke:var(--wt)}.st-pu{stroke:var(--pu)}.st-kv{stroke:var(--kv)}.st-bad{stroke:var(--bad)}.st-dim{stroke:var(--dim)}.st-txt{stroke:var(--text)}
+.f-me{fill:var(--me)}.f-snap{fill:var(--snap)}.f-stor{fill:var(--stor)}.f-wt{fill:var(--wt)}.f-pu{fill:var(--pu)}.f-kv{fill:var(--kv)}.f-bad{fill:var(--bad)}.f-dim{fill:var(--dim)}.f-txt{fill:var(--text)}.f-none{fill:none}
+.t-h{fill:var(--text);font:700 30px Inter,sans-serif}
+.t-b{fill:var(--text);font:600 24px Inter,sans-serif}
+.t-d{fill:var(--dim);font:500 22px Inter,sans-serif}
+.t-s{fill:var(--dim);font:500 20px Inter,sans-serif}
+.t-ink{fill:var(--ink);font:700 22px Inter,sans-serif}
+.t-mono{font-family:var(--mono)!important}
+.t-me{fill:var(--me)}.t-snap{fill:var(--snap)}.t-stor{fill:var(--stor)}.t-wt{fill:var(--wt)}.t-pu{fill:var(--pu)}.t-kv{fill:var(--kv)}.t-bad{fill:var(--bad)}
+.ln{fill:none;stroke-width:3.5}
+.ln.thin{stroke-width:2.5}
+.ln.anim{stroke-dasharray:12 9;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-42}}
+.badge-c{stroke:none}
+/* demo shell */
+.demo{position:relative;background:rgba(8,12,14,.9);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:24px 28px;box-shadow:0 0 0 1px rgba(118,185,0,.06),0 18px 50px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:16px;min-height:0}
+.demo-h{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.demo-h b{font-size:27px}
+.demo-tag{font-family:var(--mono);font-size:15px;letter-spacing:.14em;color:var(--accent);border:1px solid rgba(118,185,0,.5);border-radius:999px;padding:5px 12px;white-space:nowrap}
+.ctl{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;font-size:20px;color:var(--dim)}
+.ctl label{display:flex;align-items:center;gap:10px}
+.ctl .grow{flex:1;min-width:300px}.ctl .grow input{flex:1}
+select,.btn{background:#162025;color:var(--text);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 18px;font-size:20px;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#081004;font-weight:700}
+.btn.on{background:rgba(118,185,0,.18);border-color:var(--accent);color:#d7f59c}
+.btn.snapon.on{background:rgba(62,199,224,.16);border-color:var(--snap);color:#bff0f8}
+.btn.warnb{border-color:rgba(255,90,95,.5);color:#ffb3b5}
+input[type=range]{accent-color:var(--accent);height:24px}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.hint{font-size:20px;color:var(--dim);line-height:1.5}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpis div{background:var(--chipbg);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center}
+.kpis b{display:block;font-family:var(--mono);font-size:42px;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpis span{font-size:19px;color:var(--dim);margin-top:4px}
+.lg{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:19px;color:var(--dim)}
+.lg i{display:inline-block;width:18px;height:18px;border-radius:4px;vertical-align:-2px;margin-right:7px}
+.k-cuda{background:var(--kv)}.k-pull{background:#7f8a83}.k-stor{background:var(--stor)}.k-h2d{background:var(--wt)}.k-warm{background:var(--warn)}.k-reg{background:#c7d0ca}.k-rdma{background:var(--me)}.k-snap{background:var(--snap)}.k-pod{background:#5b6a60}
+.hbar{display:flex;height:110px;background:var(--well);border:1px solid var(--line);border-radius:14px;overflow:hidden;padding:6px;gap:4px}
+.hbar .sg{height:100%;border-radius:9px;display:flex;align-items:center;padding:0 10px;overflow:hidden;transition:width .45s ease}
+.hbar .sg span{font-size:19px;font-weight:700;color:var(--ink);white-space:nowrap}
+/* slide 2 pipeline */
+.pipe{display:flex;flex-direction:column;gap:0}
+.pstep{display:grid;grid-template-columns:58px 1fr auto;gap:16px;align-items:center;position:relative;padding:8px 0}
+.pstep .pi{width:58px;height:58px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--ink);font-weight:800;position:relative;z-index:1}
+.pstep:not(:last-child)::after{content:"";position:absolute;left:28px;top:64px;height:26px;width:3px;background:var(--line)}
+.pstep b{font-size:25px;display:block}.pstep small{font-size:19px}
+.pstep em{font-style:normal;font-family:var(--mono);font-size:21px;color:var(--dim);background:var(--chipbg);border:1px solid var(--line);border-radius:8px;padding:4px 10px}
+/* tiles */
+.nodes{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.nd{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--well);display:flex;flex-direction:column}
+.nd .nl{font-size:17px;color:var(--dim);margin-bottom:8px;display:flex;justify-content:space-between;font-family:var(--mono)}
+.nd.dead{border-color:var(--bad);background:repeating-linear-gradient(45deg,rgba(255,90,95,.09) 0 8px,transparent 8px 16px)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tiles.t2{grid-template-columns:repeat(2,1fr);gap:10px}
+.tl{position:relative;aspect-ratio:1;border-radius:8px;background:var(--tile);border:1px solid var(--tileb);font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--ink);overflow:hidden;font-family:var(--mono)}
+.tiles.t2 .tl{font-size:24px;border-radius:12px}
+.tl .pg{position:absolute;left:0;bottom:0;height:5px;background:rgba(255,255,255,.9)}
+.tl.dead{background:rgba(255,90,95,.25);border-color:rgba(255,90,95,.5)}
+.tl.pull{background:#7f8a83}.tl.dl{background:var(--stor)}.tl.h2d{background:var(--wt)}.tl.warm{background:var(--warn)}.tl.reg{background:#c7d0ca}
+.tl.p2p{background:var(--me)}.tl.rst{background:var(--snap)}.tl.wait{background:var(--tile);color:var(--dim);border-style:dashed;border-color:var(--dim)}.tl.ckpt{background:var(--pu)}
+.tl.serve{background:#2f5b00;color:#cdf08a;border-color:var(--me)}
+canvas.fl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none!important}
+.srcrow{display:flex;gap:12px}
+.src{flex:1;text-align:center;font-size:20px;padding:10px 8px;border-radius:12px;border:1px solid var(--line);background:var(--chipbg)}
+.src.stor{border-color:rgba(245,166,35,.6)}.src.me{border-color:rgba(118,185,0,.6)}.src.snap{border-color:rgba(62,199,224,.6)}
+.src.live{border-color:var(--me);background:rgba(118,185,0,.12)}
+.src.off{opacity:.25}
+.results{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.results div{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--chipbg);font-size:21px;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+.results b{font-family:var(--mono);font-size:26px}
+/* snapshot lifecycle */
+.stepbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.sb{background:var(--chipbg);border:1px solid var(--line);border-radius:999px;color:var(--dim);padding:10px 20px;font-size:20px;cursor:pointer;font-family:inherit}
+.sb.on{border-color:var(--snap);color:var(--text);background:rgba(62,199,224,.14)}
+.life{display:grid;grid-template-columns:1fr 150px 1fr 150px 1fr;gap:14px;align-items:center}
+.lnode{border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--well)}
+.lnode h4{font-size:24px;margin-bottom:10px;display:flex;justify-content:space-between;color:var(--text)}
+.lnode h4 span{color:var(--dim);font-weight:500;font-size:19px}
+.mlabel{font-size:18px;color:var(--dim);margin:10px 0 6px;font-family:var(--mono)}
+.mem{display:flex;height:58px;border:1px solid var(--line);border-radius:10px;background:var(--chipbg);padding:4px;gap:4px;overflow:hidden}
+.ms{height:100%;border-radius:7px;display:flex;align-items:center;padding:0 8px;overflow:hidden;animation:pop .45s ease}
+.ms span{font-size:17px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes pop{from{opacity:0;transform:scaleX(.6)}to{opacity:1;transform:none}}
+.ms-w{background:var(--wt)}.ms-s{background:var(--snap)}.ms-kv{background:var(--kv)}
+.ms-kvr{background:transparent;border:2px dashed var(--kv)}.ms-kvr span{color:var(--kv)}
+.ms-cri{background:var(--snap)}.ms-big{background:linear-gradient(90deg,var(--snap),var(--wt))}.ms-gms{background:var(--wt)}
+.lstatus{margin-top:12px;font-size:20px;font-weight:700;min-height:1.4em}
+.arrow{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:20px;color:var(--dim);text-align:center}
+.arrow .ln2{width:100%;height:5px;border-radius:3px;background:var(--line)}
+.arrow.on .ln2{background:repeating-linear-gradient(90deg,var(--snap) 0 14px,transparent 14px 22px);background-size:44px 5px;animation:mv .7s linear infinite}
+.arrow.on{color:var(--text);font-weight:700}
+@keyframes mv{to{background-position:44px 0}}
+.lexp{display:grid;grid-template-columns:1.7fr 1fr;gap:20px}
+.lexp .card{display:flex;flex-direction:column;justify-content:center}
+.chips{display:flex;flex-direction:column;gap:12px}
+.chips div{background:var(--chipbg);border:1px solid var(--line);border-radius:12px;padding:10px 16px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.chips b{font-family:var(--mono);font-size:32px}.chips span{display:block;font-size:19px;color:var(--dim)}
+/* chart */
+.bars{display:flex;flex-direction:column;justify-content:space-evenly}
+.bars .row{display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:center}
+.bars .lab{font-size:22px;color:var(--dim);text-align:right}
+.bars .tr{height:60px;background:var(--well);border-radius:10px;position:relative;overflow:hidden}
+.bars .fill{height:100%;border-radius:10px;transition:width .7s cubic-bezier(.2,.8,.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:14px;font-family:var(--mono);font-size:22px;font-weight:800;color:#061014;min-width:100px}
+.f0{background:#5a6a72}.f1{background:#4fa6b8}.f2{background:var(--snap)}.f3{background:repeating-linear-gradient(45deg,#2b4950 0 8px,#20363b 8px 16px);color:#bfe9f2!important}.f4{background:linear-gradient(90deg,var(--snap),var(--me))}
+/* arch svg */
+.node{fill:var(--well);stroke:var(--line);stroke-width:1.5}
+.box{fill:var(--surface2);stroke-width:1.5}
+.t1{fill:var(--text);font-size:17px;font-weight:700;font-family:Inter,sans-serif}
+.t2{fill:var(--dim);font-size:14px;font-family:Inter,sans-serif}
+.t3{fill:var(--dim);font-size:13px;font-family:Inter,sans-serif}
+.bl{fill:#0a0d0b;font-size:13px;font-weight:700;font-family:Inter,sans-serif}
+.st{font-size:16px;font-weight:800;font-family:Inter,sans-serif}
+.chip{fill:var(--bg);stroke:var(--line)}
+.barbg{fill:var(--chipbg)}
+.barf{transform-box:fill-box;transform-origin:left center;transition:transform 1.6s ease}
+.agent{fill:rgba(180,140,255,.08);stroke:rgba(180,140,255,.5)}
+.nic{fill:rgba(118,185,0,.06);stroke:rgba(118,185,0,.45)}
+.wk{fill:var(--surface);stroke-width:2;transition:all .4s}
+.wk.empty{stroke:var(--dim);stroke-dasharray:5 5;fill:transparent;opacity:.6}
+.wk.load{stroke:var(--stor)}.wk.ckpt{stroke:var(--pu)}.wk.rst{stroke:var(--snap)}.wk.serve{stroke:var(--me);fill:rgba(118,185,0,.07)}.wk.fail{stroke:var(--bad)}
+.xmark{opacity:0;transition:opacity .4s}.xmark.on{opacity:1}
+.flow{opacity:0;transition:opacity .4s}.flow.on{opacity:1}
+.flow path{fill:none;stroke-width:3;stroke-dasharray:9 7;animation:dash .9s linear infinite}
+.flow text{font-size:15px;font-weight:700;paint-order:stroke;stroke:var(--bg);stroke-width:4px;font-family:Inter,sans-serif}
+#f-rA path,#f-rB path,#f-rC path{stroke:var(--reqc)}#f-rA text,#f-rB text,#f-rC text{fill:var(--reqc)}
+.archdesc{display:flex;flex-direction:column;justify-content:center}
+.archdesc h3{font-size:32px;margin-bottom:14px}
+.archdesc p,.archdesc li{font-size:24px}
+.archdesc ul{padding-left:24px}.archdesc li{margin:10px 0}
+/* race */
+.sl{display:flex;flex-direction:column;gap:6px}
+.sl label{display:flex;justify-content:space-between;font-size:21px;color:var(--dim)}.sl label b{color:var(--text);font-family:var(--mono)}
+.sl input{width:100%}
+.lanes{display:flex;flex-direction:column;justify-content:space-evenly}
+.lane-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.lane-h h4{font-size:26px}
+.lane-h .tm{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:800;font-size:28px}
+.lane-sub{font-size:20px;color:var(--dim);margin:2px 0 8px}
+.track{position:relative;height:58px;background:var(--well);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.segs{position:absolute;inset:0}
+.seg{position:absolute;top:5px;bottom:5px;border-radius:8px;font-size:18px;color:var(--ink);font-weight:700;padding:0 10px;display:flex;align-items:center;white-space:nowrap;overflow:hidden;border-right:1px solid rgba(0,0,0,.3)}
+.seg.r0{bottom:auto;height:calc(50% - 7px)}.seg.r1{top:auto;height:calc(50% - 7px)}
+.badge{display:inline-block;background:rgba(118,185,0,.15);color:var(--me);border:1px solid rgba(118,185,0,.5);border-radius:999px;padding:2px 12px;font-size:19px;margin-left:10px;font-family:var(--mono)}
+.axis{position:relative;height:26px;font-size:18px;color:var(--dim);font-family:var(--mono)}
+.axis span{position:absolute;transform:translateX(-50%)}
+/* sim */
+.simbar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;font-size:20px;color:var(--dim)}
+.simbar .sep{width:1px;height:32px;background:var(--line);margin:0 4px}
+.clock{font-family:var(--mono);color:var(--text);font-weight:700}
+.scmp{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.scmp div{background:var(--chipbg);border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:24px}
+.scmp span{display:block;font-size:18px;color:var(--dim)}
+.scmp b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.v1{color:var(--stor)}.v2{color:var(--me)}
+.clusters{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cluster{position:relative;background:rgba(10,14,16,.9);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.cluster h4{font-size:25px}.cluster .ch{font-size:19px;color:var(--dim);margin-top:-6px}
+.cstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cstats div{background:var(--chipbg);border-radius:10px;padding:6px 12px}
+.cstats span{display:block;font-size:17px;color:var(--dim)}.cstats b{font-family:var(--mono);font-size:26px}
+canvas.chart{width:100%;flex:1;min-height:60px;display:block;background:var(--well);border-radius:10px;border:1px solid var(--line)}
+.log{font:17px/1.45 var(--mono);color:var(--dim);height:76px;overflow:hidden}
+.log .ok{color:#a9dc4a}.log .bad{color:#ff8a8d}.log .inf{color:#9fdcec}
+/* slide 6 timelines */
+.tlrow{display:grid;grid-template-columns:260px 1fr 110px;gap:20px;align-items:center}
+.tlrow .nm{font-size:26px;font-weight:700}
+.tlrow .tt{font-family:var(--mono);font-size:30px;font-weight:800;text-align:right}
+.tlbar{display:flex;height:72px;gap:4px}
+.tlbar div{border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;position:relative;font-size:21px}
+.tlbar .gone{background:transparent;border:2px dashed var(--me);color:var(--me)}
+.brk{display:grid;grid-template-columns:260px 1fr 110px;gap:20px}
+.brkin{position:relative;height:70px}
+.brkin span{position:absolute;top:0;height:100%;border-top:4px solid;border-left:4px solid;border-right:4px solid;border-radius:10px 10px 0 0;padding:10px 14px;font-size:23px;font-weight:700}
+.iconlist{display:flex;flex-direction:column;gap:16px}
+.iconlist div{display:grid;grid-template-columns:54px 1fr;gap:16px;align-items:center}
+.iconlist i{font-style:normal;width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800}
+.iconlist .g i{background:rgba(118,185,0,.15);color:var(--me)}.iconlist .r i{background:rgba(255,90,95,.14);color:var(--bad)}.iconlist .c i{background:rgba(62,199,224,.14);color:var(--snap)}
+.iconlist p{font-size:25px}
+/* callout */
+.callout{border-radius:16px;padding:20px 26px;border:1px solid var(--line);background:linear-gradient(90deg,rgba(62,199,224,.10),rgba(118,185,0,.10));font-size:24px;display:flex;align-items:center;gap:18px}
+.callout .big{font-size:34px}
+/* slide 13 facts */
+.facts{display:grid;grid-template-columns:200px 1fr 1fr;gap:12px 24px;align-items:stretch}
+.facts .k{font-size:24px;color:var(--dim);font-weight:700;display:flex;align-items:center}
+.facts .v{background:var(--chipbg);border:1px solid var(--line);border-radius:12px;padding:14px 20px;font-size:24px;color:var(--text)}
+.facts .v.s{border-left:5px solid var(--snap)}.facts .v.m{border-left:5px solid var(--me)}
+/* slide 17 lanes */
+.lanes2{display:grid;grid-template-columns:150px 1fr 60px 1fr 60px 1fr;grid-template-rows:1fr 1fr;gap:24px 0;align-items:stretch}
+.lanehead{display:flex;flex-direction:column;justify-content:center;font-family:var(--mono);font-weight:800;font-size:22px}
+.lanehead small{font-family:Inter;font-weight:500}
+.lstep{border-radius:18px;padding:22px 24px;background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.lstep .n{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:800;font-size:26px}
+.lstep.m{border-top:4px solid var(--me)}.lstep.m .n{background:rgba(118,185,0,.15);color:var(--me)}
+.lstep.s{border-top:4px solid var(--snap)}.lstep.s .n{background:rgba(62,199,224,.14);color:var(--snap)}
+.lstep h3{font-size:28px;margin:0}.lstep p{font-size:23px}
+.larr{display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--dim)}
+.bignum{font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:-.03em;font-weight:800;font-size:64px;line-height:1.05;margin:2px 0 8px}
+.bigbar{display:flex;height:150px;gap:6px}
+.bigbar div{border-radius:12px;display:flex;flex-direction:column;justify-content:center;padding:0 16px;color:var(--ink);overflow:hidden;white-space:nowrap}
+.bigbar b{font-family:var(--mono);font-size:30px}.bigbar span{font-size:19px;font-weight:600}
+.ck{display:grid;grid-template-columns:16px 1.3fr .85fr 1.15fr;grid-template-rows:auto 1fr 1fr 1fr;column-gap:28px}
+.ckh{font-family:var(--mono);font-size:18px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);padding-bottom:12px;border-bottom:2px solid var(--line)}
+.ckc{border-radius:8px;margin:16px 0}
+.ckp,.ckv,.ckr{padding:14px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:6px}
+.ckp b,.ckv b,.ckr b{font-size:34px;line-height:1.15}
+.ckp span,.ckv span,.ckr span{font-size:24px;color:var(--dim)}
+.ckv.warn b,.ckr.warn b{color:var(--stor)}.ckv.keep b{color:var(--snap)}.ckv.drop b{color:var(--bad)}.ckr.me b{color:var(--me)}
+.cksum{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:20px}
+.cksum div{background:var(--chipbg);border:1px solid var(--line);border-radius:14px;padding:14px 22px;display:flex;flex-direction:column;justify-content:center}
+.cksum span{font-size:19px;color:var(--dim)}.cksum b{font-family:var(--mono);font-size:46px;line-height:1.1}.cksum small{font-size:19px}
+.cksum .ckfoot b{font-family:inherit;font-size:26px;line-height:1.35}
+.cmpc{display:flex;flex-direction:column;justify-content:center;gap:24px}
+.cmpn{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cmpn b{font-family:var(--mono);font-size:68px;display:block;line-height:1.05}.cmpn span{font-size:22px;color:var(--dim)}
+.rbar{display:flex;height:84px;gap:4px;background:var(--well);border-radius:12px;padding:5px}
+.rbar div{border-radius:8px;display:flex;align-items:center;padding:0 12px;font-size:21px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden}
+.cksum .txtb{font-family:inherit;font-size:26px;line-height:1.3}
+/* takeaways */
+.tk{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.tk .card{display:flex;flex-direction:column;gap:16px}
+.tk .num{font-family:var(--mono);font-weight:800;font-size:110px;line-height:1;letter-spacing:-.04em}
+.tk .unit{font-size:20px;color:var(--dim);margin-top:-8px}
+.tk h3{font-size:32px}
+.tk p{font-size:25px}
+.src-list{font-size:19px;color:var(--dim);line-height:1.7}
+.src-list a{color:#a5cf6a;text-decoration:none}
+/* nav palette */
+.progress{background:linear-gradient(90deg,var(--me),var(--snap))}
+.page-num{color:var(--dim);opacity:.8}
+.nav button{border:1px solid rgba(255,255,255,.16);background:rgba(20,28,32,.75);color:var(--dim)}
+.nav button:hover{color:var(--text);border-color:var(--accent)}
+.theme-btn{position:fixed;bottom:18px;right:124px;z-index:200;display:flex;align-items:center;gap:6px;font:600 13px/1 Inter,sans-serif;padding:12px 16px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.18);background:rgba(20,28,32,.75);color:var(--text);backdrop-filter:blur(8px)}
+.theme-btn:hover{border-color:var(--accent)}
+
+/* ===== Readability pass: large type, content centered in cards ===== */
+p,li{font-size:26px}
+small{font-size:21px}
+.hint{font-size:22px}
+.lg{font-size:20px}
+.kpis div{padding:20px 22px}
+.kpis b{font-size:56px}
+.kpis span{font-size:21px}
+.demo-h b{font-size:28px}
+.hbar{height:150px}
+.hbar .sg span{font-size:21px}
+.iconlist p{font-size:28px}
+.iconlist div{grid-template-columns:60px 1fr}
+.iconlist i{width:60px;height:60px;font-size:30px}
+.facts .k,.facts .v{font-size:27px}
+.lane-sub{font-size:21px}
+.track{height:68px}
+.seg{font-size:19px}
+.archdesc h3{font-size:36px}
+.archdesc p,.archdesc li{font-size:28px}
+.archdesc li{margin:16px 0}
+.lstep{justify-content:center}
+.lstep h3{font-size:34px}
+.lstep p{font-size:27px}
+.lstep .n{width:64px;height:64px;font-size:32px}
+.lanes2{grid-template-columns:240px 1fr 60px 1fr 60px 1fr}
+.lanehead{font-size:28px}
+.lanehead small{font-family:inherit;font-size:21px;font-weight:500}
+.tk .card{justify-content:center;gap:18px;padding:40px 44px}
+.tk .num{font-size:170px}
+.tk .unit{font-size:28px}
+.tk h3{font-size:38px}
+.tk p{font-size:30px}
+.lexp .card h3{font-size:36px}
+.lexp .card p{font-size:30px}
+.mem{height:76px}
+.ms span{font-size:19px}
+.chips b{font-size:38px}
+.chips span{font-size:21px}
+.tlbar{height:104px}
+.tlbar div{font-size:24px}
+.tlrow .nm{font-size:30px}
+.tlrow .tt{font-size:36px}
+.brkin{height:80px}
+.brkin span{font-size:26px}
+.results div{font-size:23px}
+.src{font-size:21px}
+.callout{font-size:26px}
+.bignum{font-size:76px}
+.cstats span{font-size:18px}
+.scmp span{font-size:19px}
+.sb{font-size:21px}
+.btn{font-size:21px}
+.t-b{font-size:26px!important}.t-d{font-size:24px!important}.t-s{font-size:22px!important}.t-ink{font-size:24px!important}
+.t1{font-size:18px}.t2{font-size:16px}.t3{font-size:15px}.bl{font-size:14px}.st{font-size:18px}.flow text{font-size:17px}
+
+/* ===== Readability pass 2: larger minimum type ===== */
+p,li{font-size:28px}
+small{font-size:23px}
+.hint{font-size:24px}
+.lg{font-size:22px}
+.lg i{width:20px;height:20px}
+.kpis span{font-size:23px}
+.kpis b{font-size:58px}
+.demo-h b{font-size:30px}
+.demo-tag{font-size:16px}
+.fpb{display:inline-block;vertical-align:middle;margin-left:12px;font:700 15px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#8a5cf0;border-radius:999px;padding:4px 12px;line-height:1.2}
+h3 .fpb,.pill .fpb{font-size:12px;padding:3px 9px;margin-left:8px}
+.slide.fp::after{content:"Future plan";position:absolute;top:26px;right:40px;z-index:5;font:800 32px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#8a5cf0;border-radius:999px;padding:12px 32px;box-shadow:0 6px 20px rgba(138,92,240,.35)}
+.ctl{font-size:22px}
+.btn,select,.sb{font-size:22px}
+.lane-sub{font-size:23px}
+.lane-h h4{font-size:28px}
+.axis{font-size:19px}
+.seg{font-size:20px}
+.src{font-size:22px}
+.results div{font-size:24px}
+.results b{font-size:28px}
+.nd .nl{font-size:18px}
+.mlabel{font-size:19px}
+.ms span{font-size:20px}
+.lstatus{font-size:22px}
+.arrow{font-size:21px}
+.chips span{font-size:22px}
+.lnode h4{font-size:26px}
+.ckh{font-size:20px}
+.ckp b,.ckv b,.ckr b{font-size:36px}
+.ckp span,.ckv span,.ckr span{font-size:26px}
+.cksum span,.cksum small{font-size:21px}
+.cksum .ckfoot b,.cksum .txtb{font-size:28px}
+.scmp span{font-size:20px}
+.cstats span{font-size:19px}
+.cluster .ch{font-size:20px}
+.log{font-size:18px;height:80px}
+.sl label{font-size:23px}
+.iconlist p{font-size:29px}
+.lstep p{font-size:27px}
+.archdesc p,.archdesc li{font-size:30px}
+.tk p{font-size:30px}
+.src-list{font-size:20px}
+.pill span{font-size:23px}
+.eyebrow{font-size:21px}
+.t-b{font-size:27px!important}.t-d{font-size:25px!important}.t-s{font-size:23px!important}
+.t1{font-size:19px}.t2{font-size:17px}.t3{font-size:16px}.st{font-size:19px}.flow text{font-size:18px}
+
+/* ===== Alignment: top-align boxes so labels and numbers line up across a row ===== */
+.kpis div,.cksum div,.chips div,.scmp div,.cstats div{justify-content:flex-start!important}
+.kpis b,.cksum b,.chips b{margin-top:2px}
+.lstep{justify-content:flex-start!important}
+.tk .card{justify-content:flex-start!important;padding-top:44px}
+.cmpc{justify-content:flex-start!important;padding-top:36px}
+
+/* slide 10 step demo: fit inside its frame */
+#dC{gap:12px}
+#dC .lnode{padding:12px 16px}
+#dC .mem{height:58px}
+#dC .mlabel{margin:6px 0 4px}
+#dC .lstatus{margin-top:6px}
+#dC .lexp .card{padding:20px 26px}
+#dC .lexp .card h3{font-size:32px}
+#dC .lexp .card p{font-size:28px}
+#dC .chips{gap:8px}
+#dC .chips div{padding:6px 16px}
+#dC .chips b{font-size:32px}
+/* slide 12 architecture: hide tiny memory bars, enlarge labels */
+#eSvg .chip,#eSvg .barbg,#eSvg .barf,#eSvg .bl,#eSvg .t3{display:none}
+#eSvg .st{font-size:24px}
+#eSvg [id^="wl-"]{font-size:20px!important}
+#eSvg .t1{font-size:20px}
+#eSvg .t2{font-size:18px}
+/* slide 11 race: KPI numbers on one line */
+.racek b{font-size:44px!important;white-space:nowrap}
+.racek div{padding:12px 18px}
+/* slide 15 */
+.tk h3{white-space:nowrap}
+
+/* ===== Speaker notes drawer ===== */
+.notes-btn{position:fixed;bottom:18px;right:250px;z-index:200;font:600 13px/1 Inter,sans-serif;padding:12px 16px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.18);background:rgba(20,28,32,.75);color:var(--text);backdrop-filter:blur(8px)}
+.notes-btn:hover{border-color:var(--accent)}
+.notes-panel{position:fixed;left:0;right:0;bottom:0;height:42vh;z-index:150;overflow:auto;padding:20px 32px 80px;background:rgba(12,16,18,.97);color:var(--text);border-top:3px solid var(--accent);transform:translateY(100%);transition:transform .25s ease;font:15px/1.55 Inter,sans-serif;box-shadow:0 -10px 40px rgba(0,0,0,.35)}
+.notes-panel.open{transform:none}
+.notes-panel h4{font-size:18px;margin-bottom:8px;color:var(--accent)}
+.notes-panel p,.notes-panel li{font-size:15px;color:var(--text);line-height:1.55}
+.notes-panel ul,.notes-panel ol{padding-left:22px;margin:4px 0 10px}
+.notes-panel code{font-family:var(--mono);font-size:13px;background:rgba(127,127,127,.15);padding:1px 5px;border-radius:4px}
+.notes-panel table{border-collapse:collapse;margin:6px 0 12px;font-size:14px}
+.notes-panel td,.notes-panel th{border:1px solid var(--line);padding:4px 10px;text-align:left}
+.notes-panel a{color:var(--accent)}
+html.light .notes-panel{background:rgba(255,255,255,.98);box-shadow:0 -10px 40px rgba(16,24,28,.15)}
+html.light .notes-btn{border-color:rgba(16,24,28,.18);background:rgba(255,255,255,.88)}
+
+/* ===== Light theme (default) ===== */
+html.light{
+  --bg:#eef2f1;--surface:#ffffff;--surface2:#fbfcfc;--line:rgba(16,24,28,.13);
+  --text:#12191c;--dim:#56636a;--accent:#5e9a00;
+  --me:#5e9a00;--snap:#1597b3;--stor:#c27400;--warn:#b08400;--bad:#e0353b;--kv:#4a74e8;--wt:#d9a645;--pu:#8a5cf0;
+  --ink:#0a0d0b;--well:#f1f4f3;--chipbg:#f3f6f5;--reqc:#263238;--tile:#e4eae8;--tileb:#d3dbd8;
+}
+html.light .slide{background:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.12),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.10),transparent 45%),linear-gradient(180deg,#f9fbfa,#eef2f1)}
+html.light .slide.sec-me{background:radial-gradient(ellipse at 25% 45%,rgba(118,185,0,.22),transparent 55%),linear-gradient(180deg,#f9fbfa,#eef2f1)}
+html.light .slide.sec-snap{background:radial-gradient(ellipse at 25% 45%,rgba(62,199,224,.22),transparent 55%),linear-gradient(180deg,#f9fbfa,#eef2f1)}
+html.light .slide.sec-both{background:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.18),transparent 50%),radial-gradient(ellipse at 45% 70%,rgba(62,199,224,.18),transparent 50%),linear-gradient(180deg,#f9fbfa,#eef2f1)}
+html.light p,html.light li{color:#2c373c}
+html.light .ic{background:#eef3e6;color:#3d6600;border-color:rgba(94,154,0,.25)}
+html.light .card,html.light .lstep{box-shadow:0 1px 2px rgba(16,24,28,.06),0 8px 24px rgba(16,24,28,.08)}
+html.light .tag{background:rgba(16,24,28,.04)}
+html.light .tag.me{color:#4a7a00}html.light .tag.snap{color:#0f7890}html.light .tag.warn{color:#9a7300}html.light .tag.bad{color:#c0282e}
+html.light .pill{background:rgba(255,255,255,.75)}html.light .pill.both{border-color:rgba(16,24,28,.3)}
+html.light .demo,html.light .cluster{background:rgba(255,255,255,.94);border-color:rgba(16,24,28,.12);box-shadow:0 0 0 1px rgba(94,154,0,.08),0 14px 40px rgba(16,24,28,.10)}
+html.light select,html.light .btn{background:#ffffff;border-color:rgba(16,24,28,.2)}
+html.light .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+html.light .btn.on{background:rgba(94,154,0,.14);color:#3d6600}
+html.light .btn.snapon.on{background:rgba(21,151,179,.12);color:#0f6e84}
+html.light .btn.warnb{color:#c0282e;border-color:rgba(224,53,59,.45)}
+html.light .sb.on{background:rgba(21,151,179,.12)}
+html.light .tl.serve{background:#5e9a00;color:#fff}
+html.light .tl .pg{background:rgba(16,24,28,.7)}
+html.light .f0{background:#93a3aa}
+html.light .f3{background:repeating-linear-gradient(45deg,#cfe6ec 0 8px,#bfdde5 8px 16px);color:#0f6e84!important}
+html.light .log .ok{color:#4a7a00}html.light .log .bad{color:#c0282e}html.light .log .inf{color:#0f7890}
+html.light .src-list a{color:#4a7a00}
+html.light .nav button,html.light .theme-btn{border-color:rgba(16,24,28,.18);background:rgba(255,255,255,.88)}
+html.light .wk.serve{fill:rgba(94,154,0,.07)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="aMe" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="f-me"/></marker>
+<marker id="aSnap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="f-snap"/></marker>
+<marker id="aStor" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="f-stor"/></marker>
+<marker id="aKv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="f-kv"/></marker>
+<marker id="aWt" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="f-wt"/></marker>
+<marker id="aPu" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="f-pu"/></marker>
+<marker id="aDim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="f-dim"/></marker>
+<marker id="aBad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="f-bad"/></marker>
+</defs></svg>
+<div class="deck" id="deck"></div>
+<button class="notes-btn" id="notesBtn" type="button" aria-label="Toggle speaker notes">✎ Notes (N)</button>
+<div class="notes-panel" id="notesPanel" aria-live="polite"></div>
+<button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle light/dark mode">☾ Dark</button>
+<div class="nav"><button onclick="go(-1)" aria-label="Previous">&#9664;</button><button onclick="go(1)" aria-label="Next">&#9654;</button></div>
+<div class="progress" id="progress"></div>
+<div class="page-num" id="pageNum"></div>
+
+<script>
+/* ===================== SVG generators used inside slides ===================== */
+function treeSVG(){
+  let s='<svg class="dg" viewBox="0 0 700 640" preserveAspectRatio="xMidYMid meet">';
+  s+='<ellipse cx="350" cy="100" rx="80" ry="18" class="s-card st-stor"/><rect x="270" y="40" width="160" height="60" class="s-card" style="stroke:none"/><line x1="270" y1="40" x2="270" y2="100" class="st-stor" stroke-width="2"/><line x1="430" y1="40" x2="430" y2="100" class="st-stor" stroke-width="2"/><ellipse cx="350" cy="40" rx="80" ry="18" class="s-card st-stor"/>';
+  s+='<text x="350" y="80" text-anchor="middle" class="t-s">storage</text>';
+  s+='<path d="M350,120 L350,186" class="ln st-stor anim" marker-end="url(#aStor)"/><text x="368" y="162" class="t-s t-stor">read once</text>';
+  s+='<rect x="305" y="192" width="90" height="58" rx="12" class="f-me"/><text x="350" y="228" text-anchor="middle" class="t-ink">seed</text>';
+  [110,270,430,590].forEach(cx=>{s+=`<path d="M350,250 C350,290 ${cx},290 ${cx},322" class="ln thin st-me anim" marker-end="url(#aMe)"/><rect x="${cx-38}" y="326" width="76" height="52" rx="10" class="f-me" opacity=".85"/>`;
+    [-60,-20,20,60].forEach(d=>{s+=`<path d="M${cx},378 L${cx+d},462" class="st-me" stroke-width="2" opacity=".7"/><rect x="${cx+d-17}" y="466" width="34" height="34" rx="7" class="f-me" opacity=".65"/>`})});
+  s+='<text x="350" y="566" text-anchor="middle" class="t-b">1 → 4 → 16 · every loaded GPU is a source</text><text x="350" y="604" text-anchor="middle" class="t-d t-me">NIXL / RDMA · GPU → GPU</text></svg>';
+  return s;
+}
+function restoreSVG(){
+  let s='<svg class="dg" viewBox="0 0 600 780" preserveAspectRatio="xMidYMid meet">';
+  s+='<text x="0" y="28" class="t-b t-bad">Upstream CRIU: 1 read at a time</text>';
+  for(let i=0;i<7;i++)s+=`<rect x="${i*86}" y="48" width="46" height="40" rx="6" class="f-dim" opacity=".6"/>`;
+  s+='<text x="0" y="122" class="t-d">storage idles between reads</text>';
+  s+='<text x="0" y="200" class="t-b t-snap">Linux native AIO: 128 in flight</text>';
+  for(let i=0;i<5;i++)s+=`<rect x="${i*16}" y="${220+i*24}" width="240" height="18" rx="5" class="f-snap" opacity="${.55+i*.09}"/>`;
+  s+='<text x="0" y="364" class="t-d">storage stays saturated</text>';
+  s+='<text x="0" y="440" class="t-b t-snap">Pinned buffers: serial → parallel</text>';
+  for(let i=0;i<5;i++)s+=`<rect x="${i*116}" y="460" width="104" height="22" rx="5" class="f-dim" opacity=".55"/>`;
+  for(let i=0;i<5;i++)s+=`<rect x="0" y="${496+i*18}" width="104" height="14" rx="4" class="f-snap"/>`;
+  s+='<text x="124" y="548" class="t-d">thread pool, all at once</text>';
+  s+='<text x="0" y="650" class="t-b t-wt">GMS: weights in parallel</text>';
+  s+='<rect x="0" y="672" width="190" height="38" rx="8" class="f-snap"/><text x="14" y="698" class="t-ink">process</text>';
+  s+='<rect x="0" y="718" width="280" height="38" rx="8" class="f-wt"/><text x="14" y="744" class="t-ink">weights</text>';
+  s+='<text x="300" y="724" class="t-b t-me">→ under 5 s</text></svg>';
+  return s;
+}
+
+const slides = [
+/* 1 ─ Title */
+`<section class="slide">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow" data-enter style="--i:0">NVIDIA Dynamo · Fast startup for inference</div>
+      <h1 data-enter style="--i:1">ModelExpress<br><span class="c-dim">+</span> <span class="c-snap">Snapshot</span></h1>
+      <p class="lead" data-enter style="--i:2;margin-top:28px">New inference replicas serving in <b>seconds, not minutes</b>, for first deployment, autoscaling and failure recovery.</p>
+    </div>
+    <div data-enter style="--i:3">
+      <svg class="dg" viewBox="0 0 760 480">
+        <text x="0" y="30" class="t-d">One new replica · Qwen3-Next-80B (148 GiB) · B200</text>
+        <text x="0" y="100" class="t-b">Cold start today</text>
+        <rect x="0" y="118" width="756" height="74" rx="10" style="fill:var(--warn)"/><text x="18" y="163" class="t-ink">load weights + engine init</text>
+        <text x="0" y="250" class="t-h t-stor" style="font-size:44px">180 – 192 s</text>
+        <text x="0" y="330" class="t-b">Snapshot + ModelExpress</text>
+        <rect x="0" y="348" width="14" height="74" rx="4" class="f-snap"/><rect x="16" y="348" width="9" height="74" rx="3" class="f-kv"/><rect x="27" y="348" width="33" height="74" rx="4" class="f-me"/>
+        <text x="80" y="402" class="t-h t-me" style="font-size:44px">14 s</text>
+        <text x="200" y="400" class="t-b">restore ▸ wake via P2P</text>
+        <text x="0" y="470" class="t-s">Measured · 2nd replica · internal benchmark</text>
+      </svg>
+    </div>
+  </div>
+  <div class="pills" data-enter style="--i:4">
+    <div class="pill me"><b class="c-me">1 · ModelExpress</b><span>Move weights GPU → GPU</span></div>
+    <div class="pill snap"><b class="c-snap">2 · Snapshot</b><span>Skip engine initialization</span></div>
+    <div class="pill both"><b>3 · Together <span class="fpb">Future plan</span></b><span>Cold start, scale-out, failover</span></div>
+  </div>
+  <div class="foot" data-enter style="--i:5">← → navigate · T light/dark · INTERACTIVE panels are live demos</div>
+</section>`,
+
+/* 2 ─ Problem: two costs */
+`<section class="slide">
+  <div class="eyebrow" data-enter style="--i:0">The problem</div>
+  <h2 data-enter style="--i:1">Two startup costs. Every replica pays both.</h2>
+  <div class="two fill" data-enter style="--i:2;grid-template-columns:700px 1fr">
+    <div class="stack">
+      <div class="card" style="flex:1.3;display:flex;flex-direction:column;justify-content:center;gap:18px">
+        <h3>1 replica · DeepSeek-V4-Pro · 806 GiB</h3>
+        <div class="bigbar"><div class="k-stor" style="width:17.2%"><b>152 s</b><span>load</span></div><div class="k-warm" style="width:82.8%"><b>≈ 12 min · 83%</b><span>JIT compile · autotune · CUDA graphs</span></div></div>
+        <p><b>14 m 43 s</b> to serving. The compile work is <b>identical</b> on every replica.</p>
+      </div>
+      <div class="two" style="grid-template-columns:1fr 1fr;gap:20px;flex:1">
+        <div class="card snap" style="display:flex;flex-direction:column;justify-content:center"><h3 class="c-snap">⚙ Repeated init</h3><p>Biggest cost per replica</p><p class="c-snap" style="font-weight:700;margin-top:8px">→ Snapshot</p></div>
+        <div class="card me" style="display:flex;flex-direction:column;justify-content:center"><h3 class="c-me">☁ Weight reads</h3><p>Grow with every replica</p><p class="c-me" style="font-weight:700;margin-top:8px">→ ModelExpress</p></div>
+      </div>
+    </div>
+    <div class="demo" style="justify-content:space-between">
+      <div class="demo-h"><b>Start N replicas at once</b><span class="demo-tag">INTERACTIVE</span></div>
+      <div class="ctl"><label class="grow">Replicas starting together <b id="aNv" class="clock">10</b><input type="range" id="aN" min="1" max="32" value="10"></label></div>
+      <div class="hbar" id="aBar"></div>
+      <div class="lg"><span><i class="k-stor"></i>Load weights (shared NFS)</span><span><i class="k-warm"></i>JIT compile · autotune · CUDA graphs</span></div>
+      <div class="kpis" id="aStats"></div>
+      <div class="callout" id="aNote" style="font-size:24px"></div>
+      <p class="hint">1 replica measured (internal: 8× B200, NFS ≈ 22 GiB/s, default loader). N replicas: same NFS bandwidth split N ways.</p>
+    </div>
+  </div>
+</section>`,
+
+/* 3 ─ Section ME */
+`<section class="slide sec-me">
+  <div class="hero-grid">
+    <div>
+      <div class="secnum" data-enter style="--i:0">01</div>
+      <div class="eyebrow" data-enter style="--i:1">Part 1</div>
+      <h1 data-enter style="--i:2">ModelExpress</h1>
+      <p class="lead" data-enter style="--i:3;margin-top:24px">Get weights from GPUs that <b>already have them</b>, over NIXL / RDMA. Storage is read <b>once</b> per cluster.</p>
+    </div>
+    <div data-enter style="--i:4;height:700px">${treeSVG()}</div>
+  </div>
+</section>`,
+
+/* 4 ─ ME flow */
+`<section class="slide">
+  <div class="eyebrow" data-enter style="--i:0">ModelExpress · how a worker gets its weights</div>
+  <h2 data-enter style="--i:1">Ask → pull from a peer, or seed from storage</h2>
+  <div class="fill" data-enter style="--i:2;display:flex;flex-direction:column;gap:20px">
+    <div class="fill">
+      <svg class="dg" viewBox="0 0 1728 690" preserveAspectRatio="xMidYMid meet">
+        <rect x="20" y="270" width="320" height="170" rx="18" class="s-card st-me" stroke-width="3"/>
+        <text x="50" y="324" class="t-h">New worker</text><text x="50" y="366" class="t-d t-mono">--load-format mx</text><text x="50" y="404" class="t-d">vLLM, starting up</text>
+        <path d="M340,355 L458,355" class="ln st-kv" marker-end="url(#aKv)"/><text x="399" y="336" text-anchor="middle" class="t-b t-kv">① ask</text>
+        <rect x="468" y="260" width="350" height="190" rx="18" class="s-card st-me" stroke-width="3"/>
+        <text x="496" y="312" class="t-h">ModelExpress server</text><text x="496" y="356" class="t-d">"Who has these weights?"</text><text x="496" y="414" class="t-s">metadata only</text>
+        <path d="M818,305 C890,305 890,165 950,165" class="ln st-me" marker-end="url(#aMe)"/><text x="866" y="212" text-anchor="end" class="t-b t-me">YES</text>
+        <rect x="960" y="85" width="370" height="160" rx="18" class="s-card st-me" stroke-width="3"/>
+        <text x="990" y="137" class="t-h">Live peer GPU</text><text x="990" y="176" class="t-d">already holds the weights</text><rect x="990" y="200" width="310" height="18" rx="5" class="f-wt"/>
+        <path d="M1330,165 C1400,165 1400,320 1412,326" class="ln st-me anim" stroke-width="6" marker-end="url(#aMe)"/><text x="1388" y="300" text-anchor="end" class="t-b t-me">② NIXL / RDMA</text>
+        <path d="M818,405 C890,405 890,545 950,545" class="ln st-stor" marker-end="url(#aStor)"/><text x="866" y="510" text-anchor="end" class="t-b t-stor">NO</text>
+        <rect x="960" y="465" width="370" height="160" rx="18" class="s-card st-stor" stroke-width="3"/>
+        <text x="990" y="517" class="t-h">Object storage / PVC</text><text x="990" y="556" class="t-d">ModelStreamer → GPU</text><text x="990" y="594" class="t-s t-mono">s3:// gs:// az:// /pvc</text>
+        <path d="M1330,545 C1400,545 1400,400 1412,394" class="ln st-stor anim" stroke-width="6" marker-end="url(#aStor)"/><text x="1388" y="432" text-anchor="end" class="t-b t-stor">② stream</text>
+        <rect x="1420" y="260" width="290" height="190" rx="18" class="s-card st-me" stroke-width="3"/>
+        <text x="1450" y="312" class="t-h">GPU memory</text><rect x="1450" y="340" width="230" height="52" rx="9" class="f-wt"/><text x="1466" y="373" class="t-ink">weights loaded</text><text x="1450" y="428" class="t-s">ready to init</text>
+        <path d="M1565,260 C1565,-80 643,-80 643,252" class="ln thin st-kv anim" marker-end="url(#aKv)"/><text x="1110" y="64" text-anchor="middle" class="t-b t-kv">③ publish: "I'm a source now"</text><text x="468" y="540" class="t-b t-kv">↺ Fallbacks</text><text x="468" y="580" class="t-d">no peer → storage</text><text x="468" y="616" class="t-d">no RDMA → gRPC</text>
+      </svg>
+    </div>
+        </div>
+  </div>
+</section>`,
+
+/* 5 ─ ME demo */
+`<section class="slide">
+  <div class="eyebrow" data-enter style="--i:0">ModelExpress · fan-out</div>
+  <h2 data-enter style="--i:1">Storage reads grow with replicas. P2P sources do too.</h2>
+  <div class="two fill" data-enter style="--i:2;grid-template-columns:500px 1fr">
+    <div class="stack">
+      <div class="card stor" style="flex:1;display:flex;flex-direction:column;justify-content:center"><h3>Storage only</h3><div class="bignum c-stor">2,368 GiB</div><p>16 replicas × 148 GiB from one store</p></div>
+      <div class="card me" style="flex:1;display:flex;flex-direction:column;justify-content:center"><h3>With ModelExpress</h3><div class="bignum c-me">148 GiB</div><p>One seed reads storage, then peers feed peers</p></div>
+      <div class="card" style="flex:1;display:flex;flex-direction:column;justify-content:center"><h3>Scale-out</h3><div class="bignum">0 GiB</div><p>A live replica already has the weights</p></div>
+    </div>
+    <div class="demo" id="dB">
+      <div class="demo-h"><b>Launch 16 replicas · Qwen3-Next-80B</b><span class="demo-tag">INTERACTIVE</span></div>
+      <div class="ctl">
+        <button class="btn" id="bStor">Storage only</button><button class="btn" id="bME">ModelExpress</button>
+        <label><input type="checkbox" id="bWarm"> 1 replica already serving</label>
+        <button class="btn pri" id="bGo">▶ Launch</button>
+        <span>t = <span class="clock" id="bClock">0 s</span></span>
+      </div>
+      <div class="srcrow"><div class="src stor" id="bObj">☁ NFS · 22 GiB/s</div><div class="src live off" id="bLive">● Live replica</div><div class="src me">◎ ModelExpress</div></div>
+      <div class="nodes fill" id="bNodes" style="align-content:center"></div>
+      <div class="lg"><span><i class="k-stor"></i>From storage</span><span><i class="k-rdma"></i>From a peer</span><span><i style="border:2px dashed var(--dim)"></i>Waiting</span><span><i style="background:#2f5b00;border:1px solid var(--me)"></i>Loaded = new source</span></div>
+      <div class="results"><div>Storage only <b class="v1" id="bR1">—</b></div><div>ModelExpress <b class="v2" id="bR2">—</b></div></div>
+      <canvas class="fl" id="bCv"></canvas>
+    </div>
+  </div>
+</section>`,
+
+/* 6 ─ ME scope (measured) */
+`<section class="slide">
+  <div class="eyebrow" data-enter style="--i:0">ModelExpress · scope</div>
+  <h2 data-enter style="--i:1">Weights get fast. Engine init stays.</h2>
+  <div class="fill" data-enter style="--i:2;display:flex;flex-direction:column;gap:28px">
+    <div class="card" style="display:flex;flex-direction:column;gap:18px;padding:32px 36px">
+      <div class="tlrow"><div class="nm">1st · NFS</div><div class="tlbar"><div class="k-warm" style="width:100%">load weights + engine init + register</div></div><div class="tt">192 s</div></div>
+      <div class="tlrow"><div class="nm c-me">2nd · MX P2P</div><div class="tlbar"><div class="k-warm" style="width:93.9%">engine init still dominates</div><div class="gone" style="width:6.1%">−12</div></div><div class="tt c-me">180 s</div></div>
+      <div class="brk"><div></div><div class="brkin"><span style="left:0;width:93.5%;border-color:var(--bad);color:var(--bad)">✗ every replica re-runs init: P2P alone saves only 6%</span></div><div></div></div>
+    </div>
+    <div class="two fill" style="grid-template-columns:1fr 1fr 1fr;gap:24px">
+      <div class="card good iconlist" style="justify-content:center">
+        <div class="g"><i>⇄</i><p><b>N reads → 1</b> per cluster</p></div>
+        <div class="g"><i>⚡</i><p><b>GPU → GPU</b> over RDMA</p></div>
+        <div class="g"><i>☁</i><p><b>NFS / S3 → GPU</b> direct</p></div>
+      </div>
+      <div class="card bad iconlist" style="justify-content:center">
+        <div class="r"><i>⚙</i><p><b>Engine init</b>, every replica</p></div>
+        <div class="r"><i>⬇</i><p><b>Image pull</b> on new nodes</p></div>
+        <div class="r"><i>✓</i><p><b>Registration</b></p></div>
+      </div>
+      <div class="card snap" style="display:flex;flex-direction:column;justify-content:center;gap:14px">
+        <h3 class="c-snap" style="font-size:36px">→ Snapshot removes the yellow block</h3>
+        <p style="font-size:28px">Initialize once, then restore that warm state anywhere.</p>
+      </div>
+    </div>
+    <p class="hint">Measured: Qwen3-Next-80B · 1× B200 · no snapshot (internal). MX can also ship JIT kernel caches: DeepSeek-V4-Pro 8 min → 1 min 44 s (NVIDIA blog). CUDA-graph capture and engine init still run.</p>
+  </div>
+</section>`,
+
+/* 7 ─ Section Snapshot */
+`<section class="slide sec-snap">
+  <div class="hero-grid">
+    <div>
+      <div class="secnum" data-enter style="--i:0">02</div>
+      <div class="eyebrow snap" data-enter style="--i:1">Part 2</div>
+      <h1 data-enter style="--i:2">Snapshot</h1>
+      <p class="lead" data-enter style="--i:3;margin-top:24px">Checkpoint a <b>warmed-up</b> worker once, including GPU state, and restore it on any node in seconds.</p>
+    </div>
+    <div data-enter style="--i:4;height:640px">
+      <svg class="dg" viewBox="0 0 700 640" preserveAspectRatio="xMidYMid meet">
+        <rect x="10" y="225" width="210" height="150" rx="16" class="s-card st-snap" stroke-width="3"/>
+        <text x="115" y="278" text-anchor="middle" class="t-b">warm worker</text>
+        <rect x="96" y="304" width="11" height="40" rx="2" class="f-snap"/><rect x="124" y="304" width="11" height="40" rx="2" class="f-snap"/>
+        <path d="M220,300 L300,300" class="ln st-pu" marker-end="url(#aPu)"/>
+        <rect x="330" y="262" width="130" height="110" rx="12" class="s-row"/><rect x="320" y="252" width="130" height="110" rx="12" class="s-row"/><rect x="310" y="242" width="130" height="110" rx="12" class="s-card st-snap" stroke-width="3"/>
+        <text x="375" y="306" text-anchor="middle" class="t-b">snapshot</text>
+        <path d="M445,280 C500,280 500,135 540,135" class="ln thin st-snap anim" marker-end="url(#aSnap)"/><path d="M445,300 L540,300" class="ln thin st-snap anim" marker-end="url(#aSnap)"/><path d="M445,320 C500,320 500,470 540,470" class="ln thin st-snap anim" marker-end="url(#aSnap)"/>
+        <rect x="548" y="90" width="145" height="90" rx="14" class="s-card st-me" stroke-width="3"/><text x="620" y="130" text-anchor="middle" class="t-b">Node B</text><text x="620" y="160" text-anchor="middle" class="t-s t-me">serving</text>
+        <rect x="548" y="255" width="145" height="90" rx="14" class="s-card st-me" stroke-width="3"/><text x="620" y="295" text-anchor="middle" class="t-b">Node C</text><text x="620" y="325" text-anchor="middle" class="t-s t-me">serving</text>
+        <rect x="548" y="425" width="145" height="90" rx="14" class="s-card st-me" stroke-width="3"/><text x="620" y="465" text-anchor="middle" class="t-b">Node D</text><text x="620" y="495" text-anchor="middle" class="t-s t-me">serving</text>
+        <text x="350" y="605" text-anchor="middle" class="t-b">init once · restore anywhere</text>
+      </svg>
+    </div>
+  </div>
+</section>`,
+
+/* 7b ─ Snapshot architecture */
+`<section class="slide">
+  <div class="eyebrow snap" data-enter style="--i:0">Snapshot · how it works on Kubernetes</div>
+  <h2 data-enter style="--i:1">Checkpoint on one node → restore on any node</h2>
+  <div class="fill" data-enter style="--i:2;display:flex;flex-direction:column;gap:20px">
+    <div class="fill">
+      <svg class="dg" viewBox="0 0 1728 630" preserveAspectRatio="xMidYMid meet">
+        <rect x="20" y="70" width="560" height="540" rx="22" class="s-card" stroke-width="2"/><text x="50" y="118" class="t-h">Node A · checkpoint</text>
+        <rect x="50" y="150" width="500" height="200" rx="18" class="s-card st-snap" stroke-width="3"/>
+        <text x="80" y="196" class="t-h">Worker pod</text><text x="80" y="240" class="t-d">① engine init: load, compile, graphs</text><text x="80" y="280" class="t-d">② signal: ready-for-checkpoint</text><text x="80" y="320" class="t-s">pauses before joining the cluster</text>
+        <path d="M300,350 L300,402" class="ln st-pu" marker-end="url(#aPu)"/>
+        <rect x="50" y="410" width="500" height="170" rx="18" class="s-card st-pu" stroke-width="3"/>
+        <text x="80" y="456" class="t-h">snapshot-agent</text><text x="80" y="500" class="t-d">③ cuda-checkpoint: GPU → host</text><text x="80" y="540" class="t-d">③ CRIU: process → files</text>
+        <rect x="680" y="240" width="370" height="210" rx="18" class="s-card st-snap" stroke-width="3"/>
+        <text x="710" y="286" class="t-h">Snapshot store</text><text x="710" y="322" class="t-d">shared PVC / NFS</text>
+        <rect x="710" y="350" width="310" height="50" rx="9" class="f-snap"/><text x="726" y="383" class="t-ink">CRIU image + overlay FS</text>
+        <path d="M550,495 C612,495 612,380 672,380" class="ln st-pu anim" stroke-width="5" marker-end="url(#aPu)"/><text x="630" y="560" text-anchor="middle" class="t-b t-pu">③ write</text>
+        <rect x="680" y="50" width="370" height="120" rx="18" class="s-card st-kv" stroke-width="3"/>
+        <text x="710" y="98" class="t-h">Dynamo router</text><text x="710" y="138" class="t-d">discovery · traffic</text>
+        <rect x="1150" y="70" width="560" height="540" rx="22" class="s-card" stroke-width="2"/><text x="1180" y="118" class="t-h">Node B · restore</text>
+        <rect x="1180" y="410" width="500" height="170" rx="18" class="s-card st-snap" stroke-width="3"/>
+        <text x="1210" y="456" class="t-h">snapshot-agent</text><text x="1210" y="500" class="t-d">④ start a placeholder pod</text><text x="1210" y="540" class="t-d">⑤ restore CRIU + CUDA state</text>
+        <path d="M1050,380 C1112,380 1112,495 1172,495" class="ln st-snap anim" stroke-width="5" marker-end="url(#aSnap)"/><text x="1100" y="560" text-anchor="middle" class="t-b t-snap">④ read</text>
+        <path d="M1430,410 L1430,358" class="ln st-snap" marker-end="url(#aSnap)"/>
+        <rect x="1180" y="150" width="500" height="200" rx="18" class="s-card st-me" stroke-width="3"/>
+        <text x="1210" y="196" class="t-h">Worker pod (restored)</text><text x="1210" y="240" class="t-d">resumes at the same instruction</text><text x="1210" y="280" class="t-d">⑥ signal: restore-complete</text><text x="1210" y="320" class="t-s">no warmup, no recompiling</text>
+        <path d="M1180,215 C1112,215 1112,110 1058,110" class="ln st-kv anim" marker-end="url(#aKv)"/><text x="1098" y="214" text-anchor="end" class="t-b t-kv">⑥ register</text>
+      </svg>
+    </div>
+    <div class="cksum" style="grid-template-columns:1fr 1fr 1fr">
+      <div><span>Clean image</span><b class="txtb">Taken before joining the cluster, so no live connections</b></div>
+      <div><span>Portable</span><b class="txtb">Stored in shared storage, so it restores on any compatible node</b></div>
+      <div><span>Non-invasive</span><b class="txtb">The agent runs from the host, with no runc changes</b></div>
+    </div>
+  </div>
+</section>`,
+
+/* 8 ─ Snapshot alone: what gets saved */
+`<section class="slide">
+  <div class="eyebrow snap" data-enter style="--i:0">Snapshot · what gets saved</div>
+  <h2 data-enter style="--i:1">Snapshot saves the warm engine, and the weights</h2>
+  <div class="fill" data-enter style="--i:2;display:flex;flex-direction:column;gap:22px">
+    <div class="ck fill">
+      <div class="ckh"></div><div class="ckh">A warm worker has…</div><div class="ckh">In the checkpoint?</div><div class="ckh">On restore</div>
+      <div class="ckc" style="background:var(--snap)"></div>
+      <div class="ckp"><b>Compiled engine</b><span>CUDA context · kernels · CUDA graphs</span></div>
+      <div class="ckv keep"><b>✓ Kept</b><span>the slow part of a cold start</span></div>
+      <div class="ckr"><b>Restored as-is</b><span>no recompiling</span></div>
+      <div class="ckc" style="background:var(--kv)"></div>
+      <div class="ckp"><b>KV cache</b><span>~25 GiB of request memory</span></div>
+      <div class="ckv drop"><b>✗ Dropped</b><span>freed, address kept</span></div>
+      <div class="ckr"><b>Re-allocated</b><span>instantly, at wake</span></div>
+      <div class="ckc" style="background:var(--wt)"></div>
+      <div class="ckp"><b>Model weights</b><span>148 GiB</span></div>
+      <div class="ckv warn"><b>✓ Kept</b><span>vLLM sleep level 1</span></div>
+      <div class="ckr warn"><b>Restored with it</b><span>the heavy part</span></div>
+    </div>
+    <div class="cksum">
+      <div><span>Checkpoint size</span><b class="c-stor">160 GiB</b><small>~93% of it is weights</small></div>
+      <div><span>Restore to serving</span><b class="c-snap">30.5 s</b><small>vs 180 s cold start</small></div>
+      <div class="ckfoot"><span>Part 3 · future plan</span><b>Drop the weights, let ModelExpress bring them back → 9.4 GiB, 14 s</b></div>
+    </div>
+    <p class="hint">Qwen3-Next-80B, 2nd replica, internal benchmark. Checkpoint is taken before the worker joins the cluster, so no live connections are saved.</p>
+  </div>
+</section>`,
+
+/* 12 ─ Section together */
+`<section class="slide sec-both fp">
+  <div class="hero-grid">
+    <div>
+      <div class="secnum" data-enter style="--i:0">03</div>
+      <div class="eyebrow" data-enter style="--i:1">Part 3</div>
+      <h1 data-enter style="--i:2"><span class="a">ModelExpress</span><br>+ <span class="b">Snapshot</span></h1>
+      <p class="lead" data-enter style="--i:3;margin-top:24px">Drop the weights from the checkpoint. On wake, ModelExpress brings them back <b>GPU → GPU</b> from a live replica.</p>
+    </div>
+    <div data-enter style="--i:4;height:640px">
+      <svg class="dg" viewBox="0 0 700 640" preserveAspectRatio="xMidYMid meet">
+        <rect x="10" y="80" width="240" height="110" rx="16" class="s-card st-snap" stroke-width="3"/><text x="130" y="128" text-anchor="middle" class="t-b">Snapshot store</text><text x="130" y="162" text-anchor="middle" class="t-d">9.4 GiB</text>
+        <rect x="10" y="430" width="240" height="110" rx="16" class="s-card st-me" stroke-width="3"/><text x="130" y="478" text-anchor="middle" class="t-b">Peer GPU</text><text x="130" y="512" text-anchor="middle" class="t-d">148 GiB</text>
+        <text x="555" y="200" text-anchor="middle" class="t-b">new replica</text>
+        <rect x="420" y="220" width="270" height="200" rx="18" class="s-card" stroke-width="2"/>
+        <rect x="438" y="240" width="112" height="160" rx="12" class="f-snap"/><text x="494" y="310" text-anchor="middle" class="t-ink">process</text><text x="494" y="342" text-anchor="middle" class="t-ink">6 s</text>
+        <rect x="560" y="240" width="112" height="160" rx="12" class="f-wt"/><text x="616" y="310" text-anchor="middle" class="t-ink">weights</text><text x="616" y="342" text-anchor="middle" class="t-ink">8 s</text>
+        <path d="M250,135 C360,135 380,300 430,300" class="ln st-snap anim" stroke-width="6" marker-end="url(#aSnap)"/>
+        <path d="M250,485 C420,485 616,520 616,410" class="ln st-me anim" stroke-width="6" marker-end="url(#aMe)"/>
+        <text x="350" y="612" text-anchor="middle" class="t-b">14 s vs 180 s · 80B model</text>
+      </svg>
+    </div>
+  </div>
+</section>`,
+
+/* 9 ─ Snapshot lifecycle demo */
+`<section class="slide fp">
+  <div class="eyebrow" data-enter style="--i:0">Together · step by step</div>
+  <h2 data-enter style="--i:1">Restore the engine, then wake with weights from a peer</h2>
+  <div class="demo fill" data-enter style="--i:2" id="dC">
+    <div class="demo-h"><b>Qwen3-Next-80B · one B200 · measured</b><span class="demo-tag">INTERACTIVE</span></div>
+    <div class="stepbar" id="cSteps"></div>
+    <div class="lg" style="font-size:21px"><span><i style="background:var(--snap)"></i>Compiled engine: kept</span><span><i style="background:var(--kv)"></i>KV cache: dropped</span><span><i style="background:var(--wt)"></i>Weights: dropped, reloaded by ModelExpress</span></div>
+    <div class="life">
+      <div class="lnode"><h4>Node A <span>checkpoint</span></h4><div class="mlabel">GPU</div><div id="cAG"></div><div class="mlabel">Host RAM</div><div id="cAH"></div><div class="lstatus" id="cAS"></div></div>
+      <div class="arrow" id="cAr1"><span>CRIU dump</span><div class="ln2"></div></div>
+      <div class="lnode"><h4>Snapshot store</h4><div class="mlabel">Artifacts</div><div id="cST"></div><div class="mlabel">&nbsp;</div><div id="cST2"></div><div class="lstatus" id="cSS"></div></div>
+      <div class="arrow" id="cAr2"><span>restore</span><div class="ln2"></div></div>
+      <div class="lnode"><h4>Node B <span>new replica</span></h4><div class="mlabel">Host RAM</div><div id="cBH"></div><div class="mlabel">GPU</div><div id="cBG"></div><div class="lstatus" id="cBS"></div></div>
+    </div>
+    <div class="lexp fill"><div class="card snap" id="cTxt"></div><div class="chips" id="cChips"></div></div>
+  </div>
+</section>`,
+
+/* 15 ─ Race (measured) */
+`<section class="slide fp">
+  <div class="eyebrow" data-enter style="--i:0">Together · measured</div>
+  <h2 data-enter style="--i:1">180 s → 14 s to serving</h2>
+  <div class="two fill" data-enter style="--i:2;grid-template-columns:420px 1fr">
+    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;gap:18px">
+      <div><h3>Qwen3-Next-80B</h3><p>148 GiB · largest model with Snapshot + MX data</p></div>
+      <div class="sl"><label>Replica</label><div style="display:flex;gap:10px"><button class="btn" id="rR1">1st · no peer</button><button class="btn" id="rR2">2nd · peer live</button></div></div>
+      <div><h3>Setup</h3><p style="line-height:1.55">1× B200 per replica<br>NFS ≈ 22 GiB/s<br>Snapshot v0.1.0<br>vLLM 0.27.1</p></div>
+    </div>
+    <div class="demo">
+      <div class="demo-h"><b>Three startup paths, same model and GPU</b><span style="display:flex;gap:12px;align-items:center"><button class="btn pri" id="rRun">▶ Run race</button><span class="demo-tag">MEASURED</span></span></div>
+      <div class="lanes fill" id="rLanes"></div><div class="axis" id="rAxis"></div>
+      <div class="kpis racek" style="grid-template-columns:repeat(3,1fr)"><div><b>160 → 9.4</b><span>GiB checkpoint</span></div><div><b>30.5 → 14.0</b><span>s restore, 2nd replica</span></div><div><b class="c-me">12.9×</b><span>faster than cold start</span></div></div>
+      <div class="lg"><span><i class="k-warm"></i>Load + engine init</span><span><i class="k-snap"></i>CRIU restore</span><span><i class="k-cuda"></i>CUDA restore</span><span><i class="k-h2d"></i>Wake: host → GPU</span><span><i class="k-stor"></i>Wake: MX from NFS</span><span><i class="k-rdma"></i>Wake: MX P2P</span></div>
+    </div>
+  </div>
+</section>`,
+
+/* 14 ─ Architecture stepper */
+`<section class="slide fp">
+  <div class="eyebrow" data-enter style="--i:0">Together · in the data center</div>
+  <h2 data-enter style="--i:1;margin-bottom:16px">Seed → checkpoint → serve → scale → recover</h2>
+  <div class="stepbar" data-enter style="--i:2;margin-bottom:18px" id="eSteps"></div>
+  <div class="two fill" data-enter style="--i:3;grid-template-columns:1290px 1fr;gap:28px">
+    <div class="demo" style="padding:14px 16px;justify-content:center"><div class="fill" style="display:flex;align-items:center;justify-content:center"><svg id="eSvg" viewBox="0 0 990 570" style="width:100%;height:100%;max-height:100%"></svg></div>
+      <div class="lg" style="justify-content:center"><span><i class="k-stor"></i>Storage</span><span><i class="k-rdma"></i>Weights P2P</span><span><i class="k-snap"></i>Snapshot restore</span><span><i style="background:var(--pu)"></i>Checkpoint</span><span><i style="background:var(--kv)"></i>Control</span><span><i style="background:var(--reqc)"></i>Requests</span></div></div>
+    <div class="card archdesc" id="eDesc"></div>
+  </div>
+</section>`,
+
+/* 16 ─ Simulator */
+`<section class="slide fp">
+  <div class="eyebrow" data-enter style="--i:0">Together · scaling &amp; fault tolerance</div>
+  <h2 data-enter style="--i:1;margin-bottom:16px">Same traffic. Spike it, break it.</h2>
+  <div class="fill" data-enter style="--i:2;display:flex;flex-direction:column;gap:14px">
+    <div class="simbar">
+      <button class="btn" id="gPlay">⏸ Pause</button><button class="btn" id="gReset">↺ Reset</button>
+      <label>Speed <select id="gSpeed"><option value="2">2×</option><option value="5" selected>5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
+      <span class="sep"></span><button class="btn pri" id="gSpike">⚡ Traffic spike</button><button class="btn warnb" id="gFail">✖ Fail a node</button>
+      <span class="sep"></span><label><input type="checkbox" id="gPre" checked> Snapshot pre-built</label>
+      <span class="sep"></span><span>t <span class="clock" id="gClock">0 s</span> · demand <span class="clock" id="gDem">0</span></span>
+      <span class="hint" style="margin-left:auto">Calibrated to Qwen3-Next-80B</span>
+    </div>
+    <div class="scmp">
+      <div><span>Avg time to serving</span><b class="v1" id="g1a">—</b> vs <b class="v2" id="g1b">—</b></div>
+      <div><span>Last capacity gap</span><b class="v1" id="g2a">—</b> vs <b class="v2" id="g2b">—</b></div>
+      <div><span>Unmet demand (replica·s)</span><b class="v1" id="g3a">—</b> vs <b class="v2" id="g3b">—</b></div>
+      <div><span>GPU·s spent starting</span><b class="v1" id="g4a">—</b> vs <b class="v2" id="g4b">—</b></div>
+    </div>
+    <div class="clusters fill"><div class="cluster" id="gA"></div><div class="cluster" id="gB"></div></div>
+  </div>
+</section>`,
+
+/* 17 ─ Adoption lanes */
+`<section class="slide">
+  <div class="eyebrow" data-enter style="--i:0">Putting it into practice</div>
+  <h2 data-enter style="--i:1">Adoption path</h2>
+  <div class="fill" data-enter style="--i:2;display:flex;flex-direction:column;gap:22px">
+    <div class="lanes2 fill">
+      <div class="lanehead c-me">ModelExpress<small>move weights</small></div>
+      <div class="lstep m"><div class="n">1</div><h3>Deploy server</h3><p>Set <span class="ic">modelExpressURL</span> on the platform</p></div>
+      <div class="larr">→</div>
+      <div class="lstep m"><div class="n">2</div><h3>Use the mx loader</h3><p><span class="ic">--load-format mx</span><br>seed via <span class="ic">MX_MODEL_URI</span></p></div>
+      <div class="larr">→</div>
+      <div class="lstep m"><div class="n">3</div><h3>RDMA fabric</h3><p>NIXL needs RDMA or NVLink. gRPC as fallback.</p></div>
+      <div class="lanehead c-snap">Snapshot<small>skip init</small></div>
+      <div class="lstep s"><div class="n">4</div><h3>Install the agent</h3><p>Helm DaemonSet, plus fast shared storage</p></div>
+      <div class="larr">→</div>
+      <div class="lstep s"><div class="n">5</div><h3>Build checkpoints</h3><p>Sleep level 2, once per model × GPU</p></div>
+      <div class="larr">→</div>
+      <div class="lstep s"><div class="n">6</div><h3>Measure</h3><p>Time to serving, capacity gap, storage bytes</p></div>
+    </div>
+    <div class="cksum" style="grid-template-columns:1fr 1fr"><div><span>Status today</span><b class="txtb">Snapshot experimental: single node, single- &amp; multi-GPU. Tested with MX on single-GPU vLLM.</b></div><div><span>Roadmap</span><b class="txtb">Multi-node · GMS parallel weight restore</b></div></div>
+  </div>
+</section>`,
+
+/* 18 ─ Takeaways */
+`<section class="slide">
+  <div class="eyebrow" data-enter style="--i:0">Takeaways</div>
+  <h2 data-enter style="--i:1">Two problems. Solve both, in parallel.</h2>
+  <div class="tk fill" data-enter style="--i:2">
+    <div class="card me"><h3 class="c-me">ModelExpress</h3><div class="num c-me">1×</div><div class="unit">storage read per cluster</div><p><b>Moves bytes.</b> Weights flow GPU → GPU from whoever already has them.</p></div>
+    <div class="card snap"><h3 class="c-snap">Snapshot</h3><div class="num c-snap">0 s</div><div class="unit">engine warmup on restore</div><p><b>Skips work.</b> Init runs once; every later replica resumes warm.</p></div>
+    <div class="card" style="border-top:4px solid var(--reqc)"><h3>Together <span class="fpb">Future plan</span></h3><div class="num">14 s</div><div class="unit">to serving · 80B model (vs 180 s)</div><p><b>One fast path</b> for cold start, scale-out and recovery.</p></div>
+  </div>
+  <div class="src-list" data-enter style="--i:3;margin-top:22px">Sources ·
+    <a href="https://developer.nvidia.com/blog/nvidia-dynamo-snapshot-fast-startup-for-inference-workloads-on-kubernetes/">NVIDIA Dynamo Snapshot blog (May 2026)</a> ·
+    <a href="https://docs.nvidia.com/dynamo/v1.3.0/kubernetes-deployment/model-loading/model-express.md">Dynamo docs: ModelExpress</a> ·
+    <a href="https://docs.nvidia.com/dynamo/latest/kubernetes-deployment/deployment-guide/snapshot.md">Dynamo docs: Snapshot</a> ·
+    <a href="https://developer.nvidia.com/blog/modelexpress-distributing-model-artifacts-at-the-speed-of-light/">ModelExpress blog (Jul 2026)</a> ·
+    <a href="https://github.com/ai-dynamo/modelexpress">github.com/ai-dynamo/modelexpress</a></div>
+</section>`
+
+];
+
+/* ===================== Engine ===================== */
+let cur = 0;
+const $ = id => document.getElementById(id);
+const deck = $('deck');
+function fitDeck(){const s=Math.min(window.innerWidth/1920,window.innerHeight/1080);deck.style.transform='translate(-50%,-50%) scale('+s+')';}
+window.addEventListener('resize',fitDeck);fitDeck();
+slides.forEach((html, i) => { const w = document.createElement('div'); w.innerHTML = html; const el = w.firstElementChild; if (el && !el.id) el.id = 'slide-' + i; deck.appendChild(el); });
+let all = deck.querySelectorAll('.slide');
+function slideIndexFromHash(h = window.location.hash) { const r = String(h || '').trim().replace(/^#/, ''); if (!r) return null; const p = Number.parseInt(r, 10); if (!Number.isFinite(p)) return null; return Math.max(0, Math.min(p - 1, all.length - 1)); }
+function syncCurrentHash() { const t = '#' + (cur + 1); if (window.location.hash === t) return; try { const u = new URL(window.location.href); u.hash = String(cur + 1); history.replaceState(null, '', u.toString()); } catch (_) { window.location.hash = t; } }
+window.__deckGo = i => show(i);
+function show(n, { syncHash = true } = {}) {
+  cur = Math.max(0, Math.min(n, all.length - 1));
+  all.forEach((s, i) => { s.classList.toggle('active', i === cur); s.classList.toggle('visible', i === cur); });
+  $('progress').style.width = ((cur + 1) / all.length * 100) + '%';
+  $('pageNum').textContent = '#' + (cur + 1) + ' / ' + all.length;
+  if (syncHash) syncCurrentHash();
+  if (window.onSlideChange) window.onSlideChange(cur);
+}
+function go(d) { show(cur + d); }
+window.addEventListener('hashchange', () => { const i = slideIndexFromHash(); if (i === null || i === cur) return; show(i, { syncHash: false }); });
+function isInteractiveTarget(node) { const el = node instanceof Element ? node : null; return !!el && !!el.closest('input, textarea, select, option, [contenteditable="true"], [contenteditable=""], [role="textbox"]'); }
+document.addEventListener('keydown', e => {
+  if (isInteractiveTarget(e.target) && (e.key.startsWith('Arrow') || e.key === ' ')) return;
+  if (e.key === ' ' && e.target instanceof Element && e.target.closest('button')) return;
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
+});
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+document.addEventListener('touchend', e => { if (isInteractiveTarget(e.target)) return; const d = e.changedTouches[0].clientX - tx; if (Math.abs(d) > 50) go(d < 0 ? 1 : -1); });
+const WHEEL_THRESHOLD = 90, WHEEL_COOLDOWN_MS = 650, WHEEL_RESET_MS = 180;
+let wheelAccum = 0, wheelLastAt = 0, wheelResetTimer = null;
+document.addEventListener('wheel', e => {
+  const delta = e.deltaMode === 1 ? e.deltaY * 18 : e.deltaY;
+  if (!delta || isInteractiveTarget(e.target)) return;
+  const now = Date.now();
+  if (now - wheelLastAt < WHEEL_COOLDOWN_MS) { e.preventDefault(); return; }
+  if (wheelAccum && Math.sign(wheelAccum) !== Math.sign(delta)) wheelAccum = 0;
+  wheelAccum += delta; clearTimeout(wheelResetTimer); wheelResetTimer = setTimeout(() => { wheelAccum = 0; }, WHEEL_RESET_MS);
+  if (Math.abs(wheelAccum) < WHEEL_THRESHOLD) { e.preventDefault(); return; }
+  e.preventDefault(); go(wheelAccum > 0 ? 1 : -1); wheelLastAt = now; wheelAccum = 0;
+}, { passive: false });
+
+/* ===================== Shared model data ===================== */
+const MODELS={
+  'qwen3-8b':{name:'Qwen3-8B',W:15,S:4.8,F:26,C:40},
+  'gpt-oss-120b':{name:'gpt-oss-120b',W:74,S:6.7,F:129,C:60},
+  'llama-70b':{name:'Llama-3.1-70B FP8 (est.)',W:70,S:7,F:120,C:75}
+};
+let MODEL='gpt-oss-120b';
+const A={P:30,sBW:2,agg:10,rBW:40,snapBW:8,C:60,H2D:25,R:2,fanout:4,seeders:2,ckptW:10};
+const kpi=(v,l)=>`<div><b>${v}</b><span>${l}</span></div>`;
+function drawLines(box,cv,lines){
+  const cr=box.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  const W=Math.round(cr.width*dpr),H=Math.round(cr.height*dpr);
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,cr.width,cr.height);
+  const P=el=>{const r=el.getBoundingClientRect();return[r.left-cr.left+r.width/2,r.top-cr.top+r.height/2]};
+  const off=-(performance.now()/40)%16;
+  for(const [a,b,col] of lines){const p=P(a),q=P(b);c.strokeStyle=col;c.lineWidth=2.4;c.setLineDash([6,5]);c.lineDashOffset=off;c.globalAlpha=.85;
+    c.beginPath();c.moveTo(p[0],p[1]);c.quadraticCurveTo((p[0]+q[0])/2,Math.min(p[1],q[1])-20,q[0],q[1]);c.stroke();
+    c.setLineDash([]);c.fillStyle=col;c.beginPath();c.arc(q[0],q[1],2.5,0,7);c.fill()}
+  c.globalAlpha=1;
+}
+
+/* ===================== Demo A: cold-start anatomy ===================== */
+const DS={W:806,load1:152,init:731,agg:22,gpus:8};
+function renderA(){
+  const N=+$('aN').value,per1=DS.W/DS.load1,per=Math.min(per1,DS.agg/N),load=DS.W/per,tot=load+DS.init;
+  const maxT=DS.W/Math.min(per1,DS.agg/32)+DS.init;
+  const mm=t=>t>=60?Math.floor(t/60)+' m '+Math.round(t%60)+' s':Math.round(t)+' s';
+  const share=Math.round(load/tot*100);
+  $('aBar').innerHTML=`<div class="sg k-stor" style="width:${load/maxT*100}%"><span>load ${mm(load)}</span></div><div class="sg k-warm" style="width:${DS.init/maxT*100}%"><span>compile · graphs ≈ 12 min</span></div>`;
+  $('aNv').textContent=N;
+  $('aStats').innerHTML=kpi((tot/60).toFixed(1),'min to serving')+kpi(share+'%','spent loading weights')+kpi((N*DS.W/1024).toFixed(1),'TiB read from NFS')+kpi(Math.round(N*DS.gpus*tot/3600),'idle GPU-hours');
+  $('aNote').innerHTML=load<DS.init*0.5
+    ?'<span class="big c-snap">⚙</span><span><b>Init dominates.</b> Every replica recompiles the same kernels.</span>'
+    :load<DS.init
+    ?'<span class="big c-stor">☁</span><span><b>Weights catch up.</b> Shared storage now costs '+share+'% of startup.</span>'
+    :'<span class="big c-bad">☁</span><span><b>Storage is now the bottleneck.</b> Weight reads outgrow compile time.</span>';
+}
+$('aN').oninput=renderA;renderA();
+
+/* ===================== Demo B: ModelExpress fan-out ===================== */
+const B={mode:'me',warm:false,run:false,t:0,tiles:[],stor:0,W:148,res:{}};
+const BB={s:5.2,agg:22,r:17.7}; /* NFS per pod / shared, P2P per source: from internal Qwen3-Next-80B runs */
+$('bNodes').innerHTML=[0,1,2,3].map(n=>`<div class="nd"><div class="nl"><span>node-${n}</span></div><div class="tiles t2">${[0,1,2,3].map(()=>`<div class="tl"><div class="pg"></div><span></span></div>`).join('')}</div></div>`).join('');
+B.els=[...$('bNodes').querySelectorAll('.tl')];
+function setBMode(m){B.mode=m;$('bStor').classList.toggle('on',m==='stor');$('bME').classList.toggle('on',m==='me');resetB()}
+function resetB(){B.t=0;B.run=false;B.stor=0;B.tiles=B.els.map((el,i)=>({i,el,bytes:B.W,via:null,src:null,done:false}));$('bLive').classList.toggle('off',!B.warm);renderB()}
+$('bStor').onclick=()=>setBMode('stor');$('bME').onclick=()=>setBMode('me');
+$('bWarm').onchange=e=>{B.warm=e.target.checked;resetB()};
+$('bGo').onclick=()=>{resetB();B.run=true};
+function stepB(dt){
+  const T=B.tiles,live=B.warm?[{live:true,el:$('bLive')}]:[];
+  const sources=[...live,...T.filter(t=>t.done)],load=new Map(sources.map(s=>[s,0]));
+  const need=T.filter(t=>!t.done).sort((a,b)=>(b.via==='storage')-(a.via==='storage')||a.i-b.i);
+  let ns=0;
+  for(const t of need){
+    if(B.mode==='stor'){t.via='storage';ns++;continue}
+    let best=null,bl=1e9;for(const s of sources){const l=load.get(s);if(l<A.fanout&&l<bl){bl=l;best=s}}
+    if(best){t.via='peer';t.src=best;load.set(best,bl+1)}else if(ns<1){t.via='storage';t.src=null;ns++}else{t.via='wait';t.src=null}
+  }
+  const sr=ns?Math.min(BB.s,BB.agg/ns):0;
+  for(const t of need){const r=t.via==='storage'?sr:t.via==='peer'?BB.r/load.get(t.src):0;const d=Math.min(t.bytes,r*dt);t.bytes-=d;if(t.via==='storage')B.stor+=d;if(t.bytes<=1e-6){t.done=true}}
+  B.t+=dt;
+  if(T.every(t=>t.done)){B.run=false;const txt=`${B.t.toFixed(0)} s · ${B.stor.toFixed(0)} GiB`;$(B.mode==='stor'?'bR1':'bR2').textContent=txt}
+}
+function renderB(){
+  for(const t of B.tiles){let cls='tl',lbl='';
+    if(t.done){cls+=' serve';lbl='●'}else if(B.run||B.t>0){cls+=' '+(t.via==='storage'?'dl':t.via==='peer'?'p2p':'wait');lbl=t.via==='storage'?'DL':t.via==='peer'?'P2P':'…'}
+    if(t.el.className!==cls)t.el.className=cls;t.el.firstChild.style.width=((1-t.bytes/B.W)*100)+'%';t.el.lastChild.textContent=lbl}
+  $('bClock').textContent=B.t.toFixed(0)+' s';
+  const lines=[];if(B.run)for(const t of B.tiles){if(t.done)continue;if(t.via==='storage')lines.push([$('bObj'),t.el,'#f5a623']);if(t.via==='peer'&&t.src)lines.push([t.src.el,t.el,'#76b900'])}
+  drawLines($('dB'),$('bCv'),lines);
+}
+setBMode('me');
+
+/* ===================== Demo C: Snapshot lifecycle ===================== */
+const C={i:0,g:true};
+const CS=['1 · Init','2 · Sleep','3 · cuda-checkpoint','4 · CRIU dump','5 · Restore','6 · Wake'];
+function cState(i,g){
+  const W=['w',148,'Weights · 148 GiB'],S=['s',6,'Engine'],KV=['kv',25,'KV'],KVr=['kvr',25,'KV addr'];
+  const st={AG:[],AH:[],ST:[],ST2:[],BH:[],BG:[],as:'',ss:'',bs:'',a1:false,a2:false};
+  if(i===0)Object.assign(st,{AG:[W,S,KV],as:'Warm, not registered'});
+  if(i===1)Object.assign(st,g?{AG:[S,KVr],as:'Sleep L2: weights + KV dropped'}:{AG:[S,KVr],AH:[W],as:'Sleep L1: weights → host RAM'});
+  if(i===2)Object.assign(st,{AH:g?[S]:[W,S],as:'GPU state → host'});
+  if(i>=3){Object.assign(st,{AH:g?[S]:[W,S],ST:g?[['cri',9.4,'CRIU · 9.4 GiB']]:[['big',160,'CRIU · 160 GiB']]});st.ss=g?'No weights in the dump':'Weights inside the dump';}
+  if(i===3)Object.assign(st,{a1:true,as:'CRIU dump'});
+  if(i>=4){st.AG=[];st.AH=[];st.as='Checkpoint job done';}
+  if(i===4)Object.assign(st,{a2:true,BH:g?[S]:[W,S],BG:[S,KVr],bs:'CRIU + CUDA restore'});
+  if(i===5)Object.assign(st,{BH:[S],BG:[W,S,KV],bs:g?'✓ Weights via MX P2P':'✓ Weights host → GPU'});
+  return st;
+}
+const memBar=(segs,cap=180)=>`<div class="mem">${segs.map(s=>`<div class="ms ms-${s[0]}" style="width:${Math.max(s[1]/cap*100,5)}%" title="${s[2]}"><span>${s[2]}</span></div>`).join('')}</div>`;
+const C_TXT=[
+ ['Engine init (once)','The slow part: load 148 GiB of weights, compile kernels, capture CUDA graphs, size the KV cache.','The slow part: load 148 GiB of weights, compile kernels, capture CUDA graphs, size the KV cache.'],
+ ['Sleep','Level 1: <b>weights</b> copied to host RAM, <b>KV cache</b> dropped.','Level 2: <b>KV cache</b> and <b>weights</b> dropped. Only the <b>compiled engine</b> remains.'],
+ ['cuda-checkpoint','GPU state, weights included, is copied into host memory.','The <b>compiled engine</b> on the GPU is copied into host memory.'],
+ ['CRIU dump','Process and weights written to shared storage: <b>160 GiB</b>.','Only the <b>compiled engine</b> is written: <b>9.4 GiB</b>.'],
+ ['Restore on Node B','CRIU 14.9 s + CUDA restore 12.6 s, mostly moving weights.','<b>Compiled engine</b> back in ~6 s (CRIU 3.5 s + CUDA 2.1 s). No recompiling.'],
+ ['Wake','Weights host → GPU in 3 s. Total ≈ <b>31 s</b>.','<b>KV cache</b> re-allocated; <b>weights</b> reloaded by ModelExpress P2P in <b>8.4 s</b>. Total ≈ <b>14 s</b>.']
+];
+function renderC(){
+  const s=cState(C.i,C.g);
+  $('cSteps').innerHTML=CS.map((t,i)=>`<button class="sb ${i===C.i?'on':''}" data-i="${i}">${t}</button>`).join('')+`<span style="flex:1"></span><button class="btn snapon ${C.g?'on':''}" id="cG">Weights: ${C.g?'via MX (sleep L2)':'in dump (sleep L1)'}</button><button class="btn" id="cNext">Next →</button>`;
+  $('cSteps').querySelectorAll('.sb').forEach(b=>b.onclick=()=>{C.i=+b.dataset.i;renderC()});
+  $('cG').onclick=()=>{C.g=!C.g;renderC()};$('cNext').onclick=()=>{C.i=(C.i+1)%6;renderC()};
+  $('cAG').innerHTML=memBar(s.AG);$('cAH').innerHTML=memBar(s.AH);$('cST').innerHTML=memBar(s.ST);$('cST2').innerHTML=memBar(s.ST2);$('cBH').innerHTML=memBar(s.BH);$('cBG').innerHTML=memBar(s.BG);
+  $('cAS').textContent=s.as;$('cSS').textContent=s.ss;$('cBS').textContent=s.bs;
+  $('cAS').style.color=C.i<4?'var(--snap)':'var(--dim)';$('cBS').style.color=C.i===5?'var(--me)':'var(--snap)';
+  $('cAr1').classList.toggle('on',s.a1);$('cAr2').classList.toggle('on',s.a2);
+  $('cTxt').innerHTML=`<h3>${C.i+1} · ${C_TXT[C.i][0]}</h3><p>${C_TXT[C.i][C.g?2:1]}</p>`;
+  $('cChips').innerHTML=`<div><b class="c-snap">${C.g?'9.4 GiB':'160 GiB'}</b><span>CRIU dump</span></div><div><b class="${C.g?'c-me':'c-snap'}">${C.g?'14.0 s':'30.5 s'}</b><span>restore, 2nd replica</span></div><div><b class="c-me">0 s</b><span>engine init on restore</span></div>`;
+}
+renderC();
+
+/* ===================== Demo E: architecture stepper ===================== */
+const NX={A:240,B:490,C:740};
+function bar(k,id,x,y,label,col){return `<rect x="${x}" y="${y}" width="150" height="18" rx="3" class="barbg"/><rect id="b${id}-${k}" x="${x}" y="${y}" width="150" height="18" rx="3" style="fill:${col};opacity:.75;transform:scaleX(0)" class="barf"/><text x="${x+6}" y="${y+13}" class="bl">${label}</text>`}
+function nodeSVG(k){const x=NX[k];return `<g>
+<rect x="${x}" y="130" width="230" height="360" rx="12" class="node"/>
+<text x="${x+14}" y="153" class="t1">Node ${k}</text><text x="${x+216}" y="153" class="t2" text-anchor="end">GPU node</text>
+<rect id="wk-${k}" x="${x+15}" y="165" width="200" height="175" rx="10" class="wk empty"/>
+<text id="wl-${k}" x="${x+28}" y="187" class="t1" style="font-size:16px">worker pod</text>
+<rect x="${x+30}" y="196" width="170" height="100" rx="6" class="chip"/>
+<text x="${x+40}" y="211" class="t3">GPU · HBM</text>
+${bar(k,'w',x+40,218,'Weights','#e6c37a')}
+${bar(k,'p',x+40,243,'CUDA ctx · graphs','#3ec7e0')}
+${bar(k,'k',x+40,268,'KV cache','#7aa2ff')}
+<text id="st-${k}" x="${x+115}" y="322" text-anchor="middle" class="st" fill="#8f9ca3">—</text>
+<rect x="${x+15}" y="352" width="200" height="36" rx="8" class="agent"/>
+<text x="${x+115}" y="375" text-anchor="middle" class="t2">snapshot-agent</text>
+<rect x="${x+15}" y="400" width="200" height="34" rx="8" class="nic"/>
+<text x="${x+115}" y="421" text-anchor="middle" class="t2">NIC · NIXL / RDMA</text>
+<g id="x-${k}" class="xmark"><rect x="${x}" y="130" width="230" height="360" rx="12" fill="rgba(255,90,95,.10)" stroke="#ff5a5f" stroke-width="2"/>
+<path d="M${x+65},215 L${x+165},315 M${x+165},215 L${x+65},315" stroke="#ff5a5f" stroke-width="9" stroke-linecap="round"/>
+<text x="${x+115}" y="465" text-anchor="middle" style="fill:#ff5a5f;font-weight:800;font-size:13px">NODE FAILED</text></g></g>`}
+const FLOWS={
+ s3A:{d:'M200,105 C238,105 228,250 255,250',c:'#f5a623',l:'ModelStreamer',x:40,y:165},
+ Ame:{d:'M355,165 C355,118 395,112 420,82',c:'#7aa2ff',l:'publish source',x:300,y:112},
+ Asnap:{d:'M255,370 C228,370 228,415 202,415',c:'#b48cff',l:'checkpoint',x:60,y:472},
+ rA:{d:'M790,55 C600,62 420,100 395,163',c:'#ffffff',l:'requests',x:560,y:98},
+ rB:{d:'M830,82 C820,125 660,118 640,163',c:'#ffffff',l:'requests',x:700,y:128},
+ rC:{d:'M890,82 L890,163',c:'#ffffff',l:'requests',x:897,y:128},
+ pB:{d:'M800,72 C700,100 640,120 610,163',c:'#7aa2ff',l:'',x:0,y:0},
+ meB:{d:'M470,82 C485,125 565,118 585,163',c:'#7aa2ff',l:'weights? → Node A',x:480,y:120},
+ meC:{d:'M525,82 C620,112 820,110 845,163',c:'#7aa2ff',l:'source → Node B',x:640,y:108},
+ snapB:{d:'M200,435 C260,545 560,545 600,492',c:'#3ec7e0',l:'CRIU restore · 9.4 GiB',x:300,y:552},
+ snapC:{d:'M200,445 C270,568 820,568 850,492',c:'#3ec7e0',l:'CRIU restore',x:690,y:556},
+ AB:{d:'M455,417 L505,417',c:'#76b900',l:'weights',x:452,y:394},
+ BC:{d:'M705,417 L755,417',c:'#76b900',l:'weights',x:702,y:394}
+};
+$('eSvg').innerHTML=`<rect x="20" y="70" width="180" height="70" rx="10" class="box" stroke="rgba(245,166,35,.6)"/><text x="34" y="98" class="t1">Object storage</text><text x="34" y="120" class="t2">S3 · GCS · PVC</text>
+<rect x="20" y="380" width="180" height="70" rx="10" class="box" stroke="rgba(62,199,224,.6)"/><text x="34" y="408" class="t1">Snapshot store</text><text x="34" y="430" class="t2">shared PVC / NVMe</text>
+<rect x="320" y="20" width="230" height="62" rx="10" class="box" stroke="rgba(118,185,0,.6)"/><text x="334" y="47" class="t1">ModelExpress server</text><text x="334" y="69" class="t2">weight registry</text>
+<rect x="780" y="20" width="190" height="62" rx="10" class="box" stroke="rgba(122,162,255,.6)"/><text x="794" y="46" class="t1">Planner + Router</text><text x="794" y="69" class="t2">control plane</text>`
+ +nodeSVG('A')+nodeSVG('B')+nodeSVG('C')
+ +Object.entries(FLOWS).map(([id,f])=>`<g id="f-${id}" class="flow"><path d="${f.d}" stroke="${f.c}"/>${f.l?`<text x="${f.x}" y="${f.y}" fill="${f.c}">${f.l}</text>`:''}</g>`).join('');
+const ES=[
+ {t:'① Seed',f:['s3A','Ame'],n:{A:['load',1,.6,0,'Seeding','replica-1 (seed)']},h:'<h3 class="c-me">① Seed once</h3><ul><li>Load weights from NFS via MX</li><li>Register as a <b>source</b></li><li>The only full storage read</li></ul>'},
+ {t:'② Checkpoint',f:['Asnap'],n:{A:['ckpt',0,1,0,'Checkpointing','replica-1 (seed)']},h:'<h3 class="c-snap">② Checkpoint once</h3><ul><li>vLLM <b>sleep level 2</b>: drop weights + KV</li><li>CRIU dump is only <b>9.4 GiB</b></li><li>Stored in <b>shared storage</b></li></ul>'},
+ {t:'③ Serve',f:['rA'],n:{A:['serve',1,1,1,'Serving ✓','replica-1']},h:'<h3>③ Serve</h3><ul><li>Seed stays live and serves traffic</li><li>It is now a <b>weight source</b> for peers</li></ul>'},
+ {t:'④ Scale out',f:['rA','pB','meB','snapB','AB'],n:{A:['serve',1,1,1,'Serving + source','replica-1'],B:['rst',1,1,0,'Restoring…','replica-2']},h:'<h3>④ Scale out</h3><ul><li><b class="c-snap">Process</b> ← snapshot: ~6 s</li><li><b class="c-me">Weights</b> ← Node A, P2P: 8.4 s</li><li><b>14 s</b> vs 180 s cold</li></ul>'},
+ {t:'⑤ Node fails',f:['rB','meC','snapC','BC'],n:{A:['fail',0,0,0,'Lost','replica-1'],B:['serve',1,1,1,'Serving + source','replica-2'],C:['rst',1,1,0,'Restoring…','replica-3']},h:'<h3 class="c-bad">⑤ Node A fails</h3><ul><li>Traffic moves to B</li><li>Snapshot is in <b>shared storage</b></li><li>C wakes with weights from <b>B</b></li></ul>'},
+ {t:'⑥ Steady',f:['rB','rC'],n:{A:['fail',0,0,0,'Repairing','—'],B:['serve',1,1,1,'Serving ✓','replica-2'],C:['serve',1,1,1,'Serving ✓','replica-3']},h:'<h3>⑥ Why both</h3><ul><li><b class="c-me">MX alone</b>: 180 s</li><li><b class="c-snap">Snapshot alone</b>: 31 s</li><li><b>Together</b>: 14 s</li></ul>'}
+];
+let eI=0,eAuto=null;
+function renderE(i){
+  eI=i;const S=ES[i];
+  $('eSteps').innerHTML=ES.map((s,j)=>`<button class="sb ${j===i?'on':''}" data-i="${j}">${s.t}</button>`).join('')+`<span style="flex:1"></span><button class="btn" id="eAuto">${eAuto?'⏸ Stop':'▶ Auto-play'}</button><button class="btn pri" id="eNext">Next →</button>`;
+  $('eSteps').querySelectorAll('.sb').forEach(b=>b.onclick=()=>renderE(+b.dataset.i));
+  $('eNext').onclick=()=>renderE((eI+1)%ES.length);
+  $('eAuto').onclick=()=>{if(eAuto){clearInterval(eAuto);eAuto=null}else eAuto=setInterval(()=>renderE((eI+1)%ES.length),6500);renderE(eI)};
+  for(const id in FLOWS)$('f-'+id).classList.toggle('on',S.f.includes(id));
+  for(const k of ['A','B','C']){
+    const st=S.n[k]||['empty',0,0,0,'—','empty slot'];
+    $('wk-'+k).setAttribute('class','wk '+st[0]);$('x-'+k).classList.toggle('on',st[0]==='fail');
+    $('st-'+k).textContent=st[4];$('st-'+k).setAttribute('fill',{serve:'#76b900',rst:'#3ec7e0',load:'#f5a623',ckpt:'#b48cff',fail:'#ff5a5f'}[st[0]]||'#8f9ca3');
+    $('wl-'+k).textContent=st[5];
+    const tg={w:st[1],p:st[2],k:st[3]};
+    for(const b of ['w','p','k']){const el=$('b'+b+'-'+k);
+      if(st[0]==='rst'||st[0]==='load'){el.style.transition='none';el.style.transform='scaleX(0)';el.getBoundingClientRect();el.style.transition=''}
+      requestAnimationFrame(()=>el.style.transform='scaleX('+tg[b]+')')}
+  }
+  $('eDesc').innerHTML=S.h;
+}
+renderE(0);
+
+/* ===================== Demo F: race ===================== */
+const MEAS={
+  'qwen3-next-80b':{dumpSize:160,mxSize:9.4,base:[192.17,180.37],
+    dump:[[14.808,15.701,2.925,33.434],[14.949,12.599,2.961,30.509]],
+    mx:[[3.573,1.318,26.840,31.731],[3.471,2.092,8.410,13.973]]},
+  'qwen3-14b':{dumpSize:49,mxSize:6.1,base:[83.46,81.85],
+    dump:[[5.945,5.173,0.597,11.715],[5.686,4.480,0.585,10.633]],
+    mx:[[3.629,0.839,5.521,8.791],[2.431,0.707,3.237,6.375]]}
+};
+let RMODEL='qwen3-next-80b',RREP=2;
+function buildLanes(){
+  const m=MEAS[RMODEL],i=RREP-1,d=m.dump[i],x=m.mx[i];
+  const seq=a=>{let t=0;return a.map(([n,dd,k])=>{const s={n,s:t,d:dd,k,row:-1};t+=dd;return s})};
+  const L=[
+    {name:'Cold start, no snapshot',sub:i?'weights via MX P2P, then full engine init':'weights from NFS via MX, then full engine init',segs:seq([['load weights + engine init',m.base[i],'warm']]),total:m.base[i]},
+    {name:'Snapshot, weights in dump',sub:`sleep level 1 · ${m.dumpSize} GiB dump`,segs:seq([['CRIU',d[0],'snap'],['CUDA',d[1],'cuda'],['',d[2],'h2d']]),total:d[3]},
+    {name:'Snapshot + ModelExpress',sub:`sleep level 2 · ${m.mxSize} GiB dump · weights ${i?'P2P from peer':'from NFS'} on wake`,segs:seq([['CRIU',x[0],'snap'],['',x[1],'cuda'],[i?'P2P':'NFS',x[2],i?'rdma':'stor']]),total:x[3]}
+  ];
+  L.forEach(l=>l.end=Math.max(...l.segs.map(s=>s.s+s.d)));return L;
+}
+let lanes=[],raceMax=1,raceAnim=null;
+function renderRace(full){
+  $('rR1').classList.toggle('on',RREP===1);$('rR2').classList.toggle('on',RREP===2);
+  lanes=buildLanes();raceMax=Math.max(...lanes.map(l=>Math.max(l.end,l.total)));
+  $('rLanes').innerHTML=lanes.map((l,i)=>`<div class="lane"><div class="lane-h"><h4>${l.name}</h4><div><span class="tm" id="tm${i}"></span><span id="bd${i}"></span></div></div><div class="lane-sub">${l.sub}</div><div class="track"><div class="segs" id="sg${i}">${l.segs.map(s=>`<div class="seg k-${s.k}" title="${s.n||s.k}: ${s.d.toFixed(1)} s" style="left:${s.s/raceMax*100}%;width:${Math.max(.4,s.d/raceMax*100)}%">${s.n}</div>`).join('')}</div></div></div>`).join('');
+  const step=raceMax>150?30:raceMax>60?10:5;let ax='';for(let t=0;t<=raceMax;t+=step)ax+=`<span style="left:${t/raceMax*100}%">${t}s</span>`;$('rAxis').innerHTML=ax;
+  if(raceAnim){cancelAnimationFrame(raceAnim);raceAnim=null}
+  drawRace(full?raceMax:0);
+}
+function drawRace(t){lanes.forEach((l,i)=>{const x=Math.min(t,l.end)/raceMax*100;$('sg'+i).style.clipPath=`inset(0 ${100-x}% 0 0)`;
+  const done=t>=l.end;$('tm'+i).textContent=(done?l.total:Math.min(t,l.total)).toFixed(1)+' s';$('tm'+i).style.color=done?(i===2?'var(--me)':'var(--text)'):'var(--dim)';
+  $('bd'+i).innerHTML=(done&&i>0)?`<span class="badge">${(lanes[0].total/l.total).toFixed(1)}× faster</span>`:''})}
+
+$('rR1').onclick=()=>{RREP=1;renderRace(true)};$('rR2').onclick=()=>{RREP=2;renderRace(true)};
+$('rRun').onclick=()=>{renderRace(false);const t0=performance.now(),dur=8000;const f=now=>{const p=Math.min(1,(now-t0)/dur);drawRace(p*raceMax);if(p<1)raceAnim=requestAnimationFrame(f)};raceAnim=requestAnimationFrame(f)};
+renderRace(true);
+
+/* ===================== Demo G: data-center simulator ===================== */
+/* calibrated to internal Qwen3-Next-80B runs: NFS load ≈28.5 s, cold start ≈192 s, CRIU+CUDA ≈5.6 s, MX P2P wake ≈8.4 s */
+const SA={P:0,sBW:5.2,agg:23.6,rBW:17.7,H2D:1e9,C:163.7,R:0.5,fanout:4,seeders:2,ckptW:3};
+const SM={W:148.5,S:9.4,F:9.4,C:163.7};
+const SIM={t:0,run:true,speed:5,D:6,spikeUntil:-1,prebuilt:true};
+function ph(n,o){return Object.assign({n,fixed:0,bytes:0},o,{f0:o.fixed||0,b0:o.bytes||0})}
+class Cluster{
+  constructor(mode,el){this.mode=mode;this.el=el;this.build();this.reset()}
+  build(){const base=this.mode==='base';
+    this.el.innerHTML=`<h4 style="color:${base?'var(--stor)':'var(--me)'}">${base?'Baseline: cold start':'ModelExpress + Snapshot'}</h4>
+    <div class="ch">${base?'pull → download → warmup → register':'restore process ‖ weights from peers'}</div>
+    <div class="srcrow"><div class="src stor">☁ Storage</div><div class="src me ${base?'off':''}">◎ ModelExpress</div><div class="src snap ${base?'off':''}">▣ Snapshot</div></div>
+    <div class="nodes">${[0,1,2,3].map(n=>`<div class="nd"><div class="nl"><span>node-${n}</span><span class="nstat"></span></div><div class="tiles">${[...Array(8)].map(()=>`<div class="tl"><div class="pg"></div><span></span></div>`).join('')}</div></div>`).join('')}</div>
+    <div class="cstats"><div><span>Serving</span><b class="s1">0</b></div><div><span>Starting</span><b class="s2">0</b></div><div><span>Unmet now</span><b class="s3">0</b></div><div><span>Snapshot</span><b class="s4">—</b></div></div>
+    <canvas class="chart"></canvas><div class="log"></div><canvas class="fl"></canvas>`;
+    this.tiles=[...this.el.querySelectorAll('.tl')];this.nds=[...this.el.querySelectorAll('.nd')];
+    this.icoObj=this.el.querySelector('.src.stor');this.icoSnap=this.el.querySelector('.src.snap');
+    this.flowCv=this.el.querySelector('canvas.fl');this.chart=this.el.querySelector('canvas.chart');this.logEl=this.el.querySelector('.log');}
+  reset(){this.nodes=[0,1,2,3].map(i=>({id:i,failed:false,repairAt:0,cached:false}));
+    this.workers=[];this.wid=0;this.lastDown=-99;this.events=[];this.hist=[];this.lastSample=-1;
+    this.snapshotReady=this.mode==='snap'&&SIM.prebuilt;this.snapshotBuilding=this.snapshotReady;
+    this.unmetInt=0;this.startGpuS=0;this.gapStart=null;this.lastGap=null;this.readyDur=[];this.serving=0;this.starting=0;this.unmet=0;
+    this.log(this.mode==='base'?'Deploying, cold start from object storage':(this.snapshotReady?'Deploying, snapshot available in store':'Deploying, no snapshot yet; first replica will create one'),'inf');}
+  log(m,c=''){this.events.unshift({t:SIM.t,m,c});this.events.length=Math.min(this.events.length,3)}
+  cnt(n){return this.workers.filter(w=>w.node===n).length}
+  mkPhases(node){const m=SM,pull=node.cached?2:SA.P;
+    if(this.mode==='base')return[ph('Image pull',{fixed:pull,pull:1,k:'pull'}),ph('Download weights (storage)',{bytes:m.W,k:'dl'}),ph('Load to GPU',{fixed:m.W/SA.H2D,k:'h2d'}),ph('Warmup + CUDA graphs',{fixed:SA.C,k:'warm'}),ph('Register',{fixed:SA.R,k:'reg'})];
+    if(this.snapshotReady)return[ph('Restore process (CRIU + CUDA)',{fixed:5.6,k:'rst'}),ph('Wake: weights via ModelExpress',{bytes:m.W,weights:1,k:'wake'}),ph('Register',{fixed:SA.R,k:'reg'})];
+    const a=[ph('Image pull',{fixed:pull,pull:1,k:'pull'}),ph('Weights via ModelExpress',{bytes:m.W,weights:1,k:'p2p'}),ph('Warmup + CUDA graphs',{fixed:SA.C,k:'warm'})];
+    if(!this.snapshotBuilding){this.snapshotBuilding=true;a.push(ph('Quiesce + checkpoint',{fixed:m.F/SA.ckptW,ckpt:1,k:'ckpt'}))}
+    a.push(ph('Register',{fixed:SA.R,k:'reg'}));return a;}
+  spawn(){const used=new Set(this.workers.map(w=>w.g));
+    const nodes=this.nodes.filter(n=>!n.failed).sort((a,b)=>this.cnt(a.id)-this.cnt(b.id)||a.id-b.id);
+    for(const n of nodes)for(let g=n.id*8;g<n.id*8+8;g++)if(!used.has(g)){const w={id:++this.wid,g,node:n.id,state:'starting',pi:0,startT:SIM.t,weightsLoaded:false,via:null,src:null};w.phases=this.mkPhases(n);this.workers.push(w);return true}
+    return false;}
+  remove(w){this.workers=this.workers.filter(x=>x!==w);if(w.state!=='serving'&&w.phases.slice(w.pi).some(p=>p.ckpt))this.snapshotBuilding=false}
+  plan(){const healthy=this.nodes.filter(n=>!n.failed).length*8,target=Math.min(healthy,Math.max(1,Math.ceil(SIM.D*1.1))),active=this.workers.length;
+    if(active<target){let k=0;for(let i=0;i<target-active;i++){if(this.spawn())k++;else break}if(k)this.log(`Planner +${k} replica${k>1?'s':''} (target ${target})`,'inf')}
+    else if(active>target+1&&SIM.t-this.lastDown>10){const st=this.workers.filter(w=>w.state!=='serving');const v=st.length?st[st.length-1]:this.workers.filter(w=>w.state==='serving').sort((a,b)=>b.readyT-a.readyT)[0];if(v){this.remove(v);this.lastDown=SIM.t;this.log(`Planner scale-in r${v.id}`)}}}
+  failNode(i){const n=this.nodes[i];if(n.failed)return;n.failed=true;n.repairAt=SIM.t+150;const v=this.workers.filter(w=>w.node===i);v.forEach(w=>this.remove(w));this.log(`✖ node-${i} failed, lost ${v.length} replica${v.length===1?'':'s'}`,'bad')}
+  step(dt){const m=SM;
+    this.nodes.forEach(n=>{if(n.failed&&SIM.t>=n.repairAt){n.failed=false;n.cached=false;this.log(`node-${n.id} repaired`,'ok')}});
+    this.plan();
+    const W=this.workers,sources=W.filter(w=>w.weightsLoaded),load=new Map(sources.map(s=>[s,0]));
+    const needs=W.filter(w=>{const p=w.phases[w.pi];return p&&p.bytes>0}).sort((a,b)=>(b.via==='storage')-(a.via==='storage')||a.startT-b.startT);
+    let nStor=0;
+    for(const w of needs){if(this.mode==='base'){w.via='storage';nStor++;continue}
+      let best=null,bl=1e9;for(const s of sources){if(s===w)continue;const l=load.get(s);if(l<SA.fanout&&l<bl){bl=l;best=s}}
+      if(best){w.via='peer';w.src=best;load.set(best,bl+1)}else if(nStor<SA.seeders){w.via='storage';w.src=null;nStor++}else{w.via='wait';w.src=null}}
+    const sRate=nStor?Math.min(SA.sBW,SA.agg/nStor):0;
+    for(const w of [...W]){const p=w.phases[w.pi];if(!p)continue;
+      if(p.fixed>0)p.fixed=Math.max(0,p.fixed-dt);
+      if(p.bytes>0){const r=w.via==='storage'?sRate:w.via==='peer'?SA.rBW/load.get(w.src):0;p.bytes=Math.max(0,p.bytes-r*dt);if(p.bytes<=0&&p.weights)w.weightsLoaded=true}
+      if(p.fixed<=0&&p.bytes<=0){if(p.pull)this.nodes[w.node].cached=true;
+        if(p.ckpt){this.snapshotReady=true;this.log(`Snapshot written by r${w.id}; later replicas restore`,'ok')}
+        w.pi++;if(w.pi>=w.phases.length){w.state='serving';w.readyT=SIM.t;const d=SIM.t-w.startT;this.readyDur.push(d);if(this.readyDur.length>12)this.readyDur.shift();this.log(`r${w.id} serving after ${d.toFixed(0)} s`,'ok')}}}
+    const serving=W.filter(w=>w.state==='serving').length,starting=W.length-serving,unmet=Math.max(0,SIM.D-serving);
+    this.unmetInt+=unmet*dt;this.startGpuS+=starting*dt;
+    if(unmet>0.05&&this.gapStart===null)this.gapStart=SIM.t;
+    if(unmet<=0.05&&this.gapStart!==null){this.lastGap=SIM.t-this.gapStart;this.gapStart=null}
+    if(SIM.t-this.lastSample>=1){this.lastSample=SIM.t;this.hist.push({t:SIM.t,D:SIM.D,s:serving,st:starting});if(this.hist.length>400)this.hist.shift()}
+    this.serving=serving;this.starting=starting;this.unmet=unmet;}
+  kind(w){if(w.state==='serving')return'serve';const p=w.phases[w.pi];
+    if(p.k==='rst')return(p.bytes>0&&w.via==='wait'&&p.fixed<=0)?'wait':'rst';
+    if(p.bytes>0)return w.via==='storage'?'dl':w.via==='peer'?'p2p':'wait';return p.k}
+  render(){const byG=new Map(this.workers.map(w=>[w.g,w]));
+    const LBL={pull:'IMG',dl:'DL',h2d:'H2D',warm:'WU',reg:'REG',p2p:'P2P',rst:'RST',wait:'…',ckpt:'CK',serve:'●'};
+    this.nds.forEach((el,i)=>{const n=this.nodes[i];el.classList.toggle('dead',n.failed);el.querySelector('.nstat').textContent=n.failed?`fix ${Math.ceil(n.repairAt-SIM.t)}s`:''});
+    this.tiles.forEach((el,g)=>{const n=this.nodes[Math.floor(g/8)],w=byG.get(g);let cls='tl',lbl='',pg=0,tip='free GPU';
+      if(n.failed)cls+=' dead';
+      else if(w){const k=this.kind(w);cls+=' '+k;lbl=LBL[k]||'';
+        if(w.state==='serving')tip=`r${w.id} serving`;
+        else{const p=w.phases[w.pi],parts=[];if(p.f0)parts.push(1-p.fixed/p.f0);if(p.b0)parts.push(1-p.bytes/p.b0);const f=parts.length?parts.reduce((a,b)=>a+b)/parts.length:0;pg=(w.pi+f)/w.phases.length;
+          tip=`r${w.id}: ${p.n}${p.b0?` · ${(p.b0-p.bytes).toFixed(0)}/${p.b0} GiB via ${w.via}`:''} · ${(SIM.t-w.startT).toFixed(0)}s`}}
+      if(el.className!==cls)el.className=cls;el.firstChild.style.width=(pg*100)+'%';el.lastChild.textContent=lbl;if(el.title!==tip)el.title=tip});
+    const q=s=>this.el.querySelector(s);q('.s1').textContent=this.serving;q('.s2').textContent=this.starting;
+    q('.s3').textContent=this.unmet.toFixed(1);q('.s3').style.color=this.unmet>0.05?'var(--bad)':'var(--me)';
+    q('.s4').textContent=this.mode==='base'?'n/a':this.snapshotReady?'ready':'building';
+    this.logEl.innerHTML=this.events.map(e=>`<div class="${e.c}">[${e.t.toFixed(0).padStart(4)}s] ${e.m}</div>`).join('');
+    const lines=[];for(const w of this.workers){if(w.state==='serving')continue;const p=w.phases[w.pi],t=this.tiles[w.g];
+      if(p.bytes>0&&w.via==='storage')lines.push([this.icoObj,t,'#f5a623']);
+      if(p.bytes>0&&w.via==='peer'&&w.src)lines.push([this.tiles[w.src.g],t,'#76b900']);
+      if(p.k==='rst'&&p.fixed>0)lines.push([this.icoSnap,t,'#3ec7e0']);
+      if(p.k==='ckpt')lines.push([t,this.icoSnap,'#b48cff'])}
+    drawLines(this.el,this.flowCv,lines);this.drawChart();}
+  drawChart(){const cv=this.chart,r={width:cv.clientWidth,height:cv.clientHeight},dpr=(window.devicePixelRatio||1)*1.5;
+    if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
+    const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);const Wd=r.width,H=r.height;c.clearRect(0,0,Wd,H);
+    const win=300,t1=Math.max(win,SIM.t),t0=t1-win,ymax=Math.max(20,...this.hist.map(h=>Math.max(h.D,h.s+h.st)))+1;
+    const X=t=>(t-t0)/win*(Wd-8)+4,Y=v=>H-5-v/ymax*(H-32);
+    c.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--dim').trim()||'#8f9ca3';c.font='22px Inter,sans-serif';c.fillText('serving · starting · demand',12,26);
+    const hs=this.hist.filter(h=>h.t>=t0);if(hs.length<2)return;
+    c.beginPath();c.moveTo(X(hs[0].t),Y(0));hs.forEach(h=>c.lineTo(X(h.t),Y(h.s+h.st)));c.lineTo(X(hs[hs.length-1].t),Y(0));c.fillStyle='rgba(143,155,147,.25)';c.fill();
+    c.beginPath();c.moveTo(X(hs[0].t),Y(0));hs.forEach(h=>c.lineTo(X(h.t),Y(h.s)));c.lineTo(X(hs[hs.length-1].t),Y(0));c.fillStyle='rgba(118,185,0,.55)';c.fill();
+    c.beginPath();hs.forEach((h,i)=>i?c.lineTo(X(h.t),Y(h.D)):c.moveTo(X(h.t),Y(h.D)));c.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--reqc').trim()||'#fff';c.lineWidth=2.5;c.stroke();}
+}
+const CA=new Cluster('base',$('gA')),CB=new Cluster('snap',$('gB'));
+function simReset(){SIM.t=0;SIM.D=6;SIM.spikeUntil=-1;CA.reset();CB.reset()}
+const avg=a=>a.length?a.reduce((x,y)=>x+y)/a.length:null;
+const fmt=(v,u='s')=>v==null?'—':v.toFixed(0)+(u?' '+u:'');
+$('gPlay').onclick=()=>{SIM.run=!SIM.run;$('gPlay').textContent=SIM.run?'⏸ Pause':'▶ Play'};
+$('gReset').onclick=simReset;$('gSpeed').onchange=e=>SIM.speed=+e.target.value;
+$('gSpike').onclick=()=>{SIM.spikeUntil=SIM.t+200;CA.log('⚡ traffic spike → ~16 replicas','bad');CB.log('⚡ traffic spike → ~16 replicas','bad')};
+$('gFail').onclick=()=>{const cand=[0,1,2,3].filter(i=>!CA.nodes[i].failed&&!CB.nodes[i].failed);if(!cand.length)return;cand.sort((a,b)=>(CA.cnt(b)+CB.cnt(b))-(CA.cnt(a)+CB.cnt(a)));CA.failNode(cand[0]);CB.failNode(cand[0])};
+$('gPre').onchange=e=>{SIM.prebuilt=e.target.checked;simReset()};
+
+/* ===================== Loop + slide hooks ===================== */
+const SLIDE_B=4,SLIDE_G=13;
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  if(cur===SLIDE_B){if(B.run){let s=dt*12;while(s>0&&B.run){const d=Math.min(.25,s);s-=d;stepB(d)}}renderB()}
+  if(cur===SLIDE_G){
+    if(SIM.run){let s=dt*SIM.speed;while(s>0){const d=Math.min(.25,s);s-=d;SIM.t+=d;
+      const tgt=6+(SIM.t<SIM.spikeUntil?10:0)+0.4*Math.sin(SIM.t/23);SIM.D+=Math.sign(tgt-SIM.D)*Math.min(Math.abs(tgt-SIM.D),(tgt>SIM.D?0.25:0.08)*d);
+      CA.step(d);CB.step(d)}}
+    CA.render();CB.render();
+    $('gClock').textContent=SIM.t.toFixed(0)+' s';$('gDem').textContent=SIM.D.toFixed(1);
+    $('g1a').textContent=fmt(avg(CA.readyDur));$('g1b').textContent=fmt(avg(CB.readyDur));
+    const gp=X=>X.gapStart!==null?`${(SIM.t-X.gapStart).toFixed(0)} s…`:fmt(X.lastGap);$('g2a').textContent=gp(CA);$('g2b').textContent=gp(CB);
+    $('g3a').textContent=fmt(CA.unmetInt,'');$('g3b').textContent=fmt(CB.unmetInt,'');$('g4a').textContent=fmt(CA.startGpuS,'');$('g4b').textContent=fmt(CB.startGpuS,'');
+  }
+  requestAnimationFrame(loop);
+}
+window.onSlideChange=i=>{renderNotes();if(i!==12&&eAuto){clearInterval(eAuto);eAuto=null;renderE(eI)}};
+
+const SPEAKER_NOTES=["<h4>1 · Title: ModelExpress + Snapshot</h4><p><strong>Key message:</strong> New inference replicas can serve in seconds instead of minutes. ModelExpress moves the weights, Snapshot skips engine startup, and together they cut time to serving by an order of magnitude.</p>\n<p><strong>Talk track</strong>\n- \"Every time we add a replica, for autoscaling, a rollout or after a node failure, it holds GPUs for minutes before it serves a single token.\"\n- Point at the chart: one new Qwen3-Next-80B replica (148 GiB) on a B200 takes <strong>180–192 s</strong> from a cold start. With Snapshot + ModelExpress it serves in <strong>14 s</strong>.\n- Agenda: Part 1 ModelExpress, Part 2 Snapshot, Part 3 the two together, including scaling and fault tolerance.</p>\n<p><strong>Numbers:</strong> 192 s = 1st replica, weights from NFS. 180 s = 2nd replica, weights P2P. 14 s = 2nd replica with Snapshot + ModelExpress. Source: internal benchmark, 1× B200, vLLM 0.27.1, Snapshot v0.1.0.</p>", "<h4>2 · The problem: two startup costs</h4><p><strong>Key message:</strong> Startup has two costs. <strong>Engine initialization</strong> is the biggest per replica and is repeated on every one. <strong>Weight reads</strong> grow with every replica you add.</p>\n<p><strong>Talk track</strong>\n- Left bar, one DeepSeek-V4-Pro replica (806 GiB, 8× B200, NFS, default loader):\n  - <strong>152 s</strong> to load weights\n  - then <strong>~12 min</strong> of JIT compile, autotuning and CUDA-graph capture\n  - <strong>14 min 43 s</strong> to serving in total\n- 83% of that time is compile work, and it's <strong>identical on every replica</strong>.\n- The two cards underneath map each cost to its fix: repeated init → Snapshot; weight reads → ModelExpress.</p>\n<p><strong>Demo (slider)</strong>\n- 1–4 replicas: loading is 17% of startup, so init dominates.\n- <strong>10 replicas:</strong> loading rises to 33%. That's 7.9 TiB read from NFS, 18.3 min to serving, and ~24 idle GPU-hours.\n- ~20 replicas: weight reads cost as much as compile. At 32 they're 62% of startup.\n- Point out that the dominant cost depends on scale and storage speed.</p>\n<p><strong>Numbers &amp; sources</strong>\n- The 1-replica numbers are measured (internal).\n- N replicas is a model: NFS ≈ 22 GiB/s split evenly. It isn't measured.\n- \"10 replicas ≈ 8 TiB of identical reads\" comes from the NVIDIA ModelExpress blog.</p>\n<p><strong>Likely questions</strong>\n- <em>\"Why not buy faster storage?\"</em> It only helps the weight part, compile is still repeated, and storage stays shared across replicas.\n- <em>\"Is this only DeepSeek?\"</em> No. Azure ran Kimi-K2.5 (591 GB) cold from Hugging Face: 29 min to API-ready, of which ~26.5 min was loading weights.</p>", "<h4>3 · Part 1: ModelExpress</h4><p><strong>Key message:</strong> Get weights from GPUs that already have them. Storage is read once per cluster, not once per replica.</p>\n<p><strong>Talk track</strong>\n- ModelExpress (MX) is Dynamo's weight-distribution service.\n- The tree shows the idea: storage is read <strong>once</strong> to seed one GPU. Every GPU that finishes loading becomes a source, so bandwidth grows as you scale: 1 → 4 → 16.\n- Transfers are GPU → GPU over NIXL/RDMA.\n- It's native in vLLM ≥ 0.23 and SGLang ≥ 0.5.13, and works with Dynamo and llm-d.</p>", "<h4>4 · How a worker gets its weights</h4><p><strong>Key message:</strong> A worker asks \"who has these weights?\". The bytes then move GPU → GPU from a peer, or stream from storage if there's no peer yet.</p>\n<p><strong>Talk track (follow the numbers)</strong>\n1. <strong>① ask:</strong> a new vLLM worker starts with <code>--load-format mx</code> (plugin <code>modelexpress</code>) and asks the ModelExpress server.\n   - The server only holds <strong>metadata</strong> and never touches the weights.\n   - Compatibility is checked with an <code>mx_source_id</code>, derived from the model plus the runtime settings that determine tensor layout.\n2. <strong>YES → ② NIXL/RDMA:</strong> a live peer GPU sends the tensors straight into the new GPU's memory. Supported networks include InfiniBand, RoCE, NVLink and EFA.\n3. <strong>NO → ② stream:</strong>\n   - ModelStreamer streams safetensors from <code>s3://</code>, <code>gs://</code>, <code>az://</code> or a PVC directly into GPU memory, never landing on disk.\n   - Local files can go disk → GPU through GPUDirect Storage.\n4. <strong>③ publish:</strong> once loaded, the worker registers itself as a source, so the pool keeps growing.</p>\n<p><strong>Fallbacks</strong>\n- No peer → storage.\n- No RDMA or shared storage → stream over gRPC (<code>MODEL_EXPRESS_NO_SHARED_STORAGE=1</code>).\n- MX tries paths in this order: P2P RDMA → ModelStreamer → GDS → default loader.</p>\n<p><strong>Numbers (public README, DeepSeek-V4-Pro, 8× B200, weight load only)</strong></p>\n<table>\n<thead>\n<tr>\n<th>Path</th>\n<th>Time</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Hugging Face cold pull</td>\n<td>8 m 53 s</td>\n</tr>\n<tr>\n<td>ModelStreamer from S3</td>\n<td>3 m 16 s</td>\n</tr>\n<tr>\n<td>Local disk</td>\n<td>1 m 10 s</td>\n</tr>\n<tr>\n<td><strong>P2P</strong></td>\n<td><strong>11 s (48×)</strong></td>\n</tr>\n</tbody>\n</table>", "<h4>5 · Fan-out demo</h4><p><strong>Key message:</strong> With storage only, N replicas mean N× the reads sharing one bandwidth. With ModelExpress, one seed reads storage and peers feed peers. When scaling out next to a live replica, storage isn't touched at all.</p>\n<p><strong>Demo</strong>\n1. Click <strong>Storage only → Launch</strong>. 16 replicas of Qwen3-Next-80B (148 GiB) load from NFS (22 GiB/s shared, ~5.2 GiB/s per pod). Note the time and the <strong>~2,368 GiB</strong> read.\n2. Click <strong>ModelExpress → Launch</strong>. One seed loads from NFS (~28 s), then the green P2P lines take over, with up to 4 pulls per source NIC. Storage read: <strong>148 GiB</strong>.\n3. Tick <strong>\"1 replica already serving\" → Launch</strong>. Everything comes from peers and <strong>0 GiB</strong> is read from storage.</p>\n<p><strong>Caveat:</strong> the rates come from internal 80B runs (NFS load ≈ 28.5 s, P2P ≈ 8.4 s per replica). The topology and the 4-pulls-per-source limit are a simplified model, not a benchmark.</p>", "<h4>6 · ModelExpress scope</h4><p><strong>Key message:</strong> P2P makes weights fast, but on its own it saves only ~6%, because engine initialization dominates.</p>\n<p><strong>Talk track</strong>\n- Measured on Qwen3-Next-80B, 1× B200, no snapshot:\n  - 1st replica (weights from NFS via MX): <strong>192 s</strong>\n  - 2nd replica (weights P2P): <strong>180 s</strong>\n- Only 12 s is saved.\n- <strong>Solved:</strong> N reads become 1, GPU→GPU over RDMA, storage → GPU directly.\n- <strong>Remains:</strong> engine init on every replica, the image pull on new nodes, and registration.\n- <strong>Nuance (public blog):</strong> MX can also copy <strong>JIT kernel caches</strong> (Triton, DeepGEMM, TileLang, FlashInfer) between replicas. That took DeepSeek-V4-Pro from 8 min to 1 min 44 s. CUDA-graph capture and the rest of engine startup still run.\n- Transition: \"What if the new replica didn't initialize at all?\" → Snapshot.</p>", "<h4>7 · Part 2: Snapshot</h4><p><strong>Key message:</strong> Checkpoint a fully warmed-up worker once, GPU state included, and restore it on any compatible node in seconds.</p>\n<p><strong>Talk track</strong>\n- Dynamo Snapshot is checkpoint/restore for GPU inference workers on Kubernetes.\n- It's built on <strong>CRIU</strong> (Linux process checkpointing) and NVIDIA's <strong>cuda-checkpoint</strong> (GPU state).\n- Status: experimental.</p>", "<h4>8 · How Snapshot works on Kubernetes</h4><p><strong>Key message:</strong> Checkpoint on one node, restore on any node. A per-node agent does all the work from the host.</p>\n<p><strong>Talk track (follow the numbers)</strong>\n1. <strong>① Engine init:</strong> the worker pod starts normally: loads weights, compiles kernels, captures CUDA graphs.\n2. <strong>② ready-for-checkpoint:</strong> <em>before</em> joining the Dynamo runtime, the worker writes a signal file (used as its readiness probe) and waits in a polling loop.\n3. <strong>③ snapshot-agent</strong> (a privileged DaemonSet, installed with Helm, on every node) runs:\n   - <strong>cuda-checkpoint</strong>, which copies GPU state into host memory\n   - <strong>CRIU</strong>, which dumps the process tree to files, plus the container's overlay filesystem\n   - It then <strong>writes</strong> the image to shared storage (PVC/NFS).\n4. <strong>④ read:</strong> on Node B, the agent reads the image and starts a lightweight <strong>placeholder pod</strong>.\n5. <strong>⑤ restore:</strong> the agent restores the overlay filesystem, the CRIU process and the CUDA state into that pod.\n6. <strong>⑥ restore-complete → register:</strong> the worker resumes <strong>at the exact instruction</strong> it paused on, sees the signal, connects to the control plane and registers. The router starts sending traffic.</p>\n<p><strong>Why it's designed this way</strong>\n- <strong>Clean image:</strong> checkpointing before joining the cluster means no TCP or RDMA connections are captured, since those can't survive a move to a new pod IP.\n- <strong>Portable:</strong> the image lives in shared storage, not on the node.\n- <strong>Non-invasive:</strong> no runc changes, and no reliance on Kubernetes checkpoint feature gates.</p>\n<p><strong>Likely questions</strong>\n- <em>\"Can it restore on any GPU?\"</em> Only on compatible nodes (same GPU type and driver stack).\n- <em>\"Driver requirements?\"</em> For the best performance on large models the Snapshot team recommends a newer user-mode driver (r615). Check with them for your cluster.</p>", "<h4>9 · What Snapshot saves (on its own)</h4><p><strong>Key message:</strong> Snapshot keeps the expensive part, the warm engine. Without changes, though, the weights fill the checkpoint.</p>\n<p><strong>Talk track (row by row)</strong>\n- <strong>Compiled engine</strong> (CUDA context, kernels, CUDA graphs): <strong>kept</strong>, restored as-is, no recompiling. This is the big win.\n- <strong>KV cache</strong> (~25 GiB): <strong>dropped</strong>. Its memory is freed through CUDA virtual memory management, but the <em>virtual address</em> is kept, so captured CUDA graphs stay valid. It's re-allocated at wake.\n- <strong>Model weights</strong> (148 GiB): <strong>kept</strong>. With vLLM sleep level 1 they're copied to host RAM and saved with the process.</p>\n<p><strong>Numbers (Qwen3-Next-80B, 2nd replica, internal)</strong>\n- Checkpoint: <strong>160 GiB</strong>, ~93% of it weights.\n- Restore: <strong>30.5 s</strong> (CRIU 14.9 s + CUDA 12.6 s + wake 3.0 s), vs 180 s cold, which is <strong>5.9×</strong>.</p>\n<p><strong>Point to make:</strong> every restore reads the full 160 GiB from the shared store. That's the same storage fan-out problem as slide 2, just moved.</p>\n<p><strong>Footnote:</strong> NVIDIA's CRIU optimizations (parallel reads + parallel restore of large buffers) make restore up to 7.9× faster than upstream CRIU (gpt-oss-120b, public blog). They're pending upstream.</p>\n<p><strong>Transition:</strong> \"What if we drop the weights from the checkpoint too, and let ModelExpress bring them back?\"</p>", "<h4>10 · Part 3: Together</h4><p><strong>Key message:</strong> Drop the weights from the checkpoint. On wake, ModelExpress brings them back GPU → GPU from a live replica.</p>\n<p><strong>Talk track</strong>\n- The process comes from the snapshot store (~6 s).\n- The weights come from a peer GPU (~8 s).\n- Result: <strong>14 s vs 180 s</strong> for an 80B model.</p>", "<h4>11 · Step-by-step demo (Snapshot + ModelExpress)</h4><p><strong>Key message:</strong> Restore the small engine image, then wake and pull the weights from a peer.</p>\n<p><strong>Demo:</strong> keep <strong>\"Weights: via MX (sleep L2)\"</strong> selected and click through the six steps. Then flip the toggle to sleep L1 to show the contrast.</p>\n<ol>\n<li><strong>Init:</strong> same as a cold start, done <strong>once</strong>.</li>\n<li><strong>Sleep (level 2):</strong> vLLM drops the weights and the KV cache. Only the engine state remains.</li>\n<li><strong>cuda-checkpoint:</strong> GPU state is copied into host memory, with no weights to copy.</li>\n<li><strong>CRIU dump:</strong> only the engine is written, <strong>9.4 GiB</strong> (vs 160 GiB at level 1).</li>\n<li><strong>Restore on Node B:</strong> CRIU 3.5 s + CUDA restore 2.1 s. No recompiling.</li>\n<li><strong>Wake:</strong> the KV cache is re-allocated, and ModelExpress loads the weights <strong>P2P in 8.4 s</strong> (26.8 s from NFS if no peer exists). Total <strong>≈ 14 s</strong>.</li>\n</ol>\n<p>The chips show <strong>9.4 GiB</strong> dump, <strong>14.0 s</strong> restore and <strong>0 s</strong> engine init.</p>", "<h4>12 · Measured: 180 s → 14 s</h4><p><strong>Key message:</strong> Combined, a new replica is serving <strong>12.9× faster</strong> than a cold start.</p>\n<p><strong>Demo:</strong> click <strong>Run race</strong>, then switch between <strong>1st (no peer)</strong> and <strong>2nd (peer live)</strong>.</p>\n<table>\n<thead>\n<tr>\n<th>Path</th>\n<th>2nd replica</th>\n<th>1st replica</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Cold start, no snapshot</td>\n<td>180.4 s</td>\n<td>192.2 s</td>\n</tr>\n<tr>\n<td>Snapshot, weights in dump (sleep L1, 160 GiB)</td>\n<td>30.5 s (5.9×)</td>\n<td>33.4 s</td>\n</tr>\n<tr>\n<td><strong>Snapshot + ModelExpress</strong> (sleep L2, 9.4 GiB)</td>\n<td><strong>14.0 s (12.9×)</strong></td>\n<td>31.7 s (weights from NFS)</td>\n</tr>\n</tbody>\n</table>\n<p><strong>Point to make:</strong> the very first replica gains little from ModelExpress, because there's no peer yet. The big win comes once any replica is serving, which is exactly the scale-out and recovery case. A \"hybrid\" strategy (first replica from a full dump, later replicas via P2P) is planned.</p>\n<p><strong>Setup:</strong> 1× B200 per replica, NFS ≈ 22 GiB/s, Snapshot v0.1.0, vLLM 0.27.1.</p>\n<p><strong>Likely question:</strong> <em>\"What about much bigger models?\"</em> A multi-GPU DeepSeek-V4-Pro Snapshot + MX benchmark is in progress (NScale cluster).</p>", "<h4>13 · In the data center: seed → checkpoint → serve → scale → recover</h4><p><strong>Key message:</strong> The same fast path covers the first deployment, scale-out and failure recovery.</p>\n<p><strong>Talk track (use Next or Auto-play)</strong>\n1. <strong>① Seed:</strong> the first replica loads weights from NFS via MX and registers as a source. This is the only full storage read.\n2. <strong>② Checkpoint:</strong> once per model × engine config × GPU type (for example in CI). Sleep level 2 → a 9.4 GiB image in shared storage.\n3. <strong>③ Serve:</strong> the seed serves traffic and is also the weight source.\n4. <strong>④ Scale out:</strong> the process is restored from the snapshot (~6 s) and the weights are pulled from Node A over RDMA (8.4 s): <strong>14 s</strong>.\n5. <strong>⑤ Node A fails:</strong>\n   - The router moves traffic to B.\n   - Node C restores from the shared snapshot and pulls weights from <strong>B</strong>.\n   - Capacity is back in seconds.\n6. <strong>⑥ Why both:</strong> MX alone 180 s · Snapshot alone 31 s · together <strong>14 s</strong>.</p>\n<p><strong>Point to make:</strong> there's no single point of failure. The snapshot is in shared storage, any live replica can be a weight source, and storage remains the fallback.</p>", "<h4>14 · Simulator: spike it, break it</h4><p><strong>Key message:</strong> At cluster scale, faster startup means smaller capacity gaps during spikes and failures, and fewer GPU-seconds wasted starting up.</p>\n<p><strong>Demo</strong>\n1. Let the initial deployment run. Average time to serving is about <strong>~210 s</strong> for the baseline vs <strong>~50 s</strong> for MX + Snapshot. The first replica seeds from NFS, so the combined side isn't instant at deploy.\n2. Click <strong>Traffic spike</strong>. The baseline capacity gap lasts about <strong>~4 min</strong>; MX + Snapshot closes it in <strong>~20 s</strong>.\n3. Click <strong>Fail a node</strong>. The baseline takes <strong>~3 min</strong> to recover vs <strong>~15 s</strong>.\n4. Optional: untick <strong>Snapshot pre-built</strong> and <strong>Reset</strong> to show the very first rollout, where the checkpoint is created.</p>\n<p><strong>Model:</strong>\n- 2 clusters × 4 nodes × 8 GPUs, one replica per GPU.\n- The planner targets ⌈demand × 1.1⌉.\n- Baseline: cold start ≈ 192 s with NFS contention.\n- Combined: process restore 5.6 s + weights P2P (≤ 4 pulls per source), or from NFS when there's no peer.\n- Calibrated to the 80B measurements. Results are directional, not a benchmark.</p>", "<h4>15 · Adoption path</h4><p><strong>Key message:</strong> Two short lanes: deploy ModelExpress, deploy Snapshot, then measure.</p>\n<p><strong>ModelExpress lane</strong>\n1. Deploy the MX server and set <code>dynamo-operator.modelExpressURL</code>. The operator injects <code>MODEL_EXPRESS_URL</code> into worker pods.\n2. Workers use <code>--load-format mx</code> (<code>VLLM_PLUGINS=modelexpress</code>). Seed from object storage with <code>MX_MODEL_URI=s3://…</code>.\n3. Provide an RDMA/NVLink fabric for NIXL. Without it, use the gRPC fallback.</p>\n<p><strong>Snapshot lane</strong>\n4. <code>helm install</code> the snapshot-agent DaemonSet on GPU nodes, and provide fast shared storage for images.\n5. Build checkpoints once per model × engine config × GPU type, using <strong>sleep level 2</strong> so the weights aren't in the image. CI is a good place.\n6. Measure time to serving, the capacity gap during spikes and node loss, and storage bytes per rollout.</p>\n<p><strong>Status box</strong>\n- Snapshot is experimental: single node, single- and multi-GPU.\n- Snapshot + MX has been tested internally on single-GPU vLLM.\n- Roadmap: multi-node, and GMS parallel weight restore. TensorRT-LLM support is also in progress.</p>", "<h4>16 · Takeaways</h4><p><strong>Key message:</strong> Cold start is two problems. Solve both and every startup path gets fast.</p>\n<ul>\n<li><strong>ModelExpress, 1×:</strong> one storage read per cluster. Weights flow GPU → GPU from whoever already has them.</li>\n<li><strong>Snapshot, 0 s:</strong> engine warmup on restore. Init runs once, and every later replica resumes warm.</li>\n<li><strong>Together, 14 s:</strong> to serving for an 80B model, vs 180 s. One fast path for cold start, scale-out and recovery.</li>\n<li><strong>Close:</strong> suggest trying it on your models. Bigger-model results (DeepSeek-V4-Pro, multi-GPU) are coming.</li>\n</ul>\n<p><strong>Sources</strong>\n- <a href=\"https://developer.nvidia.com/blog/nvidia-dynamo-snapshot-fast-startup-for-inference-workloads-on-kubernetes/\">NVIDIA Dynamo Snapshot blog</a>\n- <a href=\"https://developer.nvidia.com/blog/modelexpress-distributing-model-artifacts-at-the-speed-of-light/\">ModelExpress blog</a>\n- <a href=\"https://github.com/ai-dynamo/modelexpress#benchmarks\">ModelExpress README benchmarks</a>\n- <a href=\"https://docs.nvidia.com/dynamo/v1.3.0/kubernetes-deployment/model-loading/model-express.md\">Dynamo docs: ModelExpress</a>\n- <a href=\"https://docs.nvidia.com/dynamo/latest/kubernetes-deployment/deployment-guide/snapshot.md\">Dynamo docs: Snapshot</a></p>"];
+function renderNotes(){const p=$('notesPanel');if(p)p.innerHTML=SPEAKER_NOTES[cur]||'<p>No notes for this slide.</p>'}
+function toggleNotes(){const p=$('notesPanel');p.classList.toggle('open');renderNotes()}
+$('notesBtn').onclick=toggleNotes;
+document.addEventListener('keydown',e=>{if((e.key==='n'||e.key==='N')&&!isInteractiveTarget(e.target))toggleNotes()});
+
+/* ===================== Theme toggle (light default) ===================== */
+(function(){
+  const root=document.documentElement,btn=$('themeBtn');
+  let t='light';try{t=localStorage.getItem('dynamo-deck-theme')||'light'}catch(_){}
+  const apply=v=>{root.classList.toggle('light',v==='light');btn.textContent=v==='light'?'☾ Dark':'☀ Light';try{localStorage.setItem('dynamo-deck-theme',v)}catch(_){}};
+  apply(t);
+  btn.onclick=()=>apply(root.classList.contains('light')?'dark':'light');
+  document.addEventListener('keydown',e=>{if((e.key==='t'||e.key==='T')&&!isInteractiveTarget(e.target))btn.click()});
+})();
+show(slideIndexFromHash() ?? (window.START_SLIDE || 0), { syncHash: false });
+requestAnimationFrame(loop);
+</script>
+<script src="deck-tools.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "status": "qualified_and_cleaned",
+  "profile": "super-vl-kvcr-speedup-v3",
+  "qualified_at": "2026-11-09T01:30:37.520250+00:00",
+  "context": "Workshop-day staging pass (demos/WORKSHOP_DAY_PLAN.md, step 5) on the workshop placement: first speedup-profile run with B on cp-0942.",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "dynamo_nightly": "1.7.0.dev20261103",
+  "source_bundle_sha256": "592cda9d1831d1ece346b1185eca54d67488a9eb02bc6d8b8cdc62e79a88bc4d",
+  "bootstrap_sha256": "bcf4fcbcedf3eb922196eb044c4d918e0028be86ae7d1218a98b4e8a1ed9c54e",
+  "run": "results/demo-07-kvcr-workshop_kvcr_demo-1794185581490546380",
+  "namespace": "dynamo-ft-r610-b88667d1-kvcrdemo",
+  "placement": {
+    "a": {
+      "node": "kubecon-nke-site-cp-0198",
+      "gpu_uuids": [
+        "GPU-46608a07-1b00-810d-0d07-2fdf65a8e41f",
+        "GPU-23de81ec-c1e4-39a3-578a-ef7d7a3649cf"
+      ]
+    },
+    "b": {
+      "node": "kubecon-nke-site-cp-0942",
+      "gpu_uuids": [
+        "GPU-09ecbc64-ad4f-708b-6ca3-ba1ba5fd052f",
+        "GPU-e7ecf749-a1dc-bc9d-890c-f5376c5b995f"
+      ]
+    }
+  },
+  "cross_node": true,
+  "engine": {
+    "max_model_len": 65536,
+    "max_num_batched_tokens": 8448,
+    "tensor_parallel_size": 2,
+    "host_pool_per_worker_gib": 4
+  },
+  "startup_apply_to_ready_seconds": 2114.463527,
+  "startup_note": "Loaded while continuity, P/D and Snapshot were also loading from EFS; not comparable to a3's 734 s with EFS to itself.",
+  "preflight": {
+    "common_prefix_tokens": {
+      "main/sub": 58360,
+      "warmup_main/warmup_sub": 10032,
+      "control/sub": 11,
+      "control/main": 11
+    },
+    "reusable_pages": 13,
+    "effective_page_tokens": 4224,
+    "context_limit_tokens": 65536
+  },
+  "warmup": {
+    "warmup_main": {
+      "first_token_ms": 637.35317,
+      "client_total_seconds": 21.160011461935937
+    },
+    "warmup_sub": {
+      "first_token_ms": 260.026474,
+      "client_total_seconds": 19.726057923398912,
+      "external_cache_tokens": 8448
+    },
+    "efa_provider": true
+  },
+  "first_token": {
+    "main_a_cold": {
+      "worker": "a",
+      "repository": "shared",
+      "prompt_tokens": 58390,
+      "cached_tokens": 0,
+      "first_token_ms": 2435.8,
+      "answer_matches": true
+    },
+    "control_b_cold": {
+      "worker": "b",
+      "repository": "control",
+      "prompt_tokens": 58399,
+      "cached_tokens": 0,
+      "first_token_ms": 2558.5,
+      "answer_matches": true
+    },
+    "sub_b_kvcr": {
+      "worker": "b",
+      "repository": "shared",
+      "prompt_tokens": 58400,
+      "cached_tokens": 54912,
+      "first_token_ms": 305.4,
+      "answer_matches": true
+    },
+    "speedup_on_b": 8.38,
+    "timing_source": "frontend nvext timing (ttft_ms)"
+  },
+  "transfer": {
+    "blocks": 18,
+    "bytes": 311427072,
+    "external_cache_tokens": 54912,
+    "matched_wire_operations": 1,
+    "worker_identities_unchanged": true,
+    "transport": "NIXL/LIBFABRIC/EFA"
+  },
+  "concurrency": "The P/D walkthrough held the same staging lock and finished at 01:28:20Z, so the two never overlapped on cp-0198's EFA. Other staged demos were loading or idle.",
+  "capture": {
+    "path": "demos/transcripts/live/07-kvcr/20261108-cp0942-a1/main.txt",
+    "sha256": "70dd04b490031d87364cbcd8a9cb23d31352611e75f99bca593c833a73673498",
+    "capture_json_sha256": "35f991e5428aceb477cdd9fcd6d17691bf49f9b89cf63fb9ddf5ca70bcc83e71",
+    "status": "live_passed",
+    "walkthrough_seconds_auto": 15.4
+  },
+  "cleanup": {
+    "zero_scoped_pods_claims": true,
+    "lease_released": true,
+    "at": "2026-11-09T01:30:48.067062+00:00"
+  },
+  "earlier_attempts": {
+    "attempt_1": "results/demo-07-kvcr-workshop_kvcr_demo-1794185392927152379: prime stopped after 18 s. Engine B's first container start on cp-0942 ended in the bootstrap's nightly-wheel download with IncompleteRead (29,360,128 bytes read, 54,617,191 more expected); the container restarted and the presenter correctly refused the restarted Pod. Cleaned: zero Pods and claims, lease released."
+  },
+  "comparison": {
+    "20261108-a3, B on cp-0124": 7.84,
+    "20261108-a2, B on cp-0124": 8.37
+  },
+  "maturity": "Experimental pinned runtime integration; tailored mechanism demonstration.",
+  "limits": [
+    "Requests pinned to A and B by hand; automatic routing not exercised.",
+    "Warm idle workers and one long shared prefix; no under-load or AgentX result.",
+    "No process failure or Guard recovery injected.",
+    "This run's bootstrap downloaded the nightly wheels at container start in one attempt, which is how attempt 1 failed. Commit 652d17d retries the download in place; its live prime is a separate run."
+  ]
+}

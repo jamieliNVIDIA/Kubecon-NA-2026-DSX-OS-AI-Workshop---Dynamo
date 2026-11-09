@@ -1,0 +1,477 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "resource.k8s.io/v1",
+      "kind": "ResourceClaimTemplate",
+      "metadata": {
+        "name": "ft-mx-target-target-main-gpus",
+        "labels": {
+          "app.kubernetes.io/managed-by": "kubecon-dynamo-feature-tests",
+          "feature-test-run": "dynamo-ft-mxstartup-5f18cca583"
+        },
+        "namespace": "dynamo-ft-mxstartup-5f18cca583"
+      },
+      "spec": {
+        "spec": {
+          "devices": {
+            "requests": [
+              {
+                "name": "gpu",
+                "exactly": {
+                  "deviceClassName": "gpu.nvidia.com",
+                  "count": 2
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "nvidia.com/v1beta1",
+      "kind": "DynamoGraphDeployment",
+      "metadata": {
+        "name": "ft-mx-target",
+        "namespace": "dynamo-ft-mxstartup-5f18cca583",
+        "labels": {
+          "app.kubernetes.io/managed-by": "kubecon-dynamo-feature-tests",
+          "feature-test-run": "dynamo-ft-mxstartup-5f18cca583"
+        }
+      },
+      "spec": {
+        "backendFramework": "vllm",
+        "components": [
+          {
+            "name": "Frontend",
+            "type": "frontend",
+            "replicas": 1,
+            "podTemplate": {
+              "spec": {
+                "containers": [
+                  {
+                    "name": "main",
+                    "image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+                    "imagePullPolicy": "IfNotPresent",
+                    "command": [
+                      "python3",
+                      "-m",
+                      "dynamo.frontend"
+                    ],
+                    "args": [
+                      "--router-mode",
+                      "round-robin",
+                      "--kv-cache-block-size",
+                      "64",
+                      "--trust-remote-code"
+                    ],
+                    "env": [
+                      {
+                        "name": "HF_HOME",
+                        "value": "/model-cache/feature-tests/20261015-super-vl-tp2/hf"
+                      },
+                      {
+                        "name": "HF_HUB_OFFLINE",
+                        "value": "1"
+                      },
+                      {
+                        "name": "HF_MODULES_CACHE",
+                        "value": "/tmp/hf_modules"
+                      },
+                      {
+                        "name": "PYTHONHASHSEED",
+                        "value": "0"
+                      },
+                      {
+                        "name": "NCCL_IB_DISABLE",
+                        "value": "1"
+                      },
+                      {
+                        "name": "NVIDIA_VISIBLE_DEVICES",
+                        "value": "void"
+                      }
+                    ],
+                    "resources": {
+                      "requests": {
+                        "cpu": "1",
+                        "memory": "4Gi"
+                      },
+                      "limits": {
+                        "memory": "8Gi"
+                      }
+                    },
+                    "startupProbe": {
+                      "httpGet": {
+                        "path": "/health",
+                        "port": 8000
+                      },
+                      "periodSeconds": 10,
+                      "timeoutSeconds": 60,
+                      "failureThreshold": 60
+                    },
+                    "volumeMounts": [
+                      {
+                        "name": "shared-model-cache",
+                        "mountPath": "/model-cache"
+                      },
+                      {
+                        "name": "dshm",
+                        "mountPath": "/dev/shm"
+                      }
+                    ]
+                  }
+                ],
+                "volumes": [
+                  {
+                    "name": "shared-model-cache",
+                    "persistentVolumeClaim": {
+                      "claimName": "feature-cache"
+                    }
+                  },
+                  {
+                    "name": "dshm",
+                    "emptyDir": {
+                      "medium": "Memory",
+                      "sizeLimit": "16Gi"
+                    }
+                  }
+                ],
+                "imagePullSecrets": [
+                  {
+                    "name": "common-runtime-pull"
+                  }
+                ],
+                "activeDeadlineSeconds": 10800
+              },
+              "metadata": {
+                "labels": {
+                  "app.kubernetes.io/managed-by": "kubecon-dynamo-feature-tests",
+                  "feature-test-run": "dynamo-ft-mxstartup-5f18cca583"
+                }
+              }
+            },
+            "runtimeVersionOverride": "1.6.0"
+          },
+          {
+            "name": "target",
+            "type": "worker",
+            "replicas": 1,
+            "sharedMemorySize": "16Gi",
+            "podTemplate": {
+              "spec": {
+                "tolerations": [
+                  {
+                    "key": "nvidia.com/gpu",
+                    "operator": "Equal",
+                    "value": "true",
+                    "effect": "NoSchedule"
+                  }
+                ],
+                "volumes": [
+                  {
+                    "name": "shared-model-cache",
+                    "persistentVolumeClaim": {
+                      "claimName": "feature-cache"
+                    }
+                  },
+                  {
+                    "name": "dshm",
+                    "emptyDir": {
+                      "medium": "Memory",
+                      "sizeLimit": "16Gi"
+                    }
+                  },
+                  {
+                    "name": "efa",
+                    "configMap": {
+                      "name": "efa-userspace"
+                    }
+                  }
+                ],
+                "containers": [
+                  {
+                    "name": "main",
+                    "image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+                    "imagePullPolicy": "IfNotPresent",
+                    "workingDir": "/workspace/",
+                    "command": [
+                      "bash",
+                      "/efa/entrypoint.sh"
+                    ],
+                    "args": [
+                      "python3",
+                      "-m",
+                      "dynamo.vllm",
+                      "--model",
+                      "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                      "--revision",
+                      "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+                      "--served-model-name",
+                      "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                      "--trust-remote-code",
+                      "--tensor-parallel-size",
+                      "2",
+                      "--max-num-seqs",
+                      "4",
+                      "--max-num-batched-tokens",
+                      "8192",
+                      "--gpu-memory-utilization",
+                      "0.85",
+                      "--enable-prefix-caching",
+                      "--block-size",
+                      "64",
+                      "--mamba-backend",
+                      "flashinfer",
+                      "--mamba-ssm-cache-dtype",
+                      "float16",
+                      "--mamba-cache-mode",
+                      "align",
+                      "--reasoning-parser",
+                      "nemotron_v3",
+                      "--kv-events-config",
+                      "{\"publisher\":\"zmq\",\"topic\":\"kv-events\",\"endpoint\":\"tcp://*:20080\",\"enable_kv_cache_events\":true}",
+                      "--disaggregation-mode",
+                      "agg",
+                      "--limit-mm-per-prompt",
+                      "{\"image\":1,\"video\":0}",
+                      "--load-format",
+                      "modelexpress",
+                      "--language-model-only"
+                    ],
+                    "env": [
+                      {
+                        "name": "HF_HOME",
+                        "value": "/model-cache/feature-tests/20261015-super-vl-tp2/hf"
+                      },
+                      {
+                        "name": "HF_HUB_OFFLINE",
+                        "value": "1"
+                      },
+                      {
+                        "name": "HF_MODULES_CACHE",
+                        "value": "/tmp/hf_modules"
+                      },
+                      {
+                        "name": "PYTHONHASHSEED",
+                        "value": "0"
+                      },
+                      {
+                        "name": "NCCL_IB_DISABLE",
+                        "value": "1"
+                      },
+                      {
+                        "name": "DYN_HEALTH_CHECK_REQUEST_TIMEOUT",
+                        "value": "180"
+                      },
+                      {
+                        "name": "MX_MODEL_REVISION",
+                        "value": "8a115b9d966adce8c059a7bcf47f49a1e57957d8"
+                      },
+                      {
+                        "name": "MX_NIXL_BACKEND",
+                        "value": "LIBFABRIC"
+                      },
+                      {
+                        "name": "MX_WORKER_GRPC_PORT",
+                        "value": "6555"
+                      },
+                      {
+                        "name": "MX_METADATA_PORT",
+                        "value": "5555"
+                      },
+                      {
+                        "name": "MX_ARTIFACT_READY_URL",
+                        "value": "http://127.0.0.1:9090/health"
+                      },
+                      {
+                        "name": "FI_PROVIDER",
+                        "value": "efa"
+                      },
+                      {
+                        "name": "FI_EFA_USE_DEVICE_RDMA",
+                        "value": "1"
+                      },
+                      {
+                        "name": "FI_EFA_FORK_SAFE",
+                        "value": "1"
+                      },
+                      {
+                        "name": "FI_EFA_ENABLE_SHM_TRANSFER",
+                        "value": "0"
+                      },
+                      {
+                        "name": "FI_HMEM_CUDA_USE_DMABUF",
+                        "value": "1"
+                      },
+                      {
+                        "name": "NIXL_LIBFABRIC_USE_DEVICE_RDMA",
+                        "value": "1"
+                      },
+                      {
+                        "name": "NIXL_LOG_LEVEL",
+                        "value": "INFO"
+                      },
+                      {
+                        "name": "NIXL_TELEMETRY_ENABLE",
+                        "value": "y"
+                      },
+                      {
+                        "name": "NIXL_TELEMETRY_EXPORTER",
+                        "value": "prometheus_mp"
+                      },
+                      {
+                        "name": "NIXL_TELEMETRY_PROMETHEUS_PORT",
+                        "value": "19090"
+                      },
+                      {
+                        "name": "NIXL_TELEMETRY_MULTIPROC_DIR",
+                        "value": "/tmp/nixl-metrics"
+                      },
+                      {
+                        "name": "MX_WORKER_HOST",
+                        "valueFrom": {
+                          "fieldRef": {
+                            "fieldPath": "status.podIP"
+                          }
+                        }
+                      },
+                      {
+                        "name": "VLLM_CACHE_ROOT",
+                        "value": "/tmp/workshop-vllm-cache"
+                      },
+                      {
+                        "name": "TRITON_CACHE_DIR",
+                        "value": "/tmp/workshop-triton-cache"
+                      },
+                      {
+                        "name": "DG_JIT_CACHE_DIR",
+                        "value": "/tmp/workshop-deepgemm-cache"
+                      },
+                      {
+                        "name": "FLASHINFER_WORKSPACE_BASE",
+                        "value": "/tmp/workshop-flashinfer-cache"
+                      },
+                      {
+                        "name": "MX_METADATA_BACKEND",
+                        "value": "redis"
+                      },
+                      {
+                        "name": "MX_SERVER_ADDRESS",
+                        "value": "mx-coordinator:8001"
+                      },
+                      {
+                        "name": "MX_P2P_METADATA",
+                        "value": "1"
+                      },
+                      {
+                        "name": "MX_ARTIFACT_TRANSFER",
+                        "value": "0"
+                      },
+                      {
+                        "name": "MX_ARTIFACT_COMPILE_CONFIG_DIGEST",
+                        "value": "supervl-tp2-native1048576-seqs4-batch8192-textonly-e98d074e-baseline01"
+                      },
+                      {
+                        "name": "MX_ARTIFACT_BUNDLE_ROOT",
+                        "value": "/tmp/workshop-mx-artifact-bundles"
+                      },
+                      {
+                        "name": "DYN_CANARY_WAIT_TIME",
+                        "value": "1"
+                      }
+                    ],
+                    "resources": {
+                      "requests": {
+                        "cpu": "8",
+                        "memory": "128Gi",
+                        "vpc.amazonaws.com/efa": "8"
+                      },
+                      "limits": {
+                        "memory": "256Gi",
+                        "vpc.amazonaws.com/efa": "8"
+                      },
+                      "claims": [
+                        {
+                          "name": "gpu-main"
+                        }
+                      ]
+                    },
+                    "securityContext": {
+                      "runAsUser": 0,
+                      "capabilities": {
+                        "add": [
+                          "IPC_LOCK",
+                          "SYS_RESOURCE"
+                        ]
+                      }
+                    },
+                    "startupProbe": {
+                      "httpGet": {
+                        "path": "/live",
+                        "port": 9090
+                      },
+                      "periodSeconds": 2,
+                      "timeoutSeconds": 20,
+                      "failureThreshold": 1800
+                    },
+                    "volumeMounts": [
+                      {
+                        "name": "shared-model-cache",
+                        "mountPath": "/model-cache"
+                      },
+                      {
+                        "name": "dshm",
+                        "mountPath": "/dev/shm"
+                      },
+                      {
+                        "name": "efa",
+                        "mountPath": "/efa",
+                        "readOnly": true
+                      }
+                    ],
+                    "readinessProbe": {
+                      "failureThreshold": 3,
+                      "httpGet": {
+                        "path": "/health",
+                        "port": "system",
+                        "scheme": "HTTP"
+                      },
+                      "periodSeconds": 2,
+                      "successThreshold": 1,
+                      "timeoutSeconds": 4
+                    }
+                  }
+                ],
+                "imagePullSecrets": [
+                  {
+                    "name": "common-runtime-pull"
+                  }
+                ],
+                "activeDeadlineSeconds": 10800,
+                "nodeSelector": {
+                  "kubernetes.io/hostname": "kubecon-nke-site-cp-0198"
+                },
+                "resourceClaims": [
+                  {
+                    "name": "gpu-main",
+                    "resourceClaimTemplateName": "ft-mx-target-target-main-gpus"
+                  }
+                ]
+              },
+              "metadata": {
+                "labels": {
+                  "app.kubernetes.io/managed-by": "kubecon-dynamo-feature-tests",
+                  "feature-test-run": "dynamo-ft-mxstartup-5f18cca583",
+                  "feature-test-role": "agg",
+                  "mx-role": "target"
+                }
+              }
+            },
+            "runtimeVersionOverride": "1.6.0"
+          }
+        ]
+      }
+    }
+  ]
+}

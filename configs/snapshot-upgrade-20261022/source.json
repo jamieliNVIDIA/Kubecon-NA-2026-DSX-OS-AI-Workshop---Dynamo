@@ -1,0 +1,23 @@
+{
+  "repository": "https://github.com/ai-dynamo/snapshot",
+  "revision": "d752d982738883e3575de7bbce0689e2443fa2c2",
+  "source_archive_sha256": "78e45df0e5621e4d662e7374c8dfa0925ebb0e5d232d8434581155ea86f6f78a",
+  "files": [
+    {
+      "path": "docs/guides/vllm/capture/glm-5.3-snapshotjob.yaml",
+      "sha256": "b6f764f7eccbed87005fe96bba6e4f24336928aff960b0d352b308b4252f465f"
+    },
+    {
+      "path": "docs/guides/vllm/app.py",
+      "sha256": "2e76d12df9f93e27fa21b3910e80718f5351c3bd228252aab3be6c091d93f272"
+    },
+    {
+      "path": "docs/reference/architecture/multi-gpu.md",
+      "sha256": "0f7f6cda9fd16a47391c123724a97e7ce1b64c7219db6b75f431c25b13b0ffca"
+    },
+    {
+      "path": "docs/reference/workload-contract.md",
+      "sha256": "0d1d08b71b0266bc2f11e4f9f74a1140427ff6401930c0541a4bf0076db3826f"
+    }
+  ]
+}

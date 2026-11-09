@@ -1,0 +1,749 @@
+{
+  "schema": 1,
+  "started_at": "2026-11-04T22:30:00-08:00",
+  "timezone": "America/Los_Angeles",
+  "window_end": "2026-11-05T07:30:00-08:00",
+  "status": "checkpointed_for_user_requested_gitlab_commit_and_push",
+  "automation_id": "finish-workshop-demos-overnight",
+  "entry_point": "reports/overnight-2026-11-04/REVIEW.md",
+  "workstreams": {
+    "snapshot_presenter": {
+      "status": "durable_a3_presenter_9283file_independent_audit_sanitized_capture_final_live_resource_agent_storage_audit_and_local_lease_release_passed",
+      "notes": "SNAPSHOT.md",
+      "evidence": {
+        "final_root_audit": "results/workshop-snapshot-a3-root-audit-20261105-a2/audit.json",
+        "local_lease_release": "results/workshop-snapshot-a3-root-audit-20261105-a2/local-lease-release.json",
+        "recording": "demos/transcripts/live/04-snapshot-dgd/demo-04-dgd-live-20261105-a3/main.txt"
+      },
+      "presentation": "Canonical compact projection offline-verified; passing actual recording remains immutable."
+    },
+    "routing_presenter": {
+      "status": "c16_recorded_evidence_presenter_passed_legacy_profile_preserved_c32_two_worker_pair_independently_accepted",
+      "notes": "ROUTING.md"
+    },
+    "kvcr_presenter": {
+      "status": "a6_actual_cross_node_peer_reuse_capture_live_qualified_48sources_417evidence_hashes_independently_accepted_scoped_cleanup_and_parent_lease_release_passed_experimental_stack",
+      "notes": "KVCR.md",
+      "evidence": {
+        "binding": "results/workshop-kvcr-demo-20261105-a6/prepared-binding.json",
+        "prompt_preflight": "results/workshop-kvcr-demo-20261105-a6/prompt-preflight.json",
+        "console": "results/workshop-kvcr-demo-20261105-a6/capture-console-20261105-a1.log",
+        "independent_audit": "results/workshop-kvcr-demo-20261105-a6-independent-audit/terminal.json",
+        "recording": "demos/transcripts/live/07-kvcr/20261105-a6/main.txt",
+        "cleanup": "results/workshop-kvcr-demo-20261105-a6-cleanup-controller/terminal.json"
+      },
+      "source_http_started_at": "2026-11-05T21:09:21Z",
+      "qualification": "Controlled source cold cache and cross-node peer host-cache reuse on pinned experimental stack. Prepared workers predate capture. No automatic routing, under-load performance, Guard fault or production qualification.",
+      "peer_reuse": {
+        "blocks": 6,
+        "bytes": 103809024,
+        "external_and_cached_tokens": 4224,
+        "source_files_verified": 48,
+        "evidence_files_verified": 417,
+        "both_workers_EFA_provider": true
+      },
+      "timing_scope": {
+        "projected_source_step_seconds": 224.8,
+        "projected_target_step_seconds": 216.0,
+        "source_http_to_DONE_seconds": 19.548692665999994,
+        "target_http_to_DONE_seconds": 19.426493417000017,
+        "scope": "Projected timing includes proof collection and gate waits, not an inference-only latency or matched performance result."
+      },
+      "cleanup": {
+        "status": "passed",
+        "at": "2026-11-05T21:19:03.836175+00:00",
+        "zero_pods_claims_dgds": true,
+        "owning_parent_lease_absent": true,
+        "failed_original_and_fresh_capture_bytes_unchanged": true
+      }
+    },
+    "shadow_presenter": {
+      "status": "full_a4_initial_stage_and_coding_accepted_cleanup_and_closeout_passed_Helm_transport_fix_source_reviewed_fresh_packaged_CPU_and_full_fault_run_pending",
+      "notes": "SHADOW.md",
+      "evidence": {
+        "state": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3/state.json",
+        "runtime_preflight": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3/check-shadow-writer-runtime-preflight-1793912571351619000.json",
+        "health_before": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3/health-before.json",
+        "writer_acceptance": "results/shadow-writer-a6-independent-audit-a1/verification.json",
+        "root_closeout": "results/shadow-writer-a6-root-closeout-a1/complete.json",
+        "reader_review": "reports/overnight-2026-11-04/SHADOW-READER-V5-REVIEW.md",
+        "reader_cpu": "results/workshop-shadow-reader-v5-cpu-live-20261105-a1/result.json"
+      },
+      "deployed_at": "2026-11-05T21:06:04.638765+00:00",
+      "dgd_uid": "f1f6dfa0-7898-426a-89c2-af1dc17a8ae5",
+      "qualification": "Accepted writer plus v6 active/parked readiness and three retained correct coding streams in cache-enabled full-a4. Original capture failed before fault on missing Linux-controller Helm. All cleanup and independent/root closeout passed; full fault/recovery remains pending.",
+      "failure": {
+        "finished_at": "2026-11-05T21:11:50Z",
+        "exit_code": 1,
+        "main_restarts": 1,
+        "gms_restarts": 0,
+        "serving_gate": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3/check-shadow-writer-serving-1793913118663207000.json",
+        "owned_dgd_delete": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3/command-0142-1793913123242317000.json",
+        "delete_exit_code": 0,
+        "diagnosis": "Original runtime traceback disappeared with Pod deletion; exact crash cause remains unknown. New diagnostic candidate not yet prepared or launched at clean inventory checkpoint.",
+        "cleanup": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3/check-shadow-writer-cleanup-1793913368257995000.json",
+        "cleanup_status": "passed",
+        "health": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3/post-failure-health-audit-20261105-a1.json",
+        "health_status": "no_new_xids_or_changed_conditions_same_driver_and_boot"
+      },
+      "diagnostic_a4": {
+        "run": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a4",
+        "exception": "ValueError: Unexpected inference parameter dtype/gradient contract.",
+        "origin": "Experimental workshop exporter tensor_layout at line218 before GMS publication; exact parameter/dtype/flag not yet identified",
+        "log": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a4/main-follow-unlimited-20261105-a1.log",
+        "supplemental_main_sha256": "cb72e3dc0fe44db1f3bf60c9b09c4c935414b869576f222bf6b11a6a846f73c6",
+        "health_audit": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a4/post-failure-health-audit-20261105-a1.json",
+        "cleanup": "passed21:37:16UTC",
+        "observer_note": "Inherited30s timeout ended built-in followers. Supplemental request-timeout=0 followers retained original exception; previous-log collector also added. No frozen code changed."
+      },
+      "diagnostic_a5": {
+        "run": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a5",
+        "namespace": "dynamo-ft-r610-88b4b246-demo",
+        "overlay_sha256": "1601d0f2ec7cb6895f69e220b97abbd34b7eb0a317e2de52148f6f08c9c8ae66",
+        "spec_sha256": "3cdc0f7934fb232bd756a01d85a87939e8e04c9194218a10ef07844baf9ece5e",
+        "inventory_sha256": "2d6ef1664d7746edd922c9281dcb6d8a30fa2f91d7d0abfeeaf5114e950623ef",
+        "scope": "Diagnostic metadata only; no dtype/gradient allowance changes or reader/fault enabled",
+        "runbook": "SHADOW-DESCRIPTOR-V3-RUNBOOK.md",
+        "deployed_at": "2026-11-05T22:01:23.658692+00:00",
+        "dgd_uid": "f16d180c-2c7f-4198-b180-d33a2679e4cf",
+        "actual_image_cpu": "passed_noCUDA_realTorchMetaCPU_nonceACK",
+        "verify_session": 62799,
+        "inventory_complete": true,
+        "per_rank_slots": 2078,
+        "per_rank_cuda_parameters": 1621,
+        "per_rank_none_slots": 457,
+        "per_rank_aliases": 360,
+        "candidate_exporter_issues_per_rank": 40,
+        "actual_issue": "RoutedExperts.e_score_correction_bias fp32 shape[512] stride[1] requires_grad=True; all observed dtypes supported",
+        "cleanup": "passed22:09:20UTC",
+        "health_audit": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a5/post-failure-health-audit-20261105-a1.json",
+        "writer_serving": "failed_strict_exporter_guard_no_reader"
+      },
+      "candidate_a6": {
+        "run": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a6",
+        "namespace": "dynamo-ft-r610-031fb156-demo",
+        "spec_sha256": "237dc410c4283caf9405717745214a8b33dfdc7777bdebf5b78c993480e528f6",
+        "helper_sha256": "ae2b7f19154a0032ceb50bfc0bbf5b8f654ca8c006423205414cf2f52afb7a8e",
+        "scope": "Accepted role-bound correction-bias flag preservation with immutable stock materializer and no dtype/layout expansion; writer-only live qualification and independent/root closeout passed.",
+        "independent_review": "SHADOW-DESCRIPTORS-V4-REVIEW.md",
+        "all_local_gates": "passed",
+        "remote_package": "337files_sha7ee0ebaf36171255f0144d88af4b097b16ee01fc87eaa8e7a9d1b62b3d3bce35",
+        "root_reservation": ".local/dynamo-ft-r610-031fb156-demo-writer-remote.gpu-lease/owner.json",
+        "transport_tests": "7passed_root_reverified",
+        "controller_id": "451138cddb59e9c50d5cecb4fcd4743cda6afff20fcd14988eea95e1ed30c473",
+        "controller_started_at": "2026-11-05T22:36:33.564716553Z",
+        "remote_workspace": "/home/ubuntu/workshop-measurements/overnight-shadow-super-vl-20261105-descriptor-writer-a6-031fb156-controller/workspace",
+        "payload_sha256": "7ee0ebaf36171255f0144d88af4b097b16ee01fc87eaa8e7a9d1b62b3d3bce35",
+        "plan_sha256": "b00655594aac2eefff06396a50f2f053dcc9829fee6bb46efd1029394e034d6a",
+        "controller_scope": "deploy_verify_freshhealth_finalize_on_success_scopedcleanup_finally; no reader/fault/retry",
+        "local_state_adopted": false,
+        "writer_serving": "passed3completecorrectcodingstreams",
+        "reader_ready_manifests": "both134contracts_counts97_80_40_8",
+        "independent_acceptance": "results/shadow-writer-a6-independent-audit-a1/verification.json",
+        "root_acceptance": "results/shadow-writer-a6-root-closeout-a1/source-audit.json",
+        "root_closeout": "results/shadow-writer-a6-root-closeout-a1/complete.json",
+        "original_local_state_adopted": false,
+        "reader_or_fault_enabled": false
+      },
+      "full_a1": {
+        "run": "results/overnight-shadow-super-vl-20261105-full-a1",
+        "namespace": "dynamo-ft-r610-84d3182d-demo",
+        "spec_sha256": "d4bb47faecd62aa4b04c9edb2ad44815c2a241f0851a878edb286f6135ddf3dd",
+        "role": "full active/parked standby; initial readyness and three coding responses before any fault",
+        "source_audit": "results/shadow-writer-a6-root-closeout-a1/source-audit.json",
+        "GPU_node": "kubecon-nke-site-cp-0124",
+        "GPU_pair": "4/5",
+        "dgd_uid": "cc1c3355-2349-4f3d-b23d-350849694842",
+        "startup_intent": "results/overnight-shadow-super-vl-20261105-full-a1/full-gpu-intent.json",
+        "initial_wait_session": 57061,
+        "fault_attempted": false,
+        "initial_ready": "not_qualified",
+        "observer_failure": "local_tunnel_TLS_timeout_restored_by_owned_tunnel_restart_fresh_SSH_worked",
+        "reader_failure": "after_committed_RO_import_and_stock_materializer_generic_ModelOpt_config_reads_removed_w13_input_scale",
+        "post_failure_audit": "results/overnight-shadow-super-vl-20261105-full-a1/post-failure-audit-20261105-a1.json",
+        "cleanup": "canonical_passed_owned_reservation_absent"
+      },
+      "reader_v5": {
+        "helper": "scripts/workshop_shadow_descriptors_v5.py",
+        "helper_sha256": "2f144fd5971aa07bc6008dfe7c6fd5c5b85c7d4d33d17c7fae9bb277280c9403",
+        "schema": "unchanged_v4",
+        "writer_requalification": "not_required_for_exact_reviewed_reader_only_delta",
+        "actual_cpu": "results/workshop-shadow-reader-v5-cpu-live-20261105-a1/result.json",
+        "actual_cpu_CUDA_initialized": false,
+        "covered_roles": 80,
+        "live_reader_result": "pending_new_candidate",
+        "independent_review": "passed_11focused_tests_8independent_29nonreaderfunctions_exact_v4"
+      },
+      "full_a2": {
+        "run": "results/overnight-shadow-super-vl-20261105-full-a2",
+        "namespace": "dynamo-ft-r610-b06a9a1f-demo",
+        "full_spec_sha256": "4bb21f9a4425e7edfd669375ff6a5b2c6f86b62378e0da6d5ce416d4e6fbbb60",
+        "prepare": "passed",
+        "exact_pair_CUDA": "passed",
+        "fresh_health": "results/workshop-shadow-full-a2-start-health-20261105-a1/root-audit.json",
+        "deployed": true,
+        "fault_attempted": false,
+        "source_hold": "27 critical full-spec source files unchanged through canonical cleanup; capture helper also held",
+        "controller_id": "30017f022c300a74ffcfa4a2de4c33a2ccdb6690d0ac73bba1d909336f734a74",
+        "controller_started_at": "2026-11-05T23:42:29.693328106Z",
+        "controller_name": "kubecon-shadow-full-b06a9a1f",
+        "payload_sha256": "9fbd88e3a346c222ff0c48604addb0fc0c8d976c3bef9e36df89093bd8ccf286",
+        "plan_sha256": "ceeb2359815fdab477bd0253ff32e0b419939a8c18e67f6c3d299397fdf57c45",
+        "last_phase": "failed_preserved_for_root_audit",
+        "transport_review": "SHADOW-FULL-REMOTE-REVIEW.md",
+        "transport_tests_passed": 13,
+        "initial_ready": "failed",
+        "failure": "Later deep_gemm_warmup eligibility probe invokes generic ModelOpt callback and missing w13_input_scale",
+        "collection": "results/shadow-full-a2-remote-collected-a1",
+        "collection_verified_files": 1221,
+        "cleanup": "passed_23:51:30Z_remote_mirror_released",
+        "root_live_audit": "results/workshop-shadow-full-a2-root-closeout-20261105-a1/live-audit.json",
+        "root_reservation": "released_after_independent_and_live_audit",
+        "independent_audit": "results/shadow-full-a2-independent-audit-a1/verification.json",
+        "root_closeout": "results/workshop-shadow-full-a2-root-closeout-20261105-a1/complete.json",
+        "reader_reconstruction": "Both TP ranks completed committed RO import and120privateworkspacechecks; later native warmup failed, not standby qualified"
+      },
+      "reader_v6": {
+        "helper_sha256": "5a59b4c6e24574e3017bff5197b4603961f396da8504fb2594033b44ca410528",
+        "actual_cpu": "results/workshop-shadow-reader-v6-cpu-live-20261105-a1/result.json",
+        "covered_roles": 80,
+        "swiglu_cases": 3,
+        "cuda_initialized": false,
+        "native_warmup_counterfactual_reproduced": true,
+        "native_warmup_count": 0,
+        "scope": "Actual-image native metadata functions only; no GPU reader/recovery qualification.",
+        "independent_actual_cpu_audit": "results/workshop-shadow-reader-v6-independent-audit-20261105-a1/verification.json"
+      },
+      "full_a3": {
+        "run": "results/overnight-shadow-super-vl-20261105-full-a3",
+        "namespace": "dynamo-ft-r610-f69e4b16-demo",
+        "spec_sha256": "7902aca8d072fadadcf66cde76ac087d6fa3e1bef5bc79fc362f5f71fbda7455",
+        "cache_mode": "default_no_development_cache",
+        "inputs": 17,
+        "critical_sources": 30,
+        "prepare": "passed",
+        "CUDA": "passed",
+        "health": "results/workshop-shadow-full-a3-start-health-20261105-a1/root-audit.json",
+        "controller_name": "kubecon-shadow-full-f69e4b16",
+        "payload_sha256": "daf06fe91fa31ffcc2add16dc64edddf0cb95536ba30501843f67b37ca671c3b",
+        "plan_sha256": "048e87f4fbbba2e4362f4b1bfdfa762e8a5c9ce98af34ae83838269eab331fe9",
+        "fault_attempted": false,
+        "controller_id": "6bcdb34b5552d457209a7c0e4fda5874abecc8046bd74ed433615fbe8bf8a379",
+        "launched_at": "2026-11-06T00:55:04Z",
+        "qualification": "No active/standby/coding/fault proof yet.",
+        "terminal": "failed_host_initial_readiness_comparator_before_fault",
+        "runtime_reader": "warmed_and_parked",
+        "exact_difference": "engine-1 ready/started false->true only; Pod/container generations/roles/GMS maps unchanged",
+        "collection": "results/shadow-full-a3-remote-collected-a1",
+        "collection_files": 1263,
+        "raw_coding_retained": false,
+        "cleanup": "passed01:05:00Z",
+        "live_audit": "results/workshop-shadow-full-a3-root-closeout-20261105-a1/live-audit.json",
+        "source_hold": "released_after_independent_and_root_closeout",
+        "root_closeout": "results/workshop-shadow-full-a3-root-closeout-20261105-a1/complete.json"
+      },
+      "full_a4": {
+        "run": "results/overnight-shadow-super-vl-20261105-full-a4",
+        "namespace": "dynamo-ft-r610-2f515dd0-demo",
+        "spec_sha256": "e6dc90dffc04072e8f0b1edd7b253624c43cb5f94f8a1fbeb0c200f88efa8053",
+        "inputs": 20,
+        "critical_sources": 32,
+        "cache_qualification": "results/mx-dev-stage-20261105-a1/qualification.json",
+        "cache_qualification_sha256": "f543e915ecd64759fed478fa0456915f55d804bd67047788ac4f547ec4102667",
+        "host_fix_review": "reports/overnight-2026-11-04/SHADOW-STARTUP-READINESS-REVIEW.md",
+        "prepare": "passed",
+        "deployed": "controller_owns_once_only_deploy",
+        "fault_attempted": false,
+        "source_hold": "32critical files throughcleanup",
+        "probe": "passed",
+        "fresh_health": "results/workshop-shadow-full-a4-start-health-20261105-a1/root-audit.json",
+        "package_files": 393,
+        "payload_sha256": "f081302b464506021fdb5874d4d09500c1fb8140e588869341b3c927588e338c",
+        "plan_sha256": "575ff13383883754d58386f8b16e5ea7f0f0ca1efd921004fb8b169a32e26a3f",
+        "controller_name": "kubecon-shadow-full-2f515dd0",
+        "build_note": "First wrapper supplied nonexisting health filename and failed before package directory; preserved a1log. Corrected build reads exact root-audit receipt; fresh a2logpassed.",
+        "controller_id": "9edb1ec1179a7f6345c14ef70be5f3bbdb02dd227fd38285f654bbf0b6f93bfa",
+        "launched_at": "2026-11-06T01:34:24Z",
+        "stage": "terminal_failed_before_fault_missing_controller_helm",
+        "ready": "passed_3_retained_coding_responses_active_and_parked",
+        "worker_cache_stage": "passed_all_files_hash_verified_CUDA_uninitialized",
+        "finished_at": "2026-11-06T01:44:13.615765398Z",
+        "error": "FileNotFoundError: /opt/homebrew/bin/helm in shadow_failover_tests.preflight",
+        "collection": "results/shadow-full-a4-remote-collected-20261105-a1",
+        "collection_files": 1978,
+        "cleanup": "passed_remote_and_root_reservation_released",
+        "independent_audit": "results/shadow-full-a4-independent-audit-20261105-a1/verification.json",
+        "root_closeout": "results/workshop-shadow-full-a4-root-closeout-20261105-a1/complete.json",
+        "qualification": "114 all-file worker RAM stage; active/parked and three retained coding streams accepted; no fault/promotion/replenishment/SLO result"
+      },
+      "helm_transport_fix": {
+        "source": "scripts/workshop_shadow_full_remote.py",
+        "sha256": "ed1252ec5c281cac4dabbbea49569fdf349dce3f3703b0f39c75203d40184185",
+        "review": "reports/overnight-2026-11-04/SHADOW-FULL-HELM-REVIEW.md",
+        "focused_tests": 34,
+        "included_in_full_local_suite": true,
+        "manual_same_image_CPU_query": "passed_prior_to_implementation",
+        "actual_generated_preflight_and_fresh_full_run": "pending",
+        "native_writer_v6_CPU_sources": "unchanged"
+      }
+    },
+    "disagg_comparison": {
+      "status": "both_equal_four_gpu_agentx_arms_independently_accepted_scoped_gpu_cleanup_passed_borrowed_cpu_preserved",
+      "notes": "DISAGG.md"
+    },
+    "migration_load": {
+      "status": "paired_c4_independently_verified_enabled_4of4_disabled_2of4_scoped_cleanup_verified",
+      "notes": "MIGRATION.md"
+    },
+    "baseline_mx_capture": {
+      "status": "intro_resumed_live_passed_mx_source_ready_native_observation_interrupted_peer_unstarted_cleanup_verified",
+      "notes": "BASELINE-MX.md"
+    },
+    "takehome_review": {
+      "status": "public_cached_baseline_live_qualified_immutable_anonymous_and_serving_proofs_cleanup_passed_canonical_selector_fix_15tests_pass",
+      "notes": "TAKEHOME.md"
+    },
+    "cluster_coordinator": {
+      "status": "full_a4_postcleanup_fresh_inventory_24advertised_zeroallocated_noissues_root_lease_released_persistent_CPUcache_retained",
+      "notes": "CLUSTER.md"
+    },
+    "integration": {
+      "status": "734of734_current_local_tests_passed_full_Shadow_recovery_pending",
+      "notes": "INTEGRATION.md"
+    },
+    "routing_load_sweep": {
+      "status": "c32_original_terminal_a2_883files_48sources_verified_twoRR_twoKV_pair_independently_accepted_oneRR_rejected_liveness_restart_no_scaleout_ratio_no_replay_cleanup_and_local_release_passed",
+      "notes": "LOAD-SWEEP.md",
+      "evidence": {
+        "acceptance": "results/workshop-routing-c32-collection-terminal-20261105-a2/independent-acceptance-and-cleanup.json",
+        "local_lease_release": "results/workshop-routing-c32-collection-terminal-20261105-a2/local-lease-release.json"
+      },
+      "written_analysis": "Detailed results in progress; keep C16 and C32 separate."
+    },
+    "metrics": {
+      "status": "recorded_capture_and_real_tmux_validated",
+      "notes": "METRICS.md"
+    },
+    "observer_resilience": {
+      "status": "canonical_fix_and_12_focused_tests_complete_full_suite_passed",
+      "notes": "BASELINE-MX.md",
+      "owner": "baseline_mx_capture",
+      "scope": "Canonical presenter only; retained live source trees unchanged."
+    },
+    "shadow_composed_review": {
+      "status": "independent_source_review_complete_identity_fencing_findings_resolved_no_live_reader_or_recovery_qualification",
+      "notes": "SHADOW-COMPOSED-REVIEW.md",
+      "tests": {
+        "author_reported_passed": 12,
+        "reviewer_reran": false
+      },
+      "source_sha256": "1eaf25d09a9f84dc755d39edaefb3a14011b1ea22b8b38e80f0091e0308d96d5",
+      "test_sha256": "dd2fdf9ab5520f0897fd18ec77ae9b03c52612ff5953573d219a08ba3189dd57",
+      "scope": "Pre-fault identity fencing source-reviewed; writer descriptors accepted separately. v5 reader CPU-qualified; parked reader, promotion and replenishment remain pending."
+    },
+    "persistent_mx_development": {
+      "status": "persistent_RAM_cache_and_crossnode_native_CPU_stage_independently_accepted_kept_running",
+      "owner": "baseline_mx_capture",
+      "scope": "CPU cache server plus per-candidate local staging to avoid existing EFS-path trap; no GPU donor or direct GMS-MX loading benefit yet qualified.",
+      "runtime_sources": "results/workshop-shadow-mx-runtime-sources-20261105-a2/result.json",
+      "capability_original": "results/mx-dev-cache-capability-20261105-a2/probe-console.log",
+      "capability_wrapper": "results/mx-dev-cache-capability-20261105-a2/terminal.json",
+      "capability_cleanup": "all_owned_probe_Pods_Services_Job_ConfigMap_deleted_namespace_PVC_secret_retained",
+      "capability_torch_imported": true,
+      "capability_gpu_requests": 0,
+      "official_server_cli": "results/workshop-mx-server-cli-20261105-a1/help.txt",
+      "run": "results/mx-dev-persistent-server-20261105-a4-reviewed",
+      "server_endpoint": "mx-dev-persistent-20261105-a4-server.dynamo-ft-mx-dev-cache-20261105-a2.svc.cluster.local:8001",
+      "node": "kubecon-nke-site-cp-0198",
+      "gpu_requests": 0,
+      "cache_limit_GiB": 96,
+      "server_memory_limit_GiB": 112,
+      "admission": "results/mx-dev-persistent-server-20261105-a4-reviewed/root-admission.json",
+      "independent_review": "reports/overnight-2026-11-04/MX-CPU-CAPABILITY-AND-RAM-SEED-REVIEW.md",
+      "capability_supplement": "results/mx-dev-cache-capability-a2-independent-audit-20261105-a1/supplemental-disposition.json",
+      "prior_failed_seed": {
+        "run": "results/mx-dev-persistent-server-20261105-a2",
+        "cause": "Strict per-repository symlink assumption rejected actual ModelExpress sibling shared-CAS blob layout before copy",
+        "first_logs": "results/mx-dev-persistent-server-20261105-a2-failure-inspect-a1/seed-current.log",
+        "cleanup": "results/mx-dev-persistent-server-20261105-a2-cleanup-a1/complete.json",
+        "fix": "v2 accepts only exact owned HF hub/blobs/<first2>/<64hexSHA> and retains digest checks; fresh render/emptyDir"
+      },
+      "active_run": null,
+      "failed_a3": {
+        "run": "results/mx-dev-persistent-server-20261105-a3",
+        "first_trace": "unavailable_after_native_init_restarts_API_generation0_NotFound",
+        "observations": "results/mx-dev-persistent-server-20261105-a3-partial-inspect-a1/console.log",
+        "pinned_manifest": "results/mx-dev-source-hf-tree-20261105-a1/tree.json",
+        "facts": "Partial/source PNG SHA256 equals authoritative lfs.oid; CAS filename equals xetHash rather than file SHA; original metadata copied correctly. Do not reconstruct missing first traceback.",
+        "cleanup_in_progress": "results/mx-dev-persistent-server-20261105-a3-cleanup-a1.log"
+      },
+      "source_manifest": "results/mx-dev-source-hf-tree-20261105-a1/tree.json",
+      "current_scope": "CPU RAM population running, service not yet qualified. Separate default full GPU test proceeds oncp0124; NFS reads may overlap, no matched startup comparison.",
+      "seed_completion": "results/mx-dev-persistent-server-20261105-a4-reviewed/root-terminal.json",
+      "seed_seconds": 316.35315543878824,
+      "producer_pod_uid": "e32f8b4f-83f1-4291-879f-404d5e811514",
+      "producer_pod_ip": "192.168.100.50",
+      "cpu_stage_run": "results/mx-dev-stage-20261105-a1",
+      "cpu_stage_scope": "NativeRPC all114file hashes into96Gi RAMoncp0124, noEFS/GPU/model inference; stillrunning",
+      "seed_audit": "results/mx-dev-persistent-a4-independent-audit-20261105-a1/verification.json",
+      "client_audit": "results/mx-dev-stage-a1-independent-audit-20261105-a1/verification.json",
+      "qualification": "results/mx-dev-stage-20261105-a1/qualification.json",
+      "cpu_stage_seconds": 117.85284831607714,
+      "cpu_stage_cleanup": "results/mx-dev-stage-20261105-a1-cleanup-a1/complete.json",
+      "qualification_scope": "Development-only CPU/RAM filecache and all-file staging; no inference/GMS-MX/P2P/SLO/startup speedup claim."
+    }
+  },
+  "unrelated_work_present_at_start": [
+    "WORKSHOP_OUTLINE.md",
+    "reports/2026-11-04-kvcr-guard-upstream-readiness.md",
+    "reports/workshop-kvcr-guard-qualification.md",
+    "scripts/kvcr_guard_bootstrap.py",
+    "scripts/workshop_kvcr_guard.py",
+    "tests/test_workshop_kvcr_guard.py",
+    "configs/dgd/workshop-kvcr-guard/workshop-kvcr-guard-20261104-a4/",
+    "configs/kvcr-guard-nightly-runtime.json",
+    "reports/receipts/2026-11-04-kvcr-guard-nightly-selection.json",
+    "reports/receipts/2026-11-04-kvcr-guard-nightly.json"
+  ],
+  "constraints": [
+    "disjoint tested node and physical GPU assignments",
+    "preserve productive existing load sweep and all evidence",
+    "no shared platform upgrades or unknown workload cleanup",
+    "no automatic commit, push, upstream submission or external messaging",
+    "no live qualification claims from offline rehearsal"
+  ],
+  "last_coordinator_update": "2026-11-06T03:22:01.363025+00:00",
+  "connectivity": {
+    "status": "recovered_live_tunnel_network_requires_sandbox_escalation",
+    "first_observed": "2026-11-04T22:49:00-08:00",
+    "user_question_pending": null,
+    "rule": "Preserve owned workloads and leases; re-audit before resume, no blind cleanup/redeploy.",
+    "recovered_at": "2026-11-05T07:34:04.258912-08:00",
+    "last_observed_at": "2026-11-05T21:01:29.030449+00:00"
+  },
+  "local_validation": {
+    "suite": "results/workshop-prepush-local-suite-20261105-a1.log",
+    "suite_sha256": "64b689a1e73d0b9455f30dd46c41d78c4d6b90adeae517e8c5ba858ca3e1c183",
+    "tests": 734,
+    "passed": 734,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 109.216,
+    "scope": "Complete local suite including Full-only Helm transport fix and independent review tests; no live Shadow failover qualification."
+  },
+  "next_actions": [
+    "On resumption, inspect current cluster/cache ownership and verify producer identity before any GPU run",
+    "Execute the reviewed generated Helm CPU preflight on a fresh package, then once-only Shadow fault/promotion/replenishment/capture qualification",
+    "Keep the persistent ModelExpress CPU cache and Redis retained as requested; preserve all failed and accepted evidence",
+    "Remaining optional scope: automatic Guard/routing integration, performance/SLO claims, portable take-home variants and presentation polish"
+  ],
+  "frozen_observers": {
+    "snapshot": "results/demo-04-dgd-overnight-live-20261105-a1/frozen-observer-v2",
+    "migration_disabled": ".local/frozen-observers/migration-disabled-20261104-a1",
+    "intro": "results/overnight-baseline-mx-control/intro-a1-observer"
+  },
+  "heartbeat_checks": [
+    {
+      "observed_at": "2026-11-04T23:31:44.450707-08:00",
+      "ssh": "fresh direct SSH timed out after10s",
+      "tunnel": "local control socket absent",
+      "cluster_mutations": false,
+      "note": "No new live failure inferred; resources and leases retained. User VPN question already pending."
+    },
+    {
+      "observed_at": "2026-11-05T00:33:39.299580-08:00",
+      "ssh": "fresh direct SSH timed out after10s",
+      "tunnel": "control socket absent",
+      "cluster_mutations": false,
+      "note": "No new live observation possible. Offline implementation/review complete; no passing expensive checks repeated. Await external access recovery."
+    },
+    {
+      "observed_at": "2026-11-05T01:31:23.763456-08:00",
+      "ssh": "fresh direct SSH timed out after10s",
+      "tunnel": "control socket absent",
+      "cluster_mutations": false,
+      "local_reservations": [
+        {
+          "lease": ".local/dynamo-ft-r610-caa592eb-demo-shadow.gpu-lease",
+          "owner": "workshop-demo-shadow",
+          "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/overnight-shadow-super-vl-20261104-a1"
+        },
+        {
+          "lease": ".local/overnight-baseline-mx.gpu-lease",
+          "owner": "workshop-demo-single-replica",
+          "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/overnight-intro-live-20261104-a1"
+        },
+        {
+          "lease": ".local/overnight-migration.gpu-lease",
+          "owner": "workshop-demo-continuity",
+          "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/overnight-migration-disabled-20261104-a1"
+        },
+        {
+          "lease": ".local/overnight-routing-sweep.gpu-lease",
+          "owner": "/root/routing_load_sweep_controller",
+          "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-20261105-a1"
+        },
+        {
+          "lease": ".local/workshop-demo-kvcr-67bb153b.gpu-lease",
+          "owner": "workshop-demo-kvcr",
+          "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/overnight-kvcr-demo-20261104-a2"
+        },
+        {
+          "lease": ".local/workshop-measurements-20261030.gpu-lease",
+          "owner": "workshop-snapshot-dgd",
+          "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/demo-04-dgd-overnight-live-20261105-a1"
+        }
+      ],
+      "note": "Live state remains unobservable; all retained reservations preserved. Offline work complete; no redundant testing or new source changes."
+    },
+    {
+      "observed_at": "2026-11-05T02:30:53.443349-08:00",
+      "ssh": "fresh direct SSH timed out after10s",
+      "tunnel": "control socket absent",
+      "cluster_mutations": false,
+      "note": "Unchanged external reachability failure; live state/cleanup remain unverified. Offline review packet and308passingchecks unchanged. No redundant tests or source edits."
+    },
+    {
+      "observed_at": "2026-11-05T03:36:14.467668-08:00",
+      "ssh": "fresh direct SSH timed out after10s",
+      "tunnel": "control socket absent",
+      "cluster_mutations": false,
+      "alternate_probe": "SSH to gemini succeeded; TCP from gemini to the jump host timed out",
+      "evidence": "results/overnight-access-relay-20261105-0335/state.json",
+      "ec2_state_probe": "Not completed: existing AWS SSO token expired; no login or infrastructure change attempted.",
+      "note": "Alternative relay unavailable, root cause unproven. Routing controller launch receipt identifies the unreachable jump host, not gemini; no remote result or cleanup inferred."
+    },
+    {
+      "observed_at": "2026-11-05T04:37:53.414294-08:00",
+      "ssh": "fresh direct SSH timed out after10s",
+      "tunnel": "control socket absent",
+      "cluster_mutations": false,
+      "note": "No new live observation possible; reservations unchanged. Existing remote campaign collection and component captures take priority if access returns late. No locked windows shortened or passing tests repeated."
+    },
+    {
+      "observed_at": "2026-11-05T05:38:02.905773-08:00",
+      "ssh": "fresh direct SSH timed out after10s",
+      "tunnel": "control socket absent",
+      "cluster_mutations": false,
+      "note": "Access and six retained local reservations unchanged. No new live result, resource release or cleanup inferred. Offline packet remains ready; no redundant tests or edits."
+    },
+    {
+      "observed_at": "2026-11-05T06:39:44.075618-08:00",
+      "ssh": "fresh direct SSH timed out after10s",
+      "tunnel": "control socket absent",
+      "cluster_mutations": false,
+      "note": "Six local leases preserved; current cluster state and cleanup still unknown. No new tests started near cutoff; full review packet remains locally validated."
+    }
+  ],
+  "late_window_policy": "User explicitly resumed unfinished work after the historical overnight closeout; the original cutoff no longer applies. Continue bounded authorized qualification and scoped cleanup while preserving all accepted, failed and interrupted evidence.",
+  "active_user_resumption": {
+    "authorized": true,
+    "at": "2026-11-05T19:06:13.779937+00:00",
+    "request": "ok keep going with the stuff that is not finished for now",
+    "old_cutoff_applies": false
+  },
+  "automation_disposition": {
+    "status": "obsolete_delete_attempt_failed_app_internal_hook_error",
+    "id": "finish-workshop-demos-overnight",
+    "error": "invalid hook payload: permission request does not match the recorded tool call 'finish-workshop-demos-overnight'",
+    "instruction": "Original overnight timer has expired UNTIL. User explicitly resumed unfinished work after closeout; delayed timer must not stop or clean these active runs.",
+    "pause_attempt": "Failed with the same app internal hook error as deletion; neither pause nor deletion is confirmed."
+  },
+  "execution_policy": "Root sole live/network executor, agents prepare and independently verify. Keep original disjoint assignments and preserve all evidence; no external messages/commits/pushes/sharedplatformchanges.",
+  "console_incident": {
+    "run": "results/overnight-migration-disabled-20261104-a1",
+    "status": "original_console_recovered_verbatim_and_independently_verified",
+    "no_extra_http_or_fault": true,
+    "independent_verification": "results/overnight-migration-disabled-20261104-a1/independent-local-verification.json",
+    "recovery": "Checking same-chat retained tool output for exact original bytes; do not reconstruct as raw evidence.",
+    "recovery_receipt": "results/overnight-migration-disabled-20261104-a1/qualification-console-recovery.json",
+    "supplemental_verification": "results/overnight-migration-disabled-20261104-a1/console-recovery-supplemental-verification.json",
+    "recovered_bytes": 1137,
+    "sha256": "948607fb96ce1c8415e0b28d9e30635f3e1ee79646c2ed136967a2da8a79223b"
+  },
+  "completed_root_sessions": {
+    "mx_prime": {
+      "session_id": 73485,
+      "log": "results/overnight-mx-live-20261104-a1/prime-morning-20261105-a1.log"
+    },
+    "migration_enabled": {
+      "session_id": 77305,
+      "log": "results/overnight-migration-enabled-20261105-a1/qualification-console.log"
+    },
+    "kvcr_a3": {
+      "session_id": 43934,
+      "controller": "results/overnight-kvcr-recovered-20261105-a3-controller/controller.py"
+    },
+    "snapshot_fresh_a2": {
+      "session_id": 64059,
+      "log": "results/demo-04-dgd-live-20261105-a2/controller-console-20261105-a1.log"
+    },
+    "disagg_handoff_prepare": {
+      "session_id": 84344,
+      "run": "results/workshop-disagg-agentx-20261105-a2"
+    },
+    "shadow_writer_a4_prepare": {
+      "session_id": 79673,
+      "run": "results/overnight-shadow-super-vl-20261105-writer-a4"
+    },
+    "routing_c32": {
+      "controller_id": "a4ae19468266c954a35fd4fb46853ba221b57cbcb947447481cf47d0e5154fed",
+      "stage": "terminal_collected_completed_pair_accepted_oneRR_rejected_scoped_cleanup_and_local_lease_release_passed",
+      "plan_sha256": "cde44a8f66b68edfac8a1e8b8c3f0f0b90c0b7396f3f6e72286519654badb2ab",
+      "collection": "results/workshop-routing-c32-collection-terminal-20261105-a2",
+      "accepted_cells": [
+        "two-rr-c32-a1",
+        "two-kv-c32-a1"
+      ],
+      "rejected_cell": "one-rr-c32-a1",
+      "no_replay": true
+    },
+    "snapshot_a3": {
+      "controller_id": "30e0bcf87d166496b516e58b733e633a5c4e7a41a2378b65b09734dc0f9a2c77",
+      "stage": "presenter_independent_collection_final_live_audit_and_local_lease_release_passed",
+      "plan_sha256": "1445d3a5288a49283995cebbf5e3defc177557c7eec1ab05d4ead8defd40c5d0",
+      "local_run": "results/demo-04-dgd-live-20261105-a3",
+      "namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "dgd_uid": "dbba0138-63e9-4dbd-b25e-b5cc0e47c624",
+      "started_at": "2026-11-05T19:45:59.516129224Z",
+      "root_audit": "results/workshop-snapshot-a3-root-audit-20261105-a2/audit.json",
+      "local_lease_release": "results/workshop-snapshot-a3-root-audit-20261105-a2/local-lease-release.json"
+    },
+    "shadow_descriptor_writer_a3_deploy": {
+      "session_id": 27737,
+      "run": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3",
+      "stage": "runtime_exact_pair_cuda_health_passed_deployment_created",
+      "deployed_at": "2026-11-05T21:06:04.638765+00:00",
+      "dgd_uid": "f1f6dfa0-7898-426a-89c2-af1dc17a8ae5",
+      "qualification": "Deployment only; serving, descriptors, reader, promotion and replenishment are unfinished."
+    },
+    "shadow_descriptor_writer_a3_verify": {
+      "session_id": 32235,
+      "run": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3",
+      "stage": "terminal_failed_writer_restart_gate_main_exit1_owned_DGD_delete_succeeded",
+      "session_owner": "root",
+      "rule": "Reference only; agents do not poll inherited session handles.",
+      "qualification": "No successful serving or descriptor export; original logs/events being recovered."
+    },
+    "kvcr_a6": {
+      "session_id": 43387,
+      "run": "results/workshop-kvcr-demo-20261105-a6",
+      "stage": "terminal_actual_capture_independently_accepted",
+      "source_http_started_at": "2026-11-05T21:09:21Z",
+      "binding": "results/workshop-kvcr-demo-20261105-a6/prepared-binding.json",
+      "prompt_preflight": "results/workshop-kvcr-demo-20261105-a6/prompt-preflight.json",
+      "prepared_parent": "results/workshop-kvcr-demo-20261105-a5",
+      "session_owner": "root",
+      "rule": "Reference only; agents do not poll inherited session handles.",
+      "independent_audit": "results/workshop-kvcr-demo-20261105-a6-independent-audit/terminal.json",
+      "recording": "demos/transcripts/live/07-kvcr/20261105-a6/main.txt"
+    },
+    "kvcr_a6_cleanup": {
+      "session_id": 58925,
+      "stage": "passed_zero_owned_pods_claims_dgd_parent_lease_absent_failed_and_fresh_bytes_unchanged",
+      "terminal": "results/workshop-kvcr-demo-20261105-a6-cleanup-controller/terminal.json"
+    },
+    "qualified_closeouts_inventory": {
+      "session_id": 58633,
+      "stage": "passed_24advertised_0allocated_noissues_historical_checkpoint",
+      "audit": "results/workshop-resumed-20261105-qualified-closeouts-a1/audit.json"
+    }
+  },
+  "active_root_sessions": {},
+  "previous_closeout": {
+    "closed_at": "2026-11-05T18:23:38.625252+00:00",
+    "closure_reason": "Latest heartbeat arrived after requested cutoff; completed bounded runs, collected failures, cleaned only owned workloads, and prepared review packet. No new long runs started.",
+    "final_audit": {
+      "path": "results/overnight-20261105-final-audit-postcleanup-a1/audit.json",
+      "observed_at": "2026-11-05T18:20:06.246696+00:00",
+      "advertised_gpus": 24,
+      "allocated_gpus": 0,
+      "claims": 0,
+      "gpu_pods": 0,
+      "dgds": 0,
+      "issues": [],
+      "local_gpu_leases": [],
+      "retained": [
+        "borrowed routing CPU client",
+        "model caches and PVCs",
+        "namespaces",
+        "Snapshot artifacts",
+        "all successful and failed evidence"
+      ]
+    }
+  },
+  "fresh_health": "results/workshop-resumed-20261105-health-clearance-a1.json",
+  "last_review_update": "2026-11-06T03:22:01.363025+00:00",
+  "completed_pd_profile": {
+    "run": "results/workshop-disagg-agentx-20261105-a2",
+    "CPU_UID": "4385c581-2c2c-446a-8f7d-123617386cf8",
+    "arm": "disagg-a2-disaggregated-c16-a1",
+    "profile_started_at": "2026-11-05T20:05:58+00:00",
+    "admission_seconds": 900,
+    "drain_seconds": 300,
+    "historical_transport_state": {
+      "rule": "Do not replay or clean productive remote runner. Collect original terminal artifacts after tunnel recovery.",
+      "local_controller_exit": "transport_failed_no_qualified_pd_result_yet"
+    },
+    "status": "original_pair_independently_accepted_scoped_gpu_cleanup_passed_borrowed_CPU_retained_no_replay",
+    "acceptance": "results/workshop-disagg-agentx-20261105-a2/independent-pair-acceptance.json",
+    "cleanup": "results/workshop-disagg-agentx-20261105-a2/cleanup-final.json",
+    "results": "reports/overnight-2026-11-04/disagg/RESULTS.md",
+    "local_controller_exit": "Original observer transport failure preserved; original detached P/D runner finished and its original outputs were independently accepted."
+  },
+  "preserved_attempts": {
+    "shadow_descriptor_writer_a2": {
+      "run": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a2",
+      "status": "local_sandbox_denied_GPU_probe_before_resource_creation_intent_preserved",
+      "successor": "results/overnight-shadow-super-vl-20261105-descriptor-writer-a3",
+      "qualification": "No live writer/reader result from a2."
+    }
+  },
+  "resource_checkpoint": {
+    "path": "results/workshop-shadow-full-a4-root-closeout-20261105-a1/inventory/audit.json",
+    "observed_at": "2026-11-06T01:47:12.205129+00:00",
+    "advertised_gpus": 24,
+    "allocated_gpus": 0,
+    "issues": [],
+    "scope": "Post full-a4 cleanup; independent/root closeout and exact root reservation release subsequently passed; persistent CPU cache retained."
+  },
+  "closed_resource_ownership": {
+    "kvcr_a5_parent": {
+      "run": "results/workshop-kvcr-demo-20261105-a5",
+      "historical_capture_state": {
+        "stage": "first_source_http400_diagnosis_no_resend_workers_retained",
+        "run": "results/workshop-kvcr-demo-20261105-a5",
+        "note": "Actualtokenization/livegeometrypassed; no successful sourcecache seed or Brequest."
+      },
+      "stage": "closed_after_independent_child_acceptance_and_scoped_owning_parent_cleanup",
+      "child": "results/workshop-kvcr-demo-20261105-a6",
+      "rule": "Owning parent lease absent; cache/evidence retained, original failed source/preflight/input/capture bytes unchanged.",
+      "cleanup": "results/workshop-kvcr-demo-20261105-a6-cleanup-controller/terminal.json"
+    }
+  },
+  "previous_resource_checkpoint": {
+    "path": "results/workshop-resumed-20261105-post-comparisons-a1/audit.json",
+    "observed_at": "2026-11-05T21:00:43.648198+00:00",
+    "advertised_gpus": 24,
+    "allocated_gpus": 4,
+    "allocated_workstreams": [
+      "kvcr"
+    ],
+    "issues": [],
+    "scope": "Historical read-only scheduling and placement audit, not utilization proof. Shadow a3 deployed afterward and its owned DGD was later stopped after a failed writer restart gate; this is not the current global allocation."
+  },
+  "git_push_authorization": {
+    "at": "2026-11-06T03:22:01.363025+00:00",
+    "request": "ok lets go ahead and push everything we have locally up to gitlab before calling it a night",
+    "scope": "All nonignored repository work; preserve ignored raw evidence and local credentials; no new GPU qualification run."
+  },
+  "end_of_day_checkpoint": {
+    "at": "2026-11-06T03:22:01.363025+00:00",
+    "local_gpu_leases": [],
+    "new_gpu_run_started": false,
+    "internal_agents": "quiesced for commit",
+    "persistent_cache": "retained as requested; latest live identity audit remains separately timestamped",
+    "ignored_data": "results/ and .local/ stay local, excluded by existing .gitignore",
+    "remote_base_preserved": "5801f74 added kubecon slides"
+  }
+}

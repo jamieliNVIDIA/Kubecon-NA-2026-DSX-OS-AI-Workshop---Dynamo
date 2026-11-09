@@ -1,0 +1,8 @@
+{
+  "model_type": "nemotron_h_omni",
+  "architectures": [
+    "NemotronH_Omni_Reasoning_V3"
+  ],
+  "max_position_embeddings": null,
+  "text_config": null
+}

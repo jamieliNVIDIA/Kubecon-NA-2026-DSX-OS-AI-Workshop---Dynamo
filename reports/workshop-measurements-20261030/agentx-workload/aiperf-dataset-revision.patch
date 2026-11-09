@@ -1,0 +1,10 @@
+--- a/src/aiperf/dataset/loader/semianalysis_cc_traces_weka.py
++++ b/src/aiperf/dataset/loader/semianalysis_cc_traces_weka.py
+@@ -67,6 +67,7 @@
+     """
+ 
+     tag: ClassVar[str] = "SemiAnalysisCCTracesWeka"
++    hf_revision: str = "23f152f6f0f9399a85901b89a6458def0ef16729"
+ 
+     def __init__(
+         self,

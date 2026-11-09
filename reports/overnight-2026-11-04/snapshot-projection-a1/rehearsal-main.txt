@@ -1,0 +1,108 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/demo-04-dgd-projection-20261105-a1
+
+Dynamo workshop · Operator-managed Snapshot recovery
+REHEARSAL / SIMULATED OUTPUT / NO CLUSTER CALLS
+Run: results/demo-04-dgd-projection-20261105-a1
+Namespace: dynamo-ft-snapshot-demo-7de8c1a6d4
+Commands shown relative to the run directory; workshop kubectl/kubeconfig supplied.
+[REHEARSAL] CPU model-cache, admission, runtime overlay and prepared storage checks simulated.
+Primed. Creating DGD, frontend and artifact stay alive through onstage replacement.
+
+Next: 1/4  An initialized Dynamo worker, saved once
+
+================================================================
+1/4  An initialized Dynamo worker, saved once
+Inspect the DGD checkpoint settings; capture and storage staging happened offstage.
+================================================================
+
+$ cat deployment-excerpt.yaml
+kind: DynamoGraphDeployment
+metadata:
+  name: ft-snapshot
+spec:
+  backendFramework: vllm
+  components:
+  - name: Frontend
+    type: frontend
+    replicas: 1
+  - name: VllmSnapshotWorker
+    type: worker
+    replicas: 1
+    experimental:
+      checkpoint: {enabled: true, startupPolicy: WaitForCheckpoint, deletionPolicy: Retain}
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          command: [python3, -m, dynamo.vllm]
+          args: [--model, nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4, --tensor-parallel-size,
+            '2', --max-model-len, '8192']
+Full executable manifest: deployment.yaml. Runtime bridge: runtime-patch.yaml.
+Storage: nvme checkpoint (simulated).
+Capture and staging happened offstage; the checkpoint belongs to this living DGD.
+Same-node fresh-request recovery. KV was released before capture; active streams are separate.
+
+Step finished in 0.0s
+
+Next: 2/4  Replace the worker Pod
+
+================================================================
+2/4  Replace the worker Pod
+Delete only the worker. The operator restores its replacement while the frontend stays put.
+================================================================
+
+$ kubectl delete pod simulated-initial -n dynamo-ft-snapshot-demo-7de8c1a6d4
+
+Restore timing · REHEARSAL / not measured
+Pod to Ready: not measured
+Agent restore: not measured
+Deletion to observed Ready: not measured
+Capture, publication, staging and hashes happened offstage.
+Agent restore, Pod-to-Ready and deletion-to-observed-Ready are different boundaries; do not add them.
+No matched cold-start baseline. The next request has not been sent yet.
+
+Step finished in 0.0s
+
+Next: 3/4  Check what recovered
+
+================================================================
+3/4  Check what recovered
+A new Pod and worker, the same DGD, frontend, checkpoint, node and GPU pair.
+================================================================
+
+$ cat recovery-summary.txt
+REHEARSAL / SIMULATED IDENTITIES
+RESOURCE                    RECOVERY
+Worker Pod                  replaced
+DGD / frontend / Service    unchanged
+Checkpoint                  unchanged
+Node / GPU pair             unchanged
+
+Full identity proof: recovery-proof.json
+
+Step finished in 0.0s
+
+Next: 4/4  Use the recovered service
+
+================================================================
+4/4  Use the recovered service
+Submit a fresh coding request through the unchanged HTTP frontend.
+================================================================
+
+$ kubectl port-forward -n dynamo-ft-snapshot-demo-7de8c1a6d4 service/ft-snapshot-frontend 18004:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error --no-buffer --max-time 180 -H 'Content-Type: application/json' --data-binary @request.json http://127.0.0.1:18004/v1/chat/completions
+def add(a, b):
+    return a + b
+
+Dynamo decode worker: simulated-replacement-worker
+Fresh coding inference through the unchanged frontend. No in-flight request was restored.
+
+Step finished in 0.0s
+
+Demo complete. The service stays running.
+
+From the repository root:
+
+Resume: ./demos/04-snapshot/run-dgd.sh --run results/demo-04-dgd-projection-20261105-a1 --rehearsal
+Cleanup: ./demos/04-snapshot/run-dgd.sh cleanup --run results/demo-04-dgd-projection-20261105-a1 --rehearsal

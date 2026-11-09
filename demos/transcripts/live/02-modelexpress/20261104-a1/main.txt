@@ -1,0 +1,220 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress
+
+Dynamo workshop · ModelExpress peer weights
+LIVE CLUSTER
+Run: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress
+
+Preparation
+
+Next: 1/4  Enable ModelExpress
+
+================================================================
+1/4  Enable ModelExpress
+Use the MX loader and discover a compatible source that already holds the weights.
+================================================================
+Prepared source -> MX metadata discovery -> new worker
+Weights move directly over NIXL/EFA. Compiler-artifact transfer is disabled.
+
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress/modelexpress-settings.yaml /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress/worker-changes.diff
+# MX settings excerpt; full configuration is in peer.yaml
+env:
+- name: MX_METADATA_BACKEND
+  value: k8s-service
+- name: MX_K8S_SERVICE_PATTERN
+  value: mx-source
+- name: MX_NIXL_BACKEND
+  value: LIBFABRIC
+- name: MX_ARTIFACT_TRANSFER
+  value: '0'
+--- storage loader
++++ MX peer loader
+@@ -24,6 +24,8 @@
+ - nemotron_v3
+ - --enforce-eager
+ - --language-model-only
++- --load-format
++- modelexpress
+ env:
+ - name: HF_HOME
+   value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+
+The same model, engine settings, target node, and transport setup are used in both target arms.
+
+Step finished in 0.0s
+
+Next: 2/4  Start a new worker
+
+================================================================
+2/4  Start a new worker
+Load peer weights over NIXL/EFA, then finish engine initialization and compare startup.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s apply -f /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress/peer.yaml
+Starting the service. Phase timing updates in the resource pane.
+
+  Pod startup      running     4.4s
+  Model loading    pending        —
+  Engine init      pending        —
+  Readiness        pending        —
+
+  Pod startup      done       11.0s
+  Model loading    pending        —
+  Engine init      pending        —
+  Readiness        pending        —
+
+  Pod startup      done       11.0s
+  Model loading    running     3.9s
+  Engine init      pending        —
+  Readiness        pending        —
+
+  Pod startup      done       11.0s
+  Model loading    done       45.7s
+  Engine init      running     8.2s
+  Readiness        pending        —
+
+  Pod startup      done       11.0s
+  Model loading    done       53.6s
+  Engine init      done       82.3s
+  Readiness        running     7.4s
+
+  Pod startup      done       11.0s
+  Model loading    done       53.6s
+  Engine init      done       82.3s
+  Readiness        done       39.7s
+
+Startup timing
+  Kubernetes worker Ready timestamp: 250.0s since apply
+  worker_and_frontend_ready           257.0s
+
+Engine log subphases (slowest TP rank):
+  model_loading                       53.58s
+  engine_initialization               82.28s
+  warmup                           not logged
+  Compilation / CUDA graphs        disabled for this demo
+  Startup proceeds without presenter pauses; readiness is polled every 5 seconds.
+  Logged subphases can overlap; do not sum them.
+  Checkpoint already staged; external download is excluded.
+  This introductory profile skips torch.compile and CUDA graphs (eager execution).
+
+Storage versus peer startup
+Boundary                        Storage Peer weights
+Deployment to Ready              459.4s       250.0s
+Model loading                    263.8s        53.6s
+Engine initialization             82.2s        82.3s
+Readiness speedup: 1.84x (one matched pair)
+One storage/peer pair; source idle; checkpoint staged on EFS; page cache uncontrolled. Only this same-profile pair is compared. Tensor-copy time is a subphase of full startup.
+
+Step finished in 261.1s
+
+Next: 3/4  Follow the weight transfer
+
+================================================================
+3/4  Follow the weight transfer
+Check both TP ranks, the transport, and whether loading fell back to storage.
+================================================================
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress/transfer-excerpts.log
+2026-11-04T08:05:51.226151336Z (Worker_TP1 pid=1912) INFO 11-04 08:05:51 [__init__.py:89] [Worker 1] Trying strategy: rdma
+2026-11-04T08:05:51.237516975Z (Worker_TP0 pid=1617) INFO 11-04 08:05:51 [__init__.py:89] [Worker 0] Trying strategy: rdma
+2026-11-04T08:06:28.595936687Z I1104 08:06:28.595769    1617 libfabric_rail_manager.cpp:232] Created 8 rails using provider=efa
+2026-11-04T08:06:28.644158827Z 2026-11-04 08:06:28 NIXL INFO    _api.py:405 Backend LIBFABRIC was instantiated
+2026-11-04T08:06:28.707869429Z I1104 08:06:28.707745    1912 libfabric_rail_manager.cpp:232] Created 8 rails using provider=efa
+2026-11-04T08:06:28.745784354Z 2026-11-04 08:06:28 NIXL INFO    _api.py:405 Backend LIBFABRIC was instantiated
+2026-11-04T08:06:30.332257911Z (Worker_TP0 pid=1617) INFO 11-04 08:06:30 [rdma_strategy.py:553] [Worker 0] Receiving 1413 tensors from source (P2P)
+2026-11-04T08:06:31.973823904Z (Worker_TP0 pid=1617) INFO 11-04 08:06:31 [nixl_transfer.py:972] Transfer complete: 1413 tensors, 39.22 GB in 1.64s (191.1 Gbps)
+2026-11-04T08:06:35.547327967Z (Worker_TP1 pid=1912) INFO 11-04 08:06:35 [rdma_strategy.py:553] [Worker 1] Receiving 1413 tensors from source (P2P)
+2026-11-04T08:06:39.850356099Z (Worker_TP1 pid=1912) INFO 11-04 08:06:39 [nixl_transfer.py:972] Transfer complete: 1413 tensors, 39.22 GB in 4.30s (72.9 Gbps)
+{
+  "transfers": [
+    {
+      "rank": 0,
+      "tensors": 1413,
+      "gigabytes": 39.22,
+      "seconds": 1.64
+    },
+    {
+      "rank": 1,
+      "tensors": 1413,
+      "gigabytes": 39.22,
+      "seconds": 4.3
+    }
+  ],
+  "backend": "LIBFABRIC",
+  "provider": "efa",
+  "gigabytes_total": 78.44,
+  "slowest_rank_copy_seconds": 4.3,
+  "simulated": false,
+  "source": {
+    "uid": "ec919141-b93b-44d5-83f3-1b464c78ae3d",
+    "node": "kubecon-nke-site-cp-0124"
+  },
+  "target_node": "kubecon-nke-site-cp-0198"
+}
+Tensor-copy duration is inside model loading; the new engine still has to initialize.
+
+Step finished in 1.4s
+
+Next: 4/4  Use the new worker
+
+================================================================
+4/4  Use the new worker
+Send a request through the destination frontend.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-6273f37b-demo service/demo-inference-frontend 18001:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18001/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793779737,"owned_by":"nvidia","context_window":1048576}]}
+
+Request body:
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a short Python function add(a, b) that returns their sum. Reply with code only."
+    }
+  ],
+  "max_completion_tokens": 64,
+  "temperature": 0,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  }
+}
+
+
+$ curl --fail --silent --show-error --max-time 180 http://127.0.0.1:18001/v1/chat/completions -H 'Content-Type: application/json' --data-binary @/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress/request.json
+{
+  "id": "chatcmpl-9d45343d-c90f-4602-b126-47f3e3c071b2",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "content": "def add(a, b):\n    return a + b",
+        "refusal": null,
+        "role": "assistant"
+      },
+      "finish_reason": "stop",
+      "logprobs": null
+    }
+  ],
+  "created": 1793779738,
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "object": "chat.completion",
+  "usage": {
+    "prompt_tokens": 36,
+    "completion_tokens": 12,
+    "total_tokens": 48,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  }
+}
+
+Step finished in 7.0s
+
+Demo complete. The service stays running.
+
+Resume: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/02-modelexpress/run.sh --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress
+Cleanup: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/02-modelexpress/run.sh cleanup --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-demo-live-20261104-a1/02-modelexpress

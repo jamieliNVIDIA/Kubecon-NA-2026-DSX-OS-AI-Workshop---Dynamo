@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "audited_at": "2026-11-05T19:47:02.563664+00:00",
+  "namespace": "dynamo-ft-takehome-9812d1b965",
+  "namespace_uid": "6ebf8c2c-b3da-4700-a770-b5ff1a695a9b",
+  "job_uid": "31954d7d-7d51-4c96-9d65-ceedb677dcf9",
+  "pod_uid": "a3b5163b-52fe-472a-9b55-cd8a51fe3907",
+  "image": "nvcr.io/nvidia/ai-dynamo/vllm-runtime-nightly@sha256:c186817f4669d615d2b14bee5a6119d35d4d0fe186fdfab69920da8de9d09337",
+  "observed_download_uid": 0,
+  "result": {
+    "status": "passed",
+    "scope": "CPU cache preparation and metadata resolution; no GPU serving proof",
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+    "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+    "offline": "1"
+  },
+  "files_sha256": {
+    "qualification-spec.json": "71af896d701f9b2a5fd2d8e32909e58950e1c0ee6c2a9352b185c9984e2c6a47",
+    "cache-job-observed.json": "ec63f4a59a8f6fc86749275015eba8ca9a5ec58eb232a9e9f37cec80ec2006f0",
+    "cache-job-pods.json": "5742a482f727d463d938b044df98ebfe565951623857b7e812e0685e18db801d",
+    "cache-job.log": "695ed6b2c563f05959b78ed766d1cde5bc8fd6793a5cc65d57af3bc9f608171b"
+  },
+  "scope": "Independent offline validation of root-executed generated Job on pre-existing cached revision. Positive shard inventory, exact metadata hashes and actual offline Dynamo resolution passed. No fresh weight download, GPU kernels or serving qualification.",
+  "dra_bundle_dry_runs": 8,
+  "operator_runtime_override": "1.7.0",
+  "expected_dynamo_package_version": "1.7.0.dev20261103",
+  "gpu_serving_qualified": false
+}

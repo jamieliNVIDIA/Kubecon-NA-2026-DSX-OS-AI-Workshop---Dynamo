@@ -1,0 +1,45 @@
+{
+  "status": "not-qualified",
+  "checked_at": "2026-11-05T02:10:05.747353+00:00",
+  "run": "results/workshop-kvcr-guard-20261104-a3",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "kvcr_revision": "dd5df02c076dfee4bb2cdc39bef11164f9dcaec5",
+  "adapter_revision": "a5db4c9ff58a0ec4dc20594ba5cea9f776dcd693",
+  "topology": "Two TP2 engines on separate GPU pairs on one node (cp-0124)",
+  "serving": "passed",
+  "host_offload": {
+    "a": {
+      "local_fill_blocks": 6.0,
+      "kvcr_write_bytes": 103809024.0,
+      "remote_deliver_blocks": 0.0,
+      "external_kv_tokens": 0.0
+    },
+    "b": {
+      "local_fill_blocks": 6.0,
+      "kvcr_write_bytes": 103809024.0,
+      "remote_deliver_blocks": 0.0,
+      "external_kv_tokens": 0.0
+    }
+  },
+  "peer_reuse": "failed",
+  "reason": "Super VL hybrid cache events rejected with NonMainAttentionKind; state-agent quarantines CacheOwner residency before peer reuse.",
+  "fault_injected": false,
+  "guard_recovery": "not-tested",
+  "upstream_fix": {
+    "url": "https://github.com/ai-dynamo/dynamo/pull/15535",
+    "commit": "8bf042187a8f3f4224e608b1045db14e5f712f30",
+    "included_in_runtime_source": false,
+    "companion_vllm_pr": "https://github.com/vllm-project/vllm/pull/59703"
+  },
+  "cleanup": "passed",
+  "evidence_sha256": {
+    "qualification-result.json": "ff30c91d3118b91152d2d3e4fc40f5c61e4aff769079af10b6ebec9024669098",
+    "cleanup-proof.json": "a949d298e79af077026adbe7cda6ba01f36793c6f46faca8c76bbbaac09eb001",
+    "final-cleanup-proof.json": "1efcf1f16b0a2aa9e1c7b6d1cab03bbf049d4ecdf804de8c7e966beb26aaec4f",
+    "native-runtime-compatibility.json": "f0974598ab6eb7740884b1097af8095afbda594d925483fa1d4605e8f0d491d6",
+    "cpu-821ee03e0d12.json": "6282f2ac88a54782a7e36867af2859987ad2a1f338aae0b44db169465fc1998e",
+    "upstream-fix-pr-metadata.json": "3d4d542508718b94227181cbe4f493078de5fda1e07245a4bbb5bd264e3458ae"
+  }
+}

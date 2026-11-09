@@ -1,0 +1,1460 @@
+<meta charset="utf-8">
+<title>Deploy and tune Dynamo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 16:9 full-viewport slides; one visual per slide; right-arrow walks build steps before advancing. Light by default, dark via T. */
+:root{
+  color-scheme:light;
+  --bg:#eef2f1; --surface:#ffffff; --surface2:#f1f4f3; --line:rgba(16,24,28,.13);
+  --text:#12191c; --dim:#56636a;
+  --req:#c27400; --disc:#4a74e8; --evt:#8a5cf0; --gpu:#4a7a00; --cpu:#1597b3;
+  --warn:#b08400; --bad:#e0353b; --ok:#4a7a00;
+  --green:#5e9a00; --green-fill:#76b900; --green-ink:#4a7a00; --tint:rgba(118,185,0,.12);
+  --shadow:0 1px 2px rgba(16,24,28,.06),0 8px 24px rgba(16,24,28,.08);
+  --slidebg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.12),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.10),transparent 45%),linear-gradient(180deg,#f9fbfa,#eef2f1);
+  --herobg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.18),transparent 50%),radial-gradient(ellipse at 65% 72%,rgba(62,199,224,.16),transparent 50%),linear-gradient(180deg,#f9fbfa,#eef2f1);
+  --display:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --body:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:JetBrains Mono,ui-monospace,Menlo,Consolas,monospace;
+}
+html.dark{
+  color-scheme:dark;
+  --bg:#07090a; --surface:#11171a; --surface2:#172025; --line:rgba(255,255,255,.12);
+  --text:#e8eef0; --dim:#8f9ca3;
+  --req:#f5a623; --disc:#7aa2ff; --evt:#b48cff; --gpu:#76b900; --cpu:#3ec7e0;
+  --warn:#ffd166; --bad:#ff5a5f; --ok:#76b900;
+  --green:#76b900; --green-fill:#76b900; --green-ink:#9fd44a; --tint:rgba(118,185,0,.14);
+  --shadow:0 2px 4px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.22);
+  --slidebg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.10),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.08),transparent 45%),linear-gradient(180deg,#080b0c,#06080a);
+  --herobg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.14),transparent 50%),radial-gradient(ellipse at 65% 72%,rgba(62,199,224,.12),transparent 50%),linear-gradient(180deg,#080b0c,#06080a);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--body)}
+body{padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+.deck{position:relative;width:100%;height:100%}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(10px,2.2cqh,26px);
+  padding:clamp(18px,5cqh,64px) max(16px,clamp(18px,5cqw,88px)) clamp(54px,9cqh,90px);
+  opacity:0;pointer-events:none;transition:opacity .45s ease,transform .45s ease;transform:translateX(30px);overflow:hidden}
+.slide.active{opacity:1;pointer-events:auto;transform:none}
+@media (prefers-reduced-motion:reduce){.slide,[data-s],[data-only],.anim{transition:none!important;animation:none!important}}
+
+/* type */
+.kicker{font-family:var(--mono);font-size:clamp(11px,1.4cqh,14px);letter-spacing:.16em;text-transform:uppercase;color:var(--cpu)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,8.5cqh,104px);line-height:.98;letter-spacing:-.025em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,5cqh,54px);line-height:1.05;letter-spacing:-.015em;text-wrap:balance}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(16px,2.4cqh,26px)}
+p,li{font-size:clamp(14px,2.2cqh,22px);line-height:1.45}
+.dim{color:var(--dim)}
+.mono,code{font-family:var(--mono)}
+code{font-size:.9em;background:var(--surface2);padding:1px 6px;border-radius:4px}
+.head{display:flex;flex-direction:column;gap:6px;max-width:1500px}
+.body{flex:0 1 auto;min-height:0;display:flex;gap:clamp(14px,2.5cqw,36px);align-items:center;max-width:1600px;width:100%}
+.body.col{flex-direction:column;align-items:stretch}
+
+/* svg */
+.viz{width:100%;min-width:0;flex:1 1 auto}
+.viz svg{display:block;width:100%;height:auto;max-height:60cqh}
+svg text{font-family:var(--body);fill:var(--text)}
+svg .h{font-family:var(--display);font-weight:700;font-size:20px}
+svg .hs{font-family:var(--display);font-weight:700;font-size:17px}
+svg .s{font-size:14px;fill:var(--dim)}
+svg .m{font-family:var(--mono);font-size:12.5px;fill:var(--dim)}
+svg .lb{font-size:13.5px;font-weight:600}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .cpu{fill:color-mix(in srgb,var(--cpu) 12%,var(--surface));stroke:var(--cpu);stroke-width:1.8}
+svg .gpu{fill:color-mix(in srgb,var(--gpu) 12%,var(--surface));stroke:var(--gpu);stroke-width:1.8}
+svg .py{fill:color-mix(in srgb,var(--warn) 9%,var(--surface));stroke:var(--warn);stroke-width:1.5}
+svg .hot{fill:color-mix(in srgb,var(--bad) 20%,var(--surface));stroke:var(--bad);stroke-width:1.8}
+svg .disc-f{fill:color-mix(in srgb,var(--disc) 12%,var(--surface));stroke:var(--disc);stroke-width:1.6}
+svg .evt-f{fill:color-mix(in srgb,var(--evt) 12%,var(--surface));stroke:var(--evt);stroke-width:1.6}
+svg .pod{fill:none;stroke:var(--dim);stroke-width:1.4;stroke-dasharray:7 6}
+svg .a-req{stroke:var(--req);stroke-width:3.2;fill:none}
+svg .a-disc{stroke:var(--disc);stroke-width:2.2;fill:none;stroke-dasharray:6 5}
+svg .a-evt{stroke:var(--evt);stroke-width:2.2;fill:none;stroke-dasharray:6 5}
+svg .a-ink{stroke:var(--text);stroke-width:2;fill:none}
+svg .a-gpu{stroke:var(--gpu);stroke-width:3.2;fill:none}
+svg .a-dim{stroke:var(--dim);stroke-width:1.3;fill:none}
+svg .flow{stroke-dasharray:11 8;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-19}}
+svg .c-req{fill:var(--req)} svg .c-disc{fill:var(--disc)} svg .c-evt{fill:var(--evt)} svg .c-gpu{fill:var(--gpu)}
+svg .c-cpu{fill:var(--cpu)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-ok{fill:var(--ok)} svg .c-ink{fill:var(--text)}
+
+/* build steps */
+[data-s],[data-only]{opacity:0;transition:opacity .35s ease}
+[data-s].on,[data-only].on{opacity:1}
+.stack{display:grid}.stack>*{grid-area:1/1}
+
+/* controls */
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.modes button{font:600 clamp(13px,1.8cqh,17px) var(--body);color:var(--text);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:7px 16px;cursor:pointer}
+.modes button[aria-pressed="true"]{border-color:var(--req);background:color-mix(in srgb,var(--req) 16%,var(--surface))}
+.modes button:focus-visible,.navbtn:focus-visible{outline:2px solid var(--cpu);outline-offset:2px}
+
+/* cards & chips */
+.cards{display:grid;gap:clamp(10px,1.6cqw,20px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(12px,2cqh,22px);display:flex;flex-direction:column;gap:6px;min-width:0}
+.card p{font-size:clamp(13px,1.9cqh,19px);color:var(--dim)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:clamp(11px,1.6cqh,15px);padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);white-space:nowrap}
+.yes{color:var(--ok)} .no{color:var(--bad)} .part{color:var(--warn)}
+
+/* stats row */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat{border-top:2px solid var(--line);padding-top:8px;min-width:0}
+.stat b{display:block;font-family:var(--display);font-size:clamp(18px,3cqh,32px)}
+.stat span{font-size:clamp(12px,1.7cqh,17px);color:var(--dim)}
+
+/* split slide */
+.split{display:grid;grid-template-columns:1fr 0px 1fr;width:100%;max-width:1400px;margin:0 auto;transition:grid-template-columns .6s ease}
+.slide[data-step="1"] .split{grid-template-columns:1fr clamp(120px,14cqw,220px) 1fr}
+.half{border:2px solid var(--warn);padding:clamp(14px,2.4cqh,26px);display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .5s,border-radius .5s,background .5s;background:var(--surface)}
+.half.l{border-right:none;border-radius:14px 0 0 14px}
+.half.r{border-left:none;border-radius:0 14px 14px 0}
+.slide[data-step="1"] .half.l{border:2px solid var(--cpu);border-radius:14px;background:color-mix(in srgb,var(--cpu) 8%,var(--surface))}
+.slide[data-step="1"] .half.r{border:2px solid var(--gpu);border-radius:14px;background:color-mix(in srgb,var(--gpu) 8%,var(--surface))}
+.half .chips{display:flex;flex-direction:column;gap:8px}
+.half .chip{white-space:normal;font-size:clamp(12px,1.9cqh,18px);padding:7px 12px;border-radius:8px}
+.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;gap:6px;text-align:center}
+.mid .line{width:100%;height:3px;background:var(--text);position:relative}
+.mid .line::before,.mid .line::after{content:"";position:absolute;top:-6px;border:7.5px solid transparent}
+.mid .line::before{left:-4px;border-right-color:var(--text)}
+.mid .line::after{right:-4px;border-left-color:var(--text)}
+.mid small{font-family:var(--mono);font-size:clamp(11px,1.6cqh,15px);color:var(--dim)}
+.splitlabel{font-family:var(--mono);font-size:clamp(12px,1.7cqh,16px);color:var(--dim)}
+
+/* lifecycle grid */
+.lanes{display:grid;grid-template-columns:clamp(90px,10cqw,150px) repeat(6,1fr);gap:6px;width:100%}
+.lanes .ln{font-family:var(--mono);font-size:clamp(11px,1.6cqh,15px);color:var(--dim);display:flex;align-items:center}
+.lanes .hd{font-family:var(--mono);font-size:clamp(11px,1.5cqh,14px);color:var(--dim);text-align:center;padding-bottom:4px}
+.lanes .cell{min-height:clamp(46px,8cqh,84px);border-radius:8px;background:color-mix(in srgb,var(--surface) 60%,transparent);border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;padding:6px}
+.lanes .ev{font-size:clamp(11px,1.65cqh,16px);line-height:1.25;text-align:center;padding:6px 8px;border-radius:7px;background:var(--surface2);border:1px solid var(--line);width:100%}
+.lanes .ev.now{border-color:var(--req);box-shadow:0 0 0 2px color-mix(in srgb,var(--req) 35%,transparent)}
+.ev.k{color:var(--dim)} .ev.sc{border-left:3px solid var(--cpu)} .ev.en{border-left:3px solid var(--gpu)} .ev.rt{border-left:3px solid var(--disc)}
+.caption{font-size:clamp(15px,2.3cqh,24px);min-height:2.6em}
+
+/* failure slide */
+.slide[data-step="1"] .eng-box{stroke:var(--bad);fill:color-mix(in srgb,var(--bad) 14%,var(--surface))}
+.slide[data-step="2"] .sc-box{stroke:var(--bad);fill:color-mix(in srgb,var(--bad) 14%,var(--surface))}
+.slide[data-step="3"] .eng-box{stroke:var(--warn);fill:color-mix(in srgb,var(--warn) 12%,var(--surface))}
+.slide[data-step="1"] .route,.slide[data-step="2"] .route,.slide[data-step="3"] .route{stroke:var(--bad);stroke-dasharray:4 6}
+.outcome{list-style:none;display:flex;flex-direction:column;gap:10px}
+.outcome li{padding-left:22px;position:relative;font-size:clamp(14px,2.1cqh,21px)}
+.outcome li::before{content:"";position:absolute;left:0;top:.5em;width:10px;height:10px;border-radius:50%;background:var(--dim)}
+.outcome li.g::before{background:var(--ok)} .outcome li.b::before{background:var(--bad)} .outcome li.w::before{background:var(--warn)}
+
+/* perf sim */
+.sim{display:flex;flex-direction:column;gap:10px;width:100%}
+.simctl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:clamp(13px,1.9cqh,18px)}
+.simctl input{width:min(380px,60cqw);accent-color:var(--req)}
+.badge{font-family:var(--mono);font-size:clamp(11px,1.5cqh,14px);padding:3px 9px;border-radius:6px;border:1px solid var(--warn);color:var(--warn)}
+
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(13px,2cqh,20px)}
+th,td{padding:clamp(6px,1.2cqh,12px) 12px;border-bottom:1px solid var(--line);text-align:left}
+th{font-family:var(--mono);font-size:clamp(11px,1.5cqh,14px);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:500}
+td:first-child{font-family:var(--display);font-weight:700}
+td.c{text-align:center;font-family:var(--mono);font-weight:600}
+
+pre{font-family:var(--mono);font-size:clamp(11px,1.75cqh,17px);line-height:1.55;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:clamp(10px,1.8cqh,20px);overflow:auto;color:var(--text)}
+pre .cm{color:var(--dim)} pre .k{color:var(--cpu)} pre .g{color:var(--gpu)}
+
+.phases{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.phase{border-top:4px solid var(--line);padding-top:8px;font-size:clamp(12px,1.8cqh,17px)}
+.phase b{display:block;font-family:var(--mono);font-size:clamp(11px,1.5cqh,14px);color:var(--dim)}
+.phase.cur{border-top-color:var(--req)}
+
+/* chrome */
+.progress{position:fixed;left:0;bottom:0;height:4px;background:var(--req);transition:width .4s ease;z-index:50}
+.chrome{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;align-items:center;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));z-index:60;pointer-events:none}
+.chrome>*{pointer-events:auto}
+.hint{font-family:var(--mono);font-size:12px;color:var(--dim);opacity:.7}
+.navs{display:flex;gap:6px;align-items:center}
+.navbtn{font:500 13px var(--mono);height:34px;min-width:34px;padding:0 10px;color:var(--dim);background:color-mix(in srgb,var(--surface) 80%,transparent);border:1px solid var(--line);border-radius:7px;cursor:pointer}
+.navbtn:hover{color:var(--text)}
+.pg{font-family:var(--mono);font-size:12px;color:var(--dim);min-width:58px;text-align:center}
+.stepdots{display:flex;gap:4px;margin-right:6px}
+.stepdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.stepdots i.on{background:var(--req)}
+.notes-panel{visibility:hidden;position:fixed;left:50%;transform:translate(-50%,calc(100% + 80px));bottom:56px;width:min(960px,calc(100% - 32px));max-height:38cqh;overflow:auto;
+  background:color-mix(in srgb,var(--surface2) 96%,transparent);border:1px solid var(--line);border-radius:12px;padding:16px 20px;z-index:70;transition:transform .3s ease;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.notes-panel.open{transform:translate(-50%,0);visibility:visible}
+.notes-panel h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cpu);margin-bottom:8px}
+.notes-panel li,.notes-panel p{font-size:15px;line-height:1.5;color:var(--text)}
+.notes-panel ul{padding-left:18px;display:flex;flex-direction:column;gap:4px}
+aside.notes{display:none}
+
+@container (max-width:900px){
+  .body{flex-direction:column;align-items:stretch}
+  .stats{grid-template-columns:1fr}
+  .hint{display:none}
+  .lanes{grid-template-columns:70px repeat(6,minmax(70px,1fr));overflow-x:auto}
+}
+
+/* ===== Unified Dynamo deck look (matches the slides on ai-dynamo.github.io) ===== */
+html,body{background:var(--bg)}
+.slide{background:var(--slidebg)}
+.slide:first-child{background:var(--herobg)}
+h1{font-weight:800;letter-spacing:-.035em}
+h2{font-weight:700;letter-spacing:-.025em}
+h3{font-weight:700;letter-spacing:-.01em}
+.kicker{color:var(--green-ink);font-weight:500;display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--green-fill);flex:none}
+code{background:var(--tint);color:var(--green-ink);border-radius:6px}
+.card{border-radius:16px;box-shadow:var(--shadow)}
+.chip{background:var(--surface)}
+.modes button{border-width:1px;box-shadow:0 1px 2px rgba(16,24,28,.05)}
+.modes button:hover{border-color:var(--green)}
+.modes button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 0 0 0 1px var(--green)}
+.half{box-shadow:var(--shadow)}
+.lanes .ev{background:var(--surface);box-shadow:0 1px 2px rgba(16,24,28,.06)}
+.lanes .ev.now{border-color:var(--green);box-shadow:0 0 0 2px color-mix(in srgb,var(--green) 35%,transparent)}
+pre{background:#0d1316;color:#cdd6d3;border-color:rgba(255,255,255,.08);box-shadow:var(--shadow)}
+pre .cm{color:#7a878d} pre .k{color:#3ec7e0} pre .g{color:#9fd44a}
+.phase.cur{border-top-color:var(--green-fill)}
+.simctl input{accent-color:var(--green)}
+.stepdots i.on{background:var(--green-fill)}
+td.c,.stat b{font-variant-numeric:tabular-nums}
+.progress{height:3px;background:linear-gradient(90deg,#76b900,#3ec7e0)}
+.pg{font-size:13px;opacity:.8}
+.navbtn{height:40px;min-width:40px;padding:0 12px;border-radius:10px;font:500 13px var(--body);background:rgba(255,255,255,.88);border-color:rgba(16,24,28,.18);backdrop-filter:blur(8px)}
+.navbtn:hover{border-color:var(--green)}
+html.dark .navbtn{background:rgba(20,28,32,.75);border-color:rgba(255,255,255,.16)}
+.notes-panel{background:var(--surface);box-shadow:var(--shadow)}
+.notes-panel h4{color:var(--green-ink)}
+.modes button:focus-visible,.navbtn:focus-visible{outline-color:var(--green)}
+
+/* ===== Fill the screen: title at the top, content uses the space below it ===== */
+.slide{justify-content:flex-start;padding-top:clamp(28px,6.5cqh,76px);padding-bottom:clamp(64px,10cqh,96px);gap:clamp(14px,2.6cqh,30px)}
+.slide>.head{flex:none}
+.slide>.body{flex:1 1 auto;min-height:0;max-width:none;align-items:center;justify-content:center}
+.slide>.body.col{justify-content:center}
+.viz{align-self:stretch;display:flex;align-items:center;justify-content:center;min-height:0}
+.viz svg{height:100%;max-height:none}
+.body.col>.viz{flex:1 1 0}
+/* text-led slides: larger type so cards fill the screen without empty boxes */
+.card{padding:clamp(16px,2.8cqh,32px);gap:clamp(8px,1.3cqh,14px)}
+.card h3{font-size:clamp(18px,3cqh,32px)}
+.card p,.card li{font-size:clamp(15px,2.35cqh,24px)}
+.card .chip{font-size:clamp(12px,1.8cqh,17px)}
+table{font-size:clamp(14px,2.4cqh,24px)}
+th{font-size:clamp(12px,1.7cqh,16px)}
+pre{font-size:clamp(12px,2.1cqh,20px)}
+.phase{font-size:clamp(13px,2.1cqh,20px)}
+.caption{font-size:clamp(16px,2.6cqh,26px)}
+.outcome li{font-size:clamp(15px,2.4cqh,24px)}
+.lanes .cell{min-height:clamp(54px,10cqh,104px)}
+.lanes .ev{font-size:clamp(12px,1.9cqh,18px)}
+/* card rows: equal-height cards at natural height, centred in the space below the title */
+.slide>.body[style*="align-items:stretch"]{flex:0 0 auto;margin:auto 0}
+/* slide 14: keep the phase strip right under the tables; centre the pair */
+.slide>.body[style*="align-items:stretch"]:has(+.phases){margin-bottom:0}
+.slide>.phases{margin-bottom:auto}
+/* slides 12-15: text-led, so type scales up to fill the screen at natural height */
+.slide.txt{gap:clamp(18px,4cqh,48px)}
+.slide.txt>.body{gap:clamp(16px,2cqw,32px)}
+.slide.txt .card{padding:clamp(20px,3.6cqh,44px) clamp(20px,2.2cqw,40px);gap:clamp(10px,1.8cqh,20px)}
+.slide.txt .card h3{font-size:clamp(20px,4cqh,42px)}
+.slide.txt .card p{font-size:clamp(16px,2.9cqh,30px)}
+.slide.txt .outcome{gap:clamp(10px,2cqh,22px)}
+.slide.txt .outcome li{font-size:clamp(16px,2.9cqh,30px);padding-left:28px}
+.slide.txt .outcome li::before{width:12px;height:12px}
+.slide.txt .chip{font-size:clamp(13px,2.2cqh,22px);padding:6px 14px}
+.slide.txt table{font-size:clamp(16px,3.2cqh,32px)}
+.slide.txt th{font-size:clamp(12px,2cqh,19px)}
+.slide.txt th,.slide.txt td{padding:clamp(8px,2cqh,20px) 14px}
+.slide.txt pre{font-size:clamp(14px,2.8cqh,28px);padding:clamp(16px,3.4cqh,40px)}
+.slide.txt .phases{gap:16px}
+.slide.txt .phase{font-size:clamp(14px,2.6cqh,26px);padding-top:12px}
+.slide.txt .phase b{font-size:clamp(12px,1.9cqh,18px)}
+.slide.txt p.dim{font-size:clamp(13px,2cqh,19px)!important}
+.slide.txt td:first-child{white-space:nowrap}
+.slide.txt pre{font-size:clamp(12px,2.25cqh,23px);flex:1.9 1 0!important;min-width:0}
+.slide.txt pre+.card{flex:1 1 0!important}
+/* perf slide: Python roofline chart */
+.body.pl{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(16px,2cqw,32px);align-items:stretch}
+.pl-chart{gap:10px!important;justify-content:center}
+.pl-top{display:flex;align-items:center;gap:16px;font-size:clamp(15px,2.2cqh,22px)}
+.pl-k{font-weight:600}
+.pl-top input{flex:1;accent-color:var(--green)}
+.pl-top b{font:700 clamp(22px,3.6cqh,36px) var(--display);color:var(--gpu);min-width:3.4em;text-align:right;font-variant-numeric:tabular-nums}
+.pl-leg{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:clamp(13px,1.9cqh,18px);color:var(--dim)}
+.pl-leg i{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:8px;vertical-align:4px}
+.pl-leg i.sc{background:var(--gpu)}.pl-leg i.ip{background:var(--req)}
+.pl-side{display:flex;flex-direction:column;gap:clamp(14px,2cqh,24px)}
+.pl-c{flex:1;justify-content:center}
+.pl-c h3{font-size:clamp(18px,3cqh,30px)}
+.pl-c .outcome li{font-size:clamp(15px,2.4cqh,24px)}
+.pl-minor{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
+.pl-minor span{font:600 clamp(11px,1.6cqh,14px) var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.pl-minor i,.pl-gate i{font-style:normal;font-size:clamp(12px,1.9cqh,18px);padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);color:var(--dim)}
+.pl-chk{list-style:none;display:flex;flex-direction:column;gap:clamp(6px,1.2cqh,12px)}
+.pl-chk li{font-size:clamp(15px,2.3cqh,23px);padding-left:34px;position:relative}
+.pl-chk li::before{content:"";position:absolute;left:0;top:.15em;width:22px;height:22px;border-radius:6px;border:2px solid var(--disc)}
+/* slide 13 legend */
+.ct-leg{display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,2cqw,40px);align-items:start;font-size:clamp(14px,2.2cqh,22px)}
+.ct-leg>div{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.ct-leg i{display:inline-block;width:26px;height:4px;border-radius:2px}
+.ct-leg i.ink{background:var(--text)}.ct-leg i.evt{background:var(--evt)}
+.ct-leg span{color:var(--dim)}
+.ct-leg em{font-style:normal;font:500 clamp(12px,1.8cqh,17px) var(--mono);padding:4px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--evt) 40%,transparent);background:color-mix(in srgb,var(--evt) 8%,var(--surface));color:var(--evt)}
+/* slide 14 timeline */
+.tl4{display:grid;grid-template-columns:repeat(4,1fr);position:relative;width:100%;padding-top:12px}
+.tl4::before{content:"";position:absolute;left:12px;right:12px;top:20px;height:3px;background:var(--line)}
+.tl4-i{position:relative;display:flex;flex-direction:column;gap:4px;padding-right:12px}
+.tl4-i i{width:19px;height:19px;border-radius:50%;background:var(--surface);border:3px solid var(--line);margin-bottom:6px;z-index:1}
+.tl4-i.now i{background:var(--green-fill);border-color:var(--green-fill);box-shadow:0 0 0 5px var(--tint)}
+.tl4-i b{font-size:clamp(15px,2.5cqh,25px)}
+.tl4-i span{font-size:clamp(13px,1.9cqh,19px);color:var(--dim)}
+.gp-l{font:600 clamp(11px,1.6cqh,15px) var(--mono);letter-spacing:.12em;text-transform:uppercase;margin-top:6px}
+/* ===== Vertical balance: content sits centred between the title and the footer ===== */
+.slide{gap:clamp(18px,3.6cqh,40px);padding-bottom:clamp(40px,5cqh,52px)}
+.slide>.body{flex:0 1 auto;margin-top:auto;margin-bottom:auto;padding-top:clamp(0px,3.4cqh,32px)}
+.slide>.body:has(+.tl4){margin-bottom:0}
+.slide>.tl4{margin-bottom:auto}
+.viz svg{height:auto;max-height:64cqh}
+.body.col>.viz{flex:0 1 auto}
+/* mode buttons: clear separation from the title, sized like the rest of the controls */
+.head>.modes{margin-top:clamp(14px,3cqh,30px);gap:10px}
+.head>.modes button{font-size:clamp(14px,2cqh,19px);padding:9px 20px}
+/* diagrams that share the slide with a row below them stay shorter */
+.body.col:has(>.stack) .viz svg,.body.col:has(>.ct-leg) .viz svg{max-height:52cqh}
+</style>
+
+<style>
+/* ===== KVCR deck ===== */
+.body.col:has(>.stack) .viz svg{max-height:60cqh}
+.slide:first-child h1{font-size:clamp(34px,6.6cqh,78px);line-height:1.06}
+.slide:last-child{background:var(--herobg)}
+.rq-c{gap:10px!important}.rq-c svg{width:100%;height:auto;max-height:24cqh}
+.rq-c h3{font-size:clamp(17px,2.8cqh,28px)}.rq-c p{font-size:clamp(13px,2cqh,19px);margin:0}
+.rq-n{display:grid;place-items:center;width:clamp(30px,4.6cqh,44px);height:clamp(30px,4.6cqh,44px);border-radius:50%;background:var(--green-fill);color:#12191c;font:800 clamp(16px,2.6cqh,24px) var(--display)}
+.tiers{display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,14px);width:100%}
+.tr{display:grid;grid-template-columns:1.1fr 2.4fr .7fr 1.2fr;align-items:center;gap:20px;padding:clamp(12px,2cqh,22px) 22px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.tr.fut{border-style:dashed;box-shadow:none;background:transparent}
+.tr.th{background:none;border:0;box-shadow:none;padding-top:0;padding-bottom:0;font:600 clamp(11px,1.6cqh,15px) var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.tn b{display:block;font-size:clamp(17px,2.8cqh,28px)}.tn span{font-size:clamp(13px,1.9cqh,18px);color:var(--dim)}
+.tn em{font-style:normal;font:500 clamp(11px,1.6cqh,14px) var(--mono);color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 10px;margin-left:10px}
+.tb{display:flex;gap:5px;flex-wrap:wrap}.tb i{width:clamp(14px,2.4cqh,24px);height:clamp(14px,2.4cqh,24px);border-radius:5px;background:var(--line)}.tb i.on{background:var(--green-fill)}
+.own-kvcr,.own-eng{display:inline-block;font-weight:700;font-size:clamp(14px,2.2cqh,21px);padding:6px 16px;border-radius:10px}
+.own-kvcr{background:var(--green-fill);color:#12191c}.own-eng{border:1.5px solid var(--text)}
+.ts{font-size:clamp(14px,2.1cqh,20px);color:var(--dim)}.ts.g{color:var(--green-ink);font-weight:600}
+svg .kvb{fill:var(--green-fill)}svg .kvbt{fill:#12191c}
+.slide[data-step="1"] .kvb,.slide[data-step="2"] .kvb{fill:var(--surface2);stroke:var(--line)}.slide[data-step="1"] .kvbt,.slide[data-step="2"] .kvbt{fill:var(--dim)}
+.slide[data-step="1"] .eng-b,.slide[data-step="2"] .eng-b{stroke:var(--bad);stroke-width:2}
+svg .bk{fill:none;stroke:var(--green);stroke-width:2;stroke-dasharray:6 5}
+.slide[data-step="2"] .bk{fill:var(--green-fill);stroke-dasharray:none}
+.body.res{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:clamp(14px,1.8cqw,28px);align-items:stretch;width:100%}
+.res-g{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.6cqw,22px)}
+.rc{gap:6px!important}.rc b{font:800 clamp(30px,6cqh,62px) var(--display);letter-spacing:-.03em;line-height:1.05}
+.rc h3{font-size:clamp(14px,2.2cqh,21px)}.rc p{margin:0;font-size:clamp(12px,1.7cqh,16px)}
+.res-sub{margin:4px 0 0;font-size:clamp(14px,2.1cqh,20px)}
+.rmg{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,1.8cqw,26px);width:100%}
+.rm{gap:clamp(6px,1cqh,10px)!important;padding:clamp(14px,2.2cqh,24px) clamp(16px,1.6cqw,28px)!important}
+.rm-setup{font:500 clamp(12px,1.8cqh,17px) var(--mono);color:var(--dim)}
+.rm-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:1px solid var(--line);padding-top:clamp(4px,.9cqh,10px)}
+.rm-row span{font-size:clamp(14px,2.2cqh,21px)}
+.rm-row b{font:800 clamp(20px,3.6cqh,36px) var(--display);letter-spacing:-.02em;color:var(--green-ink);white-space:nowrap}
+.rm-row b small{font:600 clamp(12px,1.8cqh,17px) var(--body);color:var(--dim);margin-left:6px;letter-spacing:0}
+.rm-row b i{font-style:normal;margin-right:2px}
+.simwrap{flex:1 1 auto!important;min-height:0;width:100%;margin:0!important;padding-top:0!important}
+.sim-box{position:relative;flex:1 1 auto;min-height:clamp(380px,62cqh,760px);width:100%}
+#simFrame{position:absolute;top:0;left:0;width:1240px;height:660px;border:0;transform-origin:top left;background:transparent}
+html.dark .sim-box{background:#f3f6f5;border-radius:16px;box-shadow:var(--shadow)}
+html.dark #simFrame{padding:0}
+.prim .pfoot{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;width:100%}
+.prim .caption{flex:1;min-height:2.8em}
+.pleg{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:flex-end;max-width:46%;font-size:clamp(12px,1.7cqh,16px);color:var(--dim)}
+.pleg span{display:flex;align-items:center;gap:6px}.pleg i{width:16px;height:16px;border-radius:4px;display:inline-block}
+.pleg i.h{background:var(--green-fill)}.pleg i.d{background:color-mix(in srgb,var(--green-fill) 45%,var(--surface))}.pleg i.t{border:2px dashed var(--green)}.pleg i.f{border:2px dashed var(--bad)}.pleg i.o{background:var(--line)}
+.tag{align-self:flex-start;font:600 clamp(10px,1.5cqh,13px) var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:3px 12px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.tag.prod{background:var(--green-fill);border-color:var(--green-fill);color:#12191c}.tag.rep{border-color:var(--req);color:var(--req)}
+.rchart{gap:10px!important}.rchart h3{font-size:clamp(16px,2.6cqh,26px)}
+.seg2{display:inline-flex;align-self:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg2 button{font:600 clamp(13px,1.9cqh,17px) var(--body);color:var(--dim);background:none;border:0;border-radius:9px;padding:6px 14px;cursor:pointer}
+.seg2 button.on{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--green)}
+.body.gd{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);gap:clamp(14px,1.8cqw,28px);align-items:stretch;width:100%}
+.gtop{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.gtop h3{font-size:clamp(16px,2.6cqh,26px);margin:0}
+.gnote{font-size:clamp(14px,2.2cqh,21px)}.gnote b{color:var(--green-ink)}
+.gsetup{margin:4px 0 0;font:500 clamp(12px,1.8cqh,16px) var(--mono)}
+.gpre{font:500 clamp(12px,1.7cqh,15px) var(--mono);color:var(--dim)}
+.gstats{display:flex!important;flex-direction:column;justify-content:space-around!important;gap:0!important}
+.gstats .stat{border-top:0;padding:0}
+.gstats .stat+.stat{border-top:1px solid var(--line);padding-top:clamp(8px,1.4cqh,14px)}
+.gchart{gap:10px!important}
+.gstats .stat b{color:var(--green-ink);font-size:clamp(20px,3.6cqh,36px)}.gstats .stat span{display:block}
+.tiny-setup{font:500 clamp(11px,1.6cqh,14px) var(--mono);color:var(--dim);text-align:center}
+/* slide 10: size the chart by height so it never runs past the footer */
+#gdSvg{width:auto!important;max-width:100%;height:auto;max-height:44cqh;align-self:center}
+.body.gd{align-items:start!important}
+.gchart{gap:6px!important;padding:clamp(12px,2cqh,22px) clamp(16px,1.6cqw,26px)!important}
+.gstats .stat b{font-size:clamp(18px,3.2cqh,32px)!important}
+/* section divider: center the title on the whole slide */
+.slide.sect{justify-content:center;padding-top:0;padding-bottom:0}
+.slide.sect>.body{flex:0 0 auto}
+/* ---------- setup deck ---------- */
+.sx-g2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2.4cqw,34px);width:100%;align-items:stretch;min-height:0}
+.sx-g2.l{grid-template-columns:1.15fr .85fr}
+.sx-g2.r{grid-template-columns:.85fr 1.15fr}
+.sx-col{display:flex;flex-direction:column;gap:clamp(10px,1.8cqh,18px);min-width:0;min-height:0}
+.sx-col.c{justify-content:center}
+.sx-tg{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sx-tg>span{font:700 clamp(10px,1.4cqh,13px) var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);min-width:6.5em}
+.sx-tg button,.sx-btn{font:600 clamp(13px,1.8cqh,17px) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 15px;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,28,.05)}
+.sx-tg button:hover,.sx-btn:hover{border-color:var(--green)}
+.sx-tg button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 0 0 0 1px var(--green)}
+.sx-btn.warn{border-color:color-mix(in srgb,var(--req) 50%,var(--line))}
+pre.sx{margin:0;white-space:pre;overflow:hidden;font-size:clamp(12px,2cqh,20px);line-height:1.5}
+pre.sx.sm{font-size:clamp(11px,1.75cqh,17px)}
+pre .k{color:#9bd65a}
+pre .s{color:#86c8ff}
+pre .p{color:#ffbb5c}
+pre .w{color:#fff;font-weight:700}
+pre .yk{border-radius:4px;transition:background .2s;cursor:default}
+pre .yk.hl{background:rgba(118,185,0,.32)}
+.sx-note{font-size:clamp(12px,1.7cqh,16px);color:var(--dim);line-height:1.45}
+.sx-note b{color:var(--text)}
+.sx-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sx-chips .chip{font-size:clamp(11px,1.5cqh,14px)}
+.sx-h{font:700 clamp(10px,1.4cqh,13px) var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--green-ink)}
+.viz svg [data-k]{transition:opacity .25s}
+.viz svg [data-k].hl rect,.viz svg [data-k].hl path{stroke:var(--green)!important;stroke-width:3.5!important}
+.sx-fade{transition:opacity .35s}
+.sx-off{opacity:.18}
+/* path cards */
+.sx-paths{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.6cqw,22px);width:100%}
+.sx-path{display:flex;flex-direction:column;gap:10px;text-align:left;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--pc,var(--green));border-radius:14px;padding:clamp(14px,2.4cqh,26px);cursor:pointer;box-shadow:var(--shadow);font:inherit;color:inherit;transition:transform .15s,border-color .15s}
+.sx-path:hover{transform:translateY(-3px);border-color:var(--pc,var(--green))}
+.sx-path i{font-style:normal;font-size:clamp(26px,4.4cqh,44px);line-height:1}
+.sx-path b{font:800 clamp(17px,2.6cqh,26px) var(--display)}
+.sx-path em{font:600 clamp(11px,1.5cqh,14px) var(--mono);font-style:normal;color:var(--green-ink)}
+.sx-path span{font-size:clamp(13px,1.8cqh,17px);color:var(--dim);line-height:1.45}
+.sx-path small{margin-top:auto;font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim)}
+/* requirement list */
+.sx-req{display:grid;grid-template-columns:auto 1fr;gap:clamp(6px,1.1cqh,12px) 14px;font-size:clamp(13px,1.8cqh,17px);align-items:baseline}
+.sx-req dt{font:700 clamp(10px,1.4cqh,13px) var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.sx-req dd{margin:0}
+/* recipe browser */
+.sx-tbl{width:100%;border-collapse:collapse;font-size:clamp(12px,1.65cqh,16px)}
+.sx-tbl th{font:700 clamp(10px,1.35cqh,12px) var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)}
+.sx-tbl td{padding:clamp(3px,.7cqh,7px) 8px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.sx-tbl tr.r{cursor:pointer}
+.sx-tbl tr.r:hover td{background:color-mix(in srgb,var(--green) 7%,transparent)}
+.sx-tbl tr.r.sel td{background:var(--tint)}
+.sx-tbl tr.r.sel td:first-child{box-shadow:inset 3px 0 0 var(--green)}
+.sx-tbl td:first-child{font-weight:700}
+.sx-tag{font:700 clamp(10px,1.3cqh,12px) var(--mono);padding:2px 8px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);white-space:nowrap}
+.sx-tag.d{background:color-mix(in srgb,var(--req) 14%,var(--surface));border-color:color-mix(in srgb,var(--req) 45%,var(--line))}
+.sx-tag.a{background:var(--tint);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+/* result cards */
+.sx-res{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.8cqw,24px);width:100%}
+.sx-rc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(14px,2.4cqh,26px);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,14px);color:inherit;text-decoration:none}
+.sx-rc:hover{border-color:var(--green)}
+.sx-rc b{font:800 clamp(16px,2.3cqh,23px) var(--display)}
+.sx-rc small{font:600 clamp(11px,1.45cqh,13px) var(--mono);color:var(--dim)}
+.sx-m{display:flex;flex-direction:column;gap:5px}
+.sx-m>div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:clamp(12px,1.6cqh,15px);color:var(--dim)}
+.sx-m em{font:800 clamp(22px,3.6cqh,36px) var(--display);font-style:normal;color:var(--green-ink)}
+.sx-bar{height:clamp(8px,1.3cqh,12px);border-radius:999px;background:var(--surface2);overflow:hidden}
+.sx-bar i{display:block;height:100%;border-radius:999px}
+.sx-bar i.o{background:color-mix(in srgb,var(--dim) 55%,var(--surface))}
+.sx-bar i.g{background:var(--green-fill)}
+/* symptom explorer */
+.sx-sym{display:flex;flex-direction:column;gap:8px}
+.sx-sym button{display:flex;gap:12px;align-items:center;text-align:left;font:600 clamp(13px,1.85cqh,18px) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.4cqh,14px) 14px;cursor:pointer}
+.sx-sym button i{font-style:normal;font-size:1.2em;width:1.4em;text-align:center}
+.sx-sym button:hover{border-color:var(--green)}
+.sx-sym button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 3px 0 0 var(--green)}
+.sx-det{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(16px,2.8cqh,30px);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:clamp(10px,1.8cqh,16px);min-height:0}
+.sx-det h3{margin:0;font:800 clamp(20px,3cqh,30px) var(--display)}
+.sx-det p{margin:0;font-size:clamp(14px,1.95cqh,19px);line-height:1.5}
+.sx-det .sx-go{align-self:flex-start}
+/* router sim */
+.sx-sl{display:grid;grid-template-columns:auto 1fr auto;gap:8px 14px;align-items:center;font-size:clamp(13px,1.8cqh,17px)}
+.sx-sl code{font-size:.9em}
+.sx-sl input{accent-color:var(--green);width:100%}
+.sx-sl b{font:700 clamp(13px,1.8cqh,17px) var(--mono);min-width:3.2em;text-align:right}
+.sx-wk{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,1.2cqw,16px)}
+.sx-w{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:clamp(10px,1.8cqh,18px);display:flex;flex-direction:column;gap:8px;transition:border-color .2s,box-shadow .2s}
+.sx-w.win{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 25%,transparent)}
+.sx-w b{font:800 clamp(15px,2.2cqh,21px) var(--display);display:flex;justify-content:space-between}
+.sx-w b span{font:700 clamp(10px,1.3cqh,12px) var(--mono);color:var(--green-ink);align-self:center}
+.sx-w .bl{display:flex;gap:2px;flex-wrap:wrap}
+.sx-w .bl i{width:clamp(9px,1.3cqh,13px);height:clamp(9px,1.3cqh,13px);border-radius:2px;background:var(--surface2);border:1px solid var(--line)}
+.sx-w .bl i.h{background:var(--green-fill);border-color:var(--green-fill)}
+.sx-w .bl i.d{background:color-mix(in srgb,var(--req) 60%,var(--surface));border-color:transparent}
+.sx-w small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim)}
+.sx-cost{font:800 clamp(18px,2.8cqh,28px) var(--mono);color:var(--text)}
+.sx-w.win .sx-cost{color:var(--green-ink)}
+/* offload cards */
+.sx-ol{display:flex;flex-direction:column;gap:8px}
+.sx-o{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--oc,var(--green));border-radius:10px;padding:clamp(8px,1.3cqh,12px) 14px;display:flex;flex-direction:column;gap:3px}
+.sx-o b{font:700 clamp(14px,1.95cqh,18px) var(--display);display:flex;gap:8px;align-items:center}
+.sx-o code{font-size:clamp(10px,1.35cqh,13px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.sx-o .sx-tag{font-size:clamp(9px,1.2cqh,11px)}
+/* rollout */
+.sx-ro{display:flex;gap:8px;align-items:stretch}
+.sx-ro div{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.4cqh,14px);display:flex;flex-direction:column;gap:4px;position:relative}
+.sx-ro div b{font:800 clamp(14px,2cqh,19px) var(--display)}
+.sx-ro div span{font-size:clamp(12px,1.6cqh,15px);color:var(--dim)}
+.sx-ro div em{font:700 clamp(10px,1.3cqh,12px) var(--mono);font-style:normal;color:var(--green-ink)}
+/* skill panel */
+.sx-sk{display:flex;flex-direction:column;gap:8px}
+.sx-sk li{list-style:none;display:flex;flex-direction:column;gap:2px}
+.sx-sk ul{margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(6px,1.1cqh,10px)}
+.sx-sk code{font-size:clamp(12px,1.65cqh,16px);color:var(--green-ink);font-weight:700;background:none;padding:0}
+.sx-sk span{font-size:clamp(13px,1.75cqh,17px);color:var(--text);line-height:1.4}
+.viz svg .sk{cursor:pointer}
+.viz svg .sk rect{transition:fill .2s,stroke-width .2s}
+.viz svg .sk rect{fill:var(--surface)}
+.viz svg .sk.on rect{fill:color-mix(in srgb,var(--green) 16%,var(--surface));stroke:var(--green);stroke-width:3}
+/* cheat sheet */
+.sx-cs{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.5cqw,20px);width:100%}
+.sx-c{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(12px,2cqh,20px);display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);text-decoration:none;color:inherit;min-width:0}
+.sx-c:hover{border-color:var(--green)}
+.sx-c b{font:800 clamp(15px,2.2cqh,21px) var(--display);display:flex;gap:8px;align-items:center}
+.sx-c pre{margin:0;font-size:clamp(11px,1.75cqh,16px);padding:clamp(8px,1.2cqh,12px);white-space:pre;overflow:hidden}
+.sx-c small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--green-ink);margin-top:auto}
+/* dgdr toggle panel */
+.sx-st{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sx-st div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.4cqh,14px);display:flex;flex-direction:column;gap:3px;transition:opacity .25s,border-color .25s}
+.sx-st div b{font:800 clamp(15px,2.2cqh,21px) var(--display)}
+.sx-st div em{font:800 clamp(18px,2.8cqh,28px) var(--display);font-style:normal;color:var(--green-ink)}
+.sx-st div span{font-size:clamp(12px,1.6cqh,15px);color:var(--dim)}
+@container (max-width:900px){.sx-g2,.sx-g2.l,.sx-g2.r,.sx-paths,.sx-res,.sx-cs,.sx-wk{grid-template-columns:1fr}}
+.sx-stack{display:grid}.sx-stack>*{grid-area:1/1}
+.sx-path b{font-size:clamp(19px,3cqh,30px)}.sx-path span{font-size:clamp(14px,2.1cqh,20px)}.sx-path{padding:clamp(18px,3.2cqh,34px);gap:14px}
+.sx-rc b{font-size:clamp(18px,2.7cqh,27px)}.sx-rc{padding:clamp(18px,3cqh,32px)}
+.sx-note{font-size:clamp(13px,1.95cqh,18px)}
+.sx-req{font-size:clamp(14px,2cqh,19px)}
+.sx-tbl{font-size:clamp(12px,1.8cqh,17px)}
+.viz svg .sx-stop{cursor:pointer}
+.viz svg .sx-stop circle{transition:stroke-width .15s,filter .15s}
+.viz svg .sx-stop:hover circle,.viz svg .sx-stop:focus circle{stroke-width:6;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--green) 60%,transparent))}
+.viz svg .sx-stop:focus{outline:none}
+.sx-hint{margin:0;font:600 clamp(13px,1.9cqh,18px) var(--body);color:var(--green-ink);background:var(--tint);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line));border-radius:999px;padding:7px 16px;align-self:flex-start;animation:sxPulse 2.4s ease-in-out infinite}
+@keyframes sxPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--green) 30%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+.sx-rb{display:grid;grid-template-columns:minmax(150px,.62fr) 1.45fr 1.05fr;gap:clamp(14px,2cqw,28px);width:100%;align-items:start}
+.sx-pv{display:flex;flex-direction:column;gap:3px;border-right:1px solid var(--line);padding-right:clamp(8px,1cqw,14px)}
+.sx-pv button{display:flex;justify-content:space-between;gap:8px;text-align:left;font:600 clamp(12px,1.7cqh,16px) var(--body);color:var(--text);background:none;border:0;border-radius:8px;padding:clamp(3px,.55cqh,6px) 10px;cursor:pointer}
+.sx-pv button small{font:600 clamp(10px,1.3cqh,12px) var(--mono);color:var(--dim)}
+.sx-pv button:hover{background:color-mix(in srgb,var(--green) 8%,transparent)}
+.sx-pv button[aria-pressed="true"]{background:var(--tint);box-shadow:inset 3px 0 0 var(--green);color:var(--green-ink)}
+.sx-ms{display:flex;flex-wrap:wrap;gap:6px}
+.sx-ms button{font:600 clamp(12px,1.7cqh,16px) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 13px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.sx-ms button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 0 0 0 1px var(--green)}
+.sx-ms button i{font:700 clamp(9px,1.15cqh,11px) var(--mono);font-style:normal;color:var(--dim)}
+.sx-tw{max-height:46cqh;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.sx-tw th{position:sticky;top:0;background:var(--surface);z-index:1}
+.sx-perf{background:var(--tint);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line));border-radius:12px;padding:clamp(10px,1.8cqh,18px);font-size:clamp(13px,1.85cqh,17px);line-height:1.5;display:flex;flex-direction:column;gap:4px}
+.sx-perf.none{background:var(--surface2);border-color:var(--line);color:var(--dim)}
+.sx-res.q{grid-template-columns:repeat(4,1fr)}
+.sx-hb{display:grid;grid-template-columns:auto 1fr auto;gap:8px 10px;align-items:center;font-size:clamp(12px,1.6cqh,15px);color:var(--dim)}
+.sx-hb b{font:700 clamp(12px,1.7cqh,16px) var(--mono);color:var(--text)}
+@container (max-width:900px){.sx-rb,.sx-res.q,.sx-pd,.sx-vds{grid-template-columns:1fr}.sx-pv{flex-direction:row;flex-wrap:wrap;border-right:0;padding-right:0}}
+#sxRecCmd{white-space:pre-wrap;word-break:break-all}
+.sx-res.q{grid-template-rows:repeat(4,auto)}.sx-res.q .sx-rc{display:grid;grid-row:span 4;grid-template-rows:subgrid;align-content:start}.sx-res.q .sx-hb{align-self:start}
+.sx-vds{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,1.4cqw,18px)}
+.sx-vd{border-radius:16px;padding:clamp(14px,2.4cqh,26px);display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,14px);border:2px solid}
+.sx-vd b{font:800 clamp(20px,3.2cqh,32px) var(--display)}
+.sx-vd ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:clamp(4px,.9cqh,10px)}
+.sx-vd li{font:700 clamp(16px,2.5cqh,25px) var(--body);line-height:1.25}
+.sx-vd.ok{background:color-mix(in srgb,var(--green) 13%,var(--surface));border-color:var(--green)}
+.sx-vd.ok b{color:var(--green-ink)}
+.sx-vd.no{background:color-mix(in srgb,var(--bad) 9%,var(--surface));border-color:color-mix(in srgb,var(--bad) 70%,var(--line))}
+.sx-vd.no b{color:var(--bad)}
+.sx-ais{background:var(--surface);border:1px dashed color-mix(in srgb,var(--disc) 60%,var(--line));border-radius:14px;padding:clamp(12px,2cqh,20px);display:flex;flex-direction:column;gap:clamp(8px,1.3cqh,12px)}
+a.sx-btn{text-decoration:none;display:inline-block}
+.sx-knob{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:clamp(8px,1.3cqh,12px) 14px}
+.sx-knob code{font-size:clamp(12px,1.7cqh,16px);color:var(--green-ink);background:none;padding:0;font-weight:700}
+.sx-knob span{font-size:clamp(13px,1.85cqh,17px)}
+.sx-leg{display:flex;flex-wrap:wrap;gap:6px 16px;font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim);align-items:center}
+.sx-leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#sxRw{display:flex;flex-direction:column;gap:clamp(6px,1.1cqh,10px)}
+.sx-rw{display:grid;grid-template-columns:7.2em auto auto 1fr auto 4.6em;gap:12px;align-items:center;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:clamp(8px,1.5cqh,14px) 16px;transition:border-color .2s,box-shadow .2s}
+.sx-rw.win{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 22%,transparent)}
+.sx-rw>div:first-child{display:flex;flex-direction:column}
+.sx-rw b{font:800 clamp(15px,2.2cqh,21px) var(--display)}
+.sx-rw small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim);text-transform:uppercase}
+.sx-rw .bk{display:flex;gap:4px;flex-wrap:wrap}
+.sx-rw .bk i{width:clamp(16px,2.6cqh,26px);height:clamp(16px,2.6cqh,26px);border-radius:5px}
+.sx-rw .pl{font:700 clamp(16px,2.2cqh,20px) var(--body);color:var(--dim)}
+.sx-rw .eq{font:700 clamp(14px,2cqh,19px) var(--mono);text-align:right;white-space:nowrap}
+.sx-rw .eq em{font-style:normal}
+.sx-rw .eq b{font-size:clamp(18px,2.8cqh,27px)}
+.sx-rw .pk{font:700 clamp(10px,1.35cqh,12px) var(--mono);color:var(--green-ink)}
+.sx-rw.win .pk{background:var(--tint);border:1px solid var(--green);border-radius:999px;padding:2px 8px;text-align:center}
+.sx-call{margin:0;background:var(--tint);border-left:4px solid var(--green);border-radius:10px;padding:clamp(8px,1.5cqh,14px) 16px;font-size:clamp(13px,1.9cqh,18px);line-height:1.45;min-height:3.2em}
+.sx-pd{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.6cqw,22px);align-content:center}
+.sx-pd .sx-toy{grid-column:1/-1;margin:0;font-size:clamp(11px,1.5cqh,14px)}
+.sx-step{display:flex;align-items:center;gap:10px}
+.sx-step span{flex:1;font:700 clamp(14px,2cqh,19px) var(--display)}
+.sx-step button{width:clamp(28px,4cqh,38px);height:clamp(28px,4cqh,38px);border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--text);font:700 clamp(16px,2.4cqh,22px) var(--body);cursor:pointer;line-height:1}
+.sx-step button:hover{border-color:var(--green)}
+.sx-step b{font:800 clamp(20px,3cqh,30px) var(--mono);min-width:1.4em;text-align:center}
+.sx-gpus{display:flex;gap:5px;min-height:clamp(18px,2.8cqh,26px)}
+.sx-gpus i{width:clamp(18px,2.8cqh,26px);height:clamp(18px,2.8cqh,26px);border-radius:5px}
+.sx-gpus i.p{background:var(--req)}.sx-gpus i.d{background:var(--green-fill)}
+.sx-met{display:flex;flex-direction:column;gap:4px}
+.sx-mh{display:flex;justify-content:space-between;align-items:baseline}
+.sx-mh span{font:700 clamp(12px,1.7cqh,16px) var(--mono);color:var(--dim)}
+.sx-mh b{font:800 clamp(16px,2.4cqh,23px) var(--mono);color:var(--green-ink)}
+.sx-mh b.bad,.sx-mb i.bad{color:var(--bad)}
+.sx-mb{position:relative;height:clamp(10px,1.6cqh,14px);border-radius:999px;background:var(--surface2)}
+.sx-mb i{display:block;height:100%;border-radius:999px;background:var(--green-fill);transition:width .3s}
+.sx-mb i.bad{background:var(--bad)}
+.sx-mb u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--text);opacity:.6}
+.sx-met small{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim)}
+.sx-gp{background:var(--tint);border:1px solid color-mix(in srgb,var(--green) 45%,var(--line));border-radius:14px;padding:clamp(8px,1.4cqh,14px) 16px;display:flex;flex-direction:column}
+.sx-gp span{font:700 clamp(11px,1.5cqh,14px) var(--mono);color:var(--green-ink);text-transform:uppercase;letter-spacing:.06em}
+.sx-gp b{font:800 clamp(24px,4cqh,40px) var(--display);color:var(--green-ink)}
+.sx-gp small{font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim)}
+.sx-hm{display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr auto;gap:4px 6px}
+.sx-hmy{writing-mode:vertical-rl;transform:rotate(180deg);font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim);text-align:center}
+.sx-hmx{grid-column:2;font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim);text-align:center}
+#sxHm{display:grid;grid-template-columns:auto repeat(6,1fr);gap:3px;max-width:clamp(200px,30cqh,280px);align-items:center}
+#sxHm span{font:600 clamp(10px,1.3cqh,12px) var(--mono);color:var(--dim);text-align:center;padding:0 3px}
+.sx-hm{justify-content:center}
+.sx-hml{font:600 clamp(10px,1.35cqh,12px) var(--mono);color:var(--dim);text-align:center}
+#sxHm button{aspect-ratio:1;border:1px solid var(--line);border-radius:5px;cursor:pointer;font:700 clamp(11px,1.6cqh,15px) var(--body);color:#12191c;padding:0}
+#sxHm button.cur{outline:3px solid var(--text);outline-offset:-1px}
+.sx-sim{display:flex;flex-direction:column;gap:clamp(8px,1.4cqh,14px);min-width:0}
+.sx-simc{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.sx-simc .sx-step span{display:flex;align-items:center;gap:8px}
+.sx-simc .sx-step span i{width:12px;height:12px;border-radius:3px;display:inline-block}
+#sxSimCv{width:100%;aspect-ratio:640/300;max-height:33cqh;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.sx-gauges{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(8px,1.2cqw,16px)}
+.sx-ga{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(8px,1.3cqh,12px) 14px;display:flex;flex-direction:column;gap:4px}
+.sx-ga span{font:700 clamp(10px,1.4cqh,13px) var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.sx-ga b{font:800 clamp(18px,2.8cqh,27px) var(--mono);color:var(--green-ink)}
+.sx-ga b.bad{color:var(--bad)}
+.sx-ga small{font:600 clamp(10px,1.3cqh,12px) var(--mono);color:var(--dim)}
+.sx-ga.gp{background:var(--tint);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+.sx-sim .sx-toy{margin:0;font-size:clamp(11px,1.45cqh,14px)}
+@container (max-width:900px){.sx-gauges{grid-template-columns:1fr}}
+.sx-best{font:600 clamp(11px,1.5cqh,14px) var(--mono);color:var(--dim)}.sx-best b{color:var(--green-ink)}
+@container (max-width:900px){.sx-g2{grid-template-columns:1fr!important}.sx-vd b{font-size:clamp(18px,2.6cqh,26px)}}
+@container (max-width:900px){.slide{overflow-y:auto;overflow-x:hidden;justify-content:flex-start}.slide>.head{flex:none}.slide>.body,.slide>.body.col{flex:none!important;justify-content:flex-start!important;margin-top:0!important;margin-bottom:0!important;padding-bottom:90px;min-height:auto}}
+.sx-ais.tp{border-color:color-mix(in srgb,var(--cpu) 60%,var(--line))}
+.sx-ais{gap:clamp(6px,1cqh,10px)}
+.sx-vd{padding:clamp(10px,1.7cqh,18px) clamp(12px,1.6cqh,18px);gap:clamp(4px,.8cqh,8px)}
+.sx-vd b{font-size:clamp(18px,2.7cqh,27px)}.sx-vd li{font-size:clamp(14px,2.1cqh,21px)}
+.sx-ais{padding:clamp(10px,1.5cqh,16px)}
+
+/* fixed design canvas, scaled uniformly to the window */
+html,body{width:100%;height:100%;overflow:hidden}
+#stage{position:fixed;left:0;top:0;width:100cqw;height:100cqh;container-type:size;transform-origin:0 0;overflow:hidden;background:var(--bg)}
+#stage .slide{background:var(--slidebg,var(--bg))}
+
+</style>
+<!-- shared markers -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="mr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--req)"/></marker>
+    <marker id="md" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--disc)"/></marker>
+    <marker id="me" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--evt)"/></marker>
+    <marker id="mk" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--text)"/></marker>
+    <marker id="mg" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--gpu)"/></marker>
+  </defs>
+</svg>
+
+<div id="stage"><main class="deck" id="deck">
+
+<section class="slide" data-title="Title">
+  <div class="body" style="align-items:center">
+    <div class="head" style="flex:1 1 44%;gap:18px">
+      <span class="kicker">NVIDIA Dynamo · Hands-on guide</span>
+      <h1>Deploy and tune Dynamo</h1>
+      <p class="dim" style="max-width:34ch;font-size:clamp(18px,3cqh,30px)">From a laptop to a Kubernetes cluster, then faster: recipes, the right knobs, and agents that tune for you.</p>
+      <p class="sx-hint">👆 Click a stop on the map to start from there</p>
+    </div>
+    <div class="viz" style="flex:1 1 56%">
+      <svg viewBox="0 0 640 360" role="img" aria-label="Path from local run to Kubernetes to recipes to optimization">
+        <path id="sxRoute" d="M60,120 C160,120 160,240 260,240 C360,240 360,120 460,120 C540,120 560,240 600,240" style="fill:none;stroke:var(--line);stroke-width:6;stroke-linecap:round"/>
+        <path d="M60,120 C160,120 160,240 260,240 C360,240 360,120 460,120 C540,120 560,240 600,240" style="fill:none;stroke:var(--green);stroke-width:6;stroke-linecap:round;stroke-dasharray:14 12" class="flow"/>
+        <g class="sx-stop" data-jump="3" role="button" tabindex="0"><circle cx="60" cy="120" r="34" style="fill:var(--surface);stroke:var(--green);stroke-width:3"/><text x="60" y="132" text-anchor="middle" style="font-size:32px">💻</text><text class="hs" x="60" y="182" text-anchor="middle">Local</text><text class="m" x="60" y="202" text-anchor="middle">pip · container</text></g>
+        <g class="sx-stop" data-jump="6" role="button" tabindex="0"><circle cx="260" cy="240" r="34" style="fill:var(--surface);stroke:var(--green);stroke-width:3"/><text x="260" y="252" text-anchor="middle" style="font-size:32px">☸️</text><text class="hs" x="260" y="302" text-anchor="middle">Kubernetes</text><text class="m" x="260" y="322" text-anchor="middle">operator · DGD</text></g>
+        <g class="sx-stop" data-jump="9" role="button" tabindex="0"><circle cx="460" cy="120" r="34" style="fill:var(--surface);stroke:var(--green);stroke-width:3"/><text x="460" y="132" text-anchor="middle" style="font-size:32px">📖</text><text class="hs" x="460" y="62" text-anchor="middle">Recipes</text><text class="m" x="460" y="80" text-anchor="middle">tested configs</text></g>
+        <g class="sx-stop" data-jump="12" role="button" tabindex="0"><circle cx="600" cy="240" r="34" style="fill:var(--tint);stroke:var(--green);stroke-width:3"/><text x="600" y="252" text-anchor="middle" style="font-size:32px">🚀</text><text class="hs" x="600" y="302" text-anchor="middle">Optimize</text><text class="m" x="600" y="322" text-anchor="middle">knobs · agents</text></g>
+        <circle r="9" style="fill:var(--req)"><animateMotion dur="7s" repeatCount="indefinite"><mpath href="#sxRoute"/></animateMotion></circle>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Click any stop on the route to jump to that section: Local (slide 3), Kubernetes (6), Recipes (9), Optimize (12).</li><li>A hands-on companion to the Dynamo docs: the Local Guide, the Kubernetes Guide, Recipes and Agent Skills tabs on docs.nvidia.com/dynamo. Commands are from the docs for Dynamo v1.6.0 (released Oct 22 2026).</li><li>Route: try it on one machine, install the platform on Kubernetes, start from a tested recipe, then tune with a few levers, or hand the loop to a coding agent.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Pick a path">
+  <div class="head"><span class="kicker">Start here</span><h2>Four ways in. Pick the one that matches where you are.</h2></div>
+  <div class="body">
+    <div class="sx-paths">
+      <button class="sx-path" data-jump="3" style="--pc:var(--cpu)"><i>💻</i><em>~10 min · 1 GPU</em><b>Try it locally</b><span>pip or container, one frontend, one worker, one curl.</span><small>Local Guide →</small></button>
+      <button class="sx-path" data-jump="6" style="--pc:var(--green)"><i>☸️</i><em>~30 min · cluster</em><b>Deploy on Kubernetes</b><span>Helm-install the platform, then a DGD or let a DGDR size it for you.</span><small>Kubernetes Guide →</small></button>
+      <button class="sx-path" data-jump="9" style="--pc:var(--req)"><i>📖</i><em>production shape</em><b>Start from a recipe</b><span>A tested deploy.yaml per model, backend and mode, with a benchmark job.</span><small>Recipes →</small></button>
+      <button class="sx-path" data-jump="17" style="--pc:var(--disc)"><i>🤖</i><em>hands-off</em><b>Let an agent tune it</b><span>Skills that deploy, benchmark, propose one change and review it.</span><small>Agent Skills →</small></button>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Click a card to jump to that section. The paths build on each other: most teams try locally, deploy a recipe on Kubernetes, then optimize.</li><li>Times are rough: the local quickstart is a few commands; the Kubernetes quickstart waits on Helm installs and a DGDR (up to 30 minutes in the docs' wait command).</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Local: install">
+  <div class="head"><span class="kicker">Local · install</span><h2>Install: one container or one wheel</h2></div>
+  <div class="body">
+    <div class="sx-g2 l">
+      <div class="sx-col c">
+        <div class="sx-tg" data-sx="im"><span>Method</span><button data-v="ctr" aria-pressed="true">Container</button><button data-v="whl">Wheel</button></div>
+        <div class="sx-tg" data-sx="ib"><span>Backend</span><button data-v="vllm" aria-pressed="true">vLLM</button><button data-v="sglang">SGLang</button><button data-v="trtllm">TensorRT-LLM</button></div>
+        <pre class="sx" id="sxInst"></pre>
+        <pre class="sx sm"><span class="cm"># verify the install</span>
+python3 -m dynamo.frontend --help
+python3 dev/sanity_check.py
+<span class="cm"># optional: etcd + NATS for KV events and routing</span>
+docker compose -f dev/docker-compose.yml up -d</pre>
+      </div>
+      <div class="card sx-col c">
+        <div class="sx-h">Requirements · v1.6.0</div>
+        <dl class="sx-req">
+          <dt>OS</dt><dd>Ubuntu 22.04 / 24.04 · x86_64 or ARM64</dd>
+          <dt>CUDA</dt><dd>12.9+ or 13.0+ <span class="dim">(B300 / GB300 need 13)</span></dd>
+          <dt>Driver</dt><dd>575.51.03+ (CUDA 12) · 580.00.03+ (CUDA 13)</dd>
+          <dt>Python</dt><dd>3.11 / 3.12 <span class="dim">(TRT-LLM: 3.12)</span></dd>
+          <dt>Engines</dt><dd>vLLM 0.31.0 · SGLang 0.5.21 · TRT-LLM 1.3.0rc29</dd>
+        </dl>
+        <p class="sx-note"><b>No etcd or NATS needed</b> to start: <code>--discovery-backend file</code> uses the filesystem. Add them when you want KV-aware routing locally.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From the Local Guide install page and the docs' install selector. Containers: nvcr.io/nvidia/ai-dynamo/{vllm,sglang,tensorrtllm}-runtime:1.6.0. Wheels: ai-dynamo[vllm] / ai-dynamo[sglang] (SGLang needs --prerelease=allow). The selector has no TRT-LLM wheel; use the container.</li><li>Container path needs Docker plus the NVIDIA Container Toolkit.</li><li>etcd and NATS are optional on one machine; the install page lists KV events, routing and planner as not available in file discovery mode. On Kubernetes the operator uses Kubernetes discovery, so no etcd.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Local: first request" data-steps="2">
+  <div class="head"><span class="kicker">Local · first request</span><h2>Two processes and a curl</h2></div>
+  <div class="body">
+    <div class="sx-g2 r">
+      <div class="viz"><svg viewBox="0 0 520 330" role="img" aria-label="curl to frontend to worker">
+        <g data-s="2" class="sx-fade"><rect class="box" x="0" y="130" width="110" height="70" rx="12"/><text class="hs" x="55" y="162" text-anchor="middle">curl</text><text class="m" x="55" y="182" text-anchor="middle">OpenAI API</text>
+          <path class="a-req flow" d="M112,165 L168,165" marker-end="url(#mr)"/></g>
+        <g><rect x="172" y="110" width="140" height="110" rx="14" style="fill:var(--tint);stroke:var(--green);stroke-width:2"/><text class="hs" x="242" y="150" text-anchor="middle">frontend</text><text class="m" x="242" y="172" text-anchor="middle">:8000</text><text class="m" x="242" y="192" text-anchor="middle">route · tokenize</text></g>
+        <g data-s="1" class="sx-fade"><path class="a-gpu flow" d="M314,165 L366,165" marker-end="url(#mg)"/>
+          <rect x="370" y="90" width="150" height="150" rx="14" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="hs" x="445" y="122" text-anchor="middle">worker</text><text class="m" x="445" y="142" text-anchor="middle">dynamo.vllm</text>
+          <rect x="390" y="156" width="110" height="64" rx="10" style="fill:var(--green-fill)"/><text class="lb" x="445" y="194" text-anchor="middle" style="fill:#12191c">GPU</text></g>
+        <g><rect x="172" y="270" width="348" height="40" rx="10" style="fill:var(--surface2);stroke:var(--line);stroke-dasharray:5 4"/><text class="m" x="346" y="295" text-anchor="middle">discovery: --discovery-backend file</text></g>
+      </svg></div>
+      <div class="sx-col c">
+<pre class="sx sm"><span><span class="cm"># terminal 1 · frontend on :8000</span>
+python3 -m dynamo.frontend --discovery-backend file
+</span><span data-s="1" class="sx-fade">
+<span class="cm"># terminal 2 · a worker (pick your engine)</span>
+python3 -m <span class="k">dynamo.vllm</span> --model Qwen/Qwen3-0.6B \
+    --discovery-backend file
+<span class="cm">#   dynamo.sglang / dynamo.trtllm take --model-path</span>
+</span><span data-s="2" class="sx-fade">
+<span class="cm"># terminal 3 · ask it something</span>
+curl -sf localhost:8000/health &amp;&amp; echo OK
+curl localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"Qwen/Qwen3-0.6B",
+       "messages":[{"role":"user","content":"Hello!"}],
+       "max_tokens":50}'</span></pre>
+        <p class="sx-note">Press <b>→</b> to start the worker, then send a request.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From the Local Guide quickstart. The frontend serves the OpenAI-compatible API on port 8000; the worker registers through file discovery and the frontend finds it.</li><li>The deployment guide variant uses etcd + NATS and adds demo flags --enforce-eager --max-model-len 4096 for vLLM.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Local: presets" data-steps="3">
+  <div class="head"><span class="kicker">Local · scale the shape</span><h2>Launch presets: from one worker to disaggregated with a KV router</h2>
+    <div class="modes"><button data-goto="0">1 worker</button><button data-goto="1">agg_router.sh</button><button data-goto="2">disagg.sh</button><button data-goto="3">disagg_router.sh</button></div></div>
+  <div class="body">
+    <div class="sx-g2 l">
+      <div class="viz"><svg viewBox="0 0 600 320" role="img" aria-label="Local launch presets">
+        <rect x="0" y="125" width="120" height="70" rx="12" style="fill:var(--tint);stroke:var(--green);stroke-width:2"/><text class="hs" x="60" y="157" text-anchor="middle">frontend</text>
+        <text class="m" x="60" y="177" text-anchor="middle" data-only="0 2">round-robin</text><text class="m" x="60" y="177" text-anchor="middle" data-only="1 3" style="fill:var(--green-ink);font-weight:700">KV router</text>
+        <g data-only="0"><path class="a-gpu flow" d="M122,160 L250,160" marker-end="url(#mg)"/><rect x="256" y="115" width="170" height="90" rx="12" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="hs" x="341" y="150" text-anchor="middle">worker</text><text class="m" x="341" y="172" text-anchor="middle">prefill + decode</text><rect x="446" y="130" width="60" height="60" rx="9" style="fill:var(--green-fill)"/><text class="lb" x="476" y="166" text-anchor="middle" style="fill:#12191c">1</text></g>
+        <g data-only="1"><path class="a-gpu flow" d="M122,150 L250,95" marker-end="url(#mg)"/><path class="a-gpu flow" d="M122,170 L250,225" marker-end="url(#mg)"/>
+          <rect x="256" y="50" width="170" height="80" rx="12" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="hs" x="341" y="84" text-anchor="middle">worker A</text><text class="m" x="341" y="106" text-anchor="middle">publishes KV events</text>
+          <rect x="256" y="190" width="170" height="80" rx="12" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="hs" x="341" y="224" text-anchor="middle">worker B</text><text class="m" x="341" y="246" text-anchor="middle">publishes KV events</text>
+          <path class="a-evt" d="M256,90 C190,70 150,100 120,130" style="stroke-dasharray:5 4"/><path class="a-evt" d="M256,230 C190,250 150,220 120,190" style="stroke-dasharray:5 4"/></g>
+        <g data-only="2 3"><rect x="236" y="20" width="160" height="280" rx="14" style="fill:color-mix(in srgb,var(--req) 6%,transparent);stroke:var(--req);stroke-dasharray:6 4"/><text class="lb" x="316" y="44" text-anchor="middle" style="fill:var(--req)">prefill</text>
+          <rect x="420" y="20" width="170" height="280" rx="14" style="fill:color-mix(in srgb,var(--green) 6%,transparent);stroke:var(--green);stroke-dasharray:6 4"/><text class="lb" x="505" y="44" text-anchor="middle" style="fill:var(--green-ink)">decode</text>
+          <rect x="252" y="120" width="128" height="70" rx="10" class="box"/><text class="lb" x="316" y="160" text-anchor="middle">P1</text>
+          <rect x="440" y="120" width="130" height="70" rx="10" class="box"/><text class="lb" x="505" y="160" text-anchor="middle">D1</text>
+          <path class="a-gpu flow" d="M382,155 L436,155" marker-end="url(#mg)"/><text class="m" x="409" y="214" text-anchor="middle">KV · NIXL</text>
+          <path class="a-req flow" d="M122,160 L248,160" marker-end="url(#mr)"/></g>
+        <g data-only="3"><rect x="252" y="210" width="128" height="70" rx="10" class="box"/><text class="lb" x="316" y="250" text-anchor="middle">P2</text><rect x="440" y="210" width="130" height="70" rx="10" class="box"/><text class="lb" x="505" y="250" text-anchor="middle">D2</text>
+          <rect x="252" y="60" width="0" height="0"/><path class="a-req flow" d="M122,175 L248,240" marker-end="url(#mr)"/><path class="a-gpu flow" d="M382,245 L436,245" marker-end="url(#mg)"/></g>
+      </svg></div>
+      <div class="sx-col c">
+        <div class="sx-stack"><div class="card sx-col" data-only="0"><div class="sx-h">quickstart · 1 GPU</div><p class="sx-note">One aggregated worker does prefill and decode. Fine for a smoke test and small models.</p></div>
+        <div class="card sx-col" data-only="1"><div class="sx-h">launch/agg_router.sh · 2 GPUs</div><p class="sx-note">Two workers behind the <b>KV-aware router</b>: requests go to the worker that already holds the prefix. vLLM needs <code>PYTHONHASHSEED=0</code> for matching block hashes.</p><p class="sx-note">TRT-LLM preset: 1 worker.</p></div>
+        <div class="card sx-col" data-only="2"><div class="sx-h">launch/disagg.sh · 2 GPUs</div><p class="sx-note">1 prefill + 1 decode worker. KV moves prefill → decode over NIXL. Workers take <code>--disaggregation-mode prefill|decode</code>; vLLM needs a unique <code>VLLM_NIXL_SIDE_CHANNEL_PORT</code> per worker.</p></div>
+        <div class="card sx-col" data-only="3"><div class="sx-h">launch/disagg_router.sh · 4 GPUs</div><p class="sx-note">2 prefill + 2 decode with the KV router picking the prefill worker. TRT-LLM preset: 1P + 1D on 2 GPUs.</p></div></div>
+<pre class="sx sm"><span class="cm"># presets live per backend</span>
+cd examples/backends/<span class="k">vllm</span>   <span class="cm"># or sglang, trtllm</span>
+./launch/<span class="w">disagg_router.sh</span></pre>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Presets from examples/backends/{vllm,sglang,trtllm}/launch/, described in the Local Guide's disaggregated-serving and KV-aware-routing pages.</li><li>GPU counts: agg_router 2 (vLLM/SGLang) or 1 (TRT-LLM); disagg 2; disagg_router 4 (vLLM/SGLang) or 2 (TRT-LLM).</li><li>The old --is-prefill-worker flag was removed in v1.4.0; use --disaggregation-mode.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="K8s: platform">
+  <div class="head"><span class="kicker">Kubernetes · install</span><h2>Install the platform once, add what your workload needs</h2></div>
+  <div class="body">
+    <div class="sx-g2 r">
+      <div class="sx-col c">
+<pre class="sx sm"><span class="cm"># 1 · GPU Operator</span>
+helm upgrade --install gpu-operator nvidia/gpu-operator \
+  -n gpu-operator --create-namespace --wait
+<span class="cm"># 2 · Dynamo platform: operator + NATS</span>
+helm upgrade --install dynamo-platform \
+  "$CHARTS/dynamo-platform-<span class="p">${DYNAMO_VERSION}</span>.tgz" \
+  -n dynamo-system --create-namespace --wait
+<span class="cm"># 3 · Hugging Face token (this exact name)</span>
+kubectl create secret generic <span class="w">hf-token-secret</span> \
+  --from-literal=HF_TOKEN=...
+<span class="cm"># 4 · check</span>
+kubectl get crd | grep dynamo
+./deploy/pre-deployment/pre-deployment-check.sh</pre>
+        <div class="sx-tg" id="sxOpt"><span>I need</span><button data-o="mn">Multinode</button><button data-o="rdma">Disagg in prod</button><button data-o="prom">SLA Planner</button><button data-o="pvc">Models &gt;70B</button></div>
+      </div>
+      <div class="sx-col c"><div class="viz"><svg viewBox="0 0 600 380" role="img" aria-label="Dynamo platform stack with optional components">
+        <rect x="0" y="320" width="380" height="50" rx="10" style="fill:#1b2227"/><text class="lb" x="190" y="350" text-anchor="middle" style="fill:#fff">GPU nodes · Kubernetes ≥ 1.30</text>
+        <rect x="0" y="258" width="380" height="50" rx="10" class="box"/><text class="lb" x="190" y="288" text-anchor="middle">GPU Operator</text>
+        <rect x="0" y="160" width="380" height="86" rx="12" style="fill:var(--tint);stroke:var(--green);stroke-width:2"/><text class="hs" x="16" y="186">dynamo-platform</text>
+        <rect x="16" y="198" width="168" height="36" rx="8" class="box"/><text class="m" x="100" y="221" text-anchor="middle">operator · CRDs</text><rect x="196" y="198" width="168" height="36" rx="8" class="box"/><text class="m" x="280" y="221" text-anchor="middle">NATS</text>
+        <rect x="0" y="40" width="380" height="108" rx="12" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="hs" x="16" y="66">your deployments</text>
+        <rect x="16" y="80" width="110" height="54" rx="8" class="box"/><text class="m" x="71" y="112" text-anchor="middle">DGD</text><rect x="136" y="80" width="110" height="54" rx="8" class="box"/><text class="m" x="191" y="112" text-anchor="middle">DGDR</text><rect x="256" y="80" width="110" height="54" rx="8" class="box"/><text class="m" x="311" y="112" text-anchor="middle">recipe</text>
+        <g data-o="mn" class="sx-fade sx-off"><rect x="404" y="40" width="196" height="70" rx="10" style="fill:color-mix(in srgb,var(--disc) 10%,var(--surface));stroke:var(--disc);stroke-width:2"/><text class="lb" x="502" y="68" text-anchor="middle">Grove + KAI</text><text class="m" x="502" y="90" text-anchor="middle">or LWS + Volcano</text></g>
+        <g data-o="rdma" class="sx-fade sx-off"><rect x="404" y="124" width="196" height="70" rx="10" style="fill:color-mix(in srgb,var(--cpu) 10%,var(--surface));stroke:var(--cpu);stroke-width:2"/><text class="lb" x="502" y="152" text-anchor="middle">Network Operator</text><text class="m" x="502" y="174" text-anchor="middle">RDMA for KV</text></g>
+        <g data-o="prom" class="sx-fade sx-off"><rect x="404" y="208" width="196" height="70" rx="10" style="fill:color-mix(in srgb,var(--req) 10%,var(--surface));stroke:var(--req);stroke-width:2"/><text class="lb" x="502" y="236" text-anchor="middle">kube-prometheus</text><text class="m" x="502" y="258" text-anchor="middle">live metrics</text></g>
+        <g data-o="pvc" class="sx-fade sx-off"><rect x="404" y="292" width="196" height="70" rx="10" style="fill:var(--surface2);stroke:var(--dim);stroke-width:2"/><text class="lb" x="502" y="320" text-anchor="middle">RWX PVC</text><text class="m" x="502" y="342" text-anchor="middle">shared model cache</text></g>
+      </svg></div>
+      <p class="sx-note" id="sxOptWhy" style="min-height:4.4em;margin:0">Pick what you need to see which add-on it brings in, and why.</p></div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From the Kubernetes quickstart and install guide. Add --set driver.enabled=false to the GPU Operator install when the cloud provider manages drivers. $CHARTS is https://helm.ngc.nvidia.com/nvidia/ai-dynamo/charts. Prerequisites: Kubernetes ≥1.30 with GPU nodes, kubectl ≥1.30, Helm v3+. Verify: CRDs present, dynamo-operator-* and nats-* pods running.</li><li>Add-ons: multinode needs Grove + KAI Scheduler or LWS + Volcano (the operator errors without one); production disaggregation needs RDMA via the Network Operator (TCP fallback: ~98 s TTFT vs ~200–500 ms with RDMA, per the install guide); Planner sla mode and KEDA/HPA need kube-prometheus-stack; models over 70B benefit from an RWX PVC model cache.</li><li>Docs caveat: the install guide still pins RELEASE_VERSION=1.2.1 while the quickstart uses 1.6.0. Use the current release.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="K8s: DGD">
+  <div class="head"><span class="kicker">Kubernetes · DynamoGraphDeployment</span><h2>One DGD describes the whole serving graph</h2></div>
+  <div class="body">
+    <div class="sx-g2">
+      <div class="sx-col c">
+        <div class="sx-tg" data-sx="db"><span>Backend</span><button data-v="vllm" aria-pressed="true">vLLM</button><button data-v="sglang">SGLang</button><button data-v="trtllm">TRT-LLM</button></div>
+<pre class="sx sm" id="sxDgd">apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+metadata: {name: <span class="yk" data-k="name">qwen3-32b-agg</span>}
+spec:
+  components:
+  <span class="yk" data-k="fe">- name: Frontend
+    type: frontend</span>
+  <span class="yk" data-k="wk">- name: worker
+    type: worker
+    replicas: <span class="p">1</span></span>
+    podTemplate:
+      spec:
+        containers:
+        - name: <span class="w">main</span>
+          image: <span class="yk" data-k="img" id="sxImg">nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.6.0</span>
+          envFrom: [{secretRef: {name: hf-token-secret}}]
+          command: <span class="yk" data-k="cmd" id="sxCmd">[python3, -m, dynamo.vllm]</span>
+          args: <span class="yk" data-k="tp" id="sxArgs">[--model, Qwen/Qwen3-32B, --tensor-parallel-size, "2"]</span>
+          resources: {limits: {<span class="yk" data-k="gpu">nvidia.com/gpu: "2"</span>}}</pre>
+      </div>
+      <div class="sx-col c">
+        <div class="viz"><svg viewBox="0 0 520 330" role="img" aria-label="What the DGD creates">
+          <g data-k="name"><rect x="0" y="0" width="520" height="250" rx="16" style="fill:none;stroke:var(--line);stroke-width:2;stroke-dasharray:7 5"/><text class="lb" x="16" y="26">DGD qwen3-32b-agg</text></g>
+          <g data-k="fe"><rect x="20" y="60" width="160" height="150" rx="12" style="fill:var(--tint);stroke:var(--green);stroke-width:2"/><text class="hs" x="100" y="96" text-anchor="middle">Frontend</text><text class="m" x="100" y="120" text-anchor="middle">Service</text><text class="m" x="100" y="138" text-anchor="middle">&lt;name&gt;-frontend</text><text class="m" x="100" y="158" text-anchor="middle">:8000</text></g>
+          <path class="a-gpu flow" d="M182,135 L232,135" marker-end="url(#mg)"/>
+          <g data-k="wk"><rect x="236" y="40" width="270" height="190" rx="12" style="fill:var(--surface);stroke:var(--req);stroke-width:2"/><text class="hs" x="252" y="68">worker × replicas</text></g>
+          <g data-k="cmd"><rect x="252" y="82" width="238" height="40" rx="8" class="box"/><text class="m" x="371" y="107" text-anchor="middle" id="sxMod">dynamo.vllm</text></g>
+          <g data-k="tp"><rect x="252" y="134" width="238" height="80" rx="8" style="fill:none;stroke:var(--line);stroke-dasharray:4 3"/><text class="m" x="264" y="152">TP = 2</text></g>
+          <g data-k="gpu"><rect x="264" y="160" width="100" height="44" rx="8" style="fill:var(--green-fill)"/><text class="lb" x="314" y="188" text-anchor="middle" style="fill:#12191c">GPU</text><rect x="376" y="160" width="100" height="44" rx="8" style="fill:var(--green-fill)"/><text class="lb" x="426" y="188" text-anchor="middle" style="fill:#12191c">GPU</text></g>
+          <g data-k="img"><rect x="20" y="268" width="486" height="52" rx="10" style="fill:var(--surface2);stroke:var(--line)"/><text class="m" x="263" y="299" text-anchor="middle" id="sxImgT">image: vllm-runtime:1.6.0</text></g>
+        </svg></div>
+        <div class="sx-chips"><span class="chip">GPU limit = TP × PP</span><span class="chip">container must be named main</span><span class="chip">TP inside a node · PP + multinode.nodeCount across</span></div>
+        <p class="sx-note">Hover the YAML to see what each part creates.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From "Deploy with DGD". API nvidia.com/v1beta1: spec.components is a list with name, type (frontend, worker, prefill, decode), replicas, multinode.nodeCount, sharedMemorySize and a podTemplate whose container is named main. The older v1alpha1 services map is still served and converted.</li><li>Backends: vLLM uses --model and CLI parallelism flags; SGLang uses --model-path and --tp; TRT-LLM takes parallelism in an engine YAML via --extra-engine-args.</li><li>Apply: envsubst &lt; dgd.yaml | kubectl apply -f - (try --dry-run=server first), then kubectl wait --for=condition=Ready dynamographdeployment/&lt;name&gt;. Common rejections: GPU limit not TP×PP, multinode without Grove or LWS, missing secret.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="K8s: DGDR" data-steps="3">
+  <div class="head"><span class="kicker">Kubernetes · auto-deploy</span><h2>Not sure how to size it? Ask for an SLA and let the profiler pick</h2></div>
+  <div class="body">
+    <div class="sx-g2 r">
+      <div class="sx-col c">
+<pre class="sx sm">apiVersion: nvidia.com/v1beta1
+kind: <span class="w">DynamoGraphDeploymentRequest</span>
+metadata: {name: qwen3-quickstart}
+spec:
+  model: <span class="k">Qwen/Qwen3-0.6B</span>   <span class="cm"># the only required field</span>
+  backend: auto
+  searchStrategy: <span class="p">rapid</span>     <span class="cm"># or thorough</span>
+  workload: {isl: 4000, osl: 1000}
+  sla: {ttft: 2000, itl: 30}  <span class="cm"># ms</span>
+  autoApply: true</pre>
+        <div class="sx-st"><div><b>rapid</b><em>~30 s</em><span>simulated with AISim · no GPUs</span></div><div><b>thorough</b><em>2–4 h</em><span>real GPUs + AIPerf · disagg only</span></div></div>
+      </div>
+      <div class="sx-col c">
+        <div class="viz"><svg viewBox="0 0 560 300" role="img" aria-label="DGDR phases">
+          <g><rect x="0" y="20" width="100" height="56" rx="28" style="fill:var(--tint);stroke:var(--green);stroke-width:2"/><text class="lb" x="50" y="53" text-anchor="middle">Pending</text></g>
+          <path class="a-dim" d="M102,48 L124,48" marker-end="url(#md)"/>
+          <g><rect x="128" y="0" width="300" height="160" rx="16" style="fill:color-mix(in srgb,var(--req) 8%,var(--surface));stroke:var(--req);stroke-width:2"/><text class="hs" x="146" y="28">Profiling</text>
+            <text class="m" x="146" y="56">sweep prefill · sweep decode</text><text class="m" x="146" y="80">select config · build curves</text><text class="m" x="146" y="104">generate DGD</text>
+            <rect x="146" y="120" width="264" height="22" rx="6" style="fill:var(--surface2)"/><rect x="146" y="120" height="22" rx="6" style="fill:var(--req)" width="0"><animate attributeName="width" values="0;264;264" keyTimes="0;.8;1" dur="3s" repeatCount="indefinite"/></rect></g>
+          <g data-s="1" class="sx-fade"><path class="a-dim" d="M428,80 L452,80" marker-end="url(#md)"/><rect x="456" y="52" width="100" height="56" rx="28" style="fill:var(--tint);stroke:var(--green);stroke-width:2"/><text class="lb" x="506" y="85" text-anchor="middle">Ready</text></g>
+          <g data-s="2" class="sx-fade"><path class="a-dim" d="M506,110 L506,184" marker-end="url(#md)"/><rect x="380" y="190" width="176" height="56" rx="28" style="fill:var(--tint);stroke:var(--green);stroke-width:2"/><text class="lb" x="468" y="223" text-anchor="middle">Deploying</text></g>
+          <g data-s="3" class="sx-fade"><path class="a-gpu" d="M378,218 L300,218" marker-end="url(#mg)"/><rect x="100" y="186" width="196" height="64" rx="32" style="fill:var(--green-fill)"/><text class="hs" x="198" y="224" text-anchor="middle" style="fill:#101800">Deployed ✓</text><text class="m" x="198" y="282" text-anchor="middle">→ a regular DGD you can read and edit</text></g>
+        </svg></div>
+<pre class="sx sm"><span class="cm"># review before deploying: set autoApply: false, then</span>
+kubectl get dgdr my-model -o jsonpath=\
+  '{.status.profilingResults.selectedConfig}' &gt; my-dgd.yaml</pre>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From "Auto-deploy with DGDR" and the Profiler page. Phases: Pending → Profiling → Ready → Deploying → Deployed (or Failed; profiling failures are terminal).</li><li>Defaults: isl 4000, osl 1000, ttft 2000 ms, itl 30 ms. e2eLatency can replace ttft/itl. hardware.gpuSku / totalGpus / numGpusPerNode; modelCache for a PVC; features.planner to add the Planner.</li><li>The profiler optimizes for: independent prefill and decode engines when the Planner is on; the fewest GPUs that meet a target load when one is set; otherwise maximum throughput. MoE is fully supported on SGLang.</li><li>Deleting the DGDR does not delete the DGD it made.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Recipes: anatomy">
+  <div class="head"><span class="kicker">Recipes</span><h2>Recipes: a tested deployment for a model, a backend and a mode</h2></div>
+  <div class="body">
+    <div class="sx-g2 r">
+      <div class="sx-col c">
+<pre class="sx">recipes/
+└─ <span class="w">qwen3-32b/</span>                <span class="cm"># model</span>
+   ├─ model-cache/
+   │  ├─ model-cache.yaml    <span class="cm"># PVC</span>
+   │  └─ model-download.yaml <span class="cm"># Job</span>
+   └─ <span class="k">vllm/</span>                  <span class="cm"># backend</span>
+      ├─ <span class="p">agg-round-robin/</span>     <span class="cm"># mode</span>
+      └─ <span class="p">disagg-kv-router/</span>
+         ├─ <span class="w">deploy.yaml</span>       <span class="cm"># full DGD</span>
+         └─ perf.yaml         <span class="cm"># AIPerf Job</span></pre>
+        <div class="stats" style="gap:clamp(14px,2.4cqw,34px)"><div class="stat"><b>15</b><span>model providers</span></div><div class="stat"><b>31</b><span>models</span></div><div class="stat"><b>191</b><span>tested targets</span></div></div>
+      </div>
+      <div class="sx-col c">
+<pre class="sx sm"><span class="cm"># 1 · token + model cache (edit storageClassName first)</span>
+kubectl create secret generic hf-token-secret \
+  --from-literal=HF_TOKEN=... -n $NS
+kubectl apply -f qwen3-32b/model-cache/ -n $NS
+kubectl wait --for=condition=Complete \
+  job/model-download -n $NS --timeout=6000s
+
+<span class="cm"># 2 · deploy</span>
+kubectl apply -n $NS \
+  -f qwen3-32b/vllm/<span class="p">disagg-kv-router</span>/<span class="w">deploy.yaml</span>
+
+<span class="cm"># 3 · talk to it</span>
+kubectl port-forward svc/&lt;name&gt;-frontend 8000:8000
+
+<span class="cm"># 4 · benchmark it (optional)</span>
+kubectl apply -n $NS -f .../disagg-kv-router/<span class="w">perf.yaml</span></pre>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From recipes/README.md and the Recipes tab. Layout: recipes/&lt;model&gt;/&lt;vllm|sglang|trtllm&gt;/&lt;mode&gt;/ with deploy.yaml (a full DGD) and an optional perf.yaml (AIPerf Job). recipes/accuracy/ holds a shared accuracy check.</li><li>Counts are from the docs recipe catalog (docs/fern/pages/recipes/_catalog) on main, Oct 24 2026: 15 providers, 31 model pages, 191 deployment targets (model × backend × mode × hardware); 135 targets publish expected performance.</li><li>Caveat: some newer recipes use a shared &lt;model&gt;/perf/perf.yaml driven by ENDPOINT, TRACE_FILE and CONCURRENCY, and qwen3-32b names its cache file cache.yaml.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Recipes: browse">
+  <div class="head"><span class="kicker">Recipes · browse</span><h2>Find your model: providers in the docs' order, most popular first</h2></div>
+  <div class="body">
+    <div class="sx-rb">
+      <div class="sx-pv" id="sxPv"></div>
+      <div class="sx-col">
+        <div class="sx-ms" id="sxMs"></div>
+        <div class="sx-tw"><table class="sx-tbl"><thead><tr><th>Backend</th><th>Mode</th><th>Hardware</th><th>Numbers</th></tr></thead><tbody id="sxRec"></tbody></table></div>
+      </div>
+      <div class="sx-col">
+        <div class="sx-h">Deploy this target</div>
+        <pre class="sx sm" id="sxRecCmd"></pre>
+        <div class="sx-perf" id="sxRecPerf"></div>
+        <a class="sx-btn sx-go" id="sxRecDoc" target="_blank" href="#">Recipe page in the docs →</a>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Same order as the Recipes tab on docs.nvidia.com/dynamo: providers are grouped and ordered so the most popular models come first (Z.ai, Moonshot AI, DeepSeek, Qwen, NVIDIA, then Google, Thinking Machines, OpenAI and others).</li><li>Data comes from the docs recipe catalog on main (Oct 24 2026). Pick a provider, a model and a target to see its deploy path and, when published, its expected performance. ★ marks the recommended target.</li><li>Experimental recipes are newer and less validated than validated ones.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Recipes: results">
+  <div class="head"><span class="kicker">Recipes · expected numbers</span><h2>Recipes publish numbers: compare shapes before you deploy</h2></div>
+  <div class="body col" style="justify-content:center">
+    <div class="sx-res q"><a class="sx-rc" href="https://docs.nvidia.com/dynamo/recipes/glm-5-2" target="_blank"><b>GLM-5.3</b><small>Z.ai · SGLang · B200</small><div class="sx-hb"><span>agg · 16 GPUs</span><div class="sx-bar"><i class="o" style="width:59%"></i></div><b>190</b><span>disagg · 20 GPUs</span><div class="sx-bar"><i class="g" style="width:100%"></i></div><b>324</b></div><div class="sx-m"><em>+70%</em><span class="sx-note" style="margin:0">tok/s/GPU with disagg (3P1D) at ~62 tok/s/user</span></div></a><a class="sx-rc" href="https://docs.nvidia.com/dynamo/recipes/kimi-k2-6" target="_blank"><b>Kimi-K2.6</b><small>Moonshot AI · vLLM agg</small><div class="sx-hb"><span>8× H200</span><div class="sx-bar"><i class="o" style="width:40%"></i></div><b>66.5</b><span>4× B200</span><div class="sx-bar"><i class="g" style="width:100%"></i></div><b>166.5</b></div><div class="sx-m"><em>2.5×</em><span class="sx-note" style="margin:0">tok/s/GPU on B200 vs H200 at ~56 tok/s/user</span></div></a><a class="sx-rc" href="https://docs.nvidia.com/dynamo/recipes/deepseek-v4-flash" target="_blank"><b>DeepSeek-V4-Flash</b><small>DeepSeek · vLLM · B200</small><div class="sx-hb"><span>agg · 4 GPUs</span><div class="sx-bar"><i class="o" style="width:88%"></i></div><b>362</b><span>disagg · 12 GPUs</span><div class="sx-bar"><i class="g" style="width:100%"></i></div><b>410</b></div><div class="sx-m"><em>+13%</em><span class="sx-note" style="margin:0">tok/s/GPU with disagg (2P1D) at ~50 tok/s/user</span></div></a><a class="sx-rc" href="https://docs.nvidia.com/dynamo/recipes/qwen3-6-35b-a3b" target="_blank"><b>Qwen3.6-35B-A3B</b><small>Qwen · SGLang agg · 1 GPU</small><div class="sx-hb"><span>H200</span><div class="sx-bar"><i class="o" style="width:44%"></i></div><b>1,332</b><span>B200</span><div class="sx-bar"><i class="g" style="width:98%"></i></div><b>2,989</b><span>GB200</span><div class="sx-bar"><i class="g" style="width:100%"></i></div><b>3,036</b></div><div class="sx-m"><em>2.3×</em><span class="sx-note" style="margin:0">tok/s/GPU on GB200 vs H200, same recipe</span></div></a></div>
+    <p class="sx-note" style="text-align:center">output tokens/s per GPU from each recipe's expected performance · agentic trace replays at the stated per-user speed · compare within a card, not across models</p>
+  </div>
+  <aside class="notes"><ul><li>Same provider order as the Recipes tab: Z.ai, Moonshot AI, DeepSeek, Qwen. Numbers are the expected_performance summaries in the docs recipe catalog (Oct 24 2026).</li><li>GLM-5.3 on B200 (SGLang): aggregated 16 GPUs 190.05 tok/s/GPU at 61.92 user tok/s P50 (c64) vs disaggregated 20 GPUs (3P1D) 323.82 tok/s/GPU at 63.13 user tok/s (c128), 15% agentic trace subset. Note disagg TTFT P50 is higher (1280 vs 229 ms).</li><li>Kimi-K2.6 (vLLM aggregated): 4×B200 166.5 tok/s/GPU at 55.50 tok/s/user (c64) vs 8×H200 66.5 tok/s/GPU at 56.06 tok/s/user (c48).</li><li>DeepSeek-V4-Flash on B200 (vLLM): aggregated 362.1 system tok/s/GPU at 50.6 user tok/s vs disaggregated 2P1D on 12 GPUs 409.9 at 50.35.</li><li>Qwen3.6-35B-A3B (Dynamo + SGLang aggregated, 1 GPU): H200 1332.03, B200 2988.50, GB200 3035.98 output tok/s/GPU at concurrency 32 on a 3,541-request agentic trace.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Optimize: method">
+  <div class="head"><span class="kicker">Optimize · method</span><h2>Measure, change one thing, measure again</h2></div>
+  <div class="body">
+    <div class="sx-g2">
+      <div class="viz"><svg viewBox="0 0 460 380" role="img" aria-label="Tuning loop">
+        <circle cx="230" cy="190" r="130" style="fill:none;stroke:var(--line);stroke-width:5"/>
+        <circle cx="230" cy="190" r="130" style="fill:none;stroke:var(--green);stroke-width:5;stroke-dasharray:22 18" class="flow"/>
+        <circle r="10" style="fill:var(--req)"><animateMotion dur="8s" repeatCount="indefinite" path="M230,60 A130,130 0 1,1 229.9,60"/></circle>
+        <g><rect x="135" y="30" width="190" height="60" rx="14" style="fill:var(--surface);stroke:var(--green);stroke-width:2"/><text class="hs" x="230" y="56" text-anchor="middle">1 · Baseline</text><text class="m" x="230" y="76" text-anchor="middle">recipe or DGDR</text></g>
+        <g><rect x="290" y="160" width="190" height="60" rx="14" style="fill:var(--surface);stroke:var(--green);stroke-width:2"/><text class="hs" x="385" y="186" text-anchor="middle">2 · Benchmark</text><text class="m" x="385" y="206" text-anchor="middle">AIPerf in-cluster</text></g>
+        <g><rect x="135" y="290" width="190" height="60" rx="14" style="fill:var(--surface);stroke:var(--green);stroke-width:2"/><text class="hs" x="230" y="316" text-anchor="middle">3 · Read</text><text class="m" x="230" y="336" text-anchor="middle">TTFT · ITL · tok/s/GPU</text></g>
+        <g><rect x="-20" y="160" width="190" height="60" rx="14" style="fill:var(--tint);stroke:var(--green);stroke-width:2.5"/><text class="hs" x="75" y="186" text-anchor="middle">4 · One change</text><text class="m" x="75" y="206" text-anchor="middle">a single knob</text></g>
+      </svg></div>
+      <div class="sx-col c">
+<pre class="sx sm">pip install aiperf
+aiperf profile --model Qwen/Qwen3-32B-FP8 \
+  --url http://localhost:8000 --endpoint-type chat \
+  --streaming --concurrency <span class="p">10</span> --request-count 100 \
+  --synthetic-input-tokens-mean 2000 \
+  --output-tokens-mean 256
+<span class="cm"># results → artifacts/</span></pre>
+        <div class="card sx-col">
+          <div class="sx-h">Rules that keep results honest</div>
+          <p class="sx-note"><b>Pick the SLA first:</b> TTFT and ITL targets decide what "better" means.</p>
+          <p class="sx-note"><b>One variable per run:</b> agg vs disagg, KV vs round-robin, replicas, TP/PP.</p>
+          <p class="sx-note"><b>Benchmark inside the cluster,</b> not through a port-forward, then sweep concurrency.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From the Benchmarking with AIPerf pages (Kubernetes and Local) and the disaggregated serving overview: change one setting at a time, then sweep concurrency; benchmark in-cluster, not through port-forward.</li><li>Recipes ship a perf.yaml AIPerf Job so the baseline is reproducible.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Optimize: levers">
+  <div class="head"><span class="kicker">Optimize · what to change</span><h2>Start from the symptom, not the knob</h2></div>
+  <div class="body">
+    <div class="sx-g2 r">
+      <div class="sx-sym" id="sxSym">
+        <button data-i="0" aria-pressed="true"><i>❓</i>Don't know TP, agg or disagg</button>
+        <button data-i="1"><i>🔁</i>Shared prefixes, low cache hits</button>
+        <button data-i="2"><i>📜</i>Long prompts slow everyone's tokens</button>
+        <button data-i="3"><i>🧱</i>KV cache full, prefixes recomputed</button>
+        <button data-i="4"><i>📈</i>Traffic swings during the day</button>
+        <button data-i="5"><i>🐢</i>Disaggregated serving is slower than aggregated</button>
+      </div>
+      <div class="sx-det" id="sxSymD"></div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Each symptom maps to the lever the docs recommend: the Profiler / AISim for sizing; KV-aware routing for prefix reuse; disaggregation for long prompts and high concurrency; KV offloading for cache pressure; the Planner for changing traffic; and NIXL/RDMA checks when disaggregation underperforms.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Lever: KV router">
+  <div class="head"><span class="kicker">Lever · KV-aware routing</span><h2>Route each request to the worker that is cheapest to finish it</h2></div>
+  <div class="body">
+    <div class="sx-g2" style="grid-template-columns:.78fr 1.22fr">
+      <div class="sx-col c">
+<pre class="sx sm"><span class="cm"># frontend: turn it on (default round-robin)</span>
+--router-mode <span class="w">kv</span>
+<span class="cm"># vLLM worker: publish KV events</span>
+--kv-events-config '{"publisher":"zmq",
+  "endpoint":"tcp://*:20080",
+  "enable_kv_cache_events":true}'
+<span class="cm"># tune through a policy file</span>
+--router-policy-config worker-selection.yaml</pre>
+        <div class="sx-knob"><code>overlap_score_credit</code><span><b>Lower</b> → spread load, lower ITL</span></div>
+        <div class="sx-knob"><code>prefill_load_scale</code><span><b>Raise</b> → when long prompts saturate workers</span></div>
+      </div>
+      <div class="sx-col c">
+        <div class="sx-tg" data-sx="rm2"><span>Score by</span><button data-v="rr">round-robin</button><button data-v="cache">cache only</button><button data-v="load">load only</button><button data-v="kv" aria-pressed="true">KV router</button></div>
+        <div class="sx-leg"><span><i style="background:var(--green-fill)"></i>cached</span><span><i style="background:var(--req)"></i>to compute</span><span><i style="background:var(--cpu)"></i>already queued</span><span class="dim">· an 8-block prompt arrives</span></div>
+        <div id="sxRw"></div>
+        <div class="sx-sl" id="sxCr"><code>overlap_score_credit</code><input type="range" id="sxC" min="0" max="1" step="0.1" value="1"><b id="sxCv">1.0</b></div>
+        <p class="sx-call" id="sxRmsg"></p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Inspired by the router deck's "How it picks a worker". Each worker's cost = blocks it still has to compute + work it already has; lowest wins. Cache only piles onto the busy worker; load only throws away reuse; round-robin ignores both.</li><li>The real cost function (router configuration and tuning): prefill_load_scale × adjusted prefill blocks + decode blocks (+ optional active-request term). overlap_score_credit scales how much a cached block counts: lower it to spread load and reduce ITL; raise prefill_load_scale when long prompts saturate workers. router_temperature adds randomness.</li><li>Other flags: --no-router-kv-events (approximate routing), --router-predicted-ttl-secs 5 for fan-out or best-of-N bursts, --no-router-assume-kv-reuse for disagg, --router-queue-threshold and --router-queue-policy wspt|fcfs. The older --router-kv-overlap-score-credit and --router-prefill-load-scale flags are deprecated (removal in v1.7).</li><li>Worker numbers are a toy example. Deep dive: router.html.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Lever: disagg">
+  <div class="head"><span class="kicker">Lever · disaggregation</span><h2>Split prefill and decode, but only when your workload calls for it</h2></div>
+  <div class="body">
+    <div class="sx-g2" style="grid-template-columns:.92fr 1.08fr">
+      <div class="sx-col c">
+        <div class="sx-vds">
+          <div class="sx-vd ok"><b>✅ Use it for</b><ul><li>Long prompts</li><li>High concurrency</li><li>Different TP per phase</li></ul></div>
+          <div class="sx-vd no"><b>⛔ Skip it for</b><ul><li>Small models</li><li>Short prompts</li><li>No fast fabric</li></ul></div>
+        </div>
+        <div class="sx-ais">
+          <div class="sx-h">🔮 Not sure? Project it first</div>
+          <p class="sx-note" style="margin:0"><b>AISim</b> compares agg vs disagg for your model, traffic and SLA in ~30 s. No GPUs.</p>
+<pre class="sx sm">pip install aisimulate
+aisimulate recommend -c my-model.yaml  <span class="cm"># agg vs disagg</span></pre>
+          <div class="sx-tg"><a class="sx-btn" href="https://github.com/ai-dynamo/aisimulate" target="_blank">AISim on GitHub →</a><a class="sx-btn" href="aisim.html" target="_blank">AISim deck →</a></div>
+        </div>
+        <div class="sx-ais tp">
+          <div class="sx-h">🔌 Deployed? Test the transfer path</div>
+<pre class="sx sm"><span class="cm"># from the dynamo-interconnect-check skill</span>
+check_interconnect.py <span class="k">env</span>  &lt;recipe&gt;        <span class="cm"># NIXL/UCX/NCCL</span>
+check_interconnect.py <span class="k">node</span> --pod &lt;worker&gt;  <span class="cm"># IB, RDMA, NVLink</span>
+check_interconnect.py <span class="k">nixl</span> --pod &lt;worker&gt;  <span class="cm"># transfer test</span></pre>
+        </div>
+      </div>
+      <div class="sx-sim">
+        <div class="sx-simc">
+          <div class="sx-step"><span><i style="background:var(--req)"></i>Prefill workers</span><button data-pd="p-" aria-label="Fewer prefill workers">−</button><b id="sxPn">1</b><button data-pd="p+" aria-label="More prefill workers">+</button></div>
+          <div class="sx-step"><span><i style="background:var(--green-fill)"></i>Decode workers</span><button data-pd="d-" aria-label="Fewer decode workers">−</button><b id="sxDn">2</b><button data-pd="d+" aria-label="More decode workers">+</button></div>
+          <button class="sx-btn" data-pd="r">↺ restart</button>
+          <span class="sx-best">★ best for this load: <b id="sxBest"></b> · live toy model, 6 req/s</span>
+        </div>
+        <canvas id="sxSimCv" aria-label="Live simulation of requests through prefill and decode workers"></canvas>
+        <div class="sx-gauges">
+          <div class="sx-ga"><span>TTFT p90</span><b id="sxTt">–</b><div class="sx-mb"><i id="sxTb"></i><u style="left:50%"></u></div><small>SLA 1 s</small></div>
+          <div class="sx-ga"><span>ITL</span><b id="sxIt">–</b><div class="sx-mb"><i id="sxIb"></i><u style="left:50%"></u></div><small>SLA 35 ms</small></div>
+          <div class="sx-ga gp"><span>Goodput / GPU</span><b id="sxG">–</b><small id="sxG2"></small></div>
+        </div>
+        <p class="sx-call" id="sxPdMsg"></p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>When to use it (disaggregated serving overview): long prompts, high concurrency, or different TP needs per phase. When not to: small models, short prompts, or no fast fabric. Without RDMA, KV transfer falls back to TCP (the install guide quotes ~98 s TTFT vs ~200–500 ms with RDMA).</li><li>Live toy simulation: requests arrive (6/s), wait for a prefill worker (0.25 s each), hand their KV to the least-loaded decode worker, then stream 60 tokens; a decode step takes 20 ms + 2.5 ms per active stream on that worker. A request counts toward goodput if TTFT ≤ 1 s and its average ITL ≤ 35 ms. Start at 1P/2D: prefill can only do 4 req/s, so the queue grows and TTFT fails. Add prefill → TTFT recovers but decode streams pile up → ITL fails. Add decode → both pass. Keep adding → goodput per GPU drops. The ★ best split is found by a quick seeded sweep of all 36 splits when the slide loads (2P/3D with these settings). Real numbers: AISim or a DGDR profile.</li><li>Transfer-path check: the dynamo-interconnect-check agent skill ships scripts/check_interconnect.py with three read-only subcommands: env (NIXL/UCX/NCCL env vars on a recipe), node (InfiniBand, GPUDirect RDMA, GDRCopy, NVLink on a node or pod) and nixl (NIXL transfer-test readiness for a pod). Run it after deploying a disaggregated recipe.</li><li>Flags: --disaggregation-mode prefill|decode; sharedMemorySize: 16Gi in the DGD (64 MB default breaks NIXL); kubectl logs &lt;prefill-pod&gt; | grep NIXL should show UCX.</li><li>Project it first with AISim: aisimulate recommend searches parallelism, batching, replicas and agg vs disagg and returns the fewest GPUs that meet the SLA, in about 30 seconds without GPUs. The Kubernetes equivalent is a DGDR with searchStrategy: rapid.</li><li>Sizing once deployed: no fixed ratio; prefill queue grows → add prefill; decode KV near its limit → add decode; disagg worse than agg → check NIXL/RDMA first. vLLM flags: --kv-transfer-config with NixlConnector, kv_role kv_producer / kv_consumer.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Lever: offload + Planner">
+  <div class="head"><span class="kicker">Lever · memory and capacity</span><h2>Keep KV instead of recomputing it. Let the Planner follow traffic.</h2></div>
+  <div class="body">
+    <div class="sx-g2">
+      <div class="sx-col c">
+        <div class="sx-h">KV offloading · pick one backend</div>
+        <div class="sx-ol">
+          <div class="sx-o" style="--oc:var(--green)"><b>LMCache</b><code>--kv-transfer-config '{"kv_connector":"LMCacheConnectorV1","kv_role":"kv_both",…}'</code></div>
+          <div class="sx-o" style="--oc:var(--green)"><b>SGLang HiCache</b><code>--enable-hierarchical-cache --hicache-ratio 2 --hicache-write-policy write_through</code></div>
+          <div class="sx-o" style="--oc:var(--disc)"><b>KVCR</b><code>cross-node KV sharing · see the KVCR deck</code></div>
+          <div class="sx-o" style="--oc:var(--cpu)"><b>FlexKV</b><code>DYNAMO_USE_FLEXKV=1 · FLEXKV_CPU_CACHE_GB</code></div>
+        </div>
+        <p class="sx-note">Size the pod memory limit to hold the host cache.</p>
+      </div>
+      <div class="sx-col c">
+        <div class="sx-h">Planner · in the DGDR</div>
+<pre class="sx sm">features:
+  planner:
+    mode: disagg
+    optimization_target: <span class="p">sla</span>  <span class="cm"># default: throughput</span>
+    ttft_ms: 500.0
+    itl_ms: 50.0
+    enable_throughput_scaling: true  <span class="cm"># every 180 s</span>
+    enable_load_scaling: true        <span class="cm"># every 5 s</span>
+    advisory: <span class="w">true</span>   <span class="cm"># recommend only</span></pre>
+        <div class="sx-ro"><div><em>step 1</em><b>advisory</b><span>watch its recommendations</span></div><div><em>step 2</em><b>throughput</b><span>let it scale</span></div><div><em>step 3</em><b>sla</b><span>+ Prometheus, both scalers</span></div></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>KV offloading backends are alternatives, not layers. LMCache via the vLLM KV connector; SGLang HiCache flags; FlexKV is experimental; KVCR is a separate, early-stage cross-node cache.</li><li>Planner is configured only through a DGDR (features.planner), not in the DGD. Guardrails: min_endpoint, prefill_min_endpoint, decode_min_endpoint, max_gpu_budget. Only sla mode needs Prometheus. Scale-down does not drain in-flight requests.</li><li>Advisory mode emits dynamo_planner_predicted_num_{prefill,decode}_replicas without acting.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Agent skills">
+  <div class="head"><span class="kicker">Agent skills</span><h2>Hand the loop to a coding agent, with guardrails</h2></div>
+  <div class="body">
+    <div class="sx-g2 l">
+      <div class="viz"><svg viewBox="0 0 600 380" role="img" aria-label="Agent optimization loop">
+        <circle cx="300" cy="190" r="140" style="fill:none;stroke:var(--line);stroke-width:4"/>
+        <circle cx="300" cy="190" r="140" style="fill:none;stroke:var(--disc);stroke-width:4;stroke-dasharray:18 14" class="flow"/>
+        <circle r="9" style="fill:var(--disc)"><animateMotion dur="10s" repeatCount="indefinite" path="M300,50 A140,140 0 1,1 299.9,50"/></circle>
+        <g class="sk on" data-n="0"><rect x="220" y="20" width="160" height="60" rx="14" class="box"/><text class="hs" x="300" y="46" text-anchor="middle">Interview</text><text class="m" x="300" y="66" text-anchor="middle">workload · baseline</text></g>
+        <g class="sk" data-n="1"><rect x="420" y="96" width="160" height="60" rx="14" class="box"/><text class="hs" x="500" y="122" text-anchor="middle">Deploy</text><text class="m" x="500" y="142" text-anchor="middle">smoke test</text></g>
+        <g class="sk" data-n="2"><rect x="420" y="236" width="160" height="60" rx="14" class="box"/><text class="hs" x="500" y="262" text-anchor="middle">Measure</text><text class="m" x="500" y="282" text-anchor="middle">AIPerf</text></g>
+        <g class="sk" data-n="3"><rect x="220" y="300" width="160" height="60" rx="14" class="box"/><text class="hs" x="300" y="326" text-anchor="middle">Propose</text><text class="m" x="300" y="346" text-anchor="middle">one knob</text></g>
+        <g class="sk" data-n="4"><rect x="20" y="236" width="160" height="60" rx="14" class="box"/><text class="hs" x="100" y="262" text-anchor="middle">Challenge</text><text class="m" x="100" y="282" text-anchor="middle">approve · reject</text></g>
+        <g class="sk" data-n="5"><rect x="20" y="96" width="160" height="60" rx="14" class="box"/><text class="hs" x="100" y="122" text-anchor="middle">Stop?</text><text class="m" x="100" y="142" text-anchor="middle">ledger · budget</text></g>
+      </svg></div>
+      <div class="sx-col c">
+        <div class="card sx-sk" id="sxSk"></div>
+<pre class="sx sm" style="white-space:pre-wrap"><span class="cm"># just state the outcome; skills are picked by intent</span>
+"Optimize this deployment for output tokens/s per user
+ under a 200 ms TTFT SLO. Budget 8 GPU-hours and stop
+ after three failed deployments."</pre>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>From the Agent Skills tab. Skills live in .agents/skills/ (skills/ and .claude/skills/ are symlinks). Claude Code, Codex or Cursor discover them from the repo and choose by intent.</li><li>Loop (agent-docs/guides/optimization/optimize-loop.md): interview → deploy → measure → propose one knob backed by evidence → adversarial review → iterate or stop. No GPU time is spent on an unapproved candidate. Stopping follows a ledger where every lever family is tested, ruled out, not applicable or deferred.</li><li>Advice from the docs: set budgets (GPU-hours, wall clock, failed deploys); use goal mode for unattended runs; never put secrets in prompts.</li></ul></aside>
+</section>
+
+<section class="slide" data-title="Cheat sheet">
+  <div class="head"><span class="kicker">Cheat sheet</span><h2>Everything on one page</h2></div>
+  <div class="body">
+    <div class="sx-cs">
+      <a class="sx-c" href="https://docs.nvidia.com/dynamo/" target="_blank"><b>💻 Local</b><pre>python3 -m dynamo.frontend
+python3 -m dynamo.vllm --model …</pre><small>Local Guide →</small></a>
+      <a class="sx-c" href="https://docs.nvidia.com/dynamo/" target="_blank"><b>☸️ Platform</b><pre>helm upgrade --install \
+  dynamo-platform …</pre><small>Kubernetes Guide →</small></a>
+      <a class="sx-c" href="https://docs.nvidia.com/dynamo/" target="_blank"><b>🎯 Auto-size</b><pre>kind: DynamoGraphDeploymentRequest
+searchStrategy: rapid</pre><small>DGDR + Profiler →</small></a>
+      <a class="sx-c" href="https://github.com/ai-dynamo/dynamo/tree/main/recipes" target="_blank"><b>📖 Recipe</b><pre>kubectl apply -f \
+  &lt;model&gt;/&lt;backend&gt;/&lt;mode&gt;/deploy.yaml</pre><small>recipes/ →</small></a>
+      <a class="sx-c" href="https://github.com/ai-dynamo/aiperf" target="_blank"><b>📊 Benchmark</b><pre>aiperf profile --url … \
+  --concurrency 10 --streaming</pre><small>AIPerf →</small></a>
+      <a class="sx-c" href="https://github.com/ai-dynamo/dynamo/tree/main/.agents/skills" target="_blank"><b>🤖 Agents</b><pre>"Optimize for tok/s/user
+ under a 200 ms TTFT SLO"</pre><small>.agents/skills →</small></a>
+    </div>
+  </div>
+  <aside class="notes"><ul><li>Deeper dives on each component: ai-dynamo.org/slides (Router, KVCR, Planner + Grove, ModelExpress + Snapshot, AISim and more).</li></ul></aside>
+</section>
+
+</main>
+
+<div class="notes-panel" id="notes" aria-live="polite"><h4>Speaker notes</h4><div id="notesBody"></div></div>
+<div class="progress" id="progress"></div>
+<div class="chrome">
+  <span class="hint">← → step · N notes · F fullscreen</span>
+  <div class="navs">
+    <span class="stepdots" id="dots"></span>
+    <button class="navbtn" id="bPrev" aria-label="Previous">◀</button>
+    <span class="pg" id="pg"></span>
+    <button class="navbtn" id="bNext" aria-label="Next">▶</button>
+    <button class="navbtn" id="bNotes" aria-label="Toggle speaker notes">Notes</button>
+    <button class="navbtn" id="bTheme" aria-label="Toggle dark mode">Dark</button>
+    <button class="navbtn" id="bFs" aria-label="Toggle fullscreen">⛶</button>
+  </div>
+</div>
+
+</div>
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var cur=0, step=0;
+  var $=function(id){return document.getElementById(id)};
+  function maxS(s){return +(s.dataset.steps||0)}
+  var hooks={};
+
+  function render(){
+    slides.forEach(function(s,i){s.classList.toggle('active',i===cur)});
+    var s=slides[cur]; s.dataset.step=step;
+    s.querySelectorAll('[data-s]').forEach(function(e){var k=+e.dataset.s;e.classList.toggle('on',step>=k);e.classList.toggle('now',step===k)});
+    s.querySelectorAll('[data-only]').forEach(function(e){e.classList.toggle('on',e.dataset.only.split(' ').indexOf(String(step))>-1)});
+    s.querySelectorAll('[data-goto]').forEach(function(b){b.setAttribute('aria-pressed',(+b.dataset.goto===step)?'true':'false')});
+    $('progress').style.width=((cur+1)/slides.length*100)+'%';
+    $('pg').textContent=(cur+1)+' / '+slides.length;
+    var n=s.querySelector('aside.notes'); $('notesBody').innerHTML=n?n.innerHTML:'';
+    var d=$('dots'); d.innerHTML=''; var m=maxS(s);
+    if(m){for(var i=0;i<=m;i++){var x=document.createElement('i');if(i<=step)x.className='on';d.appendChild(x)}}
+    if(s.dataset.hook&&hooks[s.dataset.hook]) hooks[s.dataset.hook]();
+    try{history.replaceState(null,'','#'+(cur+1))}catch(e){}
+  }
+  function next(){var m=maxS(slides[cur]); if(step<m){step++}else if(cur<slides.length-1){cur++;step=0} render()}
+  function prev(){if(step>0){step--}else if(cur>0){cur--;step=maxS(slides[cur])} render()}
+  window.__deckGo = i => goto(i);
+  function goto(i){cur=Math.max(0,Math.min(i,slides.length-1));step=0;render()}
+
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-goto]'); if(b){step=+b.dataset.goto; render()}});
+  $('bNext').onclick=next; $('bPrev').onclick=prev;
+  function toggleNotes(){$('notes').classList.toggle('open')}
+  $('bNotes').onclick=toggleNotes;
+  function toggleFs(){
+    try{
+      if(document.fullscreenElement){document.exitFullscreen()}
+      else{var p=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); if(p&&p.catch)p.catch(function(){})}
+    }catch(e){}
+  }
+  $('bFs').onclick=toggleFs;
+  function setTheme(d){document.documentElement.classList.toggle('dark',d);$('bTheme').textContent=d?'Light':'Dark';try{localStorage.setItem('setup-theme',d?'dark':'light')}catch(e){}if(slides[cur].dataset.hook&&hooks[slides[cur].dataset.hook])hooks[slides[cur].dataset.hook]()}
+  function toggleTheme(){setTheme(!document.documentElement.classList.contains('dark'))}
+  $('bTheme').onclick=toggleTheme;
+  (function(){var t=null;try{t=localStorage.getItem('setup-theme')}catch(e){}if(t==='dark')document.documentElement.classList.add('dark');$('bTheme').textContent=t==='dark'?'Light':'Dark';})();
+  document.addEventListener('keydown',function(e){
+    var t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&e.key!=='Escape'){ if(e.key!=='PageDown'&&e.key!=='PageUp')return }
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev()}
+    else if(e.key==='Home'){goto(0)} else if(e.key==='End'){goto(slides.length-1)}
+    else if(e.key==='n'||e.key==='N'){toggleNotes()}
+    else if(e.key==='f'||e.key==='F'){toggleFs()}
+    else if(e.key==='t'||e.key==='T'){toggleTheme()}
+  });
+  var tx=0;
+  document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',function(e){if(e.target.closest('input'))return;var d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)(d<0?next:prev)()});
+
+
+  var h=parseInt((location.hash||'').slice(1),10);
+  if(h>0&&h<=slides.length)cur=h-1;
+  render();
+})();
+</script>
+
+<script>
+/* Fit each static diagram's viewBox to what it actually draws, so it centres in its space */
+(function(){
+  function fit(){
+    document.querySelectorAll('.viz svg').forEach(function(svg){
+      if(svg.id==='simsvg'||svg.id==='plSvg'||svg.dataset.fitted)return;
+      try{var b=svg.getBBox();if(!b.width||!b.height)return;var m=14;
+        svg.setAttribute('viewBox',[b.x-m,b.y-m,b.width+2*m,b.height+2*m].map(function(v){return Math.round(v)}).join(' '));svg.dataset.fitted='1';}catch(e){}
+    });
+  }
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);else window.addEventListener('load',fit);
+})();
+</script>
+<script>
+/* the stage takes the window's shape: scale by height (min 810 logical px tall, 720 wide) and reflow the width */
+(function(){var st=document.getElementById('stage');
+  function fit(){var s=Math.min(innerHeight/810,innerWidth/720);st.style.width=(innerWidth/s)+'px';st.style.height=(innerHeight/s)+'px';st.style.transform='scale('+s+')';}
+  fit();addEventListener('resize',fit);
+  /* keep deck-tools' buttons in the scaled control bar on any window shape */
+  addEventListener('load',function(){setTimeout(function(){var bar=document.querySelector('#stage .chrome .navs'),ref=document.getElementById('bNotes');if(!bar)return;
+    ['dtFs','dtAll'].forEach(function(id){var b=document.getElementById(id);if(!b||bar.contains(b))return;var box=b.parentElement;b.className=ref.className+' dt-in';b.removeAttribute('style');bar.insertBefore(b,bar.firstElementChild);if(box&&box.classList.contains('dt-float')&&!box.children.length)box.remove()});
+    var fs=document.getElementById('dtFs');if(fs&&document.getElementById('bFs'))fs.remove()},60)});
+})();
+</script>
+<script>
+var RC=[["Z.ai",[["GLM-5.3-Flash","experimental","glm-5-3-flash",[["vllm","agg","4× GB200","recipes/glm-5.3-flash/vllm/agg-gb200-agentic/deploy.yaml","",1],["vllm","disagg","8× GB200","recipes/glm-5.3-flash/vllm/disagg-gb200-agentic/deploy.yaml","",0],["vllm","agg","8× H200","recipes/glm-5.3-flash/vllm/agg-h200-agentic/deploy.yaml","",0],["vllm","disagg","16× H200","recipes/glm-5.3-flash/vllm/disagg-h200-agentic/deploy.yaml","",0],["sglang","agg","4× B200","recipes/glm-5.3-flash/sglang/agg-b200-agentic/deploy-nscale.yaml","",0],["sglang","agg","4× GB200","recipes/glm-5.3-flash/sglang/agg-gb200-agentic/deploy-gb200.yaml","",0],["sglang","disagg","12× GB200","recipes/glm-5.3-flash/sglang/disagg-gb200-agentic/deploy-gb200.yaml","",0]]],["GLM-5.3/5.2","validated","glm-5-2",[["sglang","agg","16× B200","recipes/glm-5.3/sglang/agg-b200-agentic/deploy.yaml","190.05 output tok/s/GPU, 61.92 user tok/s P50, TTFT P50 228.7 ms at concurrency 64 (4 workers, 15% agentic trace subset)",0],["sglang","disagg","20× B200","recipes/glm-5.3/sglang/disagg-b200-agentic/deploy.yaml","323.82 output tok/s/GPU, 63.13 user tok/s P50, TTFT P50 1280.1 ms at concurrency 128 (3P1D, 15% agentic trace subset)",0],["sglang","agg","24× H200","recipes/glm-5.3/sglang/agg-h200-agentic/deploy.yaml","60.87 output tok/s/GPU, 57.33 user tok/s P50, TTFT P50 1158.2 ms at concurrency 32 (3 workers, 15% agentic trace subset)",0],["sglang","disagg","16× H200","recipes/glm-5.3/sglang/disagg-h200-agentic/deploy.yaml","84.33 output tok/s/GPU, 61.46 user tok/s P50, TTFT P50 1309.6 ms at concurrency 24 (1P1D, 15% agentic trace subset)",0]]],["GLM-5 NVFP4","validated","glm-5-nvfp4",[["sglang","disagg","20× GB200","recipes/glm-5-nvfp4/sglang/disagg/deploy.yaml","16,824 tok/s output, 2.05 req/s, TTFT p50 15,423 ms, ITL avg 23.31 ms/token, 43.39 tok/user/s, 0 errors over 1,536 requests / 747.87 s",1],["sglang","disagg","20× GB200","recipes/glm-5-nvfp4/sglang/disagg/efa/deploy.yaml","parity with non-EFA: 19,131 tok/s output, TTFT p50 621 ms, ITL avg 24.5 ms/token; at ISL 20k/OSL 2k LIBFABRIC is +39% throughput / -56% TTFT p50 vs UCX",0]]]]],["Moonshot AI",[["Kimi-K3","experimental","kimi-k3",[["vllm","agg","16× GB300","recipes/kimi-k3/vllm/agg-gb300-agentic/deploy.yaml","62.2 output tok/s/GPU, 57.8 user tok/s P50, TTFT P50 879 ms at concurrency 24 (1 worker, 15% agentic trace subset, synthetic acc_len=4.2584)",0],["vllm","disagg","16× GB300","recipes/kimi-k3/vllm/disagg-gb300-agentic/deploy.yaml","50.3 output tok/s/GPU, 90.0 user tok/s P50, TTFT P50 6357 ms at concurrency 16 (1P1D, 15% agentic trace subset, synthetic acc_len=4.2584)",0],["vllm","agg","16× GB200","recipes/kimi-k3/vllm/agg-gb200-agentic/deploy.yaml","20.1 output tok/s/GPU, 56.1 user tok/s P50, TTFT P50 638 ms at concurrency 7 (1 worker, 15% agentic trace subset)",0],["vllm","agg","32× H200","recipes/kimi-k3/vllm/agg-h200-agentic/deploy.yaml","3.54 output tok/s/GPU, 39.95 user tok/s P50, TTFT P50 3660 ms at concurrency 4 (1 worker, 15% agentic trace subset)",0],["sglang","agg","16× GB300","recipes/kimi-k3/sglang/agg-gb300-agentic/deploy.yaml","91.3 output tok/s/GPU, 55.6 user tok/s P50, TTFT P50 486 ms at concurrency 36 over 2 workers (15% agentic trace subset, TP8/DCP8/EP1, synthetic acc_len=4.05)",0],["sglang","disagg","16× GB300","recipes/kimi-k3/sglang/disagg-gb300-agentic/deploy.yaml","62.0 output tok/s/GPU, 77.6 user tok/s P50, TTFT P50 4793 ms at concurrency 18 (1P1D, 15% agentic trace subset, synthetic acc_len=4.05)",0],["sglang","agg","32× GB200","recipes/kimi-k3/sglang/agg-gb200-agentic/deploy.yaml","32.9 output tok/s/GPU, 56.1 user tok/s P50, TTFT P50 828 ms at concurrency 28 over 2 workers (15% agentic trace subset, synthetic acc_len=4.05)",0],["sglang","disagg","48× GB200","recipes/kimi-k3/sglang/disagg-gb200-agentic/deploy.yaml","29.3 output tok/s/GPU, 77.9 user tok/s P50, TTFT P50 3090 ms at concurrency 24 (2P1D, 15% agentic trace subset, synthetic acc_len=4.05)",0]]],["Kimi-K2.6","validated","kimi-k2-6",[["vllm","agg","4× B200","recipes/kimi-k2.6/vllm/agg-b200-chat/deploy.yaml","49.86 tok/s/user, 107.8 tok/s/GPU at c=48 (15% trace subset, 4 replicas)",1],["vllm","agg","8× H200","recipes/kimi-k2.6/vllm/agg-h200-chat/deploy.yaml","54.86 tok/s/user, 38.7 tok/s/GPU at c=32 (15% subset)",0],["vllm","agg","4× B200","recipes/kimi-k2.6/vllm/agg-b200-agentic/deploy.yaml","55.50 tok/s/user, 166.5 tok/s/GPU at c=64 (15% subset)",0],["vllm","agg","8× H200","recipes/kimi-k2.6/vllm/agg-h200-agentic/deploy.yaml","56.06 tok/s/user, 66.5 tok/s/GPU at c=48 (15% subset)",0]]]]],["DeepSeek",[["DeepSeek-V4.1-Flash","experimental","deepseek-v4-1-flash",[["vllm","agg","8× GB200","recipes/deepseek-v4.1-flash/vllm/agg-gb200-agentic/kustomization.yaml","Concurrency 168, 953.08 output tok/s/GPU, output per user p50 51.83 tok/s, TTFT p50/p99 286.75/26793.16 ms, per-request mean ITL p50/p99 19.29/110.46 ms.",0],["vllm","disagg","8× GB200","recipes/deepseek-v4.1-flash/vllm/disagg-gb200-agentic/kustomization.yaml","Concurrency 168, 1154.87 output tok/s/GPU, output per user p50 80.85 tok/s, TTFT p50/p99 169.02/124167.34 ms, per-request mean ITL p50/p99 12.37/30.59 ms.",1],["vllm","agg","8× B200","recipes/deepseek-v4.1-flash/vllm/agg-b200-agentic/kustomization.yaml","Concurrency 168, 990.57 output tok/s/GPU, output per user p50 54.69 tok/s, TTFT p50/p99 178.66/26864.62 ms, per-request mean ITL p50/p99 18.28/120.94 ms.",0],["vllm","disagg","8× B200","recipes/deepseek-v4.1-flash/vllm/disagg-b200-agentic/kustomization.yaml","Concurrency 184, 1087.71 output tok/s/GPU, output per user p50 82.12 tok/s, TTFT p50/p99 135.12/168049.68 ms, per-request mean ITL p50/p99 12.18/25.03 ms.",0],["vllm","agg","16× H200","recipes/deepseek-v4.1-flash/vllm/agg-h200-agentic/kustomization.yaml","Concurrency 80, 209.18 output tok/s/GPU, output per user p50 51.32 tok/s; TTFT p50/p99 171.29/30075.76 ms, per-request mean ITL p50/p99 19.49/183.57 ms.",0],["vllm","disagg","8× H200","recipes/deepseek-v4.1-flash/vllm/disagg-h200-agentic/kustomization.yaml","Concurrency 64, 359.41 output tok/s/GPU, output per user p50 50.63 tok/s, TTFT p50/p90/p99 177.59/35043.23/82772.24 ms, per-request mean ITL p50/p99 19.75/34.31 ms.",0],["sglang","agg","8× GB200","recipes/deepseek-v4.1-flash/sglang/agg-gb200/deploy.yaml","",0],["sglang","disagg","8× GB200","recipes/deepseek-v4.1-flash/sglang/disagg-gb200/deploy-generic.yaml","",0]]],["DeepSeek-V4-Pro","validated","deepseek-v4-pro",[["vllm","disagg","16× B200","recipes/deepseek-v4/deepseek-v4-pro/vllm/disagg-b200-agentic/deploy.yaml","Floor-pick c28 = 77.31 system tok/s/GPU @ user 51.3 (1P1D, +6% over AGG).",1],["vllm","agg","8× B200","recipes/deepseek-v4/deepseek-v4-pro/vllm/agg-b200-agentic/deploy.yaml","Floor-pick c13 = 72.79 system tok/s/GPU @ user 51.3.",0],["vllm","agg","8× H200","recipes/deepseek-v4/deepseek-v4-pro/vllm/agg-h200-agentic/deploy.yaml","Secondary/best-effort on the public FP8 checkpoint; floor-pick c8 = 45.9 system tok/s/GPU @ user 53.2, max_model_len 86016 (H200 HBM cap).",0],["vllm","disagg","32× H200","recipes/deepseek-v4/deepseek-v4-pro/vllm/disagg-h200-agentic/deploy.yaml","Secondary/best-effort; floor-pick c32 = 43.86 system tok/s/GPU @ user 50.5 (1P3D). Pro ships AGG on H200 (AGG > 1P3D).",0]]],["DeepSeek-V4-Pro-0813","experimental","deepseek-v4-pro-0813",[["vllm","agg","8× GB200","recipes/deepseek-v4/deepseek-v4-pro-0813/vllm/agg-gb200-agentic/deploy.yaml","c8 = 69.45 system tok/s/GPU @ user 51.85 tok/s, TTFT p50 403 ms.",1],["vllm","disagg","16× GB200","recipes/deepseek-v4/deepseek-v4-pro-0813/vllm/disagg-gb200-agentic/deploy.yaml","c10 = 50.58 system tok/s/GPU @ user 53.42 tok/s, TTFT p50 1,237 ms.",0],["vllm","agg","8× H200","recipes/deepseek-v4/deepseek-v4-pro-0813/vllm/agg-h200-agentic/deploy.yaml","c4 = 21.4 system tok/s/GPU @ user 51.8 tok/s, TTFT p50 322 ms.",0],["vllm","disagg","16× H200","recipes/deepseek-v4/deepseek-v4-pro-0813/vllm/disagg-h200-agentic/deploy.yaml","c4 = 13.1 system tok/s/GPU @ user 57.2 tok/s, TTFT p50 441 ms.",0]]],["DeepSeek-V4-Flash","validated","deepseek-v4-flash",[["vllm","agg","4× B200","recipes/deepseek-v4/deepseek-v4-flash/vllm/agg-b200-agentic/deploy.yaml","Floor-pick c38 = 362.1 system tok/s/GPU @ user 50.6.",0],["vllm","disagg","12× B200","recipes/deepseek-v4/deepseek-v4-flash/vllm/disagg-b200-agentic/deploy.yaml","Floor-pick c128 = 409.9 system tok/s/GPU @ user 50.35 (2P1D, 12 GPU).",1],["vllm","agg","4× H200","recipes/deepseek-v4/deepseek-v4-flash/vllm/agg-h200-agentic/deploy.yaml","Floor-pick c16 = 145.4 system tok/s/GPU @ user 50.7; H200 serves the public checkpoint.",0],["vllm","disagg","28× H200","recipes/deepseek-v4/deepseek-v4-flash/vllm/disagg-h200-agentic/deploy.yaml","Floor-pick c128 = 201.9 system tok/s/GPU @ user 51.8 (4P3D); decode-ITL bound.",0]]]]],["Qwen",[["Qwen3.8-Flash-Next","experimental","qwen-3-8-flash-next",[["vllm","agg","4× B200","recipes/qwen3.8-flash-next/vllm/agg-b200-agentic/deploy.yaml","457.4 output tok/s/GPU, 102.8 user tok/s P50, TTFT P50 329 ms, ITL P50 9.7 ms at concurrency 24 (15% agentic trace subset)",1],["vllm","agg","8× B200","recipes/qwen3.8-flash-next/vllm/agg-b200-agentic-8gpu/deploy.yaml","309.3 output tok/s/GPU, 127.6 user tok/s P50, TTFT P50 339 ms, ITL P50 7.8 ms at concurrency 24 (15% agentic trace subset)",0],["vllm","agg","12× B200","recipes/qwen3.8-flash-next/vllm/agg-b200-agentic-12gpu/deploy.yaml","238.1 output tok/s/GPU, 144.5 user tok/s P50, TTFT P50 325 ms, ITL P50 6.9 ms at concurrency 24 (15% agentic trace subset)",0],["vllm","disagg","8× B200","recipes/qwen3.8-flash-next/vllm/disagg-b200-agentic/deploy.yaml","330.2 output tok/s/GPU, 132.8 user tok/s P50, TTFT P50 452 ms, ITL P50 7.5 ms at concurrency 24 (15% agentic trace subset)",0],["vllm","disagg","12× B200","recipes/qwen3.8-flash-next/vllm/disagg-b200-agentic-2p1d/deploy.yaml","227.9 output tok/s/GPU, 133.4 user tok/s P50, TTFT P50 407 ms, ITL P50 7.5 ms at concurrency 24 (15% agentic trace subset)",0]]],["Qwen3.8-2.4T-A95B","experimental","qwen-3-8-2-4t-a95b-fp8",[["vllm","agg","16× GB300","recipes/qwen3.8-2.4t-a95b-fp8/vllm/agg-gb300-chat/deploy.yaml","",1],["vllm","agg","16× GB300","recipes/qwen3.8-2.4t-a95b-fp8/vllm/agg-gb300-agentic/deploy.yaml","",0],["vllm","agg","16× GB200","recipes/qwen3.8-2.4t-a95b-fp8/vllm/agg-gb200-chat/deploy.yaml","",0],["vllm","agg","16× GB200","recipes/qwen3.8-2.4t-a95b-fp8/vllm/agg-gb200-agentic/deploy.yaml","",0],["sglang","agg","16× GB300","recipes/qwen3.8-2.4t-a95b-fp8/sglang/agg-gb300-chat/deploy.yaml","",0],["sglang","disagg","32× GB300","recipes/qwen3.8-2.4t-a95b-fp8/sglang/disagg-gb300-chat/deploy.yaml","",0],["sglang","agg","16× GB200","recipes/qwen3.8-2.4t-a95b-fp8/sglang/agg-gb200-chat/deploy.yaml","",0],["sglang","disagg","48× GB200","recipes/qwen3.8-2.4t-a95b-fp8/sglang/disagg-gb200-chat/deploy.yaml","",0]]],["Qwen3.6-35B-A3B","validated","qwen3-6-35b-a3b",[["sglang","agg","1× B200","recipes/qwen3.6-35b-a3b/sglang/agg-b200-mtp/deploy.yaml","2988.50 output tok/s/GPU, 111.98 user tok/s P50, TTFT P50 286.90 ms at concurrency 32 (3,541-request agentic trace, simulated acc_len=3.3153 from SpeedBench coding)",1],["sglang","agg","1× GB200","recipes/qwen3.6-35b-a3b/sglang/agg-gb200-mtp/deploy.yaml","3035.98 output tok/s/GPU, 111.47 user tok/s P50, TTFT P50 156.07 ms at concurrency 32 (3,541-request agentic trace, simulated acc_len=3.3153 from SpeedBench coding)",0],["sglang","agg","1× H200","recipes/qwen3.6-35b-a3b/sglang/agg-h200-mtp/deploy.yaml","1332.03 output tok/s/GPU, 57.75 user tok/s P50, TTFT P50 360.31 ms at concurrency 32 (3,541-request agentic trace, simulated acc_len=3.3153 from SpeedBench coding)",0]]],["Qwen3.5-122B-A10B","validated","qwen3-5-122b",[["vllm","agg","2× B200","recipes/qwen3.5-122b/nvfp4/vllm/agg-b200-agentic/deploy.yaml","1173.2 output tok/s/GPU, 52.4 user tok/s P50, TTFT P50 246 ms at concurrency 50 over 2 TP1 replicas (3,541-request agentic trace)",1],["vllm","agg","4× H200","recipes/qwen3.5-122b/fp8/vllm/agg-h200-agentic/deploy.yaml","720.3 output tok/s/GPU, 52.9 user tok/s P50, TTFT P50 313 ms at concurrency 64 over 2 TP2 replicas (3,541-request agentic trace)",1],["vllm","disagg","3× B200","recipes/qwen3.5-122b/nvfp4/vllm/disagg-b200-agentic/deploy.yaml","916.6 output tok/s/GPU, 51.4 user tok/s P50, TTFT P50 1353 ms at concurrency 60 (3,541-request agentic trace)",0],["vllm","disagg","3× H200","recipes/qwen3.5-122b/fp8/vllm/disagg-h200-agentic/deploy.yaml","256.5 output tok/s/GPU, 52.5 user tok/s P50, TTFT P50 3087 ms at concurrency 18 (3,541-request agentic trace)",0]]],["Qwen3-235B-A22B FP8","validated","qwen3-235b-a22b-fp8",[["trtllm","agg","16× H100/H200","recipes/qwen3-235b-a22b-fp8/trtllm/agg/hopper/deploy.yaml","",0],["trtllm","agg","16× B100/B200","recipes/qwen3-235b-a22b-fp8/trtllm/agg/blackwell/deploy.yaml","",1],["trtllm","disagg","16× H100/H200","recipes/qwen3-235b-a22b-fp8/trtllm/disagg/hopper/deploy.yaml","",0],["trtllm","disagg","16× B100/B200","recipes/qwen3-235b-a22b-fp8/trtllm/disagg/blackwell/deploy-generic.yaml","",0]]],["Qwen3-32B","validated","qwen3-32b",[["vllm","disagg","16× H200","recipes/qwen3-32b/vllm/disagg-kv-router/deploy.yaml","",1]]],["Qwen3-32B FP8","validated","qwen3-32b-fp8",[["trtllm","agg","2× H100/H200/A100","recipes/qwen3-32b-fp8/trtllm/agg/deploy.yaml","",1],["trtllm","disagg","8× H100/H200/A100","recipes/qwen3-32b-fp8/trtllm/disagg/deploy.yaml","",0],["vllm","disagg","8× H100/H200/A100, single node","recipes/qwen3-32b-fp8/vllm/disagg/deploy.yaml","",0]]]]],["NVIDIA",[["Nemotron 3.5 Super VL","experimental","nemotron-3-5-super-vl",[["vllm","agg","4× H100","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/agg-h100-swebenchpro/deploy.yaml","270 output tok/s/GPU, 102.2 user tok/s P50, TTFT P50 0.49 s at concurrency 16 (2 workers, TP2 per worker, SWE-bench Pro replay).",0],["vllm","disagg","4× H100","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/disagg-h100-swebenchpro/deploy.yaml","259 output tok/s/GPU, 106 user tok/s P50, TTFT P50 1.3 s at concurrency 16 (1P1D, TP2 per worker, SWE-bench Pro replay).",0],["vllm","agg","2× H200","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/agg-h200-swebenchpro/deploy.yaml","376 output tok/s/GPU, 61 user tok/s P50, TTFT P50 0.71 s at concurrency 16 (2 workers, SWE-bench Pro replay).",0],["vllm","disagg","2× H200","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/disagg-h200-swebenchpro/deploy.yaml","361 output tok/s/GPU, 61.6 user tok/s P50, TTFT P50 1.87 s at concurrency 16 (1P1D, SWE-bench Pro replay).",0],["vllm","agg","4× B200","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/agg-b200-swebenchpro/deploy.yaml","1,378.9 raw output tok/s/GPU, 68.86 user tok/s P50, TTFT P50 0.396 s at concurrency 128 (4 workers, SWE-bench Pro replay).",0],["vllm","disagg","5× B200","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/disagg-b200-swebenchpro/deploy.yaml","1,050.44 output tok/s/GPU, 60.84 user tok/s P50, TTFT P50 1.073 s at concurrency 128 (3P2D, SWE-bench Pro replay).",0],["vllm","agg","4× GB200","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/agg-gb200-swebenchpro/deploy.yaml","1,503.57 raw output tok/s/GPU, 76.15 user tok/s P50, TTFT P50 0.403 s at concurrency 128 (4 workers, SWE-bench Pro replay).",0],["vllm","disagg","5× GB200","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/disagg-gb200-swebenchpro/deploy.yaml","1,269.93 raw output tok/s/GPU, 82.09 user tok/s P50, TTFT P50 0.836 s at concurrency 128 (5 GPUs, 3P2D MTP3, one-hour SWE-bench Pro replay, synthetic acceptance 3.2418; 0% request errors; runtime f27880e; recipe defaults",0],["vllm","agg","4× B300","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/agg-b300-swebenchpro/deploy.yaml","1,536 output tok/s/GPU, 78.5 user tok/s P50, TTFT P50 0.438 s at concurrency 128 (4 workers, SWE-bench Pro replay).",0],["vllm","disagg","5× B300","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/disagg-b300-swebenchpro/deploy.yaml","1,317 output tok/s/GPU, 68.1 user tok/s P50, TTFT P50 1.39 s at concurrency 160 (3P2D, SWE-bench Pro replay).",0],["vllm","agg","4× GB300","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/agg-gb300-swebenchpro/deploy.yaml","1,719.51 raw output tok/s/GPU, 67.9 user tok/s P50, TTFT P50 0.381 s at concurrency 160 (4 workers, SWE-bench Pro replay).",0],["vllm","disagg","5× GB300","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/disagg-gb300-swebenchpro/deploy.yaml","1,356.51 raw output tok/s/GPU, 82.76 user tok/s P50, TTFT P50 0.649 s at concurrency 128 (5 GPUs, 3P2D MTP3, one-hour SWE-bench Pro replay, synthetic acceptance 3.2418; 0% request errors; runtime f27880e; recipe defaults",0],["vllm","agg","11× VR200","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/agg-vr200-swebenchpro/deploy.yaml","2,969 raw output tok/s/GPU, 96.6 user tok/s P50, TTFT P50 0.49 s at concurrency 616 (11 workers, swe-bench-pro-trace, synthetic MTP acceptance 4.063; the recipe defaults to natural acceptance)",0],["vllm","disagg","11× VR200","recipes/nemotron-3.5-super-vl-120b-a12b/vllm/disagg-vr200-swebenchpro/deploy.yaml","3,276 raw output tok/s/GPU, 155.9 user tok/s P50, TTFT P50 1.12 s at concurrency 528 (7P4D, swe-bench-pro-trace, synthetic MTP acceptance 4.063; measured on the previous image with the KV split fixes added; the recipe de",0],["trtllm","agg","4× B200","recipes/nemotron-3.5-super-vl-120b-a12b/trtllm/agg-b200-swebenchpro/deploy.yaml","995 output tok/s/GPU, 78.98 user tok/s P50, TTFT P50 0.655 s at concurrency 80 (4 GPUs, 4 workers, MTP3, SWE-bench Pro replay).",0],["trtllm","disagg","4× B200","recipes/nemotron-3.5-super-vl-120b-a12b/trtllm/disagg-b200-swebenchpro/deploy.yaml","1,119.13 output tok/s/GPU, 144.61 user tok/s P50, TTFT P50 2.366 s at concurrency 80 (4 GPUs, 2P2D MTP3, SWE-bench Pro replay).",0]]],["Nemotron 3.5 Lightning","experimental","nemotron-3-5-lightning",[["vllm","agg","1× H100","recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark/deploy.yaml","1878.11 output tok/s/GPU, 93.91 tok/s/user, TTFT p50 238.64ms @ concurrency 20",1],["vllm","agg","4× H100","recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml","8149.70 total output tok/s, 2037.43 output tok/s/GPU, 101.87 tok/s/user, TTFT p50 303.84ms @ concurrency 80",1],["vllm","agg","1× H100","recipes/nemotron-3.5-lightning/vllm/agg-h100-dflash/deploy.yaml","1757.75 output tok/s/GPU, 109.86 tok/s/user, TTFT p50 216.44ms @ concurrency 16",1],["vllm","agg","1× H100","recipes/nemotron-3.5-lightning/vllm/agg-h100-mtp/deploy.yaml","1275.37 output tok/s/GPU, 106.28 tok/s/user, TTFT p50 241.21ms @ concurrency 12",1],["vllm","agg","1× H200","recipes/nemotron-3.5-lightning/vllm/agg-h200-dspark/deploy.yaml","2193.59 output tok/s/GPU, 109.68 tok/s/user, TTFT p50 243.97ms @ concurrency 20",1],["vllm","agg","4× H200","recipes/nemotron-3.5-lightning/vllm/agg-h200-dspark-kv-router/deploy.yaml","8683.99 total output tok/s, 2171.00 output tok/s/GPU, 108.55 tok/s/user, TTFT p50 286.67ms @ concurrency 80",1],["vllm","agg","1× H200","recipes/nemotron-3.5-lightning/vllm/agg-h200-dflash/deploy.yaml","1744.04 output tok/s/GPU, 109.00 tok/s/user, TTFT p50 243.30ms @ concurrency 16",1],["vllm","agg","1× H200","recipes/nemotron-3.5-lightning/vllm/agg-h200-mtp/deploy.yaml","1478.67 output tok/s/GPU, 123.22 tok/s/user, TTFT p50 250.66ms @ concurrency 12",1],["vllm","disagg","2× H100","recipes/nemotron-3.5-lightning/vllm/disagg-h100-dflash/deploy.yaml","1117.29 output tok/s/GPU, 186.21 tok/s/user, TTFT p50 542.71ms @ concurrency 12",1],["vllm","disagg","2× H100","recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml","1445.29 output tok/s/GPU, 120.44 tok/s/user, TTFT p50 2028.23ms @ concurrency 24",1],["vllm","disagg","2× H200","recipes/nemotron-3.5-lightning/vllm/disagg-h200-dflash/deploy.yaml","1277.86 output tok/s/GPU, 212.98 tok/s/user, TTFT p50 408.30ms @ concurrency 12",1],["vllm","disagg","2× H200","recipes/nemotron-3.5-lightning/vllm/disagg-h200-dspark/deploy.yaml","1656.90 output tok/s/GPU, 138.08 tok/s/user, TTFT p50 834.80ms @ concurrency 24",1],["tensorrt-llm","agg","1× H100","recipes/nemotron-3.5-lightning/trtllm/agg-h100-mtp/deploy.yaml","264.87 output tok/s/GPU, 22.07 tok/s/user, TTFT p50 1757.00ms @ concurrency 12; experimental smoke result",0],["tensorrt-llm","agg","1× H200","recipes/nemotron-3.5-lightning/trtllm/agg-h200-mtp/deploy.yaml","250.05 output tok/s/GPU, 20.84 tok/s/user, TTFT p50 1692.98ms @ concurrency 12",0],["vllm","agg","1× B200","recipes/nemotron-3.5-lightning/vllm/agg-b200-dspark-bf16/deploy.yaml","4005.48 output tok/s/GPU, 80.11 tok/s/user, TTFT p50 221.49ms @ concurrency 50",1],["vllm","agg","4× B200","recipes/nemotron-3.5-lightning/vllm/agg-b200-dspark-kv-router-bf16/deploy.yaml","16648.35 total output tok/s, 4162.09 output tok/s/GPU, 86.71 tok/s/user, TTFT p50 254.26ms @ concurrency 192",1],["vllm","agg","1× B200","recipes/nemotron-3.5-lightning/vllm/agg-b200-mtp-bf16/deploy.yaml","2454.72 output tok/s/GPU, 136.37 tok/s/user, TTFT p50 165.43ms @ concurrency 18",1],["vllm","agg","1× GB200","recipes/nemotron-3.5-lightning/vllm/agg-gb200-dspark-bf16/deploy.yaml","4327.90 output tok/s/GPU, 74.62 tok/s/user, TTFT p50 307.73ms @ concurrency 58",1],["vllm","agg","1× GB200","recipes/nemotron-3.5-lightning/vllm/agg-gb200-mtp-bf16/deploy.yaml","2289.75 output tok/s/GPU, 127.21 tok/s/user, TTFT p50 228.77ms @ concurrency 18",1],["vllm","disagg","2× B200","recipes/nemotron-3.5-lightning/vllm/disagg-b200-dspark-bf16/deploy.yaml","3711.37 output tok/s/GPU, 92.78 tok/s/user, TTFT p50 1059.12ms @ concurrency 80",1],["vllm","disagg","2× GB200","recipes/nemotron-3.5-lightning/vllm/disagg-gb200-dflash-bf16/deploy.yaml","1148.33 output tok/s/GPU, 95.69 tok/s/user, TTFT p50 10641.10ms @ concurrency 24; failed TTFT SLA",0],["vllm","disagg","2× GB200","recipes/nemotron-3.5-lightning/vllm/disagg-gb200-dspark-bf16/deploy.yaml","802.30 output tok/s/GPU, 200.58 tok/s/user, TTFT p50 569.70ms @ concurrency 8",1],["tensorrt-llm","agg","1× B200","recipes/nemotron-3.5-lightning/trtllm/agg-b200-bf16/deploy.yaml","1869.54 output tok/s/GPU, 103.86 tok/s/user, TTFT p50 219.18ms @ concurrency 18; experimental trace result",1],["tensorrt-llm","agg","1× B200","recipes/nemotron-3.5-lightning/trtllm/agg-b200-mtp-bf16/deploy.yaml","3295.50 output tok/s/GPU, 183.08 tok/s/user, TTFT p50 244.95ms @ concurrency 18; experimental trace result",1],["tensorrt-llm","agg","1× GB200","recipes/nemotron-3.5-lightning/trtllm/agg-gb200-bf16/deploy.yaml","1985.84 output tok/s/GPU, 110.32 tok/s/user, TTFT p50 216.77ms @ concurrency 18; experimental trace result",1],["tensorrt-llm","agg","1× GB200","recipes/nemotron-3.5-lightning/trtllm/agg-gb200-mtp-bf16/deploy.yaml","3556.40 output tok/s/GPU, 197.58 tok/s/user, TTFT p50 231.34ms @ concurrency 18; experimental trace result",1]]],["Nemotron 3 Ultra","experimental","nemotron-3-ultra",[["vllm","agg","8× B200","recipes/nemotron-3-ultra/vllm/agg-b200-agentic-256K-kv-router/deploy.yaml","637.41 output tok/s/GPU, 50.89 user tok/s P50, TTFT P50 526 ms at concurrency 94 (15% agentic Moontrace replay)",1],["vllm","agg","8× B200","recipes/nemotron-3-ultra/vllm/agg-b200-agentic-1M-kv-router/deploy.yaml","255.95 output tok/s/GPU, 52.00 user tok/s P50, TTFT P50 180 ms at concurrency 46 (15% agentic Moontrace replay)",1],["vllm","agg","8× GB200","recipes/nemotron-3-ultra/vllm/agg-gb200-agentic-256K-kv-router/deploy.yaml","665.95 output tok/s/GPU, 51.15 user tok/s P50, TTFT P50 612 ms at concurrency 96 (15% agentic Moontrace replay)",1],["vllm","agg","8× GB200","recipes/nemotron-3-ultra/vllm/agg-gb200-agentic-1M-kv-router/deploy.yaml","269.55 output tok/s/GPU, 51.21 user tok/s P50, TTFT P50 274 ms at concurrency 48 (15% agentic Moontrace replay)",1],["vllm","agg","16× H200","recipes/nemotron-3-ultra/vllm/agg-h200-agentic-256K-kv-router/deploy.yaml","203.58 output tok/s/GPU, 51.94 user tok/s P50, TTFT P50 565 ms at concurrency 64 (15% agentic Moontrace replay)",1],["vllm","agg","16× H200","recipes/nemotron-3-ultra/vllm/agg-h200-agentic-1M-kv-router/deploy.yaml","81.50 output tok/s/GPU, 53.02 user tok/s P50, TTFT P50 215 ms at concurrency 32 (15% agentic Moontrace replay)",1],["vllm","disagg","12× B200","recipes/nemotron-3-ultra/vllm/disagg-b200-agentic-256K/deploy.yaml","510.82 output tok/s/GPU, 52.08 user tok/s P50, TTFT P50 3,681 ms at concurrency 144 (15% agentic Moontrace replay)",1],["vllm","disagg","8× B200","recipes/nemotron-3-ultra/vllm/disagg-b200-agentic-1M/deploy.yaml","223.49 output tok/s/GPU, 53.57 user tok/s P50, TTFT P50 1,294 ms at concurrency 38 (15% agentic Moontrace replay)",1],["vllm","disagg","12× GB200","recipes/nemotron-3-ultra/vllm/disagg-gb200-agentic-256K/deploy.yaml","534.82 output tok/s/GPU, 55.47 user tok/s P50, TTFT P50 3,343 ms at concurrency 140 (15% agentic Moontrace replay)",1],["vllm","disagg","8× GB200","recipes/nemotron-3-ultra/vllm/disagg-gb200-agentic-1M/deploy.yaml","270.93 output tok/s/GPU, 50.55 user tok/s P50, TTFT P50 1,696 ms at concurrency 48 (15% agentic Moontrace replay)",1],["vllm","disagg","24× H200","recipes/nemotron-3-ultra/vllm/disagg-h200-agentic-256K/deploy.yaml","136.96 output tok/s/GPU, 56.30 user tok/s P50, TTFT P50 4,576 ms at concurrency 72 (15% agentic Moontrace replay)",1],["vllm","disagg","16× H200","recipes/nemotron-3-ultra/vllm/disagg-h200-agentic-1M/deploy.yaml","88.13 output tok/s/GPU, 60.71 user tok/s P50, TTFT P50 4,309 ms at concurrency 30 (15% agentic Moontrace replay)",1]]],["Nemotron 3 Super","validated","nemotron-3-super",[["vllm","agg","8× B200","recipes/nemotron-3-super/vllm/agg-b200-chat/deploy.yaml","61.25 tok/s/user, 844.5 tok/s/GPU @ c128, 2 replicas",1],["vllm","agg","8× B200","recipes/nemotron-3-super/vllm/agg-b200-agentic/deploy.yaml","63.16 tok/s/user, 1388.4 tok/s/GPU @ c192, 2 replicas",1],["vllm","agg","8× H200","recipes/nemotron-3-super/vllm/agg-h200-chat/deploy.yaml","56.07 tok/s/user, 404.6 tok/s/GPU @ c64, 2 replicas",1],["vllm","agg","8× H200","recipes/nemotron-3-super/vllm/agg-h200-agentic/deploy.yaml","62.94 tok/s/user, 851.0 tok/s/GPU @ c128, 2 replicas",1]]]]],["Google",[["Gemma-4-31B","experimental","gemma-4-31b",[["trtllm","agg","8× B200","recipes/gemma4-31b/trtllm/agg-b200-agentic/deploy.yaml","1,096.75 output tok/s/GPU, 57.22 user output tok/s P50, TTFT P50 3,052.24 ms at concurrency 192 over 8 TP1 workers",1],["trtllm","agg","8× GB200","recipes/gemma4-31b/trtllm/agg-gb200-agentic/deploy.yaml","1,037.40 output tok/s/GPU, 49.98 user output tok/s P50, TTFT P50 2,893.94 ms at concurrency 192 over 8 TP1 workers",1],["trtllm","agg","8× H200","recipes/gemma4-31b/trtllm/agg-h200-agentic/deploy.yaml","153.020 output tok/s/GPU, 63.02 user output tok/s P50, TTFT P50 979.09 ms at concurrency 32 over 2 TP4 workers",1]]]]],["Thinking Machines",[["Inkling NVFP4","experimental","inkling",[["vllm","agg","8× GB300","recipes/inkling/vllm/agg-gb300-agentic/deploy.yaml","192.41 tok/s/GPU, 84.87 user tok/s P50 at concurrency 20 over 2 TP4 replicas (3,541-request agentic trace)",1],["vllm","disagg","8× GB300","recipes/inkling/vllm/disagg-gb300-agentic/deploy-generic.yaml","144.01 tok/s/GPU, 77.94 user tok/s P50, TTFT P50 1305 ms at concurrency 16 over 4P + 4D (3,541-request agentic trace), measured on the aws-roce fabric variant",0],["sglang","agg","8× B200","recipes/inkling/sglang/agg-b200/deploy.yaml","",1]]]]],["OpenAI",[["GPT-OSS-120B","validated","gpt-oss-120b",[["trtllm","agg","4× GB200","recipes/gpt-oss-120b/trtllm/agg/deploy.yaml","",0],["trtllm","disagg","5× GB200/B200","recipes/gpt-oss-120b/trtllm/disagg/deploy.yaml","",0],["vllm","agg","8× B200","recipes/gpt-oss-120b/vllm/agg-b200-agentic/deploy.yaml","2896 tok/s/GPU, 58 tok/s/user, TTFT avg 4.4s at concurrency 512 (agentic 15% trace, EAGLE3 proxy)",0],["vllm","agg","8× H200","recipes/gpt-oss-120b/vllm/agg-h200-agentic/deploy.yaml","1256 tok/s/GPU, 47.5 tok/s/user, TTFT avg 1.4s at concurrency 256 (agentic 15% trace, EAGLE3 proxy)",0],["vllm","disagg","8× B200","recipes/gpt-oss-120b/vllm/disagg-b200-agentic/deploy.yaml","2069 tok/s/GPU, 99 tok/s/user, TTFT avg 5.6s at concurrency 256 (2P6D in-pod, agentic 15% trace, EAGLE3 proxy)",0],["vllm","disagg","8× H200","recipes/gpt-oss-120b/vllm/disagg-h200-agentic/deploy.yaml","1046 tok/s/GPU, 43 tok/s/user, TTFT avg 4.4s at concurrency 256 (4P4D in-pod, agentic 15% trace, EAGLE3 proxy)",0]]]]],["LG AI Research",[["K-EXAONE 2.0","experimental","k-exaone-2",[["vllm","agg","4× B200","recipes/k-exaone-2.0/vllm/agg-b200-chat/deploy-generic.yaml","87 tok/s/GPU at concurrency 7, E2E 51.4 tok/s/user, TTFT p50 291 ms, ITL 19.15 ms, meeting a joint gate of E2E >= 50 tok/s/user and TTFT p50 < 5 s",1],["vllm","disagg","8× B200","recipes/k-exaone-2.0/vllm/disagg-b200-chat/deploy-ib.yaml","85 tok/s/GPU at concurrency 14, E2E 54.9 tok/s/user, TTFT p50 2,230 ms, ITL 15.98 ms, meeting a joint gate of E2E >= 50 tok/s/user and TTFT p50 < 5 s; level with the aggregated target's 87 tok/s/GPU when each is run at i",0]]]]],["SK Telecom",[["A.X-K2","experimental","ax-k2",[["vllm","agg","8× B200","recipes/ax-k2/vllm/agg-b200-chat/deploy-generic.yaml","C=16, chat 15%: 76.49 output toks/sec/GPU, 55.83 mean toks/sec/user, 0.525 s p50 TTFT. Historical synthetic EAGLE3 AL=2.12 run; 1765/1765 successful requests, 0 failed, 20 warmup requests. Predates the published NVCR run",0],["vllm","disagg","12× B200","recipes/ax-k2/vllm/disagg-b200-chat/deploy-generic.yaml","C=16, chat 15%: 61.97 output toks/sec/GPU, 83 mean toks/sec/user, 3.879 s p50 TTFT. Historical synthetic EAGLE3 AL=2.12 run; 1755/1765 successful requests, 10 failed, 32 warmup requests. Predates the published NVCR runti",0],["vllm","agg","32× H200","recipes/ax-k2/vllm/agg-h200/deploy-generic.yaml","W1 c16/32/64/128 TTFT p50: 655.40/652.25/678.50/707.32 ms; TPOT p50: 16.87/22.27/31.64/46.99 ms. One measured sweep with the pinned image and no source patches.",0],["vllm","disagg","32× H200","recipes/ax-k2/vllm/disagg-h200/deploy-generic.yaml","W1 c16/32/64/128 TTFT p50: 817.80/902.83/1629.23/28194.28 ms; TPOT p50: 17.09/20.27/26.55/34.22 ms. One measured BF16 2P2D sweep with the pinned image.",0]]]]],["Upstage",[["Solar Open2 250B","validated","solar-open2-250b",[["vllm","agg","4× B200","recipes/solar-open2-250b/vllm/agg-b200-chat/deploy.yaml","216.88 output tok/s/GPU at concurrency 20, 52.02 tok/s/user P50, TTFT P50 308 ms, meeting a joint gate of user output >= 50 tok/s and TTFT P50 < 5 s",1],["vllm","disagg","8× B200","recipes/solar-open2-250b/vllm/disagg-b200-chat/deploy.yaml","206.20 output tok/s/GPU at concurrency 44, 51.69 tok/s/user P50, TTFT P50 2,277 ms, meeting a joint gate of user output >= 50 tok/s and TTFT P50 < 5 s with little margin on per-user throughput",0]]]]],["Meta",[["Muse-Spark-Open-816B-A42B","experimental","Muse-Spark-Open",[["sglang","agg","4× GB200","recipes/muse-spark-open-816b-a42b/sglang/agg-gb200-agentic/deploy.yaml","514.30 output tok/s, 128.58 output tok/s/GPU, 57.43 user output tok/s P50, TTFT P50 221.70 ms at concurrency 12",0],["sglang","disagg","8× GB200","recipes/muse-spark-open-816b-a42b/sglang/disagg-gb200-agentic/deploy.yaml","768.50 output tok/s, 96.07 output tok/s/GPU, 58.77 user output tok/s P50, TTFT P50 1,335.20 ms at concurrency 16",0],["sglang","agg","8× GB200","recipes/muse-spark-open-816b-a42b/sglang/agg-gb200-agentic-kv-router/deploy.yaml","934.20 output tok/s, 116.78 output tok/s/GPU, 54.51 user output tok/s P50, TTFT P50 239.20 ms at concurrency 22",0],["sglang","agg","4× GB300","recipes/muse-spark-open-816b-a42b/sglang/agg-gb300-agentic/deploy.yaml","635.80 output tok/s, 158.95 output tok/s/GPU, 50.97 user output tok/s P50, TTFT P50 177.90 ms at concurrency 16",1],["sglang","disagg","8× GB300","recipes/muse-spark-open-816b-a42b/sglang/disagg-gb300-agentic/deploy.yaml","835.80 output tok/s, 104.48 output tok/s/GPU, 62.12 user output tok/s P50, TTFT P50 289.40 ms at concurrency 16",0],["sglang","agg","8× GB300","recipes/muse-spark-open-816b-a42b/sglang/agg-gb300-agentic-kv-router/deploy.yaml","1,054.70 output tok/s, 131.84 output tok/s/GPU, 66.70 user output tok/s P50, TTFT P50 158.40 ms at concurrency 20",0],["vllm","agg","4× GB200","recipes/muse-spark-open-816b-a42b/vllm/agg-gb200-agentic/deploy.yaml","475.20 output tok/s, 118.81 output tok/s/GPU, 27.23 user output tok/s P50, TTFT P50 2,339.90 ms at concurrency 24 over 500 requests [functional validation]",0],["vllm","agg","4× GB300","recipes/muse-spark-open-816b-a42b/vllm/agg-gb300-agentic/deploy.yaml","564.80 output tok/s, 141.20 output tok/s/GPU, 28.84 user output tok/s P50, TTFT P50 292.90 ms at concurrency 24 over 500 requests [functional validation]",0],["trtllm","agg","4× GB200","recipes/muse-spark-open-816b-a42b/trtllm/agg-gb200-agentic/deploy.yaml","384.58 output tok/s, 96.15 output tok/s/GPU, 30.82 user output tok/s P50, TTFT P50 11,533.66 ms at concurrency 24 over 500 requests [functional validation]",0],["trtllm","agg","4× GB300","recipes/muse-spark-open-816b-a42b/trtllm/agg-gb300-agentic/deploy.yaml","583.23 output tok/s, 145.81 output tok/s/GPU, 31.37 user output tok/s P50, TTFT P50 600.34 ms at concurrency 24 over 500 requests [functional validation]",0]]]]],["MiniMax",[["MiniMax M3.1","experimental","minimax-m3-1",[["vllm","agg","4× GB300","recipes/minimax-m3.1/vllm/agg-gb300/deploy.yaml","",1],["vllm","agg","4× B200","recipes/minimax-m3.1/vllm/agg-b200/deploy.yaml","",0],["sglang","agg","4× GB300","recipes/minimax-m3.1/sglang/agg-gb300/deploy.yaml","",0],["sglang","agg","4× B200","recipes/minimax-m3.1/sglang/agg-b200/deploy.yaml","",0],["tensorrt-llm","agg","4× GB300","recipes/minimax-m3.1/trtllm/agg-gb300/deploy.yaml","",0],["tensorrt-llm","agg","4× B200","recipes/minimax-m3.1/trtllm/agg-b200/deploy.yaml","",0]]],["MiniMax M3","validated","minimax-m3",[["vllm","agg","12× GB200","recipes/minimax-m3/vllm/agg-gb200-agentic/deploy.yaml","Verified with synthetic acceptance (2.89) at concurrency 162 on 12 GB200 GPUs; 468.3 output tok/s/GPU, 50.2 user output tok/s (P50), and 765 ms TTFT (P50).",0],["vllm","disagg","24× GB200","recipes/minimax-m3/vllm/disagg-gb200-agentic/deploy.yaml","Verified with synthetic acceptance (2.89) at concurrency 128 on 24 GB200 GPUs; 344.9 output tok/s/GPU, 82.6 user output tok/s (P50), and 1,886 ms TTFT (P50).",0]]]]],["Motif Technologies",[["Motif-3 NVFP4","experimental","motif-3",[["vllm","agg","2× B200","recipes/motif-3/vllm/agg-b200-chat/base/deploy.yaml","",1],["vllm","disagg","8× B200","recipes/motif-3/vllm/disagg-b200-chat/deploy-generic.yaml","",1]]]]],["Reflection",[["Beam-1.0-501B-A23B","experimental","beam-1-0-501b",[["sglang","agg","8× H200","recipes/beam-1.0-501b/sglang/agg-h200/deploy.yaml","",0],["sglang","disagg","16× H200","recipes/beam-1.0-501b/sglang/disagg-h200/deploy.yaml","",0],["sglang","agg","8× B200","recipes/beam-1.0-501b/sglang/agg-b200-nvfp4/deploy.yaml","",0],["sglang","disagg","8× B200","recipes/beam-1.0-501b/sglang/disagg-b200-nvfp4/deploy.yaml","",0],["sglang","agg","8× B300","recipes/beam-1.0-501b/sglang/agg-b300-nvfp4/deploy.yaml","",0],["sglang","disagg","8× B300","recipes/beam-1.0-501b/sglang/disagg-b300-nvfp4/deploy.yaml","",0],["sglang","agg","8× GB200","recipes/beam-1.0-501b/sglang/agg-gb200-nvfp4/deploy.yaml","",0],["sglang","disagg","8× GB200","recipes/beam-1.0-501b/sglang/disagg-gb200-nvfp4/deploy.yaml","",0],["sglang","agg","8× GB300","recipes/beam-1.0-501b/sglang/agg-gb300-nvfp4/deploy.yaml","",0],["sglang","disagg","8× GB300","recipes/beam-1.0-501b/sglang/disagg-gb300-nvfp4/deploy.yaml","",0],["vllm","agg","8× H200","recipes/beam-1.0-501b/vllm/agg-h200/deploy.yaml","",0],["vllm","disagg","16× H200","recipes/beam-1.0-501b/vllm/disagg-h200/deploy.yaml","",0],["vllm","agg","8× B200","recipes/beam-1.0-501b/vllm/agg-b200-nvfp4/deploy.yaml","",0],["vllm","disagg","8× B200","recipes/beam-1.0-501b/vllm/disagg-b200-nvfp4/deploy.yaml","",0],["vllm","agg","8× B300","recipes/beam-1.0-501b/vllm/agg-b300-nvfp4/deploy.yaml","",0],["vllm","disagg","8× B300","recipes/beam-1.0-501b/vllm/disagg-b300-nvfp4/deploy.yaml","",0],["vllm","agg","8× GB200","recipes/beam-1.0-501b/vllm/agg-gb200-nvfp4/deploy.yaml","",0],["vllm","disagg","8× GB200","recipes/beam-1.0-501b/vllm/disagg-gb200-nvfp4/deploy.yaml","",0],["vllm","agg","8× GB300","recipes/beam-1.0-501b/vllm/agg-gb300-nvfp4/deploy.yaml","",0],["vllm","disagg","8× GB300","recipes/beam-1.0-501b/vllm/disagg-gb300-nvfp4/deploy.yaml","",0]]]]]];
+(function(){
+var $=function(id){return document.getElementById(id)};
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+// generic toggle groups: <div class="sx-tg" data-sx="key"><button data-v>…
+var TG={};
+function tg(key,cb){var g=document.querySelector('[data-sx="'+key+'"]');if(!g)return;TG[key]=g.querySelector('[aria-pressed="true"]').dataset.v;
+  g.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.stopPropagation();g.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});TG[key]=b.dataset.v;cb()});}
+// jump cards
+document.addEventListener('click',function(e){var b=e.target.closest('[data-jump]');if(b&&window.__deckGo){e.stopPropagation();window.__deckGo(+b.dataset.jump-1)}});
+
+// ---- install selector
+var IMG={vllm:'vllm',sglang:'sglang',trtllm:'tensorrtllm'};
+function inst(){var m=TG.im,b=TG.ib,o;
+  if(m==='ctr')o='<span class="cm"># pull and enter the runtime container</span>\ndocker run --gpus all --network host --ipc host \\\n  --rm -it nvcr.io/nvidia/ai-dynamo/<span class="k">'+IMG[b]+'-runtime</span>:<span class="p">1.6.0</span>';
+  else if(b==='trtllm')o='<span class="cm"># no TRT-LLM wheel in the install selector:</span>\n<span class="cm"># use the tensorrtllm-runtime container instead</span>\ndocker run --gpus all --network host --ipc host \\\n  --rm -it nvcr.io/nvidia/ai-dynamo/<span class="k">tensorrtllm-runtime</span>:<span class="p">1.6.0</span>';
+  else o='<span class="cm"># into a Python 3.11/3.12 virtualenv</span>\nuv pip install '+(b==='sglang'?'--prerelease=allow ':'')+'"ai-dynamo[<span class="k">'+b+'</span>]==<span class="p">1.6.0</span>"';
+  $('sxInst').innerHTML=o}
+tg('im',inst);tg('ib',inst);inst();
+
+// ---- DGD backend + hover
+var DB={vllm:['vllm-runtime','[python3, -m, dynamo.vllm]','[--model, Qwen/Qwen3-32B, --tensor-parallel-size, "2"]','dynamo.vllm','TP = 2 · CLI flag'],
+ sglang:['sglang-runtime','[python3, -m, dynamo.sglang]','[--model-path, Qwen/Qwen3-32B, --tp, "2"]','dynamo.sglang','TP = 2 · CLI flag'],
+ trtllm:['tensorrtllm-runtime','[python3, -m, dynamo.trtllm]','[--model-path, Qwen/Qwen3-32B, --extra-engine-args, engine.yaml]','dynamo.trtllm','TP = 2 · engine YAML']};
+function dgd(){var d=DB[TG.db];$('sxImg').textContent='nvcr.io/nvidia/ai-dynamo/'+d[0]+':1.6.0';$('sxCmd').textContent=d[1];$('sxArgs').textContent=d[2];$('sxMod').textContent=d[3];$('sxImgT').textContent='image: '+d[0]+':1.6.0';
+  var t=document.querySelector('[data-k="tp"] text');if(t)t.textContent=d[4]}
+tg('db',dgd);dgd();
+document.querySelectorAll('pre .yk').forEach(function(s){
+  function on(v){var k=s.dataset.k;document.querySelectorAll('[data-k="'+k+'"]').forEach(function(e){e.classList.toggle('hl',v)})}
+  s.addEventListener('mouseenter',function(){on(true)});s.addEventListener('mouseleave',function(){on(false)})});
+
+// ---- platform add-ons
+var WHY={mn:'<b>Multinode</b> needs Grove + KAI Scheduler (or LWS + Volcano). The operator rejects multinode deployments without one.',
+ rdma:'<b>Disaggregation in production</b> needs RDMA. Without it KV transfer falls back to TCP: the install guide quotes ~98 s TTFT vs ~200–500 ms with RDMA.',
+ prom:'<b>Planner in sla mode</b> (and KEDA/HPA) reads live metrics from kube-prometheus-stack. Point the operator at it with the prometheusEndpoint value.',
+ pvc:'<b>Models over 70B:</b> an RWX PVC model cache downloads once and mounts everywhere, instead of per pod.'};
+var opt=$('sxOpt');if(opt)opt.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.stopPropagation();var v=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',v?'true':'false');
+  document.querySelectorAll('g[data-o="'+b.dataset.o+'"]').forEach(function(g){g.classList.toggle('sx-off',!v)});
+  var on=[].slice.call(opt.querySelectorAll('[aria-pressed="true"]')).map(function(x){return WHY[x.dataset.o]});
+  $('sxOptWhy').innerHTML=on.length?on.join('<br>'):'Pick what you need to see which add-on it brings in, and why.'});
+
+// ---- recipe browser (docs catalog order)
+var BN={vllm:'vLLM',sglang:'SGLang',trtllm:'TRT-LLM'},pv=0,mo=0,tg_=0;
+function rpv(){var el=$('sxPv');if(!el)return;el.innerHTML=RC.map(function(p,i){return '<button data-p="'+i+'" aria-pressed="'+(i===pv)+'">'+p[0]+'<small>'+p[1].length+'</small></button>'}).join('');
+  var ms=RC[pv][1];$('sxMs').innerHTML=ms.map(function(m,i){return '<button data-m="'+i+'" aria-pressed="'+(i===mo)+'">'+m[0]+'<i>'+(m[1]==='validated'?'✓ validated':m[1])+'</i></button>'}).join('');
+  var m=ms[mo],ts=m[3];
+  $('sxRec').innerHTML=ts.map(function(t,i){return '<tr class="r'+(i===tg_?' sel':'')+'" data-t="'+i+'"><td>'+(t[5]?'★ ':'')+(BN[t[0]]||t[0])+'</td><td><span class="sx-tag '+(t[1]==='agg'?'a':'d')+'">'+t[1]+'</span></td><td>'+esc(t[2])+'</td><td>'+(t[4]?'✓':'<span class="dim">–</span>')+'</td></tr>'}).join('');
+  var t=ts[tg_]||ts[0],path=t[3]||'';
+  $('sxRecCmd').innerHTML='<span class="cm"># from the dynamo repo root</span>\nkubectl apply -n $NS \\\n  -f <span class="k">'+esc(path.replace(/\/[^\/]*$/,'/'))+'</span><span class="w">'+esc(path.split('/').pop())+'</span>';
+  var pf=$('sxRecPerf');pf.className='sx-perf'+(t[4]?'':' none');pf.innerHTML=t[4]?'<div class="sx-h">Expected performance</div>'+esc(t[4]):'No published numbers for this target yet.';
+  $('sxRecDoc').href='https://docs.nvidia.com/dynamo/recipes/'+m[2]}
+if($('sxPv')){$('sxPv').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.stopPropagation();pv=+b.dataset.p;mo=0;tg_=0;rpv()});
+  $('sxMs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.stopPropagation();mo=+b.dataset.m;tg_=0;rpv()});
+  $('sxRec').addEventListener('click',function(e){var r=e.target.closest('tr.r');if(!r)return;e.stopPropagation();tg_=+r.dataset.t;rpv()});
+  var r0=RC[0][1][0][3];for(var i=0;i<r0.length;i++)if(r0[i][5]){tg_=i;break}rpv()}
+
+// ---- symptom explorer
+var S=[['Size it with the profiler','Let a DGDR sweep configurations for your model, ISL/OSL and SLA. <b>rapid</b> simulates with AISim in ~30 s; <b>thorough</b> measures on GPUs in 2–4 h. Copy its TP and P/D choices.','searchStrategy: rapid\nsla: {ttft: 2000, itl: 30}\nworkload: {isl: 4000, osl: 1000}',8],
+ ['Turn on KV-aware routing','Workers publish KV events; the frontend routes each request to the worker that already holds the most of its prefix, weighed against load.','--router-mode kv          # frontend\n--kv-events-config \'{…}\'  # vLLM worker',14],
+ ['Disaggregate prefill and decode','Long prefills stall decode steps on shared GPUs. Separate pools let each phase batch its own way and use its own TP.','--disaggregation-mode prefill | decode\nsharedMemorySize: 16Gi',15],
+ ['Offload KV to host memory','Evicted prefixes come back from CPU memory instead of being recomputed. Pick one backend: LMCache, SGLang HiCache or FlexKV.','--enable-hierarchical-cache --hicache-ratio 2   # SGLang',16],
+ ['Let the Planner scale','The Planner sizes prefill and decode replicas separately against TTFT and ITL targets. Start in advisory mode, then let it act.','features:\n  planner: {optimization_target: sla,\n            ttft_ms: 500, itl_ms: 50}',16],
+ ['Check the transfer path first','Disagg loses when KV moves over TCP. Confirm NIXL uses UCX over RDMA, raise shared memory, and install the Network Operator.','kubectl logs <prefill-pod> | grep NIXL\n# → Backend UCX was instantiated',15]];
+function sym(i){var s=S[i];$('sxSymD').innerHTML='<div class="sx-h">Lever</div><h3>'+s[0]+'</h3><p>'+s[1]+'</p><pre class="sx sm">'+esc(s[2])+'</pre><button class="sx-btn sx-go" data-jump="'+s[3]+'">Go to slide '+s[3]+' →</button>'}
+var sy=$('sxSym');if(sy){sy.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.stopPropagation();sy.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});sym(+b.dataset.i)});sym(0)}
+
+// ---- disagg live simulation (toy model)
+(function(){var cv=$('sxSimCv');if(!cv)return;var cx=cv.getContext('2d');
+  var LAM=6,PS=0.25,TOK=60,I0=0.02,K=0.0025,ST=1,SI=0.035,WIN=12,RND=Math.random,BEST=null;
+  var P=1,D=2,t=0,q=[],pw=[],dw=[],fly=[],done=[],out=[],next=0,last=0,ok=0,miss=0;
+  function rnd(){return -Math.log(1-RND())/LAM}
+  function mk(){pw=[];dw=[];for(var i=0;i<P;i++)pw.push({r:null,rem:0});for(i=0;i<D;i++)dw.push({s:[],acc:0})}
+  function reset(){t=0;q=[];fly=[];done=[];out=[];next=rnd();ok=0;miss=0;mk()}
+  function setP(n){n=Math.max(1,Math.min(6,n));while(pw.length>n){var w=pw.pop();if(w.r)q.unshift(w.r)}while(pw.length<n)pw.push({r:null,rem:0});P=n}
+  function setD(n){n=Math.max(1,Math.min(6,n));var mv=[];while(dw.length>n)mv=mv.concat(dw.pop().s);while(dw.length<n)dw.push({s:[],acc:0});mv.forEach(function(r){least().s.push(r)});D=n}
+  function least(){var b=dw[0];dw.forEach(function(w){if(w.s.length<b.s.length)b=w});return b}
+  function step(dt){t+=dt;while(next<=t){q.push({a:next,itl:0,n:0});next+=rnd()}
+    pw.forEach(function(w,i){if(!w.r&&q.length){w.r=q.shift();w.rem=PS}if(w.r){w.rem-=dt;if(w.rem<=0){var r=w.r;r.ttft=t-r.a;r.tok=TOK;var d=least();d.s.push(r);fly.push({pi:i,di:dw.indexOf(d),t0:t});w.r=null}}});
+    dw.forEach(function(w){if(!w.s.length){w.acc=0;return}var stp=I0+K*w.s.length;w.acc+=dt;while(w.acc>=stp&&w.s.length){w.acc-=stp;w.s.forEach(function(r){r.tok--;r.itl+=stp;r.n++});
+      w.s=w.s.filter(function(r){if(r.tok>0)return true;var good=r.ttft<=ST&&r.itl/r.n<=SI;done.push({t:t,ttft:r.ttft,itl:r.itl/r.n,good:good});good?ok++:miss++;out.push({t0:t,good:good,y:Math.random()});return false});stp=I0+K*w.s.length}});
+    done=done.filter(function(d){return d.t>t-WIN});fly=fly.filter(function(f){return t-f.t0<0.35});out=out.filter(function(o){return t-o.t0<0.6});if(q.length>400)q.length=400}
+  var C={};function col(){var cs=getComputedStyle(document.documentElement);['--req','--green-fill','--green-ink','--bad','--text','--dim','--line','--surface','--surface2','--cpu'].forEach(function(k){C[k]=cs.getPropertyValue(k).trim()||'#888'})}
+  var LW=640,LH=300;
+  function rr(x,y,w,h,r,f,s){cx.beginPath();cx.roundRect?cx.roundRect(x,y,w,h,r):cx.rect(x,y,w,h);if(f){cx.fillStyle=f;cx.fill()}if(s){cx.strokeStyle=s;cx.lineWidth=1.5;cx.stroke()}}
+  function txt(s,x,y,c,sz,al,wt){cx.fillStyle=c;cx.font=(wt||600)+' '+sz+'px Inter, sans-serif';cx.textAlign=al||'left';cx.fillText(s,x,y)}
+  function lay(n,top,h){var gap=8,bh=Math.min(54,(h-gap*(n-1))/n),y0=top+(h-(bh*n+gap*(n-1)))/2;return function(i){return [y0+i*(bh+gap),bh]}}
+  function draw(){var r=cv.getBoundingClientRect(),dpr=(window.devicePixelRatio||1);var W=Math.max(1,Math.round(r.width*dpr)),H=Math.max(1,Math.round(r.height*dpr));if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
+    var sx=W/LW,sy=H/LH,s=Math.min(sx,sy);cx.setTransform(s,0,0,s,(W-LW*s)/2,(H-LH*s)/2);cx.clearRect(-1e3,-1e3,4e3,4e3);
+    var top=26,h=LH-40;txt('queue',40,16,C['--dim'],12,'center');txt('prefill',190,16,C['--req'],13,'center',700);txt('decode',420,16,C['--green-ink'],13,'center',700);txt('done',590,16,C['--dim'],12,'center');
+    // queue
+    var qn=q.length,shown=Math.min(qn,48);for(var i=0;i<shown;i++){var c=i%4,rw=Math.floor(i/4);cx.beginPath();cx.arc(16+c*16,top+h-8-rw*16,5.5,0,7);cx.fillStyle=(t-q[i].a)>ST?C['--bad']:C['--cpu'];cx.fill()}
+    txt(qn>48?qn+' waiting':(qn?qn+'':''),40,top+h+12,qn>8?C['--bad']:C['--dim'],12,'center',700);
+    // prefill
+    var pl=lay(P,top,h);pw.forEach(function(w,i){var g=pl(i);rr(120,g[0],140,g[1],8,C['--surface'],C['--req']);txt('P'+(i+1),128,g[0]+14,C['--dim'],11,'left',700);if(w.r){var k=1-Math.max(0,w.rem)/PS;cx.beginPath();cx.arc(130+120*k,g[0]+g[1]/2+3,5.5,0,7);cx.fillStyle=C['--req'];cx.fill()}});
+    // decode
+    var dl=lay(D,top,h);dw.forEach(function(w,i){var g=dl(i),n=w.s.length;w.ema=w.ema==null?I0+K*n:w.ema*0.97+(I0+K*n)*0.03;var stp=w.ema,bad=stp>SI;rr(330,g[0],190,g[1],8,C['--surface'],bad?C['--bad']:C['--green-fill']);
+      var per=Math.max(1,Math.floor((g[1]-10)/9)),cols=12;for(var k=0;k<Math.min(n,cols*per);k++){cx.beginPath();cx.arc(370+(k%cols)*9,g[0]+8+Math.floor(k/cols)*9,3.2,0,7);cx.fillStyle=C['--green-fill'];cx.fill()}
+      txt('D'+(i+1),338,g[0]+g[1]/2+5,C['--dim'],13,'left',700);txt(Math.round(stp*1000)+' ms',514,g[0]+g[1]/2+5,bad?C['--bad']:C['--green-ink'],12,'right',700)});
+    // transfers
+    fly.forEach(function(f){var k=Math.min(1,(t-f.t0)/0.35),a=pl(Math.min(f.pi,P-1)),b=dl(Math.max(0,Math.min(f.di,D-1)));var x=262+(326-262)*k,y=a[0]+a[1]/2+((b[0]+b[1]/2)-(a[0]+a[1]/2))*k;cx.beginPath();cx.arc(x,y,4.5,0,7);cx.fillStyle=C['--req'];cx.fill()});
+    // outputs
+    out.forEach(function(o){var k=Math.min(1,(t-o.t0)/0.6);cx.globalAlpha=1-k;cx.beginPath();cx.arc(525+60*k,top+20+o.y*(h-40),4.5,0,7);cx.fillStyle=o.good?C['--green-fill']:C['--bad'];cx.fill();cx.globalAlpha=1});
+    txt('✓ '+ok,592,top+h/2-8,C['--green-ink'],16,'center',800);txt('✗ '+miss,592,top+h/2+16,miss?C['--bad']:C['--dim'],16,'center',800)}
+  function gput(span){if(!done.length)return 0;var gf=done.filter(function(d){return d.good}).length/done.length,thr=q.length<6?LAM:Math.min(LAM,done.length/span);return thr*gf}
+  function pct(a,p){if(!a.length)return 0;a=a.slice().sort(function(x,y){return x-y});return a[Math.min(a.length-1,Math.floor(p*a.length))]}
+  function ui(){var warm=t<4,tt=pct(done.map(function(d){return d.ttft}),0.9),it=done.length?done.reduce(function(s,d){return s+d.itl},0)/done.length:0,
+      qt=q.length?t-q[0].a:0;tt=Math.max(tt,qt);var span=Math.min(WIN,Math.max(1,t-2)),g=gput(span),gg=g/(P+D);
+    var ttb=tt>ST,itb=it>SI;$('sxPn').textContent=P;$('sxDn').textContent=D;
+    $('sxTt').textContent=warm&&!done.length?'…':(tt<1?Math.round(tt*1000)+' ms':tt.toFixed(1)+' s');$('sxIt').textContent=warm&&!done.length?'…':Math.round(it*1000)+' ms';
+    $('sxTt').className=ttb?'bad':'';$('sxIt').className=itb?'bad':'';$('sxTb').style.width=Math.min(100,tt/2/ST*100)+'%';$('sxIb').style.width=Math.min(100,it/2/SI*100)+'%';$('sxTb').className=ttb?'bad':'';$('sxIb').className=itb?'bad':'';
+    $('sxG').textContent=gg.toFixed(2);$('sxG2').textContent=g.toFixed(1)+' req/s ✓ on '+(P+D)+' GPUs';
+    $('sxPdMsg').innerHTML=warm?'Watching the first requests…':ttb&&itb?'<b>Both SLAs miss.</b> Add prefill for TTFT and decode for ITL.':ttb?'<b>Prefill is the bottleneck:</b> requests queue before their first token. Add a prefill worker.':itb?'<b>Decode is the bottleneck:</b> each decode step serves too many streams, so tokens slow down. Add a decode worker.':(P===BEST[1]&&D===BEST[2]?'<b>★ Sweet spot:</b> both SLAs met with the fewest GPUs, so the most goodput per GPU.':'<b>Both SLAs met,</b> but extra GPUs dilute goodput per GPU. Try removing a worker.')}
+  var prev=0,uiT=0;function loop(ts){var sl=cv.closest('.slide');if(sl&&sl.classList.contains('active')){if(!C['--req']||loop.th!==document.documentElement.className){col();loop.th=document.documentElement.className}
+      var dt=prev?Math.min(0.05,(ts-prev)/1000):0;prev=ts;var n=4;for(var i=0;i<n;i++)step(dt/n);draw();if(ts-uiT>250){ui();uiT=ts}}else prev=0;requestAnimationFrame(loop)}
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-pd]');if(!b)return;e.stopPropagation();var k=b.dataset.pd;if(k==='p+')setP(P+1);if(k==='p-')setP(P-1);if(k==='d+')setD(D+1);if(k==='d-')setD(D-1);if(k==='r')reset();done=[];ok=0;miss=0;out=[];t=Math.max(t,0);ui()});
+  window.__sxSim={step:step,set:function(p,d){setP(p);setD(d);done=[];ok=0;miss=0},best:function(){return BEST},ui:ui,state:function(){return {P:P,D:D,q:q.length,done:done.length,tt:$('sxTt').textContent,it:$('sxIt').textContent,g:$('sxG').textContent}}};
+  /* seeded offline sweep of every split to find the best goodput per GPU */
+  (function(){var seed=7;RND=function(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646};var best=[0,1,1];
+    for(var p=1;p<=6;p++)for(var d=1;d<=6;d++){P=p;D=d;reset();var okn=0;for(var i=0;i<30*120;i++){step(1/120)}var g=gput(WIN)/(p+d);if(g>best[0]+0.02)best=[g,p,d]}
+    BEST=best;RND=Math.random;P=1;D=2})();
+  $('sxBest').textContent=BEST[1]+'P / '+BEST[2]+'D';
+  reset();requestAnimationFrame(loop)})();
+
+// ---- router picker (toy numbers, after router.html slide 3)
+var W=[['Worker A','busy',6,4],['Worker B','idle',1,0],['Worker C','light',5,1]],PB=8,rri=1;
+function rs(){var el=$('sxRw');if(!el)return;var m=TG.rm2,c=+$('sxC').value;$('sxCv').textContent=c.toFixed(1);$('sxCr').style.visibility=m==='kv'?'visible':'hidden';
+  var sc=W.map(function(w){var comp=PB-c*w[2];return m==='cache'?-w[2]:m==='load'?w[3]:m==='rr'?0:comp+w[3]}),best=m==='rr'?rri:sc.indexOf(Math.min.apply(null,sc)),h='';
+  W.forEach(function(w,i){var bl='';for(var j=0;j<PB;j++)bl+='<i style="background:'+(j<w[2]?'var(--green-fill)':'var(--req)')+'"></i>';var q='';for(j=0;j<w[3];j++)q+='<i style="background:var(--cpu)"></i>';
+    var comp=PB-(m==='kv'?c:1)*w[2],eq=m==='kv'?'<em style="color:var(--req)">'+(+comp.toFixed(1))+'</em> + <em style="color:var(--cpu)">'+w[3]+'</em> = <b>'+(+(comp+w[3]).toFixed(1))+'</b>':m==='cache'?'<em style="color:var(--green-ink)">'+w[2]+' cached</em>':m==='load'?'<em style="color:var(--cpu)">'+w[3]+' queued</em>':'<em class="dim">next in turn</em>';
+    h+='<div class="sx-rw'+(i===best?' win':'')+'"><div><b>'+w[0]+'</b><small>'+w[1]+'</small></div><div class="bk">'+bl+'</div><span class="pl">+</span><div class="bk">'+(q||'<small class="dim">nothing queued</small>')+'</div><div class="eq">'+eq+'</div><span class="pk">'+(i===best?'picked':'')+'</span></div>'});
+  el.innerHTML=h;
+  var msg={rr:'<b>Round-robin</b> picks whoever is next, here B. It recomputes 7 of 8 blocks even though A and C already hold most of the prompt.',
+    cache:'<b>Cache only</b> picks A, the most cached, and piles onto a busy worker. At scale this creates hot spots and ITL spikes.',
+    load:'<b>Load only</b> picks idle B and throws away the cache: 7 of 8 blocks recomputed.'};
+  $('sxRmsg').innerHTML=msg[m]||(best===2?'<b>KV router</b> picks C: little left to compute and a light queue, so the lowest total. Good reuse, no hot spot.':'<b>Less cache credit</b> makes cached blocks count less, so the idle worker wins. Use this when ITL matters more than reuse.')}
+tg('rm2',rs);if($('sxC')){$('sxC').addEventListener('input',rs);rs()}
+
+// ---- skills panel
+var K=[['Interview',[['synthesize-user-workload','writes user_workload.yaml and captures the baseline DGD'],['author-baseline-dgd','drafts a baseline when no recipe fits; needs your confirmation']]],
+ ['Deploy',[['deploy-dynamo-recipe','deploys one DGD and proves it with an OpenAI smoke test'],['dynamo-interconnect-check','validates NIXL/UCX/NCCL over RDMA or NVLink']]],
+ ['Measure',[['configure-aiperf-benchmark','freezes workload, objective, load policy and Job manifest'],['run-aiperf-benchmark','launches, monitors and collects one run'],['analyze-aiperf-results','normalizes results, checks SLOs, compares candidates']]],
+ ['Propose',[['consult-perf-knowledge','picks one evidence-backed change from the tuning rules'],['create-optimization-hypothesis','applies only that change in deploy-draft.yaml']]],
+ ['Challenge',[['perform-adversarial-review','checks comparability, attribution, feasibility and GPU spend. No GPU time for unapproved changes']]],
+ ['Stop?',[['ledger','every lever family is tested, ruled out, not applicable or deferred'],['budget','GPU-hours, wall clock and failed deploys you set in the prompt']]]];
+function sk(i){var k=K[i];$('sxSk').innerHTML='<div class="sx-h">'+k[0]+'</div><ul>'+k[1].map(function(x){return '<li><code>'+x[0]+'</code><span>'+x[1]+'</span></li>'}).join('')+'</ul>';
+  document.querySelectorAll('.sk').forEach(function(g){g.classList.toggle('on',+g.dataset.n===i)})}
+document.querySelectorAll('.sk').forEach(function(g){g.addEventListener('click',function(e){e.stopPropagation();sk(+g.dataset.n)})});
+if($('sxSk'))sk(0);
+})();
+/* shrink a slide body to fit when the window is too small for it */
+(function(){
+  function fit(sl){var b=sl.querySelector(':scope>.body');if(!b)return;b.style.zoom='';
+    var stg=document.getElementById('stage');if(stg&&stg.offsetWidth<900)return; /* narrow stage: the slide scrolls instead */
+    var nav=document.querySelector('.chrome'),limit=(nav?nav.getBoundingClientRect().top:innerHeight)-14;
+    var r=b.getBoundingClientRect(),bottom=0;b.querySelectorAll('*').forEach(function(e){var q=e.getBoundingClientRect();if(q.height)bottom=Math.max(bottom,q.bottom)});
+    var avail=limit-r.top,need=bottom-r.top;if(need>avail&&avail>50)b.style.zoom=Math.max(.6,avail/need).toFixed(3);}
+  function all(){document.querySelectorAll('.slide.active').forEach(fit)}
+  addEventListener('resize',all);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(all);setTimeout(all,300);
+  new MutationObserver(function(){setTimeout(all,30)}).observe(document.getElementById('deck'),{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+</script>
+<script src="deck-tools.js" defer></script>

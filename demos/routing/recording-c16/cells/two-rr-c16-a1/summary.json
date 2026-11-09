@@ -1,0 +1,20 @@
+{
+  "outcome": "clean",
+  "clean_comparison_eligible": true,
+  "successful_requests": 316.0,
+  "request_errors": 0,
+  "context_overflow": 0,
+  "cancelled_profile_records": 0,
+  "submission_valid": true,
+  "runtime_submission_invalid_reasons": [],
+  "error_summary": [],
+  "phase_completion_log_lines": [
+    "07:49:06.035 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=16, completed=2, in_flight=14 | sessions: sent=13, completed=0 (runner.py:1163)",
+    "07:50:54.793 NOTICE   Phase agentic.warmup (warmup) complete | completed=16, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=113.01s (runner.py:1286)",
+    "08:05:55.059 NOTICE   Phase profiling (profiling) sending complete | sent=316, completed=314, in_flight=2 | sessions: sent=10, completed=3 | timeout_triggered=True (runner.py:1163)",
+    "08:10:55.061 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=316, completed=316, cancelled=0, in_flight=0 (runner.py:1227)",
+    "08:10:55.062 NOTICE   Phase profiling (profiling) complete | completed=316, cancelled=0, errors=0 | sessions: completed=3, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+    "08:10:55.063 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793865055059174519, sent_end_ns=1793865955059132596, requests_end_ns=1793866255061742810, baseline_start_ns=1793865055059086827, baseline_end_ns=1793866255061812612, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=316, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=316, error_records=0) (records_manager.py:1480)"
+  ],
+  "scope": "Stress outcomes retained; censored/invalid cells do not establish latency SLOs or speedup"
+}

@@ -1,0 +1,52 @@
+{
+  "source_sha": "d752d982738883e3575de7bbce0689e2443fa2c2",
+  "before_revision": "3",
+  "agent_node": "kubecon-nke-site-cp-0124",
+  "artifact_subdirectory": "/feature-tests/20261022-snapshot-cuinterpose-upgrade/snapshot-artifacts",
+  "command": [
+    "/opt/homebrew/bin/helm",
+    "--kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig",
+    "upgrade",
+    "dynamo-platform",
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/configs/snapshot-upgrade-20261022/dynamo-platform-1.5.1-snapshot-dev.tgz",
+    "-n",
+    "dynamo-system",
+    "--reset-values",
+    "-f",
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/configs/snapshot-upgrade-20261022/values.yaml",
+    "--wait",
+    "--timeout",
+    "10m"
+  ],
+  "crds": [
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/20261022-snapshot-cuinterpose-upgrade/chart-1792688414343816000/dynamo-platform/charts/snapshot/crds/nvidia.com_podsnapshotcontents.yaml",
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/20261022-snapshot-cuinterpose-upgrade/chart-1792688414343816000/dynamo-platform/charts/snapshot/crds/nvidia.com_podsnapshots.yaml",
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/20261022-snapshot-cuinterpose-upgrade/chart-1792688414343816000/dynamo-platform/charts/snapshot/crds/nvidia.com_snapshotjobs.yaml"
+  ],
+  "changed_resources": [
+    [
+      "ConfigMap",
+      "dynamo-system",
+      "dynamo-platform-snapshot-config"
+    ],
+    [
+      "DaemonSet",
+      "dynamo-system",
+      "dynamo-platform-snapshot-agent"
+    ],
+    [
+      "Deployment",
+      "",
+      "dynamo-platform-snapshot-operator"
+    ]
+  ],
+  "applied": true,
+  "files": {
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/configs/snapshot-upgrade-20261022/dynamo-platform-1.5.1-snapshot-dev.tgz": "67dabc00785ec61476042fb1e4381e94b122ea73eb48b1beba997064d4bbd1d9",
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/configs/snapshot-upgrade-20261022/values.yaml": "9e013da87d44269126d370b4fe9b948d59cc927e44a089cce408c967b3d61471",
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/configs/snapshot-upgrade-20261022/storage.yaml": "74a127d300c507215fc37cfc55be8102a60e20b33a970b25db4a3b2295e3fc86",
+    "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/configs/snapshot-upgrade-20261022/images.json": "de7d7d6a210d0f7dd8e95d4e1e471f89b0e6c2d7e0b0f1862642f629669ee179"
+  },
+  "retention": "Old PVC/export and Snapshot objects retained; new empty EFS subdirectory used",
+  "applied_receipt": "results/20261022-snapshot-cuinterpose-upgrade/state.json"
+}

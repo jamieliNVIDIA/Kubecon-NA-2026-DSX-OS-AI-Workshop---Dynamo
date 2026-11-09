@@ -1,0 +1,77 @@
+{
+  "passed": true,
+  "errors": [],
+  "router_mode": "kv",
+  "expected_worker_pod_ips": [
+    "192.168.100.35",
+    "192.168.98.172"
+  ],
+  "registered_worker_ids": [
+    "259488343446135",
+    "4481562993701981"
+  ],
+  "smoke_worker_ids": [
+    "259488343446135",
+    "4481562993701981"
+  ],
+  "kv_event_source_hosts": [
+    "192.168.100.35",
+    "192.168.98.172"
+  ],
+  "zmq_endpoints_by_topic": {
+    "active_sequences_events": [
+      "tcp://192.168.100.35:38381",
+      "tcp://192.168.98.172:35867"
+    ],
+    "kv-events": [
+      "tcp://192.168.100.35:40975",
+      "tcp://192.168.98.172:44403"
+    ],
+    "kv_metrics": [
+      "tcp://192.168.100.35:45151",
+      "tcp://192.168.98.172:44299"
+    ]
+  },
+  "connection_records": [
+    {
+      "topic": "kv_metrics",
+      "endpoint": "tcp://192.168.100.35:45151",
+      "host": "192.168.100.35",
+      "line": "2026-11-05T01:18:53.753233Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.100.35:45151\" topic=\"kv_metrics\" rcvhwm=100000"
+    },
+    {
+      "topic": "kv_metrics",
+      "endpoint": "tcp://192.168.98.172:44299",
+      "host": "192.168.98.172",
+      "line": "2026-11-05T01:18:53.760785Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.98.172:44299\" topic=\"kv_metrics\" rcvhwm=100000"
+    },
+    {
+      "topic": "kv-events",
+      "endpoint": "tcp://192.168.98.172:44403",
+      "host": "192.168.98.172",
+      "line": "2026-11-05T01:18:53.768918Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.98.172:44403\" topic=\"kv-events\" rcvhwm=100000"
+    },
+    {
+      "topic": "kv-events",
+      "endpoint": "tcp://192.168.100.35:40975",
+      "host": "192.168.100.35",
+      "line": "2026-11-05T01:18:53.768999Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.100.35:40975\" topic=\"kv-events\" rcvhwm=100000"
+    },
+    {
+      "topic": "active_sequences_events",
+      "endpoint": "tcp://192.168.98.172:35867",
+      "host": "192.168.98.172",
+      "line": "2026-11-05T01:18:53.769963Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.98.172:35867\" topic=\"active_sequences_events\" rcvhwm=1024"
+    },
+    {
+      "topic": "active_sequences_events",
+      "endpoint": "tcp://192.168.100.35:38381",
+      "host": "192.168.100.35",
+      "line": "2026-11-05T01:18:53.770000Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.100.35:38381\" topic=\"active_sequences_events\" rcvhwm=1024"
+    }
+  ],
+  "scope": "Current frontend log and current worker Pod IPs; connection proof is separate from positive prefix-overlap/performance evidence",
+  "frontend_uid": "f7e75b56-0955-4a61-8f90-5c200cfcdbe8",
+  "current_frontend_log": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-rrkv-20261104-a1/routing-c1-kv-a1/ft-agg-0-frontend-jxkdr.log",
+  "log_sha256": "93825992463ed1cade0bd9bfe28f8d2d7eea59e54a3a526e2c89a63c2dccf807"
+}

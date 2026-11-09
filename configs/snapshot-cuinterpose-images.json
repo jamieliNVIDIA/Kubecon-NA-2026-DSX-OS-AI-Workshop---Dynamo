@@ -1,0 +1,65 @@
+[
+  {
+    "tag": "ghcr.io/ai-dynamo/snapshot/operator:v0.0.0-gd752d982",
+    "image": "ghcr.io/ai-dynamo/snapshot/operator@sha256:a050ff9c0568b2bd4ca53d89954ed8b9c834e5a2ec7558c7d8b63623fdf5eece",
+    "digest": "sha256:a050ff9c0568b2bd4ca53d89954ed8b9c834e5a2ec7558c7d8b63623fdf5eece",
+    "platforms": [
+      {
+        "digest": "sha256:503feeed170e4067efe390e11b67d499f20d0dd93c1af97a1d340b33a41a0941",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:dfe6435a76b43f94202ed2915d69c883b31cf971371f574faadaef868e27e8bd",
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        }
+      }
+    ]
+  },
+  {
+    "tag": "ghcr.io/ai-dynamo/snapshot/agent:v0.0.0-gd752d982",
+    "image": "ghcr.io/ai-dynamo/snapshot/agent@sha256:559dcb629a1a351972572ac1cae8dcaccd45e4d3e1bc6ac8c4a91621fe519dce",
+    "digest": "sha256:559dcb629a1a351972572ac1cae8dcaccd45e4d3e1bc6ac8c4a91621fe519dce",
+    "platforms": [
+      {
+        "digest": "sha256:52c79e05f28a5c586e79f0f4ff32168e4ce68c738d2d478987dcd46d3cedb5af",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:cccdadc2682e3a8473808fe000a07a3bdacba70938bf657c570d933afe08067f",
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        }
+      }
+    ]
+  },
+  {
+    "tag": "ghcr.io/ai-dynamo/snapshot/pagebroker:v0.0.0-gd752d982",
+    "image": "ghcr.io/ai-dynamo/snapshot/pagebroker@sha256:d8f08dd8110fbaf01a10176429b31c268c816bb91bdf0ba6806f435e258a1498",
+    "digest": "sha256:d8f08dd8110fbaf01a10176429b31c268c816bb91bdf0ba6806f435e258a1498",
+    "platforms": [
+      {
+        "digest": "sha256:a8bce7020b3aace6708c8c6c844eec5d49ec90ed04d1e8e98502d4edda391fac",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:f695f2862e6ce58f7d400c40fd5934db6612196a7213bcc3e6c3733a979831bf",
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        }
+      }
+    ]
+  }
+]

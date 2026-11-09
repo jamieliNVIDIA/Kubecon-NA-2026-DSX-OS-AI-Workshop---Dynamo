@@ -1,0 +1,183 @@
+{
+  "repositories": [
+    {
+      "repository": "ai-dynamo/dynamo",
+      "ref": "v1.5.1",
+      "revision": "2093662a4d4e5fd318732935213dde08dc7be818",
+      "files": [
+        {
+          "path": "deploy/helm/charts/platform/Chart.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/deploy/helm/charts/platform/Chart.yaml",
+          "status": 200,
+          "sha256": "84c783830b58a48318692e5576a5d8633ef9ec281df94ddcc2191383a159ee84"
+        },
+        {
+          "path": "deploy/helm/charts/platform/values.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/deploy/helm/charts/platform/values.yaml",
+          "status": 200,
+          "sha256": "9f90e25f26941f14ccfa72bf0974ebd48a6207d78f8273e8e9765e550e86bb4c"
+        },
+        {
+          "path": "examples/backends/trtllm/deploy/snapshot/qwen3-0.6b.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/examples/backends/trtllm/deploy/snapshot/qwen3-0.6b.yaml",
+          "status": 404
+        },
+        {
+          "path": "examples/backends/trtllm/deploy/snapshot/glm-5.3.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/2093662a4d4e5fd318732935213dde08dc7be818/examples/backends/trtllm/deploy/snapshot/glm-5.3.yaml",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "repository": "ai-dynamo/dynamo",
+      "ref": "main",
+      "revision": "736f3ca97d90468f3c5b1f32c870517693d006b7",
+      "files": [
+        {
+          "path": "deploy/helm/charts/platform/Chart.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/736f3ca97d90468f3c5b1f32c870517693d006b7/deploy/helm/charts/platform/Chart.yaml",
+          "status": 200,
+          "sha256": "8a544e979491fbf098781949054f1bccf4bcd86616a030e0c87d424b0d91d57f"
+        },
+        {
+          "path": "deploy/helm/charts/platform/values.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/736f3ca97d90468f3c5b1f32c870517693d006b7/deploy/helm/charts/platform/values.yaml",
+          "status": 200,
+          "sha256": "c89b0968a4b78e754a9488043f0f0f70dc8d00f4d4d7a8eba623a22487971c20"
+        },
+        {
+          "path": "examples/backends/trtllm/deploy/snapshot/qwen3-0.6b.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/736f3ca97d90468f3c5b1f32c870517693d006b7/examples/backends/trtllm/deploy/snapshot/qwen3-0.6b.yaml",
+          "status": 200,
+          "sha256": "9ace4bb1eab0dbf027dbfe6afcdf3d4ed5d7257e4f194b62c5cc8ffbffd64367"
+        },
+        {
+          "path": "examples/backends/trtllm/deploy/snapshot/glm-5.3.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/736f3ca97d90468f3c5b1f32c870517693d006b7/examples/backends/trtllm/deploy/snapshot/glm-5.3.yaml",
+          "status": 200,
+          "sha256": "825cf7990c58798dfabbfdf55678864b9d92fbae743b1ee7e313941d0b98f937"
+        }
+      ]
+    },
+    {
+      "repository": "ai-dynamo/snapshot",
+      "ref": "v0.1.0",
+      "revision": "69535c52124d3c5569c4e41e8fe840e98c513ae1",
+      "files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/README.md",
+          "status": 200,
+          "sha256": "ef4a883cfd751a47b4754d49ab874ebb9a616e2708b51be37bba58a579f358ea"
+        },
+        {
+          "path": "docs/limitations.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/docs/limitations.md",
+          "status": 200,
+          "sha256": "a2fa27c2bde221c1215719355a01b2ab86c58119ec4691c3d6990d8f95666f34"
+        },
+        {
+          "path": "docs/operations/install.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/docs/operations/install.md",
+          "status": 200,
+          "sha256": "5a687ccf921250a8837be30a532a38814dcf23328e1851633bdb44350d01abd4"
+        },
+        {
+          "path": "docs/operations/storage.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/docs/operations/storage.md",
+          "status": 200,
+          "sha256": "bc63187bf73d4454bc63810d7877ba23fe03f0a4a726641c3a530009c9c7bccb"
+        },
+        {
+          "path": "docs/guides/vllm.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/docs/guides/vllm.md",
+          "status": 200,
+          "sha256": "0ac6d9aef3789a7f53376d2e24f1e333cc6c535c993960eb04455239621a83ea"
+        },
+        {
+          "path": "docs/reference/workload-contract.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/docs/reference/workload-contract.md",
+          "status": 404
+        },
+        {
+          "path": "docs/guides/cuda-shared-memory.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/docs/guides/cuda-shared-memory.md",
+          "status": 404
+        },
+        {
+          "path": "charts/snapshot/Chart.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/charts/snapshot/Chart.yaml",
+          "status": 200,
+          "sha256": "9dfc9043b94dfddba91b548fa26a224822d7f6494c320a4669588539b7a4e663"
+        },
+        {
+          "path": "charts/snapshot/values.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/69535c52124d3c5569c4e41e8fe840e98c513ae1/charts/snapshot/values.yaml",
+          "status": 200,
+          "sha256": "e5c367c1d5e733c4c61899cb46040ea058c4c3d8680f6625734e8c6903670169"
+        }
+      ]
+    },
+    {
+      "repository": "ai-dynamo/snapshot",
+      "ref": "main",
+      "revision": "77fe2f40e4f14e3b3c866e607b266bffc7a3d864",
+      "files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/README.md",
+          "status": 200,
+          "sha256": "ac82c117417ca8783ec65ab12202dde665b09a12e624adffb2a8148f4caa33c8"
+        },
+        {
+          "path": "docs/limitations.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/limitations.md",
+          "status": 200,
+          "sha256": "7bd0a8d3762ca5d8a111803720aa1b3505690a91a13152fc72574a25b201d653"
+        },
+        {
+          "path": "docs/operations/install.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/operations/install.md",
+          "status": 200,
+          "sha256": "7ada83636518a7b28889519552c0991b8ba01324a09c27a34f49d855d6d12b3e"
+        },
+        {
+          "path": "docs/operations/storage.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/operations/storage.md",
+          "status": 200,
+          "sha256": "a672ae7c007088502f76d64257e6597fd80a40de7a4a11e1a7ca9335313cc256"
+        },
+        {
+          "path": "docs/guides/vllm.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/guides/vllm.md",
+          "status": 200,
+          "sha256": "82e0be6d016fbdc2145844b14c637cdc6b30c936e41ba11167ff7c514a245459"
+        },
+        {
+          "path": "docs/reference/workload-contract.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/reference/workload-contract.md",
+          "status": 200,
+          "sha256": "85359ef147c3bd3ce2f7a38017a49f14ae3c6d1ae41d75e59a13dd97b666dd04"
+        },
+        {
+          "path": "docs/guides/cuda-shared-memory.md",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/guides/cuda-shared-memory.md",
+          "status": 404
+        },
+        {
+          "path": "charts/snapshot/Chart.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/charts/snapshot/Chart.yaml",
+          "status": 200,
+          "sha256": "27fff492084e7dd31eb49a9700d70ce4c17c2ff713f882d42669e629886409e1"
+        },
+        {
+          "path": "charts/snapshot/values.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/charts/snapshot/values.yaml",
+          "status": 200,
+          "sha256": "7169a1758a5dbee6c45b484e6990c6d1c48c51081bac27cf11c88a8dec41da13"
+        }
+      ]
+    }
+  ]
+}

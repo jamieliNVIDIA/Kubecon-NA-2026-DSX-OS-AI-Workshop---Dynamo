@@ -1,0 +1,148 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/demo-06-routing-recorded-20261105-a1
+
+Dynamo workshop · Scaling and routing
+RECORDED EVIDENCE / NO CLUSTER CALLS
+Commands shown relative to the run directory.
+Run: results/demo-06-routing-recorded-20261105-a1
+Recording hashes and paired controls verified. No cluster calls or GPU reservation.
+
+Next: 1/4  Add a replica: what changed?
+
+================================================================
+1/4  Add a replica: what changed?
+Inspect a recorded AgentX scale-out pair; capacity and cache placement change together.
+================================================================
+
+$ cat scaleout-summary.txt
+RECORDED: AgentX C4, one fixed-order pair; 900 s admission.
+C counts live agent trees, not active HTTP requests.
+
+Observation                         One worker RR Two worker RR
+---------------------------------------------------------------
+H100 GPUs                                       2             4
+Measured requests                             122           114
+TTFT p50 (ms)                              306.19        477.59
+TTFT p99 (ms)                             2150.72       5238.63
+Mean active decode tokens/s/user           139.79        151.52
+Server cache-read / prompt (%)              95.79         90.72
+Canonical output tokens/s                   81.16         75.31
+Canonical rate denominator (s)            1200.00       1200.00
+
+The added worker split requests 57 / 57; it did not improve every metric.
+This low-load pair does not locate a capacity limit or isolate routing.
+Realized trace mix differs; the first worker/cache survived scale-out.
+The second arm followed a network-recovery pause.
+Earlier multimodal-capable profile with text requests; not the C1 profile.
+
+Next: 2/4  Follow the cache metadata
+
+================================================================
+2/4  Follow the cache metadata
+Workers publish residency updates; the frontend uses them to select a worker.
+================================================================
+
+$ cat routing-settings.yaml
+# Excerpt from measured KV arm; full manifest retained.
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+spec:
+  components:
+  - name: Frontend
+    type: frontend
+    replicas: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          args:
+          - --router-mode
+          - kv
+          - --kv-cache-block-size
+          - '64'
+  - name: agg
+    type: worker
+    replicas: 2
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          args:
+          - --enable-prefix-caching
+          - --block-size
+          - '64'
+          - --kv-events-config
+          - |-
+            {
+              "publisher": "zmq",
+              "topic": "kv-events",
+              "endpoint": "tcp://*:20080",
+              "enable_kv_cache_events": true
+            }
+
+$ cat cache-events.txt
+RECORDED: frontend connected to both current workers for KV events.
+kv-events    tcp://192.168.98.172:44403
+kv-events    tcp://192.168.100.35:40975
+Original unabridged lines: cache-event-log.txt
+
+Worker --metadata--> router index --request placement--> worker
+These events describe cache residency; they do not carry KV tensors.
+GPU/CPU tier visibility requires events from the selected integration.
+This recording proves KV-event connectivity, not CPU-tier event coverage.
+
+Next: 3/4  Change the routing policy
+
+================================================================
+3/4  Change the routing policy
+Compare a separate, matched two-worker RR/KV observation at C1.
+================================================================
+
+$ cat policy-summary.txt
+RECORDED: separate AgentX C1 two-worker RR/KV pair, N=1.
+Fresh workers per policy; same snapshot primer and default router tuning.
+
+Observation                           Round-robin      KV aware
+---------------------------------------------------------------
+H100 GPUs                                       4             4
+Measured requests                              81            84
+TTFT p50 (ms)                              381.18        312.75
+TTFT p99 (ms)                             5819.02       2899.97
+Mean active decode tokens/s/user           149.18        149.86
+Server cache-read / prompt (%)              95.08         97.62
+Canonical output tokens/s                   66.26         53.79
+Canonical rate denominator (s)             900.00       1200.00
+
+KV selection observed positive prefix overlap on 84 selections.
+Canonical rates use DIFFERENT drain-inclusive denominators.
+Do not report their ratio as a capacity speedup or slowdown.
+Realized request mixes differ; these are partial replay trees.
+C16/C32/C64/C128 sweep is separate; this recording does not include it.
+
+Next: 4/4  A warm worker can also be busy
+
+================================================================
+4/4  A warm worker can also be busy
+Balance reuse against load, then ask whether the cached state can move.
+================================================================
+
+$ cat tradeoff.txt
+ILLUSTRATIVE PLACEMENT CHOICE
+
+Branch 1: [same accumulated context] [investigate implementation]
+Branch 2: [same accumulated context] [design tests]
+Branch 3: [same accumulated context] [check compatibility]
+
+Worker A: reusable prefix, but busy.
+Worker B: spare compute, but cold for this prefix.
+Router tuning balances saved prefill work against assigned load.
+It can choose B already; B then pays to recompute missing state.
+
+Can B retrieve reusable state instead? Next investigation: KVCR.
+That copies cached state; request migration is a separate mechanism.
+
+Corpus evidence: two named parallel branches share 72,320 leading
+recorded token units (~94%). This is structural prefix evidence,
+not a measured cache hit, parent-context inheritance, or speedup.
+
+Recorded investigation complete. No cluster resources were created.
+Resume: ./demos/06-routing/run.sh --run results/demo-06-routing-recorded-20261105-a1

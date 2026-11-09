@@ -1,0 +1,37 @@
+[
+  {
+    "tag": "nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.5.1",
+    "image": "nvcr.io/nvidia/ai-dynamo/vllm-runtime@sha256:2b224a823d52a198ec0eeb0e3e4f5cf26cd8a7fc2e9812ee16204b6b1e974870",
+    "digest": "sha256:2b224a823d52a198ec0eeb0e3e4f5cf26cd8a7fc2e9812ee16204b6b1e974870",
+    "platforms": [
+      {
+        "digest": "sha256:4c094ab4dbb07ee434f45c17045b018255563898cd64ef78d9922f9c311c8959",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:6e4801f854c9cfab5b1a485d3a5e8aafb73ed400833d2f31d42578bdda6ff528",
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        }
+      },
+      {
+        "digest": "sha256:26cd0fa7eb2820380bd1e6181ea018c5ef63c1c79f0c9574b82fefd121ca889b",
+        "platform": {
+          "architecture": "arm64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:4199c12e4f33fa38447e83afbfb7113ffdf3a72e0c71396d1ffb3df8ad94a341",
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        }
+      }
+    ]
+  }
+]

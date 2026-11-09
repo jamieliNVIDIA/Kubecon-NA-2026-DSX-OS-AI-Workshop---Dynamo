@@ -1,0 +1,20 @@
+{
+  "status": "CPU candidates only; per-arm immutable specs remain to be resolved after qualification",
+  "concurrency_points": [
+    1,
+    4
+  ],
+  "paired_repetitions": 1,
+  "fresh_worker_processes_before_each_arm": true,
+  "router_order": [
+    "round-robin",
+    "kv"
+  ],
+  "parameters": {},
+  "integrity": {
+    "profile-c4-template.yaml": "506495de0772b5d5682e8ab44e4d21bf22a85bc3f846e8263866b82efc6ffa37",
+    "two-worker-kv-template.yaml": "774db0b34def97ebc56bcaba1fa39ba3c1dde929ed78ab05619ca99ccfb41f2e",
+    "profile-c1-template.yaml": "92482582e9175d4161e10bf4e8a28f06d0765564721110111af3dce06ddf6b2f",
+    "two-worker-round-robin-template.yaml": "e80718040f8e864e162249f9b96b594383f5d55d54ae6d10d8b02bb41d97a213"
+  }
+}

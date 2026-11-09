@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "status": "offline_prepared",
+  "live_executor": "/root",
+  "run": "results/workshop-routing-c32-20261105-a1",
+  "namespace": "dynamo-ft-routing-c32-20261105-a1",
+  "controller_name": "kubecon-workshop-routing-c32-20261105-a1",
+  "lease": ".local/workshop-routing-c32-20261105.gpu-lease",
+  "plan_sha256": "cde44a8f66b68edfac8a1e8b8c3f0f0b90c0b7396f3f6e72286519654badb2ab",
+  "payload_sha256": "9c641106c3efb2dac4dfa24645e0e58c1c2448a9dde5d0b2ea3a576305a063dd",
+  "campaign_sha256": "62bda5e243ba1172f2e31a564e1cf3ffbbd321af3e85bedd1a1426adf4e7343d",
+  "offline_validation_sha256": "6fef303c72442733071fb19091fd8069117c9d8a8dbc8db89b3b2e11e6dcab42",
+  "readiness_source_sha256": "f1838ba91d08a61d710a3412d0340a856202fe1cf7624aad0aea76b013c1b90f",
+  "readiness_tests_sha256": "9c0353d9e565ac35c8be722a64d8f9093899f7d8e492bd04089d8f5b99896ec4",
+  "readiness_tests_passed": 5,
+  "network_actions_performed_by_agent": 0,
+  "retained_pd_cpu_touched": false,
+  "shared_frozen_files_modified": false,
+  "scope": "Fresh immutable C32 comparison; exact-model startup gate only; no benchmark result"
+}

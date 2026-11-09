@@ -1,0 +1,37 @@
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+  "revision": "bee7596271d1495f6992ae224aefde4410e816b8",
+  "gated": false,
+  "architecture": [
+    "NemotronHForCausalLM"
+  ],
+  "dynamo_source_revision": "d48a9641f9754557815cd370c3154a2904ff569b",
+  "runtime_image": "nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.5.0-nemotron-3.5-lightning-dev.1",
+  "sources": [
+    {
+      "path": "recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml",
+      "sha256": "c39c79aec821dcda8d154ddb95e9d61c4792eee7ed7b35323982dfee5c15a813"
+    },
+    {
+      "path": "recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml",
+      "sha256": "1c56c9db495e84c0fdb39407c5cf3fabdc64ecb737ae95c88f90258e131bd0bd"
+    },
+    {
+      "path": "recipes/nemotron-3.5-lightning/vllm/check-efa-userspace.sh",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/check-efa-userspace.sh",
+      "sha256": "ae3d5b15b5bc4c43f136b285716e31390fbe3e9b08fc13bc38c573533610896e"
+    },
+    {
+      "path": "lib/sidecar/vllm/deploy/agg.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/lib/sidecar/vllm/deploy/agg.yaml",
+      "sha256": "db991cdbe92dcb5625eb344e71516e031ab7ebad084c85cad19fb420657c977d"
+    },
+    {
+      "path": "lib/sidecar/sglang/deploy/agg_kv_router.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/lib/sidecar/sglang/deploy/agg_kv_router.yaml",
+      "sha256": "cc2a2fe4588e76f2f4e40d8ea5611a7211c4cebd1a39e4da3fdb04fad54bcbfc"
+    }
+  ]
+}

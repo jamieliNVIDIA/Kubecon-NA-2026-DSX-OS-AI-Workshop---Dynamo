@@ -1,0 +1,241 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a2
+
+Dynamo workshop · Request continuity
+LIVE CLUSTER
+Run: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a2
+
+Preparation
+
+Next: 1/4  Two prepared cases
+
+================================================================
+1/4  Two prepared cases
+The same two-worker configuration, with frontend migration set to zero or three.
+================================================================
+
+$ cat /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a2/migration-settings.yaml
+Frontend:
+  DYN_MIGRATION_LIMIT:
+    disabled: '0'
+    enabled: '3'
+  DYN_HTTP_BACKEND_STREAM_TIMEOUT_SECS: '30'
+workers_per_case: 2
+tensor_parallel_size: 2
+client_retries: 0
+fault_gate_visible_content_chunks: 16
+
+Step finished in 0.0s
+
+Next: 2/4  Break a streaming response
+
+================================================================
+2/4  Break a streaming response
+After visible output, kill its serving EngineCore and inspect the stream failure.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-3e8c91ea-demo service/demo-continuity-disabled-frontend 18004:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18004/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793832079,"owned_by":"nvidia","context_window":1048576}]}
+
+Request body:
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a self-contained Python pytest module for an integer add(a, b) function. Include 12 individually named test functions, covering positive and negative values, zero, commutativity, and large integers. Each function needs its own assertion. Return Python code only, no explanations or markdown."
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "max_completion_tokens": 1024,
+  "temperature": 0,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "nvext": {
+    "extra_fields": [
+      "worker_id",
+      "timing"
+    ]
+  }
+}
+
+$ streaming POST /v1/chat/completions (one request; no client retry)
+def add(a, b):
+    return a + b
+
+def test_add_positive_numbers():
+    assert add
+[fault] SIGKILL EngineCore on worker 4446967580483451 (demo-continuity-disabled-0-agg-f4wsz)
+(2, 3) == 5
+[stream error] {"message": "Service temporarily unavailable", "type": "service_unavailable", "code": 503}
+
+[data: [DONE]]
+
+Observed outcome:
+{
+  "simulated": false,
+  "arm": "disabled",
+  "response_id": "chatcmpl-61419bde-3a10-458c-802f-3d2c907da79d",
+  "http_requests": 1,
+  "failed_worker": "4446967580483451",
+  "continuation_workers": [],
+  "worker_attribution": "sse",
+  "migration_trace": null,
+  "error_frames": [
+    {
+      "message": "Service temporarily unavailable",
+      "type": "service_unavailable",
+      "code": 503
+    }
+  ],
+  "read_error": null,
+  "finish_reasons": [],
+  "done": true,
+  "successful_completion": false,
+  "client_recovery_gap_seconds": null,
+  "max_client_inter_content_gap_seconds": 0.5098031249999995,
+  "scope": "One request, no client retries; gap spans last received old-worker content to first peer content."
+}
+
+Step finished in 16.7s
+
+Next: 3/4  Continue through worker failure
+
+================================================================
+3/4  Continue through worker failure
+Repeat with migration enabled: follow one request across two workers.
+================================================================
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/bin/kubectl --kubeconfig=/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/kubeconfig --request-timeout=30s port-forward -n dynamo-ft-r610-3e8c91ea-demo service/demo-continuity-enabled-frontend 18004:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18004/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1793832094,"owned_by":"nvidia","context_window":1048576}]}
+
+Request body:
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a self-contained Python pytest module for an integer add(a, b) function. Include 12 individually named test functions, covering positive and negative values, zero, commutativity, and large integers. Each function needs its own assertion. Return Python code only, no explanations or markdown."
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "max_completion_tokens": 1024,
+  "temperature": 0,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "nvext": {
+    "extra_fields": [
+      "worker_id",
+      "timing"
+    ]
+  }
+}
+
+$ streaming POST /v1/chat/completions (one request; no client retry)
+def add(a, b):
+    return a + b
+
+def test_add_positive_numbers():
+    assert add
+[fault] SIGKILL EngineCore on worker 7594699037439315 (demo-continuity-enabled-0-agg-9sf4l)
+(2, 3) == 5
+
+def test_add_negative_numbers():
+    assert add(-2, -3) == -5
+
+def test_add_positive_and_negative():
+    assert add(5, -3) == 2
+
+def test_add_zero_to_positive():
+    assert add(0, 5) == 5
+
+def test_add_zero_to_negative():
+    assert add(0, -5) == -5
+
+def test_add_zero_to_zero():
+    assert add(0, 0) == 0
+
+def test_add_commutative_positive():
+    assert add(4, 7) == add(7, 4)
+
+def test_add_commutative_negative():
+    assert add(-4, -7) == add(-7, -4)
+
+def test_add_commutative_mixed():
+    assert add(10, -3) == add(-3, 10)
+
+def test_add_large_positive_integers():
+    assert add(10**10, 10**10) == 2 * 10**10
+
+def test_add_large_negative_integers():
+    assert add(-10**10, -10**10) == -2 * 10**10
+
+def test_add_large_mixed_integers():
+    assert add(10**10, -10**10) == 0
+[data: [DONE]]
+
+SSE keeps the initial worker ID in this pinned runtime; the correlated frontend trace identifies the peer.
+
+Observed outcome:
+{
+  "simulated": false,
+  "arm": "enabled",
+  "response_id": "chatcmpl-94659c9d-eb97-4a46-8666-f8c30d746c2b",
+  "http_requests": 1,
+  "failed_worker": "7594699037439315",
+  "continuation_workers": [
+    "7809818136875612"
+  ],
+  "worker_attribution": "correlated_frontend_trace_sse_sticky",
+  "migration_trace": {
+    "http_request_id": "bc77cb33-267f-4b36-98e1-30bf4fa218b4",
+    "response_id": "chatcmpl-94659c9d-eb97-4a46-8666-f8c30d746c2b",
+    "failed_worker": "7594699037439315",
+    "continuation_worker": "7809818136875612",
+    "retained_output_tokens": 31,
+    "attempt": 1,
+    "source": "Response-correlated frontend retry and decode-worker selection logs"
+  },
+  "error_frames": [],
+  "read_error": null,
+  "finish_reasons": [
+    "stop"
+  ],
+  "done": true,
+  "successful_completion": true,
+  "client_recovery_gap_seconds": null,
+  "max_client_inter_content_gap_seconds": 0.5111186249999982,
+  "scope": "One request, no client retries. SSE worker ID is first-write-wins; trace proves retry to peer. Exact handoff gap unavailable. Maximum adjacent client content gap spans the whole response."
+}
+
+Step finished in 48.1s
+
+Next: 4/4  Inspect request continuity
+
+================================================================
+4/4  Inspect request continuity
+Compare terminal outcomes, worker changes, and the measured client recovery gap.
+================================================================
+Migration disabled: interrupted stream.
+Migration enabled: same response continues on its surviving peer.
+disabled: completed=False, client recovery gap=None
+enabled: completed=True, client recovery gap=None
+  Exact handoff gap unavailable; maximum adjacent client content gap=0.5111186249999982s across the whole response.
+
+Step finished in 0.2s
+
+Demo complete. The service stays running.
+
+Resume: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/05-request-continuity/run.sh --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a2
+Cleanup: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/demos/05-request-continuity/run.sh cleanup --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a2

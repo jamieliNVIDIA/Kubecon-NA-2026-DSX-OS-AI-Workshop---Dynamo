@@ -1,0 +1,214 @@
+2026-11-04T22:14:28.587838+00:00 Waiting for prior reservation: {"agent": "workshop-demo-continuity", "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a1", "acquired_at": "2026-11-04T21:50:27.611125+00:00"}
+2026-11-04T22:19:18.715023+00:00 Waiting for prior reservation: {"agent": "workshop-demo-continuity", "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a2", "acquired_at": "2026-11-04T22:19:08.941003+00:00", "previous_run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-continuity-live-20261104-a1"}
+{
+  "observed_at": "2026-11-04T22:45:21.809115+00:00",
+  "node": "kubecon-nke-site-cp-0124",
+  "baseline": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1",
+  "driver_pod_uid": "b06a31cd-cb81-45cb-ac4f-1615cbcae39c",
+  "changed_conditions": [],
+  "outputs": {
+    "nvidia-smi": {
+      "file": "snapshot-gpu-health-1793832317984506000-nvidia-smi.log",
+      "exit_code": 0
+    },
+    "kernel": {
+      "file": "snapshot-gpu-health-1793832317984506000-kernel.log",
+      "exit_code": 0
+    },
+    "kernel-xids": {
+      "file": "snapshot-gpu-health-1793832317984506000-kernel-xids.log",
+      "exit_code": 0
+    }
+  },
+  "scope": "Read-only node conditions, nvidia-smi and kernel logs; no GPU reset"
+}
+2026-11-04T22:45:21.829200+00:00 Exclusive local and remote GPU reservations acquired; preflight passed
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py deploy --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1
+{
+  "snapshot-dgd-admission": {
+    "status": "passed",
+    "updated_at": "2026-11-04T22:45:25.778745+00:00",
+    "scope": "Admission only; no GPU allocation or DGD created"
+  }
+}
+{
+  "snapshot-dgd-deployment": {
+    "status": "submitted",
+    "updated_at": "2026-11-04T22:45:30.860821+00:00",
+    "uid": "4236c7c2-8d88-492d-8382-3aacf9270743"
+  }
+}
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py verify --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1 --timeout 3600
+{
+  "snapshot-dgd-verify": {
+    "status": "failed",
+    "updated_at": "2026-11-04T22:56:02.875506+00:00",
+    "error": "Capture engine exited unsuccessfully: {\"pod\": \"checkpoint-d58e76bdfe4e44f56b04214554bb34f2-5xdg7\", \"uid\": \"89fe57a4-f59a-49f0-845e-d0041b336da4\", \"termination\": {\"containerID\": \"containerd://d6973099c4d2dc5d5b59fc7633d894e1f274bd902d420d003f531e005543a742\", \"exitCode\": 137, \"finishedAt\": \"2026-11-04T22:55:47Z\", \"reason\": \"Error\", \"startedAt\": \"2026-11-04T22:45:38Z\"}}"
+  }
+}
+Traceback (most recent call last):
+  File "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py", line 823, in <module>
+    main()
+  File "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py", line 808, in main
+    verify(run, spec, timeout=args.timeout)
+  File "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py", line 593, in verify
+    graph, snapshot, content = checkpoint_state(run, data)
+  File "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py", line 383, in checkpoint_state
+    raise RuntimeError('Capture engine exited unsuccessfully: ' + json.dumps({
+RuntimeError: Capture engine exited unsuccessfully: {"pod": "checkpoint-d58e76bdfe4e44f56b04214554bb34f2-5xdg7", "uid": "89fe57a4-f59a-49f0-845e-d0041b336da4", "termination": {"containerID": "containerd://d6973099c4d2dc5d5b59fc7633d894e1f274bd902d420d003f531e005543a742", "exitCode": 137, "finishedAt": "2026-11-04T22:55:47Z", "reason": "Error", "startedAt": "2026-11-04T22:45:38Z"}}
+Traceback (most recent call last):
+  File "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1/execute.py", line 148, in <module>
+    main()
+  File "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1/execute.py", line 129, in main
+    step('verify', 3600)
+  File "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1/execute.py", line 72, in step
+    raise RuntimeError(action + ' failed: ' + str(result.returncode))
+RuntimeError: verify failed: 1
+
+OBSERVATION RESUME: successful CRIU dump intentionally killed the source (exit 137); the passing v3 run shows the same behavior. Source, DGD, ConfigMap and artifact unchanged.
+
+{
+  "snapshot-dgd-observer-correction": {
+    "status": "passed",
+    "updated_at": "2026-11-04T22:58:54.223466+00:00",
+    "scope": "Removed incorrect source-exit guard; original observer failure retained, no workload/capture replay",
+    "evidence": "CRIU dump completed at 22:55:47 UTC, exactly matching source termination; v3 matched at 21:08:47 UTC",
+    "previous_observer_exit": "observer-attempt-01-exit.json"
+  }
+}
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py verify --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1 --timeout 2791
+{
+  "snapshot-dgd-source-helper": {
+    "status": "completed",
+    "updated_at": "2026-11-04T23:12:11.854280+00:00",
+    "pod_uid": "89fe57a4-f59a-49f0-845e-d0041b336da4",
+    "snapshot_uid": "eb5cea46-fb0e-4d36-8749-a60ebf12fd4e",
+    "scope": "Only CPU keepalive stopped after durable artifact Ready"
+  }
+}
+{
+  "snapshot-dgd-initial": {
+    "status": "passed",
+    "updated_at": "2026-11-04T23:18:22.256170+00:00",
+    "dgd_uid": "4236c7c2-8d88-492d-8382-3aacf9270743",
+    "worker_name": "ft-snapshot-vllmsnapshotworker-9b045732-57bbd4c9f4-s7stn",
+    "worker_uid": "71d1410a-dfda-4e40-a164-5a2cba85ea9a",
+    "frontend_uid": "42bf7daf-df65-4acb-b672-e0549783dcc3",
+    "service_uid": "381fac12-1c3a-4a97-bed2-32fc9f10305f",
+    "service_name": "ft-snapshot-frontend",
+    "checkpoint_name": "checkpoint-d58e76bdfe4e44f56b04214554bb34f2",
+    "checkpoint_uid": "eb5cea46-fb0e-4d36-8749-a60ebf12fd4e",
+    "content_uid": "a396aac2-1ce2-4a8d-8dc5-dbb2e7001c54",
+    "source_uid": "89fe57a4-f59a-49f0-845e-d0041b336da4",
+    "node": "kubecon-nke-site-cp-0124",
+    "gpu_uuids": [
+      "GPU-75461e0d-6588-94c9-2517-dca859f5c68b",
+      "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110"
+    ],
+    "pod_created_at": "2026-11-04T23:12:16Z",
+    "restored_at": "2026-11-04T23:17:38Z",
+    "ready_at": "2026-11-04T23:17:50Z",
+    "controller_lineage": [
+      {
+        "kind": "ReplicaSet",
+        "name": "ft-snapshot-vllmsnapshotworker-9b045732-57bbd4c9f4",
+        "uid": "5729c948-8bbe-418f-9b8a-c82b28d8ca6e"
+      },
+      {
+        "kind": "Deployment",
+        "name": "ft-snapshot-vllmsnapshotworker-9b045732",
+        "uid": "409595bc-e8ea-41a3-ae1c-5d6d1c04fda2"
+      },
+      {
+        "kind": "DynamoComponentDeployment",
+        "name": "ft-snapshot-vllmsnapshotworker-9b045732",
+        "uid": "04bd5864-d67b-4fc9-a656-26aecb138bff"
+      },
+      {
+        "kind": "DynamoGraphDeployment",
+        "name": "ft-snapshot",
+        "uid": "4236c7c2-8d88-492d-8382-3aacf9270743"
+      }
+    ],
+    "response_worker": {
+      "prefill_worker_id": 7964319560988462,
+      "decode_worker_id": 7964319560988462
+    },
+    "first_success_at": "2026-11-04T23:18:08.959720+00:00"
+  }
+}
+
+Initial frontend coding response:
+def add(a, b):
+    return a + b
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py replace --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1 --timeout 1800
+{
+  "snapshot-dgd-replacement": {
+    "status": "passed",
+    "updated_at": "2026-11-04T23:24:32.680481+00:00",
+    "dgd_uid": "4236c7c2-8d88-492d-8382-3aacf9270743",
+    "worker_name": "ft-snapshot-vllmsnapshotworker-9b045732-57bbd4c9f4-5w54l",
+    "worker_uid": "6e3d0d2d-2068-473c-94ce-45fc481cfdd3",
+    "frontend_uid": "42bf7daf-df65-4acb-b672-e0549783dcc3",
+    "service_uid": "381fac12-1c3a-4a97-bed2-32fc9f10305f",
+    "service_name": "ft-snapshot-frontend",
+    "checkpoint_name": "checkpoint-d58e76bdfe4e44f56b04214554bb34f2",
+    "checkpoint_uid": "eb5cea46-fb0e-4d36-8749-a60ebf12fd4e",
+    "content_uid": "a396aac2-1ce2-4a8d-8dc5-dbb2e7001c54",
+    "source_uid": "89fe57a4-f59a-49f0-845e-d0041b336da4",
+    "node": "kubecon-nke-site-cp-0124",
+    "gpu_uuids": [
+      "GPU-75461e0d-6588-94c9-2517-dca859f5c68b",
+      "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110"
+    ],
+    "pod_created_at": "2026-11-04T23:18:24Z",
+    "restored_at": "2026-11-04T23:23:54Z",
+    "ready_at": "2026-11-04T23:24:06Z",
+    "controller_lineage": [
+      {
+        "kind": "ReplicaSet",
+        "name": "ft-snapshot-vllmsnapshotworker-9b045732-57bbd4c9f4",
+        "uid": "5729c948-8bbe-418f-9b8a-c82b28d8ca6e"
+      },
+      {
+        "kind": "Deployment",
+        "name": "ft-snapshot-vllmsnapshotworker-9b045732",
+        "uid": "409595bc-e8ea-41a3-ae1c-5d6d1c04fda2"
+      },
+      {
+        "kind": "DynamoComponentDeployment",
+        "name": "ft-snapshot-vllmsnapshotworker-9b045732",
+        "uid": "04bd5864-d67b-4fc9-a656-26aecb138bff"
+      },
+      {
+        "kind": "DynamoGraphDeployment",
+        "name": "ft-snapshot",
+        "uid": "4236c7c2-8d88-492d-8382-3aacf9270743"
+      }
+    ],
+    "response_worker": {
+      "prefill_worker_id": 6784954611980798,
+      "decode_worker_id": 6784954611980798
+    },
+    "first_success_at": "2026-11-04T23:24:24.923455+00:00"
+  }
+}
+
+Replacement frontend coding response:
+def add(a, b):
+    return a + b
+
+$ /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/.local/venv/bin/python -B /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/scripts/workshop_snapshot_dgd.py cleanup --run /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-snapshot-dgd-upstream-20261104-a1
+{
+  "snapshot-dgd-cleanup": {
+    "status": "passed",
+    "updated_at": "2026-11-04T23:24:46.539269+00:00",
+    "scope": "Owned workloads/claims gone; snapshots, artifacts, storage and caller lease retained"
+  }
+}
+Owned remote GPU reservation released
+2026-11-04T23:24:48.846446+00:00 Upstream-controller Snapshot qualification passed; owned workloads cleaned

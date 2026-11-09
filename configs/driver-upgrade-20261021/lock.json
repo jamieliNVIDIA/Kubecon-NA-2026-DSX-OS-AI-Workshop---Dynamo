@@ -1,0 +1,54 @@
+{
+  "target_driver": "610.57.04",
+  "run": "results/20261021-driver-upgrade",
+  "releases": {
+    "gpu-operator": {
+      "revision": "2",
+      "chart_name": "gpu-operator-v26.7.0",
+      "chart_path": "results/20261021-driver-upgrade/gpu-operator-v26.7.0.tgz",
+      "chart_sha256": "6d1b282d74288be206c66dfe49073b7c85c209e92826c27f6507429055e2e102",
+      "values_path": "configs/driver-upgrade-20261021/gpu-operator-values.yaml",
+      "values_sha256": "219066cfdf75742cedf002aee3b2baf79e642cf1311a21f04ba84420e3bd3a15",
+      "before_values_hash": "ce6f503e2ebefe39983bf9f826dcd3df9e9d009725a5bc9541b05fe1f51e9d4f"
+    },
+    "nvidia-dra-driver-gpu": {
+      "revision": "2",
+      "chart_name": "dra-driver-nvidia-gpu-0.5.0",
+      "chart_path": "results/20261021-driver-upgrade/dra-driver-nvidia-gpu-0.5.0.tgz",
+      "chart_sha256": "c7ca3dc31a6fa8b85c6fd5ee40948cf8d9162e32f20db9fc085113b4035e8b35",
+      "values_path": "configs/driver-upgrade-20261021/nvidia-dra-driver-gpu-values.yaml",
+      "values_sha256": "5be7d0a8d8c397ed87192144120ef31e454f1058ec2d225ca8274920e825a7b9",
+      "before_values_hash": "e1c1c8cc048066c1885637dfb8b9913633dbafb074c9e11daa725c67d0536063"
+    }
+  },
+  "status": "server-dry-run-passed",
+  "nodes": {
+    "kubecon-nke-site-cp-0124": {
+      "uid": "2330d33d-c3b6-40a9-ba05-747e86fc8073",
+      "unschedulable": false,
+      "labels": {
+        "nvidia.com/gpu-driver-upgrade.skip": null,
+        "k8saas.nvidia.com/ManagedByNVSentinel": null,
+        "nvidia.com/gpu.deploy.client": "true"
+      }
+    },
+    "kubecon-nke-site-cp-0198": {
+      "uid": "a6f1143e-d980-461f-b67a-37decd35097e",
+      "unschedulable": false,
+      "labels": {
+        "nvidia.com/gpu-driver-upgrade.skip": null,
+        "k8saas.nvidia.com/ManagedByNVSentinel": null,
+        "nvidia.com/gpu.deploy.client": "true"
+      }
+    },
+    "kubecon-nke-site-cp-0942": {
+      "uid": "ad1218e2-7055-4938-a27b-f3d45b52f8cb",
+      "unschedulable": false,
+      "labels": {
+        "nvidia.com/gpu-driver-upgrade.skip": null,
+        "k8saas.nvidia.com/ManagedByNVSentinel": null,
+        "nvidia.com/gpu.deploy.client": "true"
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "scope": "Offline projection refinement after completed live qualification; no live retest or frozen-artifact mutation",
+  "live_recording_unchanged": true,
+  "frozen_live_presenter_source_unchanged": true,
+  "current_presenter_sha256": "f31635650de7ed239a7779db70a77713ff5f2fa2850e6323124cd108d2a578c6",
+  "live_transcript_sha256": "51b580663e2a81bd077b6433dec70cc5a7be723a824b42583750173da7cfcae6",
+  "preview_capture_status": "rehearsal_passed",
+  "preview_transcript_sha256": "8686ba090442513e9ac0360b0fb253c5cbd0de8728e0819691befd00b6ac2d1c",
+  "yaml_excerpt_lines_before": 32,
+  "yaml_excerpt_lines_after": 21,
+  "tests": {
+    "snapshot_presenter_passed": 17,
+    "capture_passed": 16
+  },
+  "full_private_evidence": "storage-validation.log plus existing command/check receipts and recovery-proof.json",
+  "root_closeout": "results/workshop-snapshot-a3-root-audit-20261105-a2/audit.json",
+  "local_mirror_release": "results/workshop-snapshot-a3-root-audit-20261105-a2/local-lease-release.json"
+}

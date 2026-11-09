@@ -1,0 +1,28 @@
+{
+  "dataset": "semianalysisai/cc-traces-weka-062126",
+  "revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+  "source_url": "https://huggingface.co/datasets/semianalysisai/cc-traces-weka-062126/resolve/23f152f6f0f9399a85901b89a6458def0ef16729/traces.jsonl",
+  "path": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/20261030-agentx-workload-prep-000329/corpus/traces.jsonl",
+  "bytes": 1847151435,
+  "sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+  "counts": {
+    "traces": 393,
+    "main_requests": 56798,
+    "subagent_groups": 1697,
+    "child_requests": 42029
+  },
+  "max_recorded_input_tokens": 989824,
+  "max_recorded_output_tokens": 59903,
+  "max_recorded_input_plus_output_tokens": 996579,
+  "total_recorded_input_tokens": 21635381376,
+  "total_recorded_output_tokens": 106474498,
+  "eligible_full_trajectories_by_context_limit": {
+    "8192": 0,
+    "32768": 0,
+    "131072": 82,
+    "262144": 220,
+    "1048576": 393
+  },
+  "trace_ids_sha256": "948ce1f55397f54a7157dca3dc8b8ed7793669a654de23013a4a030037f630c6",
+  "note": "Recorded proxy-tokenizer lengths, before reconstruction with the served model tokenizer."
+}

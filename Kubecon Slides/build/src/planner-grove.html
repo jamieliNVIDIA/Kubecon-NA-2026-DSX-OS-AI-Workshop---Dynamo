@@ -1,0 +1,1972 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planner × Grove</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout concept: fixed 16:9 stage (1600×900) scaled to the screen; every concept is a diagram with short, large labels. Narrow phones fall back to scrolling slides. */
+:root{
+  --bg:#eef2f1; --frame:#dfe6e4; --surface:#FFFFFF; --surface-2:#f1f4f3; --ink:#12191c; --muted:#56636a; --line:rgba(16,24,28,.13);
+  --planner:#c27400; --planner-ink:#b86e00; --planner-soft:#fcf1de; --grove:#4a7a00; --grove-fill:#5e9a00; --grove-soft:#eef5e1;
+  --prefill:#4a74e8; --decode:#8a5cf0; --warn:#e0353b; --warn-soft:#fde6e6; --ok:#4a7a00; --on-color:#FFFFFF;
+  --code-bg:#eef3e6; --code-ink:#3d6600; --chip:#f3f6f5;
+  --shadow:0 1px 2px rgba(16,24,28,.06),0 8px 24px rgba(16,24,28,.08);
+  --stage-bg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.12),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.10),transparent 45%),linear-gradient(180deg,#f9fbfa,#eef2f1);
+  --hero-bg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.18),transparent 50%),radial-gradient(ellipse at 65% 75%,rgba(62,199,224,.16),transparent 50%),linear-gradient(180deg,#f9fbfa,#eef2f1);
+  --btn-bg:rgba(255,255,255,.88); --btn-line:rgba(16,24,28,.18);
+  --display:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif;
+  --body:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif;
+  --mono:JetBrains Mono,ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#07090a; --frame:#040506; --surface:#11171a; --surface-2:#172025; --ink:#e8eef0; --muted:#8f9ca3; --line:rgba(255,255,255,.12);
+    --planner:#f5a623; --planner-ink:#f5a623; --planner-soft:#2b200c; --grove:#76b900; --grove-fill:#76b900; --grove-soft:#16220a;
+    --prefill:#7aa2ff; --decode:#b48cff; --warn:#ff5a5f; --warn-soft:#361719; --ok:#76b900; --on-color:#07090a;
+    --code-bg:rgba(118,185,0,.12); --code-ink:#d9f2a8; --chip:#121a1e;
+    --shadow:0 2px 4px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.22);
+    --stage-bg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.10),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.08),transparent 45%),linear-gradient(180deg,#080b0c,#06080a);
+    --hero-bg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.14),transparent 50%),radial-gradient(ellipse at 65% 75%,rgba(62,199,224,.12),transparent 50%),linear-gradient(180deg,#080b0c,#06080a);
+    --btn-bg:rgba(20,28,32,.75); --btn-line:rgba(255,255,255,.16); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#07090a; --frame:#040506; --surface:#11171a; --surface-2:#172025; --ink:#e8eef0; --muted:#8f9ca3; --line:rgba(255,255,255,.12);
+  --planner:#f5a623; --planner-ink:#f5a623; --planner-soft:#2b200c; --grove:#76b900; --grove-fill:#76b900; --grove-soft:#16220a;
+  --prefill:#7aa2ff; --decode:#b48cff; --warn:#ff5a5f; --warn-soft:#361719; --ok:#76b900; --on-color:#07090a;
+  --code-bg:rgba(118,185,0,.12); --code-ink:#d9f2a8; --chip:#121a1e;
+  --shadow:0 2px 4px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.22);
+  --stage-bg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.10),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.08),transparent 45%),linear-gradient(180deg,#080b0c,#06080a);
+  --hero-bg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.14),transparent 50%),radial-gradient(ellipse at 65% 75%,rgba(62,199,224,.12),transparent 50%),linear-gradient(180deg,#080b0c,#06080a);
+  --btn-bg:rgba(20,28,32,.75); --btn-line:rgba(255,255,255,.16); color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--frame);color:var(--ink);font-family:var(--body);font-size:22px;line-height:1.4;overflow:hidden}
+*{box-sizing:border-box}
+a{color:var(--grove)}
+code,.mono{font-family:var(--mono);font-size:.88em}
+
+/* ---------- Stage ---------- */
+.viewport{position:fixed;inset:0;overflow:hidden;background:var(--frame)}
+.stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;background:var(--bg);transform-origin:center center;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;padding:52px 80px 60px}
+.slide.active{display:flex;animation:fade .3s ease}
+@keyframes fade{from{opacity:.35}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.slide.active{animation:none}}
+.inner{width:100%;display:flex;flex-direction:column;gap:28px;transform-origin:top center}
+.slide.center .inner{margin-block:auto}
+.foot{position:absolute;left:80px;right:80px;bottom:20px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:14px;color:var(--muted);letter-spacing:.06em;pointer-events:none}
+.prog{position:absolute;left:0;top:0;height:5px;background:var(--planner);transition:width .3s;z-index:3}
+
+.eyebrow{font-family:var(--mono);font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:12px;align-items:center}
+.eyebrow .tag{padding:3px 10px;border-radius:3px;font-weight:500}
+.tag.p{background:var(--planner-soft);color:var(--planner)}
+.tag.g{background:var(--grove-soft);color:var(--grove)}
+.tag.b{background:var(--surface-2);color:var(--ink)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:128px;line-height:.95;font-weight:700}
+h2{font-size:52px;line-height:1.08;font-weight:600}
+h3{font-size:28px;font-weight:600}
+p{margin:0}
+.lede{font-size:28px;color:var(--muted);max-width:56ch}
+.cap{font-size:24px;color:var(--muted);text-align:center}
+.cap b{color:var(--ink)}
+.pl{color:var(--planner)} .gr{color:var(--grove)}
+.kbd{font-family:var(--mono);font-size:16px;border:1px solid var(--line);border-radius:3px;padding:1px 8px;background:var(--surface)}
+
+/* Diagrams */
+svg.dg{width:100%;height:auto;display:block;overflow:visible}
+.dg text{fill:var(--ink);font-family:var(--body);font-size:22px}
+.dg .xl{font-family:var(--display);font-size:44px;font-weight:700}
+.dg .lg{font-family:var(--display);font-size:30px;font-weight:600}
+.dg .md{font-size:24px}
+.dg .sm{font-size:20px;fill:var(--muted)}
+.dg .mo{font-family:var(--mono);font-size:21px}
+.dg .b{font-weight:600}
+.dg .mut{fill:var(--muted)} .dg .fp{fill:var(--planner)} .dg .fg{fill:var(--grove)} .dg .fpre{fill:var(--prefill)} .dg .fdec{fill:var(--decode)} .dg .fw{fill:var(--warn)} .dg .fon{fill:var(--on-color)}
+.dg .box{fill:var(--surface);stroke:var(--line);stroke-width:2}
+.dg .pbox{fill:var(--planner-soft);stroke:var(--planner);stroke-width:3}
+.dg .gbox{fill:var(--grove-soft);stroke:var(--grove);stroke-width:3}
+.dg .sbox{fill:var(--surface-2);stroke:none}
+.dg .gf{fill:var(--surface);stroke:var(--line);stroke-width:2}
+.dg .ln{stroke:var(--muted);stroke-width:3;fill:none}
+.dg .lnp{stroke:var(--planner);stroke-width:3.5;fill:none}
+.dg .lng{stroke:var(--grove);stroke-width:3.5;fill:none}
+.dg .lnd{stroke:var(--decode);stroke-width:3;fill:none}
+.dg .lnw{stroke:var(--warn);stroke-width:5;fill:none;stroke-linecap:round}
+.dg .dash{stroke-dasharray:8 7}
+.dg .grid{stroke:var(--line);stroke-width:1.5}
+.dg .bpre{fill:var(--prefill)} .dg .bdec{fill:var(--decode)}
+.ah{fill:var(--muted)} .ahp{fill:var(--planner)} .ahg{fill:var(--grove)}
+
+/* Tiles */
+.tiles{display:grid;gap:20px}
+.tiles.c3{grid-template-columns:repeat(3,1fr)}
+.tiles.c2{grid-template-columns:repeat(2,1fr)}
+.tiles>*{min-width:0}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px 24px;display:flex;flex-direction:column;gap:8px}
+.tile .val{font-family:var(--display);font-size:52px;font-weight:700;line-height:1;color:var(--planner)}
+.tile .key{font-family:var(--mono);font-size:16px;color:var(--muted);overflow-wrap:anywhere}
+.tile .what{font-size:22px}
+.tile.g{border-top:5px solid var(--grove)}
+.tile p{font-size:21px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:center}
+.chip{font-family:var(--mono);font-size:20px;padding:8px 16px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.chip.p{background:var(--planner-soft);border-color:var(--planner);color:var(--planner)}
+.chips .arr{color:var(--muted);font-size:22px}
+.chips .lbl{font-size:20px;color:var(--muted)}
+
+/* Title */
+.title-mark{display:flex;gap:22px;align-items:baseline}
+.title-mark .x{font-family:var(--mono);font-size:64px;color:var(--muted)}
+.title-meta{display:flex;gap:36px;font-family:var(--mono);font-size:18px;color:var(--muted);border-top:1px solid var(--line);padding-top:20px}
+
+/* ---------- Demo ---------- */
+.slide.demo-slide{padding:36px 52px 50px}
+.demo{gap:14px;height:100%}
+.demo-head{display:flex;justify-content:space-between;align-items:end;gap:24px}
+.demo-head h2{font-size:38px}
+.demo-grid{display:grid;grid-template-columns:310px 1fr 580px;gap:16px;flex:1;min-height:0}
+.demo-grid>*{min-width:0;min-height:0}
+.col{display:flex;flex-direction:column;gap:12px;min-height:0}
+.ctrls{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+.btnrow{display:flex;gap:8px}
+.ctrl{display:flex;flex-direction:column;gap:3px;color:var(--muted)}
+.ctrl label{font-family:var(--mono);font-size:13.5px;letter-spacing:.04em;text-transform:uppercase;display:flex;justify-content:space-between;gap:6px}
+.ctrl output{font-family:var(--mono);color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600}
+.ctrl input[type=range]{width:100%;accent-color:var(--planner);margin:0}
+.ctrl select{font:inherit;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:4px 6px;width:100%}
+.chk{display:flex;gap:8px;align-items:center;font-size:16px;color:var(--ink)}
+.chk input{accent-color:var(--planner);margin:0}
+.btn{font:inherit;font-size:16px;font-weight:600;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:5px;padding:7px 10px;cursor:pointer;flex:1}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--planner);border-color:var(--planner);color:var(--on-color)}
+.btn:focus-visible,.navbtn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--planner);outline-offset:2px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 12px;min-width:0}
+.kpi .l{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font-family:var(--display);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.2}
+.kpi .v small{font-family:var(--body);font-size:15px;color:var(--muted);font-weight:400}
+.kpi.bad .v{color:var(--warn)} .kpi.good .v{color:var(--ok)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 14px;display:flex;flex-direction:column;gap:5px;min-width:0;min-height:0}
+.panel.grow{flex:1}
+.panel h4{margin:0;font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;display:flex;justify-content:space-between;gap:8px}
+.chart{width:100%;height:94px;display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.legend i{display:inline-block;width:16px;height:4px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.racks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rack{border:1px dashed var(--line);border-radius:6px;padding:7px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.rack .rl{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.nodes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.node{background:var(--surface-2);border-radius:4px;padding:5px;display:flex;flex-direction:column;gap:4px}
+.node .nl{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.gpus{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.gpu{height:15px;border-radius:2px;background:var(--surface);border:1px solid var(--line)}
+.gpu.prefill{background:var(--prefill);border-color:var(--prefill)}
+.gpu.decode{background:var(--decode);border-color:var(--decode)}
+.gpu.starting{background-image:repeating-linear-gradient(45deg,transparent 0 3px,var(--surface) 3px 5px)}
+.gpu.waiting{background:var(--surface);border-width:2px}
+.gpu.waiting.decode{border-color:var(--decode)} .gpu.waiting.prefill{border-color:var(--prefill)}
+.res{font-family:var(--mono);font-size:14.5px;line-height:1.55;white-space:pre;overflow:hidden}
+.res .g{color:var(--grove)} .res .m{color:var(--muted)} .res .w{color:var(--warn)} .res .p{color:var(--planner)}
+.gangs{display:flex;flex-wrap:wrap;gap:5px}
+.gang{font-family:var(--mono);font-size:12.5px;padding:1px 7px;border-radius:3px;border:1px solid var(--line)}
+.gang.pending{border-color:var(--warn);color:var(--warn)}
+.gang.starting{color:var(--planner);border-color:var(--planner)}
+.gang.ready{color:var(--grove);border-color:var(--grove)}
+.log{font-family:var(--mono);font-size:13.5px;line-height:1.5;overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column}
+.log div{display:grid;grid-template-columns:60px 78px 1fr;gap:8px;padding:2px 0;border-bottom:1px solid var(--surface-2)}
+.log div>*{min-width:0}
+.log .ts{color:var(--muted)} .log .src{font-weight:600}
+.src.planner{color:var(--planner)} .src.grove{color:var(--grove)} .src.kai{color:var(--prefill)} .src.pod{color:var(--muted)} .src.operator{color:var(--ink)}
+.hint{font-size:15.5px;color:var(--muted);line-height:1.45}
+
+/* ---------- Calculator + comparison slides ---------- */
+.calc{display:grid;grid-template-columns:290px 1fr;gap:26px;align-items:start}
+.calc>*{min-width:0}
+.ctrls.big{gap:14px;padding:18px}
+.ctrls.big .ctrl label{font-size:15px}
+.ctrls.big .ctrl output{font-size:18px}
+.ctrls.big .hint{font-size:15px}
+.dg .zone-ok{fill:var(--grove-soft)} .dg .zone-hold{fill:var(--surface-2)} .dg .zone-bad{fill:var(--warn-soft)}
+.vsbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.vsbar select{font:inherit;font-size:19px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
+.vsbar .btn{flex:0 0 auto;font-size:19px;padding:8px 18px}
+.vsbar .ev{font-size:23px;font-weight:600;margin-left:8px}
+.vsbar .stepn{font-family:var(--mono);font-size:16px;color:var(--muted)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.vs>*{min-width:0}
+.vpanel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.vpanel.g{border-top:5px solid var(--grove)} .vpanel.k{border-top:5px solid var(--muted)}
+.vpanel h3{font-size:25px}
+.vpanel .msg{font-size:21px;min-height:58px}
+.pend{display:flex;gap:8px;flex-wrap:wrap;min-height:30px}
+.pchip{font-family:var(--mono);font-size:16px;border:1.5px dashed var(--warn);color:var(--warn);padding:2px 10px;border-radius:4px}
+.status{font-size:23px;font-weight:600;padding:8px 14px;border-radius:6px}
+.status.ok{background:var(--grove-soft);color:var(--grove)}
+.status.bad{background:var(--warn-soft);color:var(--warn)}
+.status.wait{background:var(--surface-2);color:var(--ink)}
+body.flow .calc,body.flow .vs{grid-template-columns:1fr}
+body.flow .vsbar .ev{font-size:17px}
+
+.stp{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 9px}
+.stp-l{font-size:17px;color:var(--muted);margin-right:4px}
+.stp button{font:inherit;font-size:20px;line-height:1;width:34px;height:34px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
+.stp button:focus-visible{outline:2px solid var(--planner);outline-offset:2px}
+.stp output{font-family:var(--mono);font-size:20px;min-width:26px;text-align:center;font-weight:600}
+.vsbar .ctrl label{font-size:14px}
+.qrow{display:flex;gap:6px;flex-wrap:wrap;min-height:30px}
+.q{font-family:var(--mono);font-size:15px;padding:3px 9px;border-radius:4px;border:1.5px solid var(--line);background:var(--surface-2)}
+.q.ok{background:var(--grove-soft);border-color:var(--grove);color:var(--grove)}
+.q.no{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.q.cur{outline:3px solid var(--planner);outline-offset:1px}
+.tiles.c4{grid-template-columns:repeat(4,1fr)}
+.rulecard{gap:10px;padding:18px 20px}
+.rulecard h3{font-size:26px}
+.rulecard p{font-size:19px}
+.stepno{font-family:var(--mono);font-size:15px;color:var(--planner);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.rule{font-family:var(--mono);font-size:17px;line-height:1.55;background:var(--surface-2);border-radius:6px;padding:10px 12px}
+.rule .fw{color:var(--warn);font-weight:600} .rule .fg{color:var(--grove);font-weight:600}
+.howto{display:flex;gap:26px;flex-wrap:wrap;font-size:19px;color:var(--muted);align-items:center}
+.howto b{color:var(--ink)}
+.sw{display:inline-block;width:30px;height:0;border-top:4px dashed var(--planner);vertical-align:middle;margin-right:8px}
+.sw.t{border-top:4px solid var(--prefill)}
+body.flow .tiles.c4{grid-template-columns:1fr}
+.tmx{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tmx-h,.tmx-r{display:grid;grid-template-columns:270px 1fr 1fr 280px;gap:0}
+.tmx-h>span,.tmx-r>span{padding:12px 18px;min-width:0}
+.tmx-h{background:var(--surface-2);font-family:var(--mono);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tmx-r{border-top:1px solid var(--line);font-size:22px;align-items:center}
+.tmx-r small{display:block;font-size:16px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.tmx-r .tn code{font-size:24px;font-weight:600}
+.tmx-r .tn em{display:block;font-style:normal;font-size:15px;font-family:var(--mono);color:var(--muted)}
+.tmx-r .tn em.pl{color:var(--planner);font-weight:600}
+.tmx-r .ok{color:var(--grove);margin-right:6px}
+.tmx-r .off{color:var(--muted);font-size:26px}
+.tmx-r.hl{background:var(--planner-soft)}
+.tmx-foot{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tmx-foot>*{min-width:0}
+body.flow .tmx-h{display:none} body.flow .tmx-r,body.flow .tmx-foot{grid-template-columns:1fr}
+.scope{align-self:flex-start;font-family:var(--mono);font-size:14px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--grove-soft);color:var(--grove)}
+.scope.p{background:var(--planner-soft);color:var(--planner)}
+.tiles .tile .val{font-size:46px}
+.cmp{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cmp-h,.cmp-r{display:grid;grid-template-columns:1fr 190px 190px}
+.cmp-h>span,.cmp-r>span{padding:8px 18px;min-width:0}
+.cmp-h{background:var(--surface-2);font-family:var(--mono);font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.cmp-h>span:nth-child(n+2),.cmp-r>span:nth-child(n+2){text-align:center}
+.cmp-r{border-top:1px solid var(--line);font-size:21px;align-items:center}
+.cmp-r .y{color:var(--grove);font-size:26px;font-weight:700}
+.cmp-r .n{color:var(--warn);font-size:26px;font-weight:700}
+.cmp-r .p{color:var(--muted);font-size:17px;font-family:var(--mono)}
+.fpre-t{color:var(--prefill)} .fdec-t{color:var(--decode)}
+.story-cap{font-size:27px;font-weight:600;font-family:var(--display);min-height:36px}
+body.flow .cmp-h,body.flow .cmp-r{grid-template-columns:1fr 70px 70px}
+.notes{display:none}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,92vw);background:var(--surface);border-left:1px solid var(--line);z-index:12;overflow-y:auto;
+  padding:22px max(22px,env(safe-area-inset-right,0px)) 90px 24px;transform:translateX(105%);transition:transform .25s ease;font-size:16px;line-height:1.6;color:var(--ink)}
+body.notes-open .drawer{transform:none}
+body.notes-open .viewport{right:min(520px,92vw)}
+.drawer .dh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.drawer .dh span{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.drawer h2{font-size:24px;margin:0 0 12px}
+.drawer p{margin:0 0 10px}
+.drawer ul,.drawer ol{margin:0 0 12px;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.drawer code{font-size:.86em;background:var(--surface-2);padding:1px 4px;border-radius:3px;overflow-wrap:anywhere}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+/* ---------- Presenter controls ---------- */
+.hud{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:6px;
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px;z-index:10;transition:opacity .4s;box-shadow:0 4px 18px rgba(0,0,0,.12)}
+.hud.idle{opacity:0;pointer-events:none}
+.navbtn{font:inherit;font-size:15px;background:transparent;border:none;color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer}
+.navbtn:hover{background:var(--surface-2)}
+.navbtn:disabled{opacity:.35;cursor:default;background:transparent}
+.hud .count{font-family:var(--mono);font-size:13px;color:var(--muted);min-width:56px;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:15px;padding:9px 16px;border-radius:6px;z-index:11;max-width:calc(100% - 32px)}
+
+/* ---------- Flow mode (phones) ---------- */
+body.flow .stage{position:absolute;inset:0;left:0;top:0;width:auto;height:auto;transform:none!important}
+body.flow .slide{overflow-y:auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 96px max(16px,env(safe-area-inset-left,0px))}
+body.flow .inner{transform:none!important;gap:18px}
+body.flow .foot{display:none}
+body.flow{font-size:16px}
+body.flow h1{font-size:56px} body.flow h2{font-size:28px} body.flow h3{font-size:20px} body.flow .lede{font-size:18px} body.flow .cap{font-size:16px}
+body.flow .title-mark .x{font-size:32px} body.flow .title-meta{flex-wrap:wrap;gap:12px;font-size:14px}
+body.flow .tiles.c3,body.flow .tiles.c2,body.flow .demo-grid{grid-template-columns:1fr}
+body.flow .tile .val{font-size:36px} body.flow .tile .what,body.flow .tile p{font-size:16px}
+body.flow .chip{font-size:14px}
+body.flow .demo{height:auto} body.flow .log{max-height:240px} body.flow .chart{height:118px}
+body.flow .demo-head{flex-direction:column;align-items:start}
+body.flow .hud .fs{display:none}
+
+/* ===== Unified Dynamo look (mx-snapshot palette + Inter), layered over the Planner × Grove deck ===== */
+.stage{background:var(--stage-bg)}
+.stage:has(.slide:first-of-type.active){background:var(--hero-bg)}
+h1{font-weight:800;letter-spacing:-.035em}
+h2{font-weight:700;letter-spacing:-.025em}
+h3{font-weight:700;letter-spacing:-.01em}
+.eyebrow{color:var(--grove);letter-spacing:.14em}
+.eyebrow .tag,.tag{border-radius:999px;padding:3px 12px;border:1px solid var(--line);font-weight:500}
+.tag.p{border-color:color-mix(in srgb,var(--planner) 45%,transparent);color:var(--planner-ink)}
+.tag.g{border-color:color-mix(in srgb,var(--grove-fill) 45%,transparent)}
+.tag.b{background:var(--chip);color:var(--muted)}
+.pl{color:var(--planner)}
+.lede .pl,.cap .pl,p .pl,.tile .pl,.tmx-r em.pl,.dg .sm.fp,.dg .md.fp,.dg .mo.fp,.res .p,.src.planner,.stepno,.gang.starting{color:var(--planner-ink);fill:var(--planner-ink)}
+.lede{color:var(--muted)}
+code{background:var(--code-bg);color:var(--code-ink);border-radius:6px;padding:0 .28em}
+.kbd{border-radius:6px;border-color:var(--btn-line);background:var(--surface)}
+/* cards */
+.tile,.ctrls,.kpi,.panel,.vpanel,.tmx,.cmp,.stp{border-color:var(--line);box-shadow:var(--shadow);border-radius:14px}
+.tile,.vpanel,.tmx,.cmp{border-radius:16px}
+.tile.g,.vpanel.g{border-top:5px solid var(--grove-fill)}
+.vpanel.k{border-top:5px solid var(--muted)}
+.tile .val{color:var(--planner);font-variant-numeric:tabular-nums}
+.kpi .v{font-family:var(--body);font-weight:700;letter-spacing:-.01em}
+.rule{border-radius:10px;background:var(--surface-2)}
+.chip{background:var(--surface);border-color:var(--line);box-shadow:0 1px 2px rgba(16,24,28,.05)}
+.chip.p{background:var(--planner-soft);border-color:color-mix(in srgb,var(--planner) 55%,transparent);color:var(--planner-ink)}
+.scope{border:1px solid color-mix(in srgb,var(--grove-fill) 40%,transparent)}
+.scope.p{border-color:color-mix(in srgb,var(--planner) 45%,transparent);color:var(--planner-ink)}
+.q,.pchip,.gang{border-radius:999px}
+.status{border-radius:10px}
+.tmx-r.hl{background:color-mix(in srgb,var(--planner-soft) 80%,transparent)}
+/* controls */
+.btn{border-radius:10px;border:1px solid var(--btn-line);background:var(--surface);color:var(--ink)}
+.btn:hover{border-color:var(--grove-fill)}
+.btn.primary{background:#5e9a00;border-color:#5e9a00;color:#fff}
+.btn.primary:hover{background:#4a7a00;border-color:#4a7a00}
+.btn:disabled{opacity:.45;cursor:default}
+.ctrl select,.vsbar select{border-radius:8px;background:var(--surface);border-color:var(--btn-line)}
+.ctrl input[type=range],.chk input{accent-color:var(--grove-fill)}
+.stp button{border-radius:8px;background:var(--surface);border-color:var(--btn-line)}
+.stp button:hover{border-color:var(--grove-fill)}
+.btn:focus-visible,.navbtn:focus-visible,select:focus-visible,input:focus-visible,.stp button:focus-visible{outline:2px solid var(--grove-fill)}
+/* chrome */
+.prog{top:auto;bottom:0;height:3px;background:linear-gradient(90deg,#76b900,#3ec7e0)}
+.foot{left:28px;right:auto;bottom:18px;justify-content:flex-start;gap:28px;font-size:13px;letter-spacing:.04em;opacity:.8}
+#footcount{order:-1;font-size:14px;font-variant-numeric:tabular-nums}
+.hud{background:transparent;border:none;box-shadow:none;padding:0;gap:8px;opacity:.45;transition:opacity .2s}
+.hud:hover,.hud:focus-within{opacity:1}
+.hud.idle{opacity:.45;pointer-events:auto}
+.hud .count{display:none}
+.navbtn{height:40px;min-width:40px;border-radius:10px;border:1px solid var(--btn-line);background:var(--btn-bg);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--muted);font-size:14px;padding:0 12px}
+.navbtn:hover{color:var(--ink);border-color:var(--grove-fill);background:var(--btn-bg)}
+.navbtn:disabled{background:var(--btn-bg)}
+.drawer{background:var(--surface);border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(16,24,28,.15)}
+.drawer .dh span{color:var(--grove)}
+.drawer h2{font-weight:700;letter-spacing:-.02em}
+.drawer b{color:var(--grove)}
+.toast{border-radius:10px}
+/* slide 11: the second decode instance is an SVG <use> clone; .dg-scoped rules don't reach into its shadow tree (it rendered as a black box) */
+.lnd{stroke:var(--decode);stroke-width:3;fill:none}
+.dash{stroke-dasharray:8 7}
+.sbox{fill:var(--surface-2);stroke:none}
+.bdec{fill:var(--decode)}
+svg text{fill:var(--ink);font-family:var(--body);font-size:22px}
+text.md{font-size:24px} text.sm{font-size:20px;fill:var(--muted)}
+</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="ahp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahp"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahg"/></marker>
+    <pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="12" height="12" style="fill:var(--surface-2)"/><line x1="0" y1="0" x2="0" y2="12" style="stroke:var(--line);stroke-width:6"/></pattern>
+  </defs>
+</svg>
+
+<div class="viewport" id="viewport">
+<div class="stage" id="stage">
+<div class="prog" id="prog"></div>
+
+<!-- 1 Title -->
+<section class="slide center" data-title="Title">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag b">NVIDIA Dynamo · Kubernetes</span><span>Docs baseline: Dynamo v1.5.1</span></div>
+    <div class="title-mark"><h1 class="pl">Planner</h1><span class="x">×</span><h1 class="gr">Grove</h1></div>
+    <p class="lede">Planner decides <b class="pl">how many</b> engines to run. Grove decides <b class="gr">what one engine instance is and where it lands</b>.</p>
+    <div class="title-meta"><span>Interactive: slides 7, 8, 9, 13, 15</span><span><span class="kbd">F</span> full screen</span><span><span class="kbd">←</span> <span class="kbd">→</span> navigate</span><span><span class="kbd">N</span> notes</span></div>
+  </div>
+  <aside class="notes"><p><b>What this deck covers.</b> Two pieces of NVIDIA Dynamo's Kubernetes stack and how they work together:</p>
+<ul>
+<li><b>Planner</b> (<code>dynamo.planner</code>): the autoscaler. It decides how many prefill and decode engines a deployment should run.</li>
+<li><b>Grove</b> (<code>ai-dynamo/grove</code>): a Kubernetes API (PodCliqueSet, PodCliqueScalingGroup, PodClique, PodGang) that turns those counts into complete, gang‑scheduled model instances.</li>
+</ul>
+<p><b>Sources.</b> Behaviour is taken from the Dynamo v1.5.1 docs and checked against the Planner source on <code>main</code> (commit 7b0e63e) and the Grove API reference.</p>
+<p><b>Flow.</b> Slides 2–3 set up the problem, 4–9 explain Planner, 10–11 show the hand‑off to Kubernetes, 12–14 explain Grove, 15 ties it together in a simulator, 16–17 cover scale‑out and operations.</p>
+<p><b>Keys.</b> ← → navigate · F full screen · N toggles these notes.</p></aside>
+</section>
+
+<!-- 2 Why different -->
+<section class="slide center" data-title="Why LLM autoscaling is different">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag b">The problem</span></div>
+    <h2>Three problems a generic autoscaler can’t solve for LLM serving</h2>
+    <svg class="dg" viewBox="0 0 1440 540" role="img" aria-label="Three reasons LLM autoscaling is different">
+      <!-- Panel 1 -->
+      <rect x="0" y="0" width="440" height="540" rx="14" class="box"/>
+      <text x="30" y="56" class="lg">① Two bottlenecks</text>
+      <text x="30" y="122" class="md b fpre">Prefill</text>
+      <g class="bpre">
+        <rect x="30" y="140" width="22" height="22" rx="3"/><rect x="56" y="140" width="22" height="22" rx="3"/><rect x="82" y="140" width="22" height="22" rx="3"/><rect x="108" y="140" width="22" height="22" rx="3"/><rect x="134" y="140" width="22" height="22" rx="3"/><rect x="160" y="140" width="22" height="22" rx="3"/>
+        <rect x="30" y="166" width="22" height="22" rx="3"/><rect x="56" y="166" width="22" height="22" rx="3"/><rect x="82" y="166" width="22" height="22" rx="3"/><rect x="108" y="166" width="22" height="22" rx="3"/><rect x="134" y="166" width="22" height="22" rx="3"/><rect x="160" y="166" width="22" height="22" rx="3"/>
+        <rect x="30" y="192" width="22" height="22" rx="3"/><rect x="56" y="192" width="22" height="22" rx="3"/><rect x="82" y="192" width="22" height="22" rx="3"/><rect x="108" y="192" width="22" height="22" rx="3"/><rect x="134" y="192" width="22" height="22" rx="3"/><rect x="160" y="192" width="22" height="22" rx="3"/>
+      </g>
+      <line x1="200" y1="177" x2="270" y2="177" class="ln" marker-end="url(#ah)"/>
+      <text x="285" y="192" class="xl">TTFT</text>
+      <text x="30" y="250" class="sm">whole prompt at once · compute‑bound</text>
+      <text x="30" y="318" class="md b fdec">Decode</text>
+      <g class="bdec">
+        <rect x="30" y="338" width="22" height="22" rx="3"/><rect x="62" y="338" width="22" height="22" rx="3" opacity=".85"/><rect x="94" y="338" width="22" height="22" rx="3" opacity=".7"/><rect x="126" y="338" width="22" height="22" rx="3" opacity=".55"/><rect x="158" y="338" width="22" height="22" rx="3" opacity=".4"/>
+      </g>
+      <line x1="200" y1="349" x2="270" y2="349" class="ln" marker-end="url(#ah)"/>
+      <text x="285" y="364" class="xl">ITL</text>
+      <text x="30" y="400" class="sm">one token per step · memory‑bound</text>
+      <text x="30" y="474" class="sm b fw">One replica count can’t fit both</text><text x="30" y="508" class="md b">Need: size each role on its SLA</text>
+      <!-- Panel 2 -->
+      <rect x="500" y="0" width="440" height="540" rx="14" class="box"/>
+      <text x="530" y="56" class="lg">② Requests ≠ load</text>
+      <text x="530" y="96" class="sm">same 10 requests / s</text>
+      <text x="530" y="160" class="mo">ISL 500</text>
+      <rect x="530" y="176" width="24" height="48" rx="4" class="bpre"/>
+      <text x="568" y="208" class="sm">5k tokens/s</text>
+      <text x="530" y="290" class="mo">ISL 8,000</text>
+      <rect x="530" y="306" width="384" height="48" rx="4" class="bpre"/>
+      <text x="548" y="338" class="md b fon">80k tokens/s</text>
+      <text x="530" y="410" class="lg">16× the prefill work</text>
+      <text x="530" y="474" class="sm b fw">Request rate alone mis‑sizes capacity</text><text x="530" y="508" class="md b">Need: forecast traffic shape</text>
+      <!-- Panel 3 -->
+      <rect x="1000" y="0" width="440" height="540" rx="14" class="box"/>
+      <text x="1030" y="56" class="lg">③ Capacity is multi‑node</text>
+      <text x="1030" y="96" class="sm">one TP16 decode instance</text>
+      <rect x="1030" y="126" width="180" height="104" rx="8" class="sbox"/>
+      <rect x="1230" y="126" width="180" height="104" rx="8" class="sbox"/>
+      <g class="bdec">
+        <rect x="1045" y="140" width="34" height="34" rx="4"/><rect x="1085" y="140" width="34" height="34" rx="4"/><rect x="1125" y="140" width="34" height="34" rx="4"/><rect x="1165" y="140" width="34" height="34" rx="4"/>
+        <rect x="1045" y="181" width="34" height="34" rx="4"/><rect x="1085" y="181" width="34" height="34" rx="4"/><rect x="1125" y="181" width="34" height="34" rx="4"/><rect x="1165" y="181" width="34" height="34" rx="4"/>
+        <rect x="1245" y="140" width="34" height="34" rx="4"/><rect x="1285" y="140" width="34" height="34" rx="4"/><rect x="1325" y="140" width="34" height="34" rx="4"/><rect x="1365" y="140" width="34" height="34" rx="4"/>
+        <rect x="1245" y="181" width="34" height="34" rx="4"/><rect x="1285" y="181" width="34" height="34" rx="4"/><rect x="1325" y="181" width="34" height="34" rx="4"/><rect x="1365" y="181" width="34" height="34" rx="4"/>
+      </g>
+      <rect x="1020" y="116" width="400" height="124" rx="12" class="lnd dash"/>
+      <text x="1030" y="276" class="sm">2 pods · 16 GPUs · works</text>
+      <rect x="1030" y="306" width="180" height="104" rx="8" class="sbox"/>
+      <g class="bdec">
+        <rect x="1045" y="320" width="34" height="34" rx="4"/><rect x="1085" y="320" width="34" height="34" rx="4"/><rect x="1125" y="320" width="34" height="34" rx="4"/><rect x="1165" y="320" width="34" height="34" rx="4"/>
+        <rect x="1045" y="361" width="34" height="34" rx="4"/><rect x="1085" y="361" width="34" height="34" rx="4"/><rect x="1125" y="361" width="34" height="34" rx="4"/><rect x="1165" y="361" width="34" height="34" rx="4"/>
+      </g>
+      <rect x="1230" y="306" width="180" height="104" rx="8" class="gf dash"/>
+      <path d="M1290 330 L1350 386 M1350 330 L1290 386" class="lnw"/>
+      <text x="1030" y="446" class="sm">half an instance = <tspan class="fw b">0 capacity</tspan></text>
+      <text x="1030" y="474" class="sm b fw">Partial placement wastes GPUs</text><text x="1030" y="508" class="md b">Need: place whole units only</text>
+    </svg>
+  </div>
+  <aside class="notes"><p><b>Point of the slide:</b> frame the three problems Dynamo has to solve. A CPU‑ or pod‑count autoscaler (e.g. a plain HPA) solves none of them. Each panel ends with what a solution needs; slide 3 shows which component provides it.</p>
+<ul>
+<li><b>Two phases.</b> Prefill processes the whole prompt at once and is compute‑bound; it determines <i>time to first token</i> (TTFT). Decode generates one token per step and is memory‑bandwidth‑bound; it determines <i>inter‑token latency</i> (ITL). In disaggregated serving they run on separate workers, so each needs its own replica count.</li>
+<li><b>Demand is tokens.</b> 10 req/s at ISL 8,000 is 16× the prefill work of ISL 500. Planner therefore forecasts ISL/OSL alongside request count, discounts ISL by the KV‑cache hit rate, and evaluates decode at context length ISL + OSL/2.</li>
+<li><b>The unit of capacity can span nodes.</b> A TP16 decode instance is two 8‑GPU pods. In a DGD this is <code>multinode.nodeCount: 2</code> with <code>gpu: 8</code> per node (total GPUs = nodeCount × gpu). Half an instance serves nothing, so capacity must be added in whole units.</li>
+</ul>
+<p>Problems ① and ② are solved by Planner; problem ③ by Grove (next slide).</p></aside>
+</section>
+
+<!-- 3 Division of labor -->
+<section class="slide center" data-title="Division of labor">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span class="tag g">Grove</span></div>
+    <h2>How Dynamo solves them: Planner + Grove</h2>
+    <svg class="dg" viewBox="0 0 1440 500" role="img" aria-label="Planner writes replica counts into the DGD; Grove turns them into placed instances">
+      <rect x="0" y="128" width="170" height="50" rx="25" class="box"/><text x="85" y="161" class="mo" text-anchor="middle">traffic</text>
+      <rect x="0" y="198" width="170" height="50" rx="25" class="box"/><text x="85" y="231" class="mo" text-anchor="middle">ISL / OSL</text>
+      <rect x="0" y="268" width="170" height="50" rx="25" class="box"/><text x="85" y="301" class="mo" text-anchor="middle">latency</text>
+      <path d="M172 153 C200 153 200 223 222 223 M172 223 L222 223 M172 293 C200 293 200 223 222 223" class="ln" marker-end="url(#ah)"/>
+      <rect x="226" y="10" width="170" height="38" rx="19" style="fill:var(--planner)"/><text x="311" y="36" class="sm b fon" text-anchor="middle">solves ① ②</text>
+      <rect x="226" y="60" width="340" height="320" rx="18" class="pbox"/>
+      <text x="256" y="128" class="xl fp">Planner</text>
+      <text x="256" y="178" class="lg">How many?</text>
+      <text x="256" y="246" class="md">① a count per role</text>
+      <text x="256" y="286" class="md">② req · ISL · OSL</text>
+      <text x="256" y="326" class="md">TTFT / ITL targets</text>
+      <line x1="568" y1="220" x2="626" y2="220" class="lnp" marker-end="url(#ahp)"/>
+      <rect x="634" y="100" width="210" height="240" rx="12" class="box"/>
+      <text x="654" y="138" class="mo mut">DGD</text>
+      <text x="654" y="190" class="mo">prefill:</text>
+      <text x="674" y="224" class="mo fp b">replicas: 4</text>
+      <text x="654" y="276" class="mo">decode:</text>
+      <text x="674" y="310" class="mo fp b">replicas: 2</text>
+      <text x="739" y="378" class="sm" text-anchor="middle">the contract</text>
+      <line x1="846" y1="220" x2="896" y2="220" class="lng" marker-end="url(#ahg)"/>
+      <rect x="904" y="10" width="150" height="38" rx="19" style="fill:var(--grove)"/><text x="979" y="36" class="sm b fon" text-anchor="middle">solves ③</text>
+      <rect x="904" y="60" width="320" height="320" rx="18" class="gbox"/>
+      <text x="934" y="128" class="xl fg">Grove</text>
+      <text x="934" y="178" class="lg">What &amp; where?</text>
+      <text x="934" y="246" class="md">③ whole instances</text>
+      <text x="934" y="286" class="md">placed all‑or‑nothing</text>
+      <text x="934" y="326" class="md">ordered, topology‑aware</text>
+      <line x1="1226" y1="220" x2="1262" y2="220" class="lng" marker-end="url(#ahg)"/>
+      <rect x="1270" y="90" width="170" height="120" rx="8" class="sbox"/>
+      <rect x="1270" y="230" width="170" height="120" rx="8" class="sbox"/>
+      <g class="bpre"><rect x="1284" y="110" width="32" height="32" rx="4"/><rect x="1322" y="110" width="32" height="32" rx="4"/><rect x="1360" y="110" width="32" height="32" rx="4"/><rect x="1398" y="110" width="32" height="32" rx="4"/></g>
+      <g class="bdec"><rect x="1284" y="150" width="32" height="32" rx="4"/><rect x="1322" y="150" width="32" height="32" rx="4"/><rect x="1360" y="150" width="32" height="32" rx="4"/><rect x="1398" y="150" width="32" height="32" rx="4"/>
+        <rect x="1284" y="250" width="32" height="32" rx="4"/><rect x="1322" y="250" width="32" height="32" rx="4"/><rect x="1360" y="250" width="32" height="32" rx="4"/><rect x="1398" y="250" width="32" height="32" rx="4"/>
+        <rect x="1284" y="290" width="32" height="32" rx="4"/><rect x="1322" y="290" width="32" height="32" rx="4"/><rect x="1360" y="290" width="32" height="32" rx="4"/><rect x="1398" y="290" width="32" height="32" rx="4"/></g>
+      <text x="1355" y="378" class="sm" text-anchor="middle">cluster</text>
+      <text x="720" y="470" class="md mut" text-anchor="middle">Planner never calls Grove. The Dynamo operator reconciles the DGD into Grove resources.</text>
+    </svg>
+  </div>
+  <aside class="notes"><p><b>Maps the problems to components.</b> Planner solves ① (separate prefill/decode counts sized on TTFT/ITL) and ② (forecasts request count, ISL and OSL, not just request rate). Grove solves ③ (adds and removes whole multi‑node instances, placed all‑or‑nothing).</p>
+<p><b>Planner</b> runs as a service inside the DynamoGraphDeployment (DGD), <code>componentType: planner</code>.</p>
+<ul>
+<li>Inputs: Prometheus traffic metrics from the Frontend (<code>dynamo_frontend_*</code>) or a router, plus per‑iteration Forward Pass Metrics (FPM) that engines publish on the event plane.</li>
+<li>Output: a replica count per role. The <code>KubernetesConnector</code> finds its parent DGD via <code>DYN_PARENT_DGD_K8S_NAME</code>, resolves services by <code>subComponentType</code> (prefill/decode) and patches <code>spec.services[x].replicas</code>.</li>
+</ul>
+<p><b>Grove</b> never receives a call from Planner. The Dynamo operator reconciles the DGD into Grove resources, and Grove plus KAI Scheduler place the pods.</p>
+<p>So the DGD replica count is the contract. Anything that writes it (Planner, HPA/KEDA through a scaling adapter, a human) is handled the same way downstream.</p>
+<p>Other connectors: <code>virtual</code> (non‑Kubernetes orchestrators poll decisions) and <code>global-planner</code> (slide 16).</p></aside>
+</section>
+
+<!-- 4 Pipeline -->
+<section class="slide center" data-title="Planner tick pipeline">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span>How it works today</span></div>
+    <h2>Planner runs one pipeline every tick</h2>
+    <svg class="dg" viewBox="0 0 1440 480" role="img" aria-label="Observe, predict, propose, constrain, execute, repeating every tick">
+      <path d="M1280 160 C1280 30, 160 30, 160 160" class="ln dash" marker-end="url(#ah)"/>
+      <text x="720" y="110" class="sm" text-anchor="middle">repeat every tick</text>
+      <g text-anchor="middle">
+        <circle cx="160" cy="255" r="92" class="pbox"/><text x="160" y="228" class="mo fp">1</text><text x="160" y="272" class="lg">Observe</text>
+        <circle cx="440" cy="255" r="92" class="pbox"/><text x="440" y="228" class="mo fp">2</text><text x="440" y="272" class="lg">Predict</text>
+        <circle cx="720" cy="255" r="92" class="pbox"/><text x="720" y="228" class="mo fp">3</text><text x="720" y="272" class="lg">Propose</text>
+        <circle cx="1000" cy="255" r="92" class="pbox"/><text x="1000" y="228" class="mo fp">4</text><text x="1000" y="272" class="lg">Constrain</text>
+        <circle cx="1280" cy="255" r="92" class="pbox"/><text x="1280" y="228" class="mo fp">5</text><text x="1280" y="272" class="lg">Execute</text>
+        <text x="160" y="398" class="md">traffic +</text><text x="160" y="430" class="md">engine metrics</text>
+        <text x="440" y="398" class="md">next interval:</text><text x="440" y="430" class="md">req · ISL · OSL</text>
+        <text x="720" y="398" class="md">replica</text><text x="720" y="430" class="md">proposals</text>
+        <text x="1000" y="398" class="md">minimums ·</text><text x="1000" y="430" class="md">GPU budget</text>
+        <text x="1280" y="398" class="md">scale_to →</text><text x="1280" y="430" class="md">connector</text>
+      </g>
+      <line x1="256" y1="255" x2="340" y2="255" class="ln" marker-end="url(#ah)"/>
+      <line x1="536" y1="255" x2="620" y2="255" class="ln" marker-end="url(#ah)"/>
+      <line x1="816" y1="255" x2="900" y2="255" class="ln" marker-end="url(#ah)"/>
+      <line x1="1096" y1="255" x2="1180" y2="255" class="ln" marker-end="url(#ah)"/>
+    </svg>
+    <div class="chips"><span class="lbl">Perf model from the first available:</span><span class="chip">self‑benchmark</span><span class="arr">→</span><span class="chip">AI Configurator</span><span class="arr">→</span><span class="chip">profiling data</span><span class="arr">→</span><span class="chip">live FPM regression</span></div>
+    <div class="chips"><span class="lbl">Which proposers run depends on</span><span class="chip p">optimization_target</span><span class="lbl">(next slide) ·</span><span class="chip p">advisory: true</span><span class="lbl">recommends without scaling</span></div>
+  </div>
+  <aside class="notes"><p>The runtime is driven by <code>OrchestratorEngineAdapter</code>. Each tick runs a fixed pipeline:</p>
+<ol>
+<li><b>Observe:</b> worker counts, traffic metrics, FPM.</li>
+<li><b>Predict:</b> <code>builtin_load_predict</code> forecasts next‑interval request count, ISL and OSL.</li>
+<li><b>Propose:</b> <code>builtin_throughput_propose</code> (forecast → floor) and <code>builtin_load_propose</code> (live ±1). External gRPC plugins can propose too.</li>
+<li><b>Reconcile / constrain:</b> merge proposals, apply minimums and the GPU budget.</li>
+<li><b>Execute:</b> <code>PlannerEffects.scale_to</code> goes to the connector.</li>
+</ol>
+<p><b>Cadence.</b> The base tick (<code>scheduling.scale_interval_seconds</code>) defaults to the GCD of the enabled loop intervals, normally 5 s. Each plugin fires only when its own interval has elapsed.</p>
+<p><b>Perf model.</b> Capacity estimates come from a forward‑pass performance model (AISimulate). It is bootstrapped from the first available of: worker self‑benchmark, AI Configurator simulation (<code>pre_deployment_sweeping_mode: rapid</code>, default), real‑GPU profiling (<code>thorough</code>, 2–4 h), or live FPM regression. It keeps tuning itself from live FPM.</p>
+<p><b>Advisory mode</b> (<code>advisory: true</code>) runs everything but skips Execute; recommendations appear as <code>dynamo_planner_*</code> metrics, HTML reports and a live dashboard (port 8080).</p></aside>
+</section>
+
+<!-- 6 Targets and knobs -->
+<section class="slide center" data-title="Targets and knobs">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span>Config · optimization_target</span></div>
+    <h2>Two ways to tell Planner when to scale</h2>
+    <svg class="dg" viewBox="0 0 1440 470" role="img" aria-label="A: scale on engine load with presets throughput, latency or custom load thresholds. B: scale to latency targets with optimization_target sla, which adds a forecast loop and an optional live latency check"><rect x="0" y="0" width="700" height="470" rx="14" class="box" style="stroke:var(--grove);stroke-width:3"/><text x="28" y="50" class="lg fg">A · Scale on engine load</text><text x="28" y="88" class="md mut">“Add an engine when the current ones are busy.”</text><text x="320" y="124" class="sm">KV‑cache demand →</text><text x="660" y="124" class="sm" text-anchor="end">150%</text><text x="28" y="170" class="lg" style="font-family:var(--mono)">throughput</text><rect x="232" y="148" width="78" height="28" rx="14" class="pbox" style="stroke-width:2"/><text x="271" y="168" class="sm b fp" text-anchor="middle" style="font-size:16px">default</text><rect x="320" y="152" width="340" height="22" rx="11" class="gf"/><rect x="320" y="152" width="227" height="22" rx="11" style="fill:var(--grove-soft)"/><line x1="547" y1="144" x2="547" y2="182" style="stroke:var(--warn);stroke-width:4"/><text x="28" y="206" class="sm">scale up at KV &gt; 100% or queue ≥ 1× context</text><text x="28" y="266" class="lg" style="font-family:var(--mono)">latency</text><rect x="320" y="248" width="340" height="22" rx="11" class="gf"/><rect x="320" y="248" width="91" height="22" rx="11" style="fill:var(--grove-soft)"/><line x1="411" y1="240" x2="411" y2="278" style="stroke:var(--warn);stroke-width:4"/><text x="28" y="302" class="sm">scale up earlier: KV &gt; 40% or queue ≥ 0.1×</text><text x="28" y="362" class="lg" style="font-family:var(--mono)">load</text><rect x="320" y="344" width="340" height="22" rx="11" class="gf"/><rect x="320" y="344" width="170" height="22" rx="11" style="fill:var(--grove-soft)"/><line x1="490" y1="336" x2="490" y2="374" style="stroke:var(--warn);stroke-width:4;stroke-dasharray:5 4"/><text x="28" y="398" class="sm">you set the up / down thresholds</text><text x="28" y="446" class="md b">Every 5 s · no latency targets</text><rect x="740" y="0" width="700" height="470" rx="14" class="pbox"/><text x="768" y="50" class="lg fp">B · Scale to latency targets</text><text x="768" y="88" class="md mut">“Keep TTFT ≤ 500 ms and ITL ≤ 50 ms.”</text><text x="768" y="140" class="sm b" style="fill:var(--ink)">You set</text><rect x="768" y="154" width="300" height="42" rx="8" class="box"/><text x="918.0" y="182" class="mo" text-anchor="middle" style="font-size:18px">optimization_target: sla</text><rect x="1080" y="154" width="160" height="42" rx="8" class="box"/><text x="1160.0" y="182" class="mo" text-anchor="middle" style="font-size:18px">ttft_ms: 500</text><rect x="1252" y="154" width="140" height="42" rx="8" class="box"/><text x="1322.0" y="182" class="mo" text-anchor="middle" style="font-size:18px">itl_ms: 50</text><text x="768" y="244" class="sm b" style="fill:var(--ink)">Planner adds</text><path d="M768 300 h18 v-12 h18 v-14 h18 v8 h20" class="lnp" style="stroke-width:4"/><text x="866" y="282" class="md b">Forecast every 180 s</text><text x="866" y="310" class="sm">sets a replica floor ahead of demand</text><circle cx="780" cy="372" r="7" class="bpre"/><circle cx="800" cy="364" r="7" class="bpre"/><circle cx="820" cy="380" r="7" class="bpre"/><line x1="768" y1="356" x2="836" y2="356" style="stroke:var(--warn);stroke-width:3;stroke-dasharray:5 4"/><text x="866" y="366" class="md b">Live check every 5 s</text><text x="866" y="394" class="sm">±1 on measured latency (enable_load_scaling)</text><text x="768" y="446" class="md b fp">The mode the next slides explain →</text></svg>
+  </div>
+  <aside class="notes"><p><b>Key setting:</b> <code>optimization_target</code>. It decides which loops run.</p>
+<p><b>A · Scale on engine load</b> (<code>throughput</code> default, <code>latency</code>, <code>load</code>): only the live loop runs (every 5 s). Code forces <code>enable_load_scaling=True</code>, <code>enable_throughput_scaling=False</code>, and ignores <code>ttft_ms</code>/<code>itl_ms</code>. Signals per engine:</p>
+<ul>
+<li>Prefill: queued prefill tokens ÷ context length.</li>
+<li>Decode: KV demand = (scheduled + queued KV tokens) ÷ max KV.</li>
+<li><code>throughput</code>: up at ≥ 1.0 / &gt; 1.0, down below 0.1 / 0.6. <code>latency</code>: up at ≥ 0.1 / &gt; 0.4, down when the queue is empty / KV &lt; 0.1. <code>load</code>: <code>prefill_scale_{up,down}_queue_tokens</code> and <code>decode_scale_{up,down}_kv_rate</code>.</li>
+<li>Scale‑up fires if <i>any</i> engine crosses the up threshold; scale‑down needs all engines under the down threshold plus a consolidation check.</li>
+</ul>
+<p><b>B · Scale to latency targets</b> (<code>sla</code>): you set <code>ttft_ms</code> (default 500) and <code>itl_ms</code> (50). The forecast loop is on by default; the live latency loop is opt‑in with <code>enable_load_scaling: true</code>. The rest of the deck assumes both are on.</p>
+<p>Set these in a DGDR under <code>spec.features.planner</code>, or in the PlannerConfig JSON/YAML mounted into the Planner pod.</p></aside>
+</section>
+
+<!-- 5 Two loops -->
+<section class="slide center" data-title="How the decision is made">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span>sla target with load scaling on · both loops</span></div>
+    <h2>How Planner makes the autoscaling decision</h2>
+    <div class="tiles c4">
+      <div class="tile rulecard"><span class="stepno">1 · every 180 s</span><h3>Forecast a floor</h3>
+        <div class="rule">floor = ⌈ forecast req/s<br>÷ req/s one engine<br>&nbsp;&nbsp;serves at the SLA ⌉</div>
+        <p>Capacity is ready before the demand arrives.</p></div>
+      <div class="tile rulecard"><span class="stepno">2 · every 5 s</span><h3>Check live latency</h3>
+        <div class="rule"><span class="fw">▲ +1</span> every engine over SLA<br><span class="fg">▼ −1</span> load fits on N−1 engines<br><span class="muted">● hold</span> otherwise</div>
+        <p>Estimated per engine from forward‑pass metrics.</p></div>
+      <div class="tile rulecard"><span class="stepno">3 · combine</span><h3>Never below the floor</h3>
+        <div class="rule">desired =<br>max(live decision, floor)</div>
+        <p>Short dips don't remove forecast capacity.</p></div>
+      <div class="tile rulecard"><span class="stepno">4 · guardrails</span><h3>Then apply</h3>
+        <div class="rule">no +1 while replicas start<br>≥ min_endpoint<br>GPU budget caps growth</div>
+        <p>Result is written to the DGD replica count.</p></div>
+    </div>
+    <svg class="dg" viewBox="0 0 1440 330" id="loopsvg" role="img" aria-label="Chart: the forecast floor steps every 180 s; live decisions add replicas during a burst and never drop below the floor">
+      <g id="loopplot"></g>
+      <line x1="1110" y1="40" x2="1160" y2="40" class="lnp" style="stroke-width:9"/>
+      <text x="1174" y="48" class="md b">① floor (180 s)</text>
+      <line x1="1110" y1="110" x2="1160" y2="110" style="stroke:var(--prefill);stroke-width:5"/>
+      <text x="1174" y="118" class="md b">②③ replicas</text>
+      <text x="1174" y="146" class="sm">±1 every 5 s, ≥ floor</text>
+      <line x1="1110" y1="196" x2="1160" y2="196" class="ln"/>
+      <text x="1174" y="204" class="md b">demand</text>
+      <text x="1110" y="270" class="sm">Burst: live loop adds +1 steps</text>
+      <text x="1110" y="298" class="sm">until the next forecast catches up.</text>
+    </svg>
+  </div>
+  <aside class="notes"><p>The four steps Planner applies in <code>sla</code> mode with load scaling enabled.</p>
+<ol>
+<li><b>Forecast floor (every 180 s,</b> <code>throughput_adjustment_interval_seconds</code><b>).</b> floor = ⌈forecast req/s ÷ req/s one engine serves within the SLA⌉. Each step moves at most ±8 replicas (<code>max_throughput_scaling_replicas</code>).</li>
+<li><b>Live check (every 5 s,</b> <code>load_adjustment_interval_seconds</code><b>).</b> Per engine, estimate TTFT/ITL from FPM. +1 if <i>every</i> engine is over the SLA. −1 only if, after removing one engine (load × N/(N−1)), every engine still fits (slide 8). Otherwise hold.</li>
+<li><b>Combine.</b> desired = max(live decision, floor). The live loop can add above the floor but never cut below it, so a short lull doesn't remove capacity the forecast says is coming.</li>
+<li><b>Guardrails.</b> No scale‑up while replicas are still starting (scale‑down may cancel starting ones). Never below <code>min_endpoint</code>. At <code>max_gpu_budget</code> a scale‑up is held; forecast targets over budget are clamped proportionally (prefill floored first, decode gets the remainder).</li>
+</ol>
+<p>The chart is a stylised illustration of steps 1–3 during a burst, not real data.</p></aside>
+</section>
+
+<!-- Throughput math -->
+<section class="slide center" data-title="Throughput loop: the math">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span>Predictive loop · optimization_target: sla</span></div>
+    <h2>How the throughput loop picks a replica count</h2>
+    <div class="calc">
+      <div class="ctrls big" role="group" aria-label="Throughput calculation inputs">
+        <div class="ctrl"><label for="tc-rps">Predicted req/s <output id="tc-rpsO"></output></label><input type="range" id="tc-rps" min="5" max="80" step="1" value="40"></div>
+        <div class="ctrl"><label for="tc-isl">Avg ISL <output id="tc-islO"></output></label><input type="range" id="tc-isl" min="500" max="8000" step="250" value="3000"></div>
+        <div class="ctrl"><label for="tc-osl">Avg OSL <output id="tc-oslO"></output></label><input type="range" id="tc-osl" min="100" max="1500" step="50" value="400"></div>
+        <div class="ctrl"><label for="tc-kv">KV hit rate <output id="tc-kvO"></output></label><input type="range" id="tc-kv" min="0" max="80" step="5" value="20"></div>
+        <div class="ctrl"><label for="tc-ttft">TTFT SLA <output id="tc-ttftO"></output></label><input type="range" id="tc-ttft" min="150" max="2000" step="50" value="500"></div>
+        <div class="ctrl"><label for="tc-itl">ITL SLA <output id="tc-itlO"></output></label><input type="range" id="tc-itl" min="20" max="120" step="5" value="50"></div>
+        <div class="ctrl"><label for="tc-bud">max_gpu_budget <output id="tc-budO"></output></label><input type="range" id="tc-bud" min="8" max="96" step="2" value="48"></div>
+        <p class="hint">Engines: prefill TP2 (2 GPUs), decode TP4 (4 GPUs). Curves are illustrative; real ones come from self‑benchmark, AI Configurator or profiling.</p>
+      </div>
+      <svg class="dg" viewBox="0 0 1100 650" id="tcsvg" role="img" aria-label="Four-step calculation: demand, capacity at SLA, divide and round up, constrain and apply"></svg>
+    </div>
+  </div>
+  <aside class="notes"><p><b>Worked example of step 1</b> (<code>core/state_machine.py</code>, <code>core/throughput_scaling.py</code>, <code>core/perf_model/engine_query.py</code>).</p>
+<ol>
+<li><b>Forecast.</b> Prometheus gives the last 180 s: request count, avg ISL, avg OSL (Frontend metrics), KV hit rate (router), spec‑decode accept length (engine). ARIMA (default; also constant, kalman, prophet) forecasts request count, ISL and OSL. KV hit and accept length reuse the last value. demand_rps = predicted num_req ÷ interval.</li>
+<li><b>Capacity per engine.</b> <code>find_engine_capacity_rps</code> queries the perf model. Prefill: ISL × (1 − KV hit, capped at 0.95); scans batch sizes, rps = batch ÷ TTFT, eligible if TTFT ≤ SLA. Decode: context = ISL + OSL/2; ITL = forward time ÷ accept length; rps = batch ÷ (OSL × ITL), eligible if ITL ≤ SLA. Highest eligible rps wins. If none meets the SLA it returns the best effort and logs a warning.</li>
+<li><b>Divide.</b> replicas = ⌈demand_rps ÷ engine_rps⌉, at least <code>min_endpoint</code>.</li>
+<li><b>Constrain.</b> Compare total GPUs with <code>max_gpu_budget</code>; clamp proportionally if over.</li>
+</ol>
+<p>The sliders drive an illustrative curve (latency = base ÷ (1 − load)); real curves come from the perf model. If the model isn't ready, Planner holds the current count (<code>model_not_ready</code>).</p></aside>
+</section>
+
+<!-- Load math -->
+<section class="slide center" data-title="Load loop: the math">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span>Reactive loop · sla mode</span></div>
+    <h2>How the load loop decides +1, −1 or hold</h2>
+    <div class="calc">
+      <div class="ctrls big" role="group" aria-label="Load calculation inputs">
+        <div class="ctrl"><label for="lc-q">Queued prefill tokens / engine <output id="lc-qO"></output></label><input type="range" id="lc-q" min="0" max="150000" step="1000" value="30000"></div>
+        <div class="ctrl"><label for="lc-imb">Imbalance across engines <output id="lc-imbO"></output></label><input type="range" id="lc-imb" min="0" max="80" step="5" value="30"></div>
+        <div class="ctrl"><label for="lc-isl">New prompt ISL <output id="lc-islO"></output></label><input type="range" id="lc-isl" min="500" max="8000" step="250" value="3000"></div>
+        <div class="ctrl"><label for="lc-ttft">TTFT SLA <output id="lc-ttftO"></output></label><input type="range" id="lc-ttft" min="150" max="2000" step="50" value="500"></div>
+        <div class="ctrl"><label for="lc-sens">Scale‑down sensitivity <output id="lc-sensO"></output></label><input type="range" id="lc-sens" min="50" max="100" step="5" value="80"></div>
+        <p class="hint">Shown for prefill/TTFT. Decode uses scheduled + queued KV tokens → ITL (÷ accept length). ±1 per tick; no scale‑up while replicas are starting; never below the throughput floor.</p>
+      </div>
+      <svg class="dg" viewBox="0 0 1100 650" id="lcsvg" role="img" aria-label="Regression from forward pass metrics, chunked queue simulation, and the all-engines decision rule"></svg>
+    </div>
+  </div>
+  <aside class="notes"><p><b>Worked example of step 2</b> (<code>core/load_scaling.py</code>, <code>_scale_decision</code>).</p>
+<ol>
+<li><b>Learn from forward passes.</b> Engines emit FPM per iteration: <code>wall_time</code>, scheduled and queued prefill tokens, decode KV tokens, request counts. These tune the AISimulate perf model (up to <code>max_num_fpm_samples</code> = 64; ready after <code>load_min_observations</code> = 5). The scatter and straight‑line fit on the slide are a simplification.</li>
+<li><b>Simulate the queue.</b> TTFT for a new request = queued prefill tokens × (1 − KV hit) + its own ISL, split into chunks of <code>max_num_batched_tokens</code>, each chunk's forward time summed. ITL uses scheduled + queued decode KV, divided by accept length.</li>
+<li><b>Decide.</b> +1 if every engine's estimate &gt; SLA. −1 only if, with load × N/(N−1), each engine's queue delay stays under (<code>ttft_ms</code> − own time) × <code>load_scaling_down_sensitivity</code>/100 (default 80). For decode: post‑consolidation KV must fit and ITL &lt; <code>itl_ms</code> × sensitivity.</li>
+</ol>
+<p>Hollow dots show each engine's estimate if one engine were removed. Try the imbalance slider: one hot engine is enough to block both scale‑up (not <i>all</i> over) and scale‑down.</p></aside>
+</section>
+
+<!-- Planner at a glance -->
+<section class="slide center" data-title="How Planner decides" id="pg-slide">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span>Interactive · illustrative capacities</span></div>
+    <h2>The decision rules, playing out over an hour</h2>
+    <div class="vsbar">
+      <select id="pg-mode" aria-label="optimization_target"><option value="sla">sla + load scaling · both loops</option><option value="thr">throughput (default) · live thresholds only</option></select>
+      <select id="pg-pat" aria-label="Traffic pattern"><option value="diurnal">Daily wave</option><option value="ramp">Ramp, hold, drop</option><option value="steady">Steady + burst</option></select>
+      <button class="btn" id="pg-burst">Add burst at cursor</button>
+      <button class="btn primary" id="pg-play">Play</button>
+      <div class="ctrl" style="flex:1;min-width:200px"><label for="pg-t">Cursor <output id="pg-tO"></output></label><input type="range" id="pg-t" min="0" max="719" step="1" value="380"></div>
+    </div>
+    <div class="howto">
+      <span><i class="sw"></i><b>① Forecast</b> every 180 s sets the floor</span>
+      <span><i class="sw t"></i><b>Target</b> replicas · shaded = ready (~60 s start)</span>
+      <span><b>▲ ▼</b> live ±1 decisions</span>
+      <span><b>Click the timeline</b> → cards show the math at that moment</span>
+    </div>
+    <svg class="dg" viewBox="0 0 1440 620" id="pgsvg" role="img" aria-label="Timeline of traffic, prefill and decode replicas, with the throughput-loop and load-loop decisions at the cursor" style="cursor:crosshair"></svg>
+  </div>
+  <aside class="notes"><p><b>Interactive timeline.</b> One simulated hour; the same rules from slides 6–8 applied tick by tick.</p>
+<ul>
+<li><b>Top:</b> observed req/s (green) and the 180 s forecasts (amber dashes).</li>
+<li><b>Prefill / Decode:</b> target replicas (solid), ready replicas (shaded; new replicas take ~60 s), forecast floor (amber dashes), ▲/▼ where the live loop changed the count.</li>
+<li><b>Cards:</b> click the timeline or drag the cursor. Left card shows the last forecast calculation. Right card shows three engines against the SLA (or thresholds) and the decision with its reason.</li>
+</ul>
+<p><b>Things to point out:</b> during a burst the live loop adds +1 steps before the next forecast raises the floor. "hold · starting" is the pending guard. Switch to <code>throughput (default)</code> to see threshold‑only behaviour with no floor.</p>
+<p><b>Simplifications:</b> prefill engine = 2 GPUs serving 9.1 req/s at SLA; decode engine = 4 GPUs serving 21 req/s; budget 40 GPUs; ARIMA approximated by a trend fit; threshold signals modelled from utilisation. Flapping in default mode under steady traffic is an artifact of that model.</p></aside>
+</section>
+
+<!-- 7 Actuation -->
+<section class="slide center" data-title="From decision to pods">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span class="tag g">Grove</span><span>Actuation path</span></div>
+    <h2>One scale decision, end to end</h2>
+    <svg class="dg" viewBox="0 0 1440 470" role="img" aria-label="Planner to DGD to Dynamo operator to Grove to KAI Scheduler to pods, then back to Planner">
+      <g class="mo" text-anchor="middle" style="font-size:17px">
+        <text x="100" y="70" class="mut">DECIDE</text><text x="348" y="70" class="mut">DECLARE</text><text x="596" y="70" class="mut">TRANSLATE</text><text x="844" y="70" class="mut">GROUP</text><text x="1092" y="70" class="mut">PLACE</text><text x="1340" y="70" class="mut">START</text>
+      </g>
+      <rect x="0" y="100" width="200" height="170" rx="14" class="pbox"/>
+      <rect x="248" y="100" width="200" height="170" rx="14" class="box"/>
+      <rect x="496" y="100" width="200" height="170" rx="14" class="box"/>
+      <rect x="744" y="100" width="200" height="170" rx="14" class="gbox"/>
+      <rect x="992" y="100" width="200" height="170" rx="14" class="box"/>
+      <rect x="1240" y="100" width="200" height="170" rx="14" class="gbox"/>
+      <g text-anchor="middle">
+        <text x="100" y="168" class="lg fp">Planner</text><text x="100" y="212" class="mo">decode</text><text x="100" y="242" class="mo b">2 → 3</text>
+        <text x="348" y="168" class="lg">DGD</text><text x="348" y="212" class="mo fp b">replicas: 3</text><text x="348" y="244" class="sm">(DGDSA if on)</text>
+        <text x="596" y="158" class="lg">Dynamo</text><text x="596" y="192" class="lg">operator</text><text x="596" y="238" class="sm">DGD → Grove</text>
+        <text x="844" y="168" class="lg fg">Grove</text><text x="844" y="212" class="mo">PCSG = 3</text><text x="844" y="244" class="sm">+1 PodGang</text>
+        <text x="1092" y="168" class="lg">KAI</text><text x="1092" y="212" class="md">all‑or‑nothing</text><text x="1092" y="244" class="sm">or stays Pending</text>
+        <text x="1340" y="168" class="lg fg">Pods</text><text x="1340" y="212" class="md">worker → leader</text><text x="1340" y="244" class="sm">then Ready</text>
+      </g>
+      <line x1="204" y1="185" x2="242" y2="185" class="lnp" marker-end="url(#ahp)"/>
+      <line x1="452" y1="185" x2="490" y2="185" class="ln" marker-end="url(#ah)"/>
+      <line x1="700" y1="185" x2="738" y2="185" class="ln" marker-end="url(#ah)"/>
+      <line x1="948" y1="185" x2="986" y2="185" class="lng" marker-end="url(#ahg)"/>
+      <line x1="1196" y1="185" x2="1234" y2="185" class="ln" marker-end="url(#ah)"/>
+      <path d="M1340 276 C1340 420, 100 420, 100 280" class="ln dash" marker-end="url(#ah)"/>
+      <text x="720" y="452" class="md mut" text-anchor="middle">new engines register → Planner counts ready capacity → next decision</text>
+    </svg>
+  </div>
+  <aside class="notes"><p>The full actuation path for one decision (decode 2 → 3):</p>
+<ol>
+<li><b>Planner</b> calls <code>set_component_replicas()</code>.</li>
+<li><b>DGD</b> <code>spec.services.decode.replicas</code> becomes 3. If the service has <code>scalingAdapter</code> enabled, a DynamoGraphDeploymentScalingAdapter (DGDSA) owns replicas via the Scale subresource, and a webhook blocks direct edits. Use one autoscaler per service (Planner <i>or</i> HPA/KEDA).</li>
+<li><b>Dynamo operator</b> reconciles the DGD into Grove resources.</li>
+<li><b>Grove</b> raises the PodCliqueScalingGroup to 3 and creates a new scaled PodGang.</li>
+<li><b>KAI Scheduler</b> binds the PodGang all‑or‑nothing, honouring topology constraints; if it can't fit, it stays Pending.</li>
+<li><b>Pods</b> start in the declared order (<code>startsAfter</code>), register with Dynamo discovery, and Planner sees them as ready capacity.</li>
+</ol>
+<p>Inspect it: <code>kubectl get dgd,dgdsa</code> then <code>kubectl get pcs,pcsg,pclq,pg,pod</code>.</p></aside>
+</section>
+
+<!-- 8 Mapping -->
+<section class="slide center" data-title="DGD to Grove mapping">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag g">Grove</span><span>Resource mapping</span></div>
+    <h2>What Planner’s number actually scales</h2>
+    <svg class="dg" viewBox="0 0 1440 600" role="img" aria-label="DGD services map to a PodCliqueSet containing a prefill PodClique and a decode PodCliqueScalingGroup">
+      <rect x="0" y="0" width="540" height="600" rx="14" class="box"/>
+      <g class="mo">
+        <text x="30" y="52" class="mut">kind: DynamoGraphDeployment</text>
+        <text x="30" y="96">spec.services:</text>
+        <text x="52" y="146" class="b fpre">prefill:</text>
+        <text x="74" y="184" class="fp b">replicas: 4</text>
+        <text x="74" y="222">gpu: 2</text>
+        <text x="52" y="290" class="b fdec">decode:</text>
+        <text x="74" y="328" class="fp b">replicas: 2</text>
+        <text x="74" y="366">multinode:</text>
+        <text x="96" y="404">nodeCount: 2</text>
+        <text x="74" y="442">gpu: 8  <tspan class="mut"># per node</tspan></text>
+        <text x="30" y="560" class="mut" style="font-size:18px"># Planner writes the replicas lines</text>
+      </g>
+      <rect x="620" y="0" width="820" height="600" rx="16" class="gbox"/>
+      <text x="646" y="44" class="lg fg">PodCliqueSet</text><text x="860" y="44" class="sm">one per DGD</text>
+      <rect x="650" y="70" width="760" height="160" rx="12" class="box"/>
+      <text x="674" y="110" class="md b">PodClique · prefill</text><text x="1388" y="110" class="mo fp b" text-anchor="end">replicas 4</text>
+      <g>
+        <rect x="674" y="134" width="164" height="76" rx="8" class="sbox"/><rect x="690" y="156" width="32" height="32" rx="4" class="bpre"/><rect x="728" y="156" width="32" height="32" rx="4" class="bpre"/><text x="772" y="180" class="sm">pod</text>
+        <rect x="854" y="134" width="164" height="76" rx="8" class="sbox"/><rect x="870" y="156" width="32" height="32" rx="4" class="bpre"/><rect x="908" y="156" width="32" height="32" rx="4" class="bpre"/><text x="952" y="180" class="sm">pod</text>
+        <rect x="1034" y="134" width="164" height="76" rx="8" class="sbox"/><rect x="1050" y="156" width="32" height="32" rx="4" class="bpre"/><rect x="1088" y="156" width="32" height="32" rx="4" class="bpre"/><text x="1132" y="180" class="sm">pod</text>
+        <rect x="1214" y="134" width="164" height="76" rx="8" class="sbox"/><rect x="1230" y="156" width="32" height="32" rx="4" class="bpre"/><rect x="1268" y="156" width="32" height="32" rx="4" class="bpre"/><text x="1312" y="180" class="sm">pod</text>
+      </g>
+      <rect x="650" y="252" width="760" height="326" rx="12" class="box"/>
+      <text x="674" y="292" class="md b">PodCliqueScalingGroup · decode</text><text x="1388" y="292" class="mo fp b" text-anchor="end">replicas 2</text>
+      <g id="inst1">
+        <rect x="674" y="312" width="346" height="246" rx="10" class="lnd dash"/>
+        <text x="692" y="344" class="sm">instance = 1 PodGang</text>
+        <rect x="690" y="360" width="150" height="180" rx="8" class="sbox"/><text x="706" y="390" class="md">leader</text>
+        <rect x="854" y="360" width="150" height="180" rx="8" class="sbox"/><text x="870" y="390" class="md">worker</text>
+        <g class="bdec">
+          <rect x="704" y="404" width="28" height="28" rx="3"/><rect x="736" y="404" width="28" height="28" rx="3"/><rect x="768" y="404" width="28" height="28" rx="3"/><rect x="800" y="404" width="28" height="28" rx="3"/>
+          <rect x="704" y="436" width="28" height="28" rx="3"/><rect x="736" y="436" width="28" height="28" rx="3"/><rect x="768" y="436" width="28" height="28" rx="3"/><rect x="800" y="436" width="28" height="28" rx="3"/>
+          <rect x="868" y="404" width="28" height="28" rx="3"/><rect x="900" y="404" width="28" height="28" rx="3"/><rect x="932" y="404" width="28" height="28" rx="3"/><rect x="964" y="404" width="28" height="28" rx="3"/>
+          <rect x="868" y="436" width="28" height="28" rx="3"/><rect x="900" y="436" width="28" height="28" rx="3"/><rect x="932" y="436" width="28" height="28" rx="3"/><rect x="964" y="436" width="28" height="28" rx="3"/>
+        </g>
+        <text x="706" y="518" class="sm">node A</text><text x="870" y="518" class="sm">node B</text>
+      </g>
+      <use href="#inst1" x="366"/>
+      <path d="M232 184 C440 184, 450 150, 642 150" class="lnp" marker-end="url(#ahp)"/>
+      <path d="M232 328 C440 328, 450 420, 642 420" class="lnp" marker-end="url(#ahp)"/>
+    </svg>
+    <p class="cap"><b>replicas</b> = complete instances · <b>nodeCount</b> = pods per instance · each instance = one PodGang</p>
+  </div>
+  <aside class="notes"><p>How the DGD you write becomes Grove objects (Grove is the default multinode orchestrator; set <code>nvidia.com/enable-grove: "false"</code> to use LWS + Volcano).</p>
+<ul>
+<li>One DGD → one <b>PodCliqueSet</b>.</li>
+<li>Single‑node service (e.g. prefill, 1 pod per engine) → one <b>PodClique</b>; <code>replicas</code> = number of pods.</li>
+<li>Multinode service → one <b>PodCliqueScalingGroup</b> with a leader PodClique and a worker PodClique. <code>replicas</code> = complete instances; <code>multinode.nodeCount</code> = pods per instance (1 leader + nodeCount − 1 workers).</li>
+<li>GPUs per instance = nodeCount × <code>gpu</code>; the engine's TP size must match (16 here).</li>
+</ul>
+<p>Planner's replica number therefore lands on a PodClique for single‑node roles and on a PodCliqueScalingGroup for multinode roles. Grove also supports scaling the whole PodCliqueSet (service copies) and individual PodCliques.</p>
+<p>Resource names on the slide are illustrative; the operator derives them from DGD and service names.</p></aside>
+</section>
+
+<!-- LWS vs Grove: what is one unit -->
+<section class="slide center" data-title="LeaderWorkerSet vs Grove" id="spec-slide">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag b">LeaderWorkerSet</span><span class="tag g">Grove</span><span>Same service, two views</span></div>
+    <h2>What does the scheduler treat as “one unit”?</h2>
+    <p class="lede" style="font-size:23px">Example service: <b class="fpre-t">2 prefill</b> + <b class="fdec-t">1 decode</b> instances, each instance = a leader pod + a worker pod.</p>
+    <svg class="dg" viewBox="0 0 1440 380" role="img" aria-label="LeaderWorkerSet sees three separate gangs; Grove sees one base gang with prefill and decode plus one scaled gang">
+      <rect x="0" y="0" width="700" height="380" rx="14" class="box"/>
+      <text x="24" y="44" class="lg">LeaderWorkerSet</text>
+      <rect x="30" y="62" width="420" height="40" rx="8" class="sbox"/><text x="240" y="90" class="md b" text-anchor="middle">LWS object · prefill</text>
+      <rect x="480" y="62" width="190" height="40" rx="8" class="sbox"/><text x="575" y="90" class="md b" text-anchor="middle">LWS · decode</text>
+      <g id="lw-u"></g>
+      <text x="465" y="208" class="lg fw" text-anchor="middle">✗</text>
+      <text x="24" y="322" class="md b">3 separate gangs</text>
+      <text x="24" y="354" class="sm">nothing says prefill needs a decode to be useful</text>
+      <rect x="740" y="0" width="700" height="380" rx="14" class="gbox"/>
+      <text x="764" y="44" class="lg fg">Grove</text><text x="868" y="44" class="sm">one PodCliqueSet for the whole service</text>
+      <rect x="772" y="62" width="430" height="230" rx="14" style="fill:var(--grove);fill-opacity:.16;stroke:var(--grove);stroke-width:5"/>
+      <text x="792" y="92" class="md b fg">Base PodGang · start together</text>
+      <rect x="1218" y="62" width="200" height="230" rx="14" class="lng dash" style="stroke-width:3"/>
+      <text x="1236" y="92" class="md b fg">Scaled gang</text>
+      <g id="gr-u"></g>
+      <text x="764" y="322" class="md b">1 “minimum service” gang + extras</text>
+      <text x="764" y="354" class="sm">minAvailable decides what goes in the base gang</text>
+    </svg>
+    <div class="cmp" role="table" aria-label="Capability comparison">
+      <div class="cmp-h" role="row"><span></span><span>LWS</span><span>Grove</span></div>
+      <div class="cmp-r" role="row"><span>Leader + workers of one instance placed together</span><span class="y">✓</span><span class="y">✓</span></div>
+      <div class="cmp-r" role="row"><span>Prefill + decode placed together (a service that can actually answer)</span><span class="n">✗</span><span class="y">✓</span></div>
+      <div class="cmp-r" role="row"><span>Startup order across roles</span><span class="p">within a group</span><span class="y">✓</span></div>
+      <div class="cmp-r" role="row"><span>Scale one role without touching the other</span><span class="y">✓</span><span class="y">✓</span></div>
+    </div>
+  </div>
+  <aside class="notes"><p><b>Same service drawn twice:</b> 2 prefill instances and 1 decode instance, each a leader + worker pod.</p>
+<p><b>LeaderWorkerSet</b> (kubernetes‑sigs/lws) models one multi‑pod role well: each <i>group</i> (leader + workers) can be gang‑scheduled by Volcano or KAI. A disaggregated service needs one LWS per role, and nothing links them, so the scheduler sees three independent units. Startup ordering (<code>LeaderCreated</code> / <code>LeaderReady</code>) applies only inside a group.</p>
+<p><b>Grove</b> describes the whole service as one PodCliqueSet and builds PodGangs from it:</p>
+<ul>
+<li><b>Base PodGang</b> (API role <i>Anchor</i>): all standalone PodCliques plus the first <code>minAvailable</code> replicas of each PodCliqueScalingGroup. Placed all‑or‑nothing: the smallest service that can answer a request.</li>
+<li><b>Scaled PodGangs</b> (role <i>Tail</i>): one per replica above <code>minAvailable</code>, each gang‑scheduled on its own.</li>
+<li><code>minAvailable</code> also drives gang termination: if a group falls below it for longer than <code>TerminationDelay</code>, the gang is torn down and rescheduled.</li>
+<li>Cross‑role startup order: <code>cliqueStartupType</code> AnyOrder (default), InOrder, or Explicit with <code>startsAfter</code>.</li>
+</ul>
+<p>LWS remains a good fit for single‑role multi‑node serving; the gap is cross‑role viability.</p></aside>
+</section>
+
+<!-- Gang story -->
+<section class="slide center" data-title="Why it matters" id="pl-slide">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag b">LeaderWorkerSet</span><span class="tag g">Grove</span><span>Interactive · step through</span></div>
+    <h2>Why it matters when GPUs are scarce</h2>
+    <div class="vsbar">
+      <button class="btn primary" id="st-tight">① Tight capacity</button>
+      <button class="btn" id="st-race">② Two services race</button>
+      <span style="flex:1"></span>
+      <button class="btn" id="st-back">◀ Back</button>
+      <span class="stepn" id="st-n"></span>
+      <button class="btn primary" id="st-next">Next ▶</button>
+    </div>
+    <p class="story-cap" id="st-cap"></p>
+    <div class="vs">
+      <div class="vpanel k"><h3>LeaderWorkerSet</h3><svg class="dg" viewBox="0 0 640 372" id="st-lws" aria-hidden="true"></svg><div class="status" id="st-lws-s"></div></div>
+      <div class="vpanel g"><h3>Grove</h3><svg class="dg" viewBox="0 0 640 372" id="st-grv" aria-hidden="true"></svg><div class="status" id="st-grv-s"></div></div>
+    </div>
+  </div>
+  <aside class="notes"><p><b>Step through two scenarios</b> with ◀ / ▶. Assumptions: 6 nodes; each prefill or decode instance needs 2 nodes (leader + worker); LWS groups are gang‑scheduled one at a time in arrival order; Grove schedules each base PodGang as one unit.</p>
+<p><b>① Tight capacity</b> (3 free nodes, service needs 4). LWS places prefill because that group fits, then decode waits: 16 GPUs are held and no request can be served (prefill has nowhere to send KV). Grove places nothing, so the 3 nodes stay available to other work, then places all 4 pods together when a node frees.</p>
+<p><b>② Two services race</b> (4 free nodes, A and B each need 4). LWS places A·prefill, then B·prefill, and both decodes wait forever: a resource deadlock with 32 GPUs held and both services down. Grove places A whole; B waits cleanly.</p>
+<p><b>Scale‑out of an already running service</b> behaves the same in both systems (one new gang per instance). The difference is only the cross‑role base gang.</p></aside>
+</section>
+
+<!-- 9 Guarantees -->
+<section class="slide center" data-title="What Grove guarantees">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag g">Grove</span><span>On every scale event</span></div>
+    <h2>Scale‑out adds a complete instance</h2>
+    <div class="tiles c3">
+      <div class="tile g">
+        <svg class="dg" viewBox="0 0 420 160" aria-hidden="true">
+          <text x="100" y="28" class="lg fg" text-anchor="middle">✓</text><text x="320" y="28" class="lg fw" text-anchor="middle">✗</text>
+          <rect x="10" y="44" width="85" height="85" rx="8" class="sbox"/><rect x="22" y="56" width="61" height="61" rx="6" class="bdec"/>
+          <rect x="105" y="44" width="85" height="85" rx="8" class="sbox"/><rect x="117" y="56" width="61" height="61" rx="6" class="bdec"/>
+          <rect x="230" y="44" width="85" height="85" rx="8" class="sbox"/><rect x="242" y="56" width="61" height="61" rx="6" class="bdec" opacity=".45"/>
+          <rect x="325" y="44" width="85" height="85" rx="8" class="gf dash"/>
+          <text x="100" y="156" class="sm" text-anchor="middle">both pods</text><text x="320" y="156" class="sm" text-anchor="middle">never half</text>
+        </svg>
+        <h3>Gang scheduling</h3><p>Whole instance or nothing</p>
+      </div>
+      <div class="tile g">
+        <svg class="dg" viewBox="0 0 420 160" aria-hidden="true">
+          <rect x="12" y="14" width="396" height="116" rx="14" class="lng dash"/>
+          <rect x="38" y="38" width="160" height="68" rx="8" class="bpre"/><text x="118" y="80" class="md b fon" text-anchor="middle">prefill ×1</text>
+          <rect x="222" y="38" width="160" height="68" rx="8" class="bdec"/><text x="302" y="80" class="md b fon" text-anchor="middle">decode ×1</text>
+          <text x="210" y="156" class="sm" text-anchor="middle">minimum viable service</text>
+        </svg>
+        <h3>Hierarchical gangs</h3><p>Never prefill without decode</p>
+      </div>
+      <div class="tile g">
+        <svg class="dg" viewBox="0 0 420 160" aria-hidden="true">
+          <rect x="16" y="22" width="200" height="38" rx="6" class="bdec" opacity=".55"/><text x="30" y="49" class="md b">worker</text>
+          <rect x="216" y="78" width="190" height="38" rx="6" class="bdec"/><text x="230" y="105" class="md b fon">leader</text>
+          <path d="M216 62 L216 76" class="ln"/>
+          <text x="230" y="50" class="sm">startsAfter</text>
+          <line x1="16" y1="132" x2="406" y2="132" class="ln" marker-end="url(#ah)"/>
+          <text x="406" y="158" class="sm" text-anchor="end">time</text>
+        </svg>
+        <h3>Startup ordering</h3><p>Roles start in declared order</p>
+      </div>
+      <div class="tile g">
+        <svg class="dg" viewBox="0 0 420 160" aria-hidden="true">
+          <rect x="8" y="10" width="198" height="126" rx="10" class="gf dash"/><rect x="214" y="10" width="198" height="126" rx="10" class="gf dash"/>
+          <text x="22" y="36" class="sm">rack A</text><text x="228" y="36" class="sm">rack B</text>
+          <rect x="22" y="50" width="78" height="70" rx="6" class="bdec"/><rect x="112" y="50" width="78" height="70" rx="6" class="bdec"/>
+          <rect x="15" y="43" width="182" height="84" rx="9" class="lng"/>
+          <rect x="228" y="50" width="78" height="70" rx="6" class="sbox"/><rect x="318" y="50" width="78" height="70" rx="6" class="sbox"/>
+          <text x="210" y="158" class="sm" text-anchor="middle">pack one instance in one rack</text>
+        </svg>
+        <h3>Topology‑aware</h3><p>Set via <code>topologyConstraint</code></p>
+      </div>
+      <div class="tile g">
+        <svg class="dg" viewBox="0 0 420 160" aria-hidden="true">
+          <rect x="12" y="20" width="206" height="112" rx="10" class="lnd dash"/>
+          <rect x="28" y="38" width="82" height="76" rx="6" class="bdec"/><rect x="122" y="38" width="82" height="76" rx="6" class="bdec"/>
+          <path d="M140 52 L186 100 M186 52 L140 100" class="lnw"/>
+          <line x1="228" y1="76" x2="280" y2="76" class="ln" marker-end="url(#ah)"/>
+          <rect x="292" y="20" width="118" height="112" rx="10" class="gf dash"/>
+          <text x="351" y="84" class="sm" text-anchor="middle">removed</text>
+          <text x="210" y="156" class="sm" text-anchor="middle">one pod fails → unit goes</text>
+        </svg>
+        <h3>Gang termination</h3><p>Capacity count stays honest</p>
+      </div>
+      <div class="tile g">
+        <svg class="dg" viewBox="0 0 420 160" aria-hidden="true">
+          <rect x="20" y="36" width="64" height="50" rx="6" class="bpre" opacity=".4"/><rect x="92" y="36" width="64" height="50" rx="6" class="bdec" opacity=".4"/>
+          <text x="88" y="118" class="md" text-anchor="middle">v1</text>
+          <line x1="172" y1="61" x2="244" y2="61" class="ln" marker-end="url(#ah)"/>
+          <rect x="260" y="36" width="64" height="50" rx="6" class="bpre"/><rect x="332" y="36" width="64" height="50" rx="6" class="bdec"/>
+          <text x="328" y="118" class="md b" text-anchor="middle">v2</text>
+          <text x="210" y="156" class="sm" text-anchor="middle">RollingRecreate · OnDelete</text>
+        </svg>
+        <h3>Coherent updates</h3><p>Prefill + decode roll together</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><p>Summary of what Grove adds to every scale event Planner triggers:</p>
+<ul>
+<li><b>Gang scheduling:</b> each instance is a PodGang; all pods bind or none do.</li>
+<li><b>Hierarchical gangs:</b> the base PodGang guarantees a viable service (≥ 1 prefill + ≥ 1 decode) before extras.</li>
+<li><b>Startup ordering:</b> <code>cliqueStartupType</code> / <code>startsAfter</code>, e.g. workers before leader (MPI) or router before workers.</li>
+<li><b>Topology‑aware placement:</b> pack an instance within a rack, block or NVLink domain; spread replicas for availability. Exposed on the DGD as <code>topologyConstraint</code>; a PCSG constraint must be equal to or stricter than the PodCliqueSet's.</li>
+<li><b>Gang termination:</b> below <code>minAvailable</code> (after <code>TerminationDelay</code>), the gang is removed as a unit, so Planner's ready count reflects real serving capacity.</li>
+<li><b>Coherent updates:</b> select the PodCliqueSet update strategy from the DGD with <code>nvidia.com/grove-update-strategy</code> (<code>RollingRecreate</code> or <code>OnDelete</code>).</li>
+</ul>
+<p>Version pairing for Dynamo 1.5.x: KAI Scheduler ≥ v0.17.0, Grove ≥ v0.1.0‑alpha.13 when installed separately.</p></aside>
+</section>
+
+<!-- 10 DEMO -->
+<section class="slide demo-slide" id="demo-slide" data-title="Live simulator">
+  <div class="inner demo">
+    <div class="demo-head">
+      <div style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow"><span class="tag p">Planner</span><span class="tag g">Grove</span><span>Interactive · simplified model</span></div>
+      <h2>Watch a scale decision reach the cluster</h2></div>
+      <p class="hint" style="max-width:560px">Try <b>Burst</b>: the load loop steps +1 before the floor rises. Budget 40 → clamping. Budget 80 + peak 70 + TP16 → the extra decode PodGang stays Pending, never half‑placed. 1 tick = 5 s; throughput loop every 60 s here. Numbers are illustrative.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="col">
+        <div class="ctrls" role="group" aria-label="Simulation controls">
+          <div class="btnrow"><button class="btn primary" id="play">Pause</button><button class="btn" id="burst">Burst</button><button class="btn" id="reset">Reset</button></div>
+          <div class="ctrl"><label for="pattern">Traffic</label><select id="pattern"><option value="diurnal">Diurnal wave</option><option value="ramp">Ramp &amp; hold</option><option value="burst">Bursty</option><option value="steady">Steady</option></select></div>
+          <div class="ctrl"><label for="peak">Peak req/s <output id="peakO"></output></label><input type="range" id="peak" min="5" max="70" step="1" value="40"></div>
+          <div class="ctrl"><label for="isl">ISL <output id="islO"></output></label><input type="range" id="isl" min="500" max="8000" step="250" value="3000"></div>
+          <div class="ctrl"><label for="osl">OSL <output id="oslO"></output></label><input type="range" id="osl" min="100" max="1500" step="50" value="400"></div>
+          <div class="ctrl"><label for="ttft">TTFT SLA <output id="ttftO"></output></label><input type="range" id="ttft" min="200" max="2000" step="50" value="500"></div>
+          <div class="ctrl"><label for="itl">ITL SLA <output id="itlO"></output></label><input type="range" id="itl" min="20" max="120" step="5" value="50"></div>
+          <div class="ctrl"><label for="budget">GPU budget <output id="budgetO"></output></label><input type="range" id="budget" min="8" max="96" step="2" value="56"></div>
+          <div class="ctrl"><label for="shape">Decode shape</label><select id="shape"><option value="multi">TP16 · 2 nodes (PCSG)</option><option value="single">TP4 · 1 pod (PodClique)</option></select></div>
+          <div class="ctrl"><label for="speed">Speed</label><select id="speed"><option value="3">1×</option><option value="6" selected>2×</option><option value="14">5×</option></select></div>
+          <label class="chk"><input type="checkbox" id="thrOn" checked> Throughput loop</label>
+          <label class="chk"><input type="checkbox" id="loadOn" checked> Load loop</label>
+        </div>
+      </div>
+      <div class="col">
+        <div class="kpis">
+          <div class="kpi"><div class="l">Sim time</div><div class="v" id="kT">0:00</div></div>
+          <div class="kpi"><div class="l">Traffic</div><div class="v" id="kL">0 <small>req/s</small></div></div>
+          <div class="kpi"><div class="l">GPUs / budget</div><div class="v" id="kG">–</div></div>
+          <div class="kpi" id="kTTFTb"><div class="l">Est. TTFT</div><div class="v" id="kTTFT">–</div></div>
+          <div class="kpi" id="kITLb"><div class="l">Est. ITL</div><div class="v" id="kITL">–</div></div>
+          <div class="kpi"><div class="l">SLA met</div><div class="v" id="kS">–</div></div>
+        </div>
+        <div class="panel"><h4><span>Traffic vs forecast</span><span>req/s</span></h4><canvas class="chart" id="cTraffic"></canvas>
+          <div class="legend"><span><i style="background:var(--ink)"></i>observed</span><span><i style="background:var(--planner)"></i>Planner forecast</span></div></div>
+        <div class="panel"><h4><span>Replicas: target vs ready</span><span>engines</span></h4><canvas class="chart" id="cRep"></canvas>
+          <div class="legend"><span><i style="background:var(--prefill);opacity:.45"></i>prefill target</span><span><i style="background:var(--prefill)"></i>ready</span><span><i style="background:var(--decode);opacity:.45"></i>decode target</span><span><i style="background:var(--decode)"></i>ready</span></div></div>
+        <div class="panel"><h4><span>Latency as % of SLA</span><span>100% = SLA</span></h4><canvas class="chart" id="cLat"></canvas>
+          <div class="legend"><span><i style="background:var(--prefill)"></i>TTFT</span><span><i style="background:var(--decode)"></i>ITL</span><span><i style="background:var(--warn)"></i>SLA</span></div></div>
+      </div>
+      <div class="col">
+        <div class="panel"><h4><span>Cluster · 8 nodes × 8 GPUs</span><span id="free">–</span></h4>
+          <div class="racks" id="racks"></div>
+          <div class="legend"><span><i style="background:var(--prefill)"></i>prefill</span><span><i style="background:var(--decode)"></i>decode</span><span>striped = starting</span><span>outlined = waiting</span></div>
+        </div>
+        <div class="panel"><h4><span>Grove resources (from DGD)</span><span>PodGangs</span></h4><div class="res" id="res"></div><div class="gangs" id="gangs"></div></div>
+        <div class="panel grow"><h4><span>Event log</span><span>newest first</span></h4><div class="log" id="log" aria-live="off"></div></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><p><b>End‑to‑end sandbox:</b> Planner → DGD → Grove → KAI → pods on an 8‑node × 8‑GPU cluster (two racks).</p>
+<ul>
+<li><b>Controls:</b> traffic pattern, peak req/s, ISL/OSL, TTFT/ITL SLA, GPU budget, decode shape (TP16 two‑node PCSG vs TP4 single‑pod PodClique), loop toggles, speed.</li>
+<li><b>Charts:</b> traffic vs forecast, target vs ready replicas, latency as % of SLA.</li>
+<li><b>Cluster:</b> GPUs coloured by role; striped = starting, outlined = leader waiting on <code>startsAfter</code>.</li>
+<li><b>Event log:</b> each line is tagged PLANNER, OPERATOR, GROVE, KAI or POD so you can follow one decision through every layer.</li>
+</ul>
+<p><b>Try:</b> Burst (live loop reacts first), budget 40 (clamping), budget 80 with peak 70 and TP16 (a decode PodGang stays Pending instead of half‑placing).</p>
+<p><b>Simplifications:</b> 1 tick = 5 s; forecast every 60 s instead of 180 s; linear‑trend predictor; made‑up engine capacities and latency curves; rack packing is "preferred", not required.</p></aside>
+</section>
+
+<!-- 11 GlobalPlanner -->
+<section class="slide center" data-title="GlobalPlanner">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag p">Planner</span><span>Beyond one DGD</span></div>
+    <h2>One Planner per DGD; GlobalPlanner coordinates many</h2>
+    <svg class="dg" viewBox="0 0 1440 600" role="img" aria-label="Control DGD with Frontend, GlobalRouter and GlobalPlanner above three pool DGDs, each with its own Planner and PodCliqueSet">
+      <rect x="120" y="76" width="150" height="56" rx="28" class="box"/><text x="195" y="112" class="mo" text-anchor="middle">clients</text>
+      <rect x="340" y="10" width="760" height="190" rx="16" class="box" style="stroke-width:2.5"/>
+      <text x="362" y="44" class="sm">Control DGD</text>
+      <rect x="372" y="64" width="190" height="96" rx="10" class="sbox"/><text x="467" y="121" class="md b" text-anchor="middle">Frontend</text>
+      <rect x="616" y="64" width="210" height="96" rx="10" class="sbox"/><text x="721" y="121" class="md b" text-anchor="middle">GlobalRouter</text>
+      <rect x="870" y="64" width="210" height="96" rx="10" class="pbox"/><text x="975" y="121" class="md b fp" text-anchor="middle">GlobalPlanner</text>
+      <line x1="272" y1="104" x2="366" y2="104" class="ln" marker-end="url(#ah)"/>
+      <line x1="564" y1="112" x2="610" y2="112" class="ln" marker-end="url(#ah)"/>
+      <text x="1120" y="94" class="mo fp" style="font-size:19px">--max-total-gpus</text>
+      <text x="1120" y="130" class="mo fp" style="font-size:19px">--managed-namespaces</text>
+      <!-- pools -->
+      <g>
+        <rect x="0" y="360" width="420" height="230" rx="16" class="box" style="stroke-width:2.5"/>
+        <text x="22" y="398" class="md b">Prefill pool · short ISL</text>
+        <rect x="22" y="420" width="170" height="54" rx="8" class="sbox"/><text x="107" y="455" class="sm" text-anchor="middle" style="fill:var(--ink)">LocalRouter</text>
+        <rect x="228" y="420" width="170" height="54" rx="8" class="pbox"/><text x="313" y="455" class="sm b fp" text-anchor="middle">Planner</text>
+        <g class="bpre"><rect x="22" y="492" width="36" height="36" rx="4"/><rect x="64" y="492" width="36" height="36" rx="4"/><rect x="106" y="492" width="36" height="36" rx="4"/></g>
+        <text x="22" y="570" class="sm fg">own PodCliqueSet</text>
+      </g>
+      <g>
+        <rect x="510" y="360" width="420" height="230" rx="16" class="box" style="stroke-width:2.5"/>
+        <text x="532" y="398" class="md b">Prefill pool · long ISL</text>
+        <rect x="532" y="420" width="170" height="54" rx="8" class="sbox"/><text x="617" y="455" class="sm" text-anchor="middle" style="fill:var(--ink)">LocalRouter</text>
+        <rect x="738" y="420" width="170" height="54" rx="8" class="pbox"/><text x="823" y="455" class="sm b fp" text-anchor="middle">Planner</text>
+        <g class="bpre"><rect x="532" y="492" width="36" height="36" rx="4"/><rect x="574" y="492" width="36" height="36" rx="4"/><rect x="616" y="492" width="36" height="36" rx="4"/><rect x="658" y="492" width="36" height="36" rx="4"/><rect x="700" y="492" width="36" height="36" rx="4"/></g>
+        <text x="532" y="570" class="sm fg">own PodCliqueSet</text>
+      </g>
+      <g>
+        <rect x="1020" y="360" width="420" height="230" rx="16" class="box" style="stroke-width:2.5"/>
+        <text x="1042" y="398" class="md b">Decode pool</text>
+        <rect x="1042" y="420" width="170" height="54" rx="8" class="sbox"/><text x="1127" y="455" class="sm" text-anchor="middle" style="fill:var(--ink)">LocalRouter</text>
+        <rect x="1248" y="420" width="170" height="54" rx="8" class="pbox"/><text x="1333" y="455" class="sm b fp" text-anchor="middle">Planner</text>
+        <g class="bdec"><rect x="1042" y="492" width="36" height="36" rx="4"/><rect x="1084" y="492" width="36" height="36" rx="4"/><rect x="1126" y="492" width="36" height="36" rx="4"/><rect x="1168" y="492" width="36" height="36" rx="4"/></g>
+        <text x="1042" y="570" class="sm fg">own PodCliqueSet</text>
+      </g>
+      <!-- routing -->
+      <path d="M700 162 L107 414" class="ln" marker-end="url(#ah)"/>
+      <path d="M715 162 L617 414" class="ln" marker-end="url(#ah)"/>
+      <path d="M735 162 L1127 414" class="ln" marker-end="url(#ah)"/>
+      <!-- scale requests -->
+      <path d="M313 416 L940 166" class="lnp dash" marker-end="url(#ahp)"/>
+      <path d="M823 416 L975 166" class="lnp dash" marker-end="url(#ahp)"/>
+      <path d="M1333 416 L1010 166" class="lnp dash" marker-end="url(#ahp)"/>
+      <text x="1190" y="234" class="sm fp b">⇢ scale requests</text><text x="1190" y="262" class="sm">budget check, then apply</text>
+      <text x="40" y="234" class="sm b" style="fill:var(--ink)">→ requests</text><text x="40" y="262" class="sm">routed by ISL + SLA target</text>
+    </svg>
+  </div>
+  <aside class="notes"><p>A local Planner manages exactly one DGD. <b>GlobalPlanner</b> centralises scaling across several.</p>
+<ul>
+<li><b>Pattern 1 · shared policy:</b> independent DGDs (often different models) keep their own endpoints. Each local Planner sets <code>environment: global-planner</code> and <code>global_planner_namespace</code>; GlobalPlanner authorises callers (<code>--managed-namespaces</code>) and enforces a total budget (<code>--max-total-gpus</code>). No GlobalRouter needed.</li>
+<li><b>Pattern 2 · one endpoint, many pools</b> (shown): a control DGD (Frontend + GlobalRouter + GlobalPlanner) fronts private pool DGDs. GlobalRouter picks a prefill pool by ISL and TTFT target, and a decode pool by context length and ITL target. Pool Planners must use <code>throughput_metrics_source: router</code> so they forecast from their own LocalRouter.</li>
+</ul>
+<p>Grove is unchanged: each pool DGD is its own PodCliqueSet with its own gangs.</p>
+<p>Limitation today: one DGDR does not generate the multi‑pool topology; profile each pool separately and compose the DGDs by hand.</p></aside>
+</section>
+
+<!-- 12 Operating notes -->
+<section class="slide center" data-title="Operating notes">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag b">Operating notes</span></div>
+    <h2>Things that bite in practice</h2>
+    <div class="tiles c3">
+      <div class="tile"><span class="val">Δt</span><h3>Interval ≥ time‑to‑ready</h3><p>Otherwise ticks just hold. Multinode gangs are slowest.</p></div>
+      <div class="tile"><span class="val">μ</span><h3>Averages hide tails</h3><p>Bimodal ISL? Split into pools under GlobalPlanner.</p></div>
+      <div class="tile"><span class="val">1</span><h3>One autoscaler per service</h3><p>HPA on Frontend + Planner on workers. Never both on decode.</p></div>
+      <div class="tile"><span class="val">≥1</span><h3>No scale‑to‑zero</h3><p>Zero workers = model leaves <code>/v1/models</code>, no signal to return.</p></div>
+      <div class="tile"><span class="val">≠</span><h3>Budget ≠ cluster</h3><p>Planner caps the ask; KAI decides what fits. Misfits stay Pending.</p></div>
+      <div class="tile"><span class="val">1.5</span><h3>Version pairing</h3><p>KAI ≥ v0.17.0 · Grove ≥ v0.1.0‑alpha.13 when installed externally.</p></div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+<li><b>Interval ≥ time‑to‑ready.</b> If an interval is shorter than scheduling + model load + registration, ticks see a transition in progress and hold. Multinode gangs are slowest; size <code>throughput_adjustment_interval_seconds</code> accordingly.</li>
+<li><b>Averages hide tails.</b> The forecast uses mean ISL/OSL. For bimodal traffic, split into pools behind GlobalPlanner.</li>
+<li><b>One autoscaler per service.</b> HPA/KEDA on the Frontend plus Planner on workers is fine; two autoscalers on decode will fight.</li>
+<li><b>No scale‑to‑zero for workers.</b> With zero workers the model disappears from <code>/v1/models</code>, so there is no demand signal to scale back up. Keep min 1.</li>
+<li><b>Budget ≠ cluster capacity.</b> <code>max_gpu_budget</code> (default 8) caps what Planner asks for; KAI decides what fits. A gang that doesn't fit stays Pending and Planner holds that role.</li>
+<li><b>Version pairing.</b> Dynamo 1.5.x with external installs: KAI ≥ v0.17.0, Grove ≥ v0.1.0‑alpha.13.</li>
+</ul>
+<p>Useful signals: <code>dynamo_planner_estimated_ttft_ms</code>, <code>dynamo_planner_estimated_itl_ms</code>, <code>dynamo_planner_predicted_num_prefill_replicas</code>/<code>_decode_replicas</code>, and the load‑scaling decision enum.</p></aside>
+</section>
+
+<!-- 13 Sources -->
+<section class="slide center" data-title="Sources">
+  <div class="inner">
+    <div class="eyebrow"><span class="tag b">Sources</span><span>Checked October 2026</span></div>
+    <h2>References</h2>
+    <div class="tiles c2" style="font-size:20px">
+      <a class="tile" href="https://docs.nvidia.com/dynamo/knowledge-base/modular-components/planner/planner-design.md" target="_blank" rel="noopener">Planner Design (v1.5.1)</a>
+      <a class="tile" href="https://docs.nvidia.com/dynamo/knowledge-base/modular-components/planner/planner-guide.md" target="_blank" rel="noopener">Planner Guide · PlannerConfig</a>
+      <a class="tile" href="https://docs.nvidia.com/dynamo/knowledge-base/modular-components/planner/global-planner-guide.md" target="_blank" rel="noopener">Global Planner Deployment Guide</a>
+      <a class="tile" href="https://docs.dynamo.nvidia.com/dynamo/v1.3.0/kubernetes-deployment/operate/autoscaling.md" target="_blank" rel="noopener">Autoscaling with DGDSA</a>
+      <a class="tile" href="https://docs.nvidia.com/dynamo/v1.2.1/kubernetes-deployment/scale/grove.md" target="_blank" rel="noopener">Grove in Dynamo docs</a>
+      <a class="tile" href="https://docs.nvidia.com/dynamo/kubernetes/installation/multinode-orchestration.md" target="_blank" rel="noopener">Multinode Orchestration (versions)</a>
+      <a class="tile" href="https://github.com/ai-dynamo/grove/blob/main/docs/api-reference/operator-api.md" target="_blank" rel="noopener">Grove API reference (PodGang, minAvailable)</a>
+      <a class="tile" href="https://blog.aks.azure.com/2026/06/02/dynamo-on-aks-part-4" target="_blank" rel="noopener">Dynamo‑Grove on AKS (Part 4)</a>
+    </div>
+    <p class="cap" style="font-size:19px">Interactive slides are teaching models: documented control logic, made‑up capacities and latency curves.</p>
+  </div>
+  <aside class="notes"><p>Each link backs specific slides:</p>
+<ul>
+<li><b>Planner Design / Guide:</b> pipeline, loops, defaults, connectors (slides 4–8).</li>
+<li><b>Planner source</b> (<code>components/src/dynamo/planner</code>, main @ 7b0e63e): <code>core/state_machine.py</code>, <code>core/throughput_scaling.py</code>, <code>core/load_scaling.py</code>, <code>core/perf_model/</code>, <code>config/defaults.py</code>, <code>config/planner_config.py</code>.</li>
+<li><b>Global Planner Guide:</b> slide 16.</li>
+<li><b>Autoscaling with DGDSA:</b> slide 10 and the one‑autoscaler rule.</li>
+<li><b>Grove docs, API reference, AKS Part 4 blog:</b> slides 11–14.</li>
+<li><b>Multinode orchestration:</b> version pairing and Grove vs LWS selection.</li>
+</ul>
+<p>Not verified: internals of AISimulate's <code>RustForwardPassPerfModel</code>, and the Kubernetes connector's exact apply path.</p></aside>
+</section>
+
+<div class="foot"><span>Planner × Grove · NVIDIA Dynamo</span><span id="footcount"></span></div>
+</div>
+</div>
+
+<nav class="hud" id="hud" aria-label="Slide navigation">
+  <button class="navbtn" id="prev" aria-label="Previous slide">←</button>
+  <span class="count" id="count"></span>
+  <button class="navbtn" id="next" aria-label="Next slide">→</button>
+  <button class="navbtn" id="notesbtn" aria-label="Toggle notes" aria-expanded="false">Notes</button>
+  <button class="navbtn fs" id="fs" aria-label="Toggle full screen">Full screen</button>
+</nav>
+<div class="toast" id="toast" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Slide notes"><div class="dh"><span id="dnum"></span><button class="navbtn" id="dclose" aria-label="Close notes">✕</button></div><h2 id="dtitle"></h2><div id="dbody"></div></aside>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+/* ---------------- Stage scaling ---------------- */
+const STAGE_W=1600, STAGE_H=900;
+const stage=$('#stage');
+let scale=1, flow=false;
+function layout(){
+  const W=window.innerWidth, H=window.innerHeight;
+  flow = W<480 && H>W;   // only phones in portrait scroll; previews and narrow panels keep the 16:9 stage
+  const dr=document.body.classList.contains('notes-open')&&!flow?Math.min(520,W*0.92):0;
+  const vw=Math.max(200,W-dr), vh=H;
+  document.body.classList.toggle('flow',flow);
+  if(flow){scale=1;stage.style.transform='';}
+  else{scale=Math.min(vw/STAGE_W,vh/STAGE_H);stage.style.transform='translate(-50%,-50%) scale('+scale+')';}
+  fitActive();
+  if(S) render();
+}
+function fitActive(){
+  const sl=slides[cur]; if(!sl) return;
+  const inner=sl.querySelector('.inner'); inner.style.transform='';
+  if(flow||sl.id==='demo-slide') return;
+  const cs=getComputedStyle(sl);
+  const avail=sl.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  const need=inner.offsetHeight;
+  if(need>avail){inner.style.transform='scale('+(avail/need).toFixed(4)+')';}
+}
+
+/* ---------------- Deck ---------------- */
+const slides=[...document.querySelectorAll('.slide')];
+let cur=-1;
+window.__deckGo = i => go(i);
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));
+  if(i===cur) return;
+  slides.forEach((s,k)=>{const on=k===i;s.classList.toggle('active',on);s.setAttribute('aria-hidden',String(!on));});
+  cur=i;
+  const c=String(i+1).padStart(2,'0')+' / '+slides.length;
+  $('#count').textContent=c; $('#footcount').textContent=c;
+  $('#prev').disabled=i===0;$('#next').disabled=i===slides.length-1;
+  $('#prog').style.width=((i+1)/slides.length*100)+'%';
+  try{history.replaceState(null,'','#s'+(i+1));}catch(e){}
+  requestAnimationFrame(fitActive);
+  fillNotes();
+  if(slides[i].id==='demo-slide') Sim.show(); else Sim.hide();
+  pgVis(slides[i].id==='pg-slide');
+}
+$('#prev').addEventListener('click',()=>go(cur-1));
+$('#next').addEventListener('click',()=>go(cur+1));
+
+let toastT=null;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200);}
+function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+function toggleFs(){
+  try{
+    if(isFs()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return;}
+    const el=document.documentElement, req=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(!req) throw new Error('unsupported');
+    const p=req.call(el); if(p&&p.catch) p.catch(()=>toast('Full screen was blocked here. Use your browser’s full screen (F11, or ⌃⌘F on Mac).'));
+  }catch(e){toast('Full screen is not available here. Use your browser’s full screen (F11, or ⌃⌘F on Mac).');}
+}
+$('#fs').addEventListener('click',toggleFs);
+function fsLabel(){$('#fs').textContent=isFs()?'Exit full screen':'Full screen';}
+document.addEventListener('fullscreenchange',()=>{fsLabel();layout();});
+document.addEventListener('webkitfullscreenchange',()=>{fsLabel();layout();});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target&&e.target.tagName)||'';
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
+  if(tag==='BUTTON'&&(e.key===' '||e.key==='Enter')) return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(slides.length-1);}
+  else if(e.key==='f'||e.key==='F'){toggleFs();}
+  else if(e.key==='n'||e.key==='N'){toggleNotes();}
+  wake();
+});
+let idleT=null;
+function wake(){const h=$('#hud');h.classList.remove('idle');clearTimeout(idleT);if(!flow)idleT=setTimeout(()=>h.classList.add('idle'),2500);}
+document.addEventListener('mousemove',wake);
+let tx=null;
+$('#viewport').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;wake();},{passive:true});
+$('#viewport').addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;tx=null;
+  if(e.target.closest&&e.target.closest('.ctrls,.chart,input,.log'))return;
+  if(Math.abs(dx)>70) go(cur+(dx<0?1:-1));},{passive:true});
+
+/* ---------------- Two-loops chart (slide 5) ---------------- */
+function drawLoops(){
+  const X0=60,X1=1050,Y0=290,Y1=34,T=72,YM=10;
+  const x=t=>X0+(X1-X0)*t/T, y=v=>Y0-(Y0-Y1)*v/YM;
+  const base=t=>2.6+3.4*(0.5-0.5*Math.cos(2*Math.PI*t/T));
+  const burst=t=>2.6*Math.exp(-Math.pow((t-47)/2.4,2));
+  const dem=t=>base(t)+burst(t);
+  let o='';
+  for(let v=0;v<=YM;v+=5){o+='<line x1="'+X0+'" y1="'+y(v)+'" x2="'+X1+'" y2="'+y(v)+'" class="grid"/><text x="'+(X0-14)+'" y="'+(y(v)+7)+'" class="sm" text-anchor="end">'+v+'</text>';}
+  for(let k=1;k<6;k++){o+='<line x1="'+x(k*12)+'" y1="'+Y1+'" x2="'+x(k*12)+'" y2="'+Y0+'" class="grid" stroke-dasharray="4 6"/>';}
+  o+='<text x="'+(x(12)+8)+'" y="'+(Y1+20)+'" class="sm">180 s</text>';
+  o+='<text x="'+X0+'" y="'+(Y1-12)+'" class="sm">replicas</text><text x="'+X1+'" y="'+(Y0+32)+'" class="sm" text-anchor="end">time →</text>';
+  let d='';for(let t=0;t<=T;t+=0.5){d+=(t?'L':'M')+x(t).toFixed(1)+' '+y(dem(t)).toFixed(1)+' ';}
+  o+='<path d="'+d+'" class="ln"/>';
+  const floorAt=t=>{const k=Math.min(5,Math.floor(t/12));let m=0;for(let s=k*12;s<=k*12+12;s+=.5)m=Math.max(m,base(s));return Math.ceil(m);};
+  let f='';for(let k=0;k<6;k++){const v=floorAt(k*12);f+=(k?'L'+x(k*12)+' '+y(v)+' ':'M'+x(0)+' '+y(v)+' ')+'L'+x(k*12+12)+' '+y(v)+' ';}
+  o+='<path d="'+f+'" class="lnp" style="stroke-width:9;opacity:.85"/>';
+  let a=floorAt(0),p='M'+x(0)+' '+y(a)+' ';
+  for(let t=1;t<=T;t++){const fl=floorAt(t),need=Math.ceil(dem(t)+0.15);
+    if(need>a)a++;else if(need<a&&t%2===0)a--; a=Math.max(a,fl);
+    p+='L'+x(t)+' '+y(a)+' ';}
+  // stepped version
+  const pts=p.trim().split('L').map(s=>s.replace('M','').trim().split(' ').map(Number));
+  let sp='M'+pts[0][0]+' '+pts[0][1]+' ';for(let i=1;i<pts.length;i++){sp+='L'+pts[i][0]+' '+pts[i-1][1]+' L'+pts[i][0]+' '+pts[i][1]+' ';}
+  o+='<path d="'+sp+'" style="stroke:var(--prefill);stroke-width:5;fill:none"/>';
+  o+='<text x="'+x(47)+'" y="'+(y(dem(47))-26)+'" class="md b" text-anchor="middle">burst</text>';
+  o+='<text x="'+(x(47)+14)+'" y="'+(y(dem(47))+2)+'" class="sm" style="fill:var(--prefill)">+1, +1 …</text>';
+  $('#loopplot').innerHTML=o;
+}
+
+/* ---------------- Simulator ---------------- */
+const TICK=5, THR_TICKS=12, HIST=240, NODES=8, GPN=8;
+const RACKS=[[0,1,2,3],[4,5,6,7]];
+const SHAPES={
+  prefill:{name:'prefill',pods:[{role:'engine',gpus:2}],cap:24000,start:[9]},
+  single:{name:'decode',pods:[{role:'engine',gpus:4}],cap:6000,start:[12]},
+  multi:{name:'decode',pods:[{role:'worker',gpus:8},{role:'leader',gpus:8}],cap:20000,start:[12,6]}
+};
+const cfg={};
+function readCfg(){
+  cfg.pattern=$('#pattern').value; cfg.peak=+$('#peak').value; cfg.isl=+$('#isl').value; cfg.osl=+$('#osl').value;
+  cfg.ttft=+$('#ttft').value; cfg.itl=+$('#itl').value; cfg.budget=+$('#budget').value;
+  cfg.thrOn=$('#thrOn').checked; cfg.loadOn=$('#loadOn').checked; cfg.speed=+$('#speed').value;
+  $('#peakO').textContent=cfg.peak; $('#islO').textContent=cfg.isl; $('#oslO').textContent=cfg.osl;
+  $('#ttftO').textContent=cfg.ttft+' ms'; $('#itlO').textContent=cfg.itl+' ms'; $('#budgetO').textContent=cfg.budget;
+}
+let S=null, shapeKey='multi';
+const shapeOf=c=>c==='prefill'?SHAPES.prefill:SHAPES[shapeKey];
+const gpusPer=c=>shapeOf(c).pods.reduce((a,p)=>a+p.gpus,0);
+const fmtT=t=>{const m=Math.floor(t/60),s=t%60;return m+':'+String(s).padStart(2,'0');};
+let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+function log(src,msg){S.log.unshift({t:S.t,src,msg}); if(S.log.length>120) S.log.pop(); S.logDirty=true;}
+function traffic(t){
+  const P=cfg.peak; let v;
+  switch(cfg.pattern){
+    case 'steady': v=0.6*P; break;
+    case 'ramp': v=P*(0.15+0.85*Math.min(1,t/600)); break;
+    case 'burst': v=0.35*P+((t%600)>=300&&(t%600)<390?0.65*P:0); break;
+    default: v=P*(0.18+0.82*(0.5-0.5*Math.cos(2*Math.PI*t/1200)));
+  }
+  v+=S.burst; v*=(0.95+0.1*rnd());
+  return Math.max(0,v);
+}
+function count(c){return S.inst.filter(i=>i.comp===c).length;}
+function ready(c){return S.inst.filter(i=>i.comp===c&&i.state==='ready').length;}
+function usedGPUs(){let n=0;S.nodes.forEach(r=>r.forEach(x=>{if(x)n++;}));return n;}
+function createInstance(c){
+  const sh=shapeOf(c); const id=c+'-'+(S.nextId[c]++);
+  const inst={id,comp:c,state:'pending',pods:sh.pods.map(p=>({role:p.role,gpus:p.gpus,node:-1,state:'pending'})),timer:0,phase:0,created:S.t,warned:false};
+  S.inst.push(inst); return inst;
+}
+function freeOn(n){return S.nodes[n].filter(x=>!x).length;}
+function planIn(pods,set,free){
+  const f=free.slice(),plan=[];
+  for(const p of pods){let best=-1;for(const n of set){if(f[n]>=p.gpus&&(best<0||f[n]<f[best]))best=n;}
+    if(best<0)return null; f[best]-=p.gpus; plan.push(best);}
+  return plan;
+}
+function tryPlace(inst,quiet){
+  const free=S.nodes.map((_,n)=>freeOn(n)); const all=[...Array(NODES).keys()];
+  let plan=null,packed=true,rackName='';
+  if(inst.pods.length>1){
+    for(let r=0;r<RACKS.length;r++){plan=planIn(inst.pods,RACKS[r],free);if(plan){rackName='rack '+'AB'[r];break;}}
+    if(!plan){plan=planIn(inst.pods,all,free);packed=false;}
+  } else plan=planIn(inst.pods,all,free);
+  if(!plan) return false;
+  inst.pods.forEach((p,i)=>{p.node=plan[i];let need=p.gpus;const row=S.nodes[plan[i]];
+    for(let g=0;g<GPN&&need>0;g++){if(!row[g]){row[g]={inst:inst.id,comp:inst.comp,pod:p};need--;}}});
+  const sh=shapeOf(inst.comp);
+  if(inst.pods.length>1) inst.pods.forEach(p=>p.state=p.role==='leader'?'waiting':'starting');
+  else inst.pods[0].state='starting';
+  inst.state='starting'; inst.timer=sh.start[0]; inst.phase=0;
+  if(!quiet){
+    const where=[...new Set(plan)].map(n=>'node-'+n).join(', ');
+    log('kai','PodGang '+inst.id+' bound all-or-nothing → '+where+(inst.pods.length>1?(packed?' (packed in '+rackName+')':' (pack relaxed: spans racks)'):''));
+    if(inst.pods.length>1) log('pod',inst.id+': worker starting; leader waits (startsAfter worker)');
+  }
+  return true;
+}
+function release(inst){
+  S.nodes.forEach(r=>{for(let g=0;g<GPN;g++){if(r[g]&&r[g].inst===inst.id)r[g]=null;}});
+  S.inst=S.inst.filter(i=>i!==inst);
+}
+function reset(){
+  readCfg(); seed=7; shapeKey=$('#shape').value;
+  S={t:0,tick:0,inst:[],nextId:{prefill:0,decode:0},nodes:Array.from({length:NODES},()=>Array(GPN).fill(null)),
+     target:{prefill:1,decode:1},floor:{prefill:1,decode:1},backlog:0,hist:[],obs:[],log:[],burst:0,pred:null,
+     ok:0,n:0,holdLogged:{prefill:false,decode:false},logDirty:true,ttft:0,itl:0,lam:0};
+  const p=createInstance('prefill'),d=createInstance('decode');
+  tryPlace(p,true);tryPlace(d,true);
+  [p,d].forEach(i=>{i.state='ready';i.pods.forEach(x=>x.state='ready');});
+  log('kai','Base PodGang scheduled: 1 prefill + 1 decode together (hierarchical gang minimum)');
+  log('operator','DGD llama-disagg reconciled → PodCliqueSet with prefill '+(shapeKey==='multi'?'PodClique + decode PodCliqueScalingGroup (nodeCount 2)':'and decode PodCliques'));
+  render();
+}
+function setTarget(c,v,why){
+  const other=c==='prefill'?'decode':'prefill';
+  const maxV=Math.floor((cfg.budget-S.target[other]*gpusPer(other))/gpusPer(c));
+  let nv=Math.max(1,v), clamped=false;
+  if(nv>maxV){nv=Math.max(1,maxV);clamped=true;}
+  const old=S.target[c];
+  if(clamped&&nv<=old&&v>old){
+    if(!S['clampLog'+c]||S.t-S['clampLog'+c]>60){log('planner','CONSTRAIN: '+c+' '+old+'→'+v+' rejected by max_gpu_budget='+cfg.budget+' (needs '+((S.target[other]*gpusPer(other))+v*gpusPer(c))+' GPUs)');S['clampLog'+c]=S.t;}
+    return;
+  }
+  if(nv===old) return;
+  S.target[c]=nv;
+  log('planner',why+': '+c+' '+old+'→'+nv+(clamped?' (clamped by max_gpu_budget)':''));
+  log('operator','PATCH DGD .spec.services.'+c+'.replicas = '+nv);
+}
+function groveReconcile(){
+  for(const c of ['prefill','decode']){
+    const have=count(c), want=S.target[c];
+    const kind=(c==='decode'&&shapeKey==='multi')?'PodCliqueScalingGroup':'PodClique';
+    if(want>have){
+      const ids=[];for(let k=have;k<want;k++)ids.push(createInstance(c).id);
+      log('grove',kind+' '+c+' replicas '+have+'→'+want+'; PodGang '+ids.join(', ')+' created');
+    } else if(want<have){
+      for(let k=have;k>want;k--){
+        const list=S.inst.filter(i=>i.comp===c);
+        const order={pending:0,starting:1,ready:2};
+        list.sort((a,b)=>(order[a.state]-order[b.state])||(b.created-a.created));
+        const v=list[0]; release(v);
+        log('grove',kind+' '+c+' replicas '+k+'→'+(k-1)+'; '+v.id+' terminated as a gang');
+      }
+    }
+  }
+}
+function schedule(){
+  for(const inst of S.inst){
+    if(inst.state!=='pending')continue;
+    if(!tryPlace(inst,false)&&!inst.warned){inst.warned=true;
+      log('kai','PodGang '+inst.id+' Pending: needs '+inst.pods.map(p=>p.gpus).join('+')+' GPUs as a unit; no partial placement');}
+  }
+}
+function progress(){
+  for(const inst of S.inst){
+    if(inst.state!=='starting')continue;
+    if(--inst.timer>0)continue;
+    const sh=shapeOf(inst.comp);
+    if(inst.pods.length>1&&inst.phase===0){
+      inst.phase=1;inst.timer=sh.start[1];
+      inst.pods.forEach(p=>p.state=p.role==='leader'?'starting':'ready');
+      log('pod',inst.id+': worker Ready → leader starts');
+    } else {
+      inst.state='ready';inst.pods.forEach(p=>p.state='ready');
+      log('pod',inst.id+' Ready; registered with Dynamo discovery');
+    }
+  }
+}
+function estimate(lam,nP,nD,backlog){
+  const capP=nP*SHAPES.prefill.cap, dP=lam*cfg.isl, base=cfg.isl/SHAPES.prefill.cap*1000;
+  let ttft=5000;
+  if(capP>0){const r=dP/capP;ttft=base/(1-Math.min(r,0.97))+(backlog||0)/capP*1000;}
+  const capD=nD*SHAPES[shapeKey].cap, dD=lam*cfg.osl;
+  let itl=400;
+  if(capD>0){const r=dD/capD,rc=Math.min(r,1);itl=10+20*rc/(1.05-rc)+Math.max(0,r-1)*150;}
+  return {ttft:Math.min(ttft,5000),itl:Math.min(itl,400)};
+}
+function pending(c){return S.inst.some(i=>i.comp===c&&i.state!=='ready')||count(c)!==S.target[c];}
+function plannerThroughput(){
+  const rec=S.obs.slice(-THR_TICKS);
+  const n=rec.length; let avg=rec.reduce((a,b)=>a+b,0)/n, slope=0;
+  if(n>2){const mx=(n-1)/2;let num=0,den=0;rec.forEach((y,x)=>{num+=(x-mx)*(y-avg);den+=(x-mx)*(x-mx);});slope=num/den;}
+  const pred=Math.max(0,avg+slope*THR_TICKS);
+  S.pred=pred;
+  const base=cfg.isl/SHAPES.prefill.cap*1000;
+  const rP=Math.max(0.05,1-base/cfg.ttft);
+  const rD=Math.min(0.95,Math.max(0.05,1.05*(cfg.itl-10)/(cfg.itl+10)));
+  const fP=Math.max(1,Math.ceil(pred*cfg.isl/(SHAPES.prefill.cap*rP)));
+  const fD=Math.max(1,Math.ceil(pred*cfg.osl/(SHAPES[shapeKey].cap*rD)));
+  S.floor={prefill:fP,decode:fD};
+  log('planner','PREDICT: next interval ≈ '+pred.toFixed(1)+' req/s (ISL '+cfg.isl+', OSL '+cfg.osl+') → PROPOSE floor P='+fP+' D='+fD);
+  for(const c of ['prefill','decode']){
+    const want=cfg.loadOn?Math.max(S.floor[c],S.target[c]):S.floor[c];
+    setTarget(c,want,'throughput');
+  }
+}
+function plannerLoad(est){
+  const defs={prefill:{e:est.ttft,s:cfg.ttft,lbl:'TTFT'},decode:{e:est.itl,s:cfg.itl,lbl:'ITL'}};
+  for(const c of ['prefill','decode']){
+    const d=defs[c];
+    if(pending(c)){
+      if((d.e>d.s)&&!S.holdLogged[c]){log('planner','load: '+c+' over SLA but a scale is still in progress → hold');S.holdLogged[c]=true;}
+      continue;
+    }
+    S.holdLogged[c]=false;
+    const fl=cfg.thrOn?S.floor[c]:1;
+    if(d.e>d.s){ setTarget(c,S.target[c]+1,'load ('+d.lbl+' '+Math.round(d.e)+' > '+d.s+' ms)'); }
+    else if(d.e<d.s*0.8&&S.target[c]>fl){
+      const nP=c==='prefill'?ready('prefill')-1:ready('prefill'), nD=c==='decode'?ready('decode')-1:ready('decode');
+      const w=estimate(S.lam,nP,nD,0); const we=c==='prefill'?w.ttft:w.itl;
+      if(we<d.s*0.9) setTarget(c,S.target[c]-1,'load ('+d.lbl+' '+Math.round(d.e)+' < 0.8×SLA)');
+    }
+  }
+}
+function step(){
+  S.tick++; S.t+=TICK;
+  groveReconcile(); schedule(); progress();
+  const lam=traffic(S.t); S.lam=lam; S.obs.push(lam); if(S.obs.length>HIST)S.obs.shift();
+  S.burst*=0.93; if(S.burst<0.2)S.burst=0;
+  const nP=ready('prefill'),nD=ready('decode');
+  S.backlog=Math.max(0,S.backlog+(lam*cfg.isl-nP*SHAPES.prefill.cap)*TICK*0.25);
+  const est=estimate(lam,nP,nD,S.backlog);
+  S.ttft=est.ttft;S.itl=est.itl;
+  S.n++; if(est.ttft<=cfg.ttft&&est.itl<=cfg.itl)S.ok++;
+  if(cfg.thrOn&&(S.tick%THR_TICKS===1)) plannerThroughput();
+  else if(!cfg.thrOn) S.floor={prefill:1,decode:1};
+  if(cfg.loadOn) plannerLoad(est);
+  S.hist.push({lam,pred:cfg.thrOn?S.pred:null,tP:S.target.prefill,tD:S.target.decode,rP:nP,rD:nD,ttft:est.ttft/cfg.ttft*100,itl:est.itl/cfg.itl*100});
+  if(S.hist.length>HIST)S.hist.shift();
+  render();
+}
+
+/* --------- Rendering --------- */
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function sizeCanvas(cv){
+  const w=cv.offsetWidth,h=cv.offsetHeight,k=(window.devicePixelRatio||1)*Math.max(1,scale);
+  const W=Math.max(10,Math.round(w*k)),H=Math.max(10,Math.round(h*k));
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}
+  const ctx=cv.getContext('2d');ctx.setTransform(k,0,0,k,0,0);return {ctx,w,h};
+}
+function drawChart(id,series,opts){
+  const cv=document.getElementById(id); if(!cv.offsetParent)return;
+  const {ctx,w,h}=sizeCanvas(cv); ctx.clearRect(0,0,w,h);
+  const padL=36,padR=6,padT=6,padB=17, W=w-padL-padR,H=h-padT-padB;
+  const data=S.hist; let ymax=opts.min||1;
+  data.forEach(d=>series.forEach(s=>{const v=d[s.k];if(v!=null&&isFinite(v))ymax=Math.max(ymax,Math.min(v,opts.cap||1e9));}));
+  ymax=niceMax(ymax*1.08);
+  ctx.font='12px '+css('--mono');ctx.fillStyle=css('--muted');ctx.strokeStyle=css('--line');ctx.lineWidth=1;
+  for(let i=0;i<=3;i++){const y=padT+H-H*i/3;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(padL+W,y);ctx.stroke();
+    ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(fmtNum(ymax*i/3),padL-5,y);}
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('−'+Math.round(HIST*TICK/60)+' min',padL,padT+H+3);
+  ctx.textAlign='right';ctx.fillText('now',padL+W,padT+H+3);
+  if(opts.ref!=null){const y=padT+H-H*opts.ref/ymax;ctx.strokeStyle=css('--warn');ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(padL+W,y);ctx.stroke();ctx.setLineDash([]);}
+  const x0=padL+W-(data.length-1)*(W/(HIST-1));
+  series.forEach(s=>{
+    ctx.strokeStyle=css(s.c);ctx.globalAlpha=s.a||1;ctx.lineWidth=s.lw||2;ctx.setLineDash(s.dash||[]);ctx.beginPath();let started=false,py=0;
+    data.forEach((d,i)=>{const v=d[s.k];if(v==null){started=false;return;}
+      const x=x0+i*(W/(HIST-1)),y=padT+H-H*Math.min(v,ymax)/ymax;
+      if(!started){ctx.moveTo(x,y);started=true;}else if(s.step){ctx.lineTo(x,py);ctx.lineTo(x,y);}else ctx.lineTo(x,y);py=y;});
+    ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+  });
+}
+function niceMax(v){const p=Math.pow(10,Math.floor(Math.log10(v)));const m=v/p;return (m<=1?1:m<=2?2:m<=3?3:m<=5?5:10)*p;}
+function fmtNum(v){return v>=10?Math.round(v):(Math.round(v*10)/10);}
+function buildRacks(){
+  const el=$('#racks');el.innerHTML='';
+  RACKS.forEach((nodes,r)=>{
+    const rk=document.createElement('div');rk.className='rack';
+    rk.innerHTML='<div class="rl">rack '+'AB'[r]+'</div>';
+    const ns=document.createElement('div');ns.className='nodes';
+    nodes.forEach(n=>{const nd=document.createElement('div');nd.className='node';
+      nd.innerHTML='<div class="nl">node-'+n+'</div><div class="gpus">'+Array.from({length:GPN},(_,g)=>'<div class="gpu" id="g'+n+'_'+g+'"></div>').join('')+'</div>';
+      ns.appendChild(nd);});
+    rk.appendChild(ns);el.appendChild(rk);
+  });
+}
+function render(){
+  if(!S)return;
+  $('#kT').textContent=fmtT(S.t);
+  $('#kL').innerHTML=(S.lam||0).toFixed(1)+' <small>req/s</small>';
+  const tOk=S.ttft<=cfg.ttft,iOk=S.itl<=cfg.itl;
+  $('#kTTFT').innerHTML=(S.n?Math.round(S.ttft):'–')+' <small>/ '+cfg.ttft+' ms</small>';
+  $('#kITL').innerHTML=(S.n?Math.round(S.itl):'–')+' <small>/ '+cfg.itl+' ms</small>';
+  $('#kTTFTb').className='kpi'+(S.n?(tOk?' good':' bad'):'');
+  $('#kITLb').className='kpi'+(S.n?(iOk?' good':' bad'):'');
+  const used=usedGPUs();
+  $('#kG').innerHTML=used+' <small>/ '+cfg.budget+'</small>';
+  $('#kS').innerHTML=S.n?Math.round(S.ok/S.n*100)+'<small>% of ticks</small>':'–';
+  $('#free').textContent=(NODES*GPN-used)+' GPUs free';
+  for(let n=0;n<NODES;n++)for(let g=0;g<GPN;g++){
+    const c=S.nodes[n][g],el=document.getElementById('g'+n+'_'+g);
+    if(!el)continue;
+    if(!c){el.className='gpu';el.title='free';}
+    else{el.className='gpu '+c.comp+(c.pod.state==='starting'?' starting':c.pod.state==='waiting'?' waiting':'');el.title=c.inst+' · '+c.pod.role+' · '+c.pod.state;}
+  }
+  const multi=shapeKey==='multi';
+  const pc=c=>{const all=S.inst.filter(i=>i.comp===c);return {spec:S.target[c],rdy:all.filter(i=>i.state==='ready').length,pend:all.filter(i=>i.state==='pending').length};};
+  const P=pc('prefill'),D=pc('decode');
+  const line=(k,name,x)=>'<span class="g">'+k+'</span> '+name+' <span class="p">replicas '+x.spec+'</span> <span class="m">· ready '+x.rdy+'</span>'+(x.pend?' <span class="w">· '+x.pend+' pending</span>':'');
+  let res='<span class="g">PodCliqueSet</span> llama-disagg\n';
+  res+='├─ '+line('PodClique','prefill',P)+'\n';
+  if(multi) res+='└─ '+line('PCSG','decode',D)+'\n   <span class="m">   ├─ leader  └─ worker (per instance)</span>';
+  else res+='└─ '+line('PodClique','decode',D);
+  res+='\n<span class="m">Planner floor: P='+(cfg.thrOn?S.floor.prefill:'–')+' D='+(cfg.thrOn?S.floor.decode:'–')+'</span>';
+  $('#res').innerHTML=res;
+  $('#gangs').innerHTML=S.inst.map(i=>'<span class="gang '+i.state+'" title="'+i.state+'">'+i.id+'</span>').join('');
+  if(S.logDirty){
+    $('#log').innerHTML=S.log.slice(0,80).map(e=>'<div><span class="ts">t+'+fmtT(e.t)+'</span><span class="src '+e.src+'">'+e.src.toUpperCase()+'</span><span>'+esc(e.msg)+'</span></div>').join('');
+    S.logDirty=false;
+  }
+  drawChart('cTraffic',[{k:'lam',c:'--ink',lw:1.6},{k:'pred',c:'--planner',step:true,lw:2.4,dash:[5,3]}],{min:5});
+  drawChart('cRep',[{k:'tP',c:'--prefill',step:true,a:.4,lw:4},{k:'rP',c:'--prefill',step:true},{k:'tD',c:'--decode',step:true,a:.4,lw:4},{k:'rD',c:'--decode',step:true}],{min:4});
+  drawChart('cLat',[{k:'ttft',c:'--prefill'},{k:'itl',c:'--decode'}],{min:150,cap:300,ref:100});
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+let timer=null,playing=true,visible=false;
+function loop(){clearInterval(timer);timer=null;if(playing&&visible)timer=setInterval(step,1000/cfg.speed);}
+const Sim={show(){visible=true;render();loop();},hide(){visible=false;loop();}};
+$('#play').addEventListener('click',()=>{playing=!playing;$('#play').textContent=playing?'Pause':'Play';loop();});
+$('#reset').addEventListener('click',()=>{reset();loop();});
+$('#burst').addEventListener('click',()=>{S.burst+=0.6*cfg.peak;log('planner','(demo) traffic burst injected: +'+Math.round(0.6*cfg.peak)+' req/s, decaying');render();});
+['pattern','peak','isl','osl','ttft','itl','budget','speed','thrOn','loadOn'].forEach(id=>{
+  $('#'+id).addEventListener('input',()=>{readCfg();if(id==='speed')loop();render();});
+});
+$('#shape').addEventListener('change',()=>{reset();loop();});
+window.addEventListener('resize',layout);
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render());}catch(e){}
+
+/* ---------------- Notes drawer ---------------- */
+function fillNotes(){const sl=slides[cur];if(!sl)return;const n=sl.querySelector('.notes');
+  $('#dnum').textContent='Notes · slide '+(cur+1)+' / '+slides.length;$('#dtitle').textContent=sl.dataset.title||'';$('#dbody').innerHTML=n?n.innerHTML:'';$('#drawer').scrollTop=0;}
+function toggleNotes(force){const on=typeof force==='boolean'?force:!document.body.classList.contains('notes-open');
+  document.body.classList.toggle('notes-open',on);$('#notesbtn').setAttribute('aria-expanded',String(on));$('#notesbtn').textContent=on?'Hide notes':'Notes';
+  try{localStorage.setItem('pg-notes',on?'1':'0');}catch(e){}
+  setTimeout(layout,270);}
+$('#notesbtn').addEventListener('click',()=>toggleNotes());
+$('#dclose').addEventListener('click',()=>toggleNotes(false));
+/* ---------------- Throughput-loop calculator ---------------- */
+const fk=v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e4?Math.round(v/1000)+'k':v>=1000?(v/1000).toFixed(1)+'k':String(Math.round(v));
+const T=(x,y,cls,txt,anchor)=>'<text x="'+x+'" y="'+y+'" class="'+cls+'"'+(anchor?' text-anchor="'+anchor+'"':'')+'>'+txt+'</text>';
+const badge=(x,y,n)=>'<circle cx="'+x+'" cy="'+y+'" r="18" class="pbox"/>'+T(x,y+7,'mo fp b',n,'middle');
+function mini(x0,y0,w,h,xmax,f,sla,cap,ymax,color,title,xlabel){
+  let o=T(x0,y0-14,'sm',title);
+  o+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+(y0+h)+'" class="ln" style="stroke-width:2"/><line x1="'+x0+'" y1="'+(y0+h)+'" x2="'+(x0+w)+'" y2="'+(y0+h)+'" class="ln" style="stroke-width:2"/>';
+  const X=v=>x0+w*v/xmax, Y=v=>y0+h-h*Math.min(v,ymax)/ymax;
+  let d='';for(let i=0;i<=60;i++){const v=xmax*0.985*i/60;d+=(i?'L':'M')+X(v).toFixed(1)+' '+Y(f(v)).toFixed(1)+' ';}
+  o+='<path d="'+d+'" style="stroke:var('+color+');stroke-width:4;fill:none"/>';
+  o+='<line x1="'+x0+'" y1="'+Y(sla)+'" x2="'+(x0+w)+'" y2="'+Y(sla)+'" style="stroke:var(--warn);stroke-width:2.5;stroke-dasharray:6 5"/>'+T(x0+w+6,Y(sla)+6,'sm fw','SLA');
+  o+='<line x1="'+X(cap)+'" y1="'+Y(sla)+'" x2="'+X(cap)+'" y2="'+(y0+h)+'" style="stroke:var('+color+');stroke-width:2;stroke-dasharray:3 4"/>';
+  o+='<circle cx="'+X(cap)+'" cy="'+Y(sla)+'" r="9" style="fill:var('+color+');stroke:var(--surface);stroke-width:3"/>';
+  o+=T(x0+w,y0+h+26,'sm',xlabel,'end');
+  return o;
+}
+function tcRender(){
+  const g=id=>+$('#'+id).value;
+  const rps=g('tc-rps'),isl=g('tc-isl'),osl=g('tc-osl'),kv=g('tc-kv'),ttft=g('tc-ttft'),itl=g('tc-itl'),bud=g('tc-bud');
+  $('#tc-rpsO').textContent=rps;$('#tc-islO').textContent=isl.toLocaleString();$('#tc-oslO').textContent=osl;$('#tc-kvO').textContent=kv+'%';
+  $('#tc-ttftO').textContent=ttft+' ms';$('#tc-itlO').textContent=itl+' ms';$('#tc-budO').textContent=bud;
+  const PMAX=30000,DMAX=3000,PG=2,DG=4;
+  const effIsl=isl*(1-kv/100);
+  const t0=effIsl/PMAX*1000, okP=t0<ttft*0.98, capP=okP?PMAX*(1-t0/ttft):PMAX*0.02;
+  const ctx=isl+osl/2, i0=8+ctx/1000*2, okD=i0<itl*0.98, capDg=okD?DMAX*(1-i0/itl):DMAX*0.02, capD=capDg*DG;
+  const engP=capP/effIsl, engD=capD/osl;            // engine capacity in requests/s at the SLA
+  const demP=rps, demD=rps;                          // demand_rps = predicted num_req / interval
+  const nP=Math.max(1,Math.ceil(rps/engP)), nD=Math.max(1,Math.ceil(rps/engD));
+  const need=nP*PG+nD*DG; let cP=nP,cD=nD,clamped=false;
+  if(need>bud){clamped=true;const f=bud/need;cP=Math.max(1,Math.floor(nP*f));cD=Math.max(1,Math.floor((bud-cP*PG)/DG));}
+  let o='';
+  o+='<rect x="0" y="0" width="535" height="310" rx="12" class="box"/><rect x="565" y="0" width="535" height="310" rx="12" class="box"/>';
+  o+='<rect x="0" y="330" width="535" height="320" rx="12" class="box"/><rect x="565" y="330" width="535" height="320" rx="12" class="box"/>';
+  // Step 1
+  o+=badge(42,40,'1')+T(72,49,'md b','Forecast the next interval');
+  o+=T(24,104,'sm','predicted num_req ÷ 180 s');
+  o+='<text x="24" y="166" class="xl fp">'+rps+'<tspan class="md"> req/s</tspan></text>';
+  o+=T(290,104,'sm','with predicted shape')+T(290,140,'mo','ISL '+isl.toLocaleString())+T(290,172,'mo','OSL '+osl);
+  o+=T(24,218,'mo','KV hit '+kv+'% → prefill sees ISL '+fk(effIsl));
+  o+=T(24,256,'sm','ARIMA (default) forecasts num_req, ISL, OSL;');
+  o+=T(24,284,'sm','KV hit rate and accept length use the last value');
+  // Step 2
+  o+=badge(607,40,'2')+T(637,49,'md b','Capacity per engine at SLA');
+  o+=mini(600,110,200,120,PMAX,x=>t0/(1-x/PMAX),ttft,capP,ttft*2,'--prefill','Prefill · TTFT vs load','tok/s / engine');
+  o+=mini(862,110,190,120,DMAX,x=>i0/(1-x/DMAX),itl,capDg,itl*2,'--decode','Decode · ITL @ ctx '+fk(ctx),'tok/s / GPU');
+  o+=T(600,294,'sm b fpre',okP?'≈ '+engP.toFixed(1)+' req/s per engine':'SLA not met: best effort');
+  o+=T(862,294,'sm b fdec',okD?'≈ '+engD.toFixed(1)+' req/s per engine':'SLA not met: best effort');
+  // Step 3
+  o+=badge(42,370,'3')+T(72,379,'md b','Divide by capacity, round up');
+  const bar=(y,dem,cap,n,cls)=>{const W=487,x0=24,tot=n*cap,s=W/tot;let b='<rect x="'+x0+'" y="'+y+'" width="'+W+'" height="42" rx="4" class="gf"/>';
+    b+='<rect x="'+x0+'" y="'+y+'" width="'+Math.min(W,dem*s).toFixed(1)+'" height="42" rx="4" class="'+cls+'" opacity=".85"/>';
+    if(n<=30)for(let i=1;i<n;i++){const x=x0+i*cap*s;b+='<line x1="'+x+'" y1="'+(y-6)+'" x2="'+x+'" y2="'+(y+48)+'" style="stroke:var(--ink);stroke-width:2.5"/>';}
+    return b;};
+  o+=T(24,418,'md b fpre','Prefill')+bar(430,demP,engP,nP,'bpre');
+  o+='<text x="24" y="508" class="mo">⌈'+rps+' ÷ '+engP.toFixed(1)+' req/s⌉ = <tspan class="b fpre">'+nP+' engines</tspan></text>';
+  o+=T(24,552,'md b fdec','Decode')+bar(564,demD,engD,nD,'bdec');
+  o+='<text x="24" y="640" class="mo">⌈'+rps+' ÷ '+engD.toFixed(1)+' req/s⌉ = <tspan class="b fdec">'+nD+' engines</tspan></text>';
+  // Step 4
+  o+=badge(607,370,'4')+T(637,379,'md b','Constrain & apply');
+  const W=487,mx=Math.max(bud,need)*1.06,s=W/mx,bx=589;
+  o+='<rect x="'+bx+'" y="418" width="'+W+'" height="46" rx="4" class="gf"/>';
+  o+='<rect x="'+bx+'" y="418" width="'+(nP*PG*s).toFixed(1)+'" height="46" class="bpre"/>';
+  o+='<rect x="'+(bx+nP*PG*s).toFixed(1)+'" y="418" width="'+(nD*DG*s).toFixed(1)+'" height="46" class="bdec"/>';
+  const bxm=bx+bud*s;
+  o+='<line x1="'+bxm+'" y1="406" x2="'+bxm+'" y2="476" style="stroke:var(--warn);stroke-width:4"/>'+T(Math.min(bxm,1050),400,'sm fw','budget '+bud,'middle');
+  o+=T(bx,506,'mo',nP+'×2 + '+nD+'×4 = '+need+' GPUs');
+  o+=T(bx,546,clamped?'md b fw':'md b fg',clamped?'✗ over budget → proportional clamp':'✓ within max_gpu_budget');
+  o+='<rect x="'+bx+'" y="564" width="'+W+'" height="76" rx="8" class="sbox"/>';
+  o+=T(bx+16,594,'mo fp b','prefill.replicas = '+cP)+T(bx+16,626,'mo fp b','decode.replicas  = '+cD)+T(bx+W-14,612,'sm','→ DGD','end');
+  $('#tcsvg').innerHTML=o;
+}
+
+/* ---------------- Load-loop calculator ---------------- */
+let ls=11;const lr=()=>{ls=(ls*16807)%2147483647;return ls/2147483647;};
+const FPM=Array.from({length:40},()=>{const x=600+lr()*15700;return {x,y:6+0.004*x+(lr()-0.5)*7};});
+const fit=(()=>{const n=FPM.length,mx=FPM.reduce((a,p)=>a+p.x,0)/n,my=FPM.reduce((a,p)=>a+p.y,0)/n;
+  let nu=0,de=0;FPM.forEach(p=>{nu+=(p.x-mx)*(p.y-my);de+=(p.x-mx)*(p.x-mx);});const b=nu/de;return {a:my-b*mx,b};})();
+const CH=8192;
+function estTTFT(q,isl){const tot=q+isl,n=Math.ceil(tot/CH),w=[];let r=tot;for(let i=0;i<n;i++){const t=Math.min(CH,r);w.push(fit.a+fit.b*t);r-=t;}return {n,w,sum:w.reduce((a,b)=>a+b,0)};}
+function lcRender(){
+  const g=id=>+$('#'+id).value;
+  const q=g('lc-q'),imb=g('lc-imb'),isl=g('lc-isl'),sla=g('lc-ttft'),sens=g('lc-sens');
+  $('#lc-qO').textContent=fk(q);$('#lc-imbO').textContent='±'+imb+'%';$('#lc-islO').textContent=isl.toLocaleString();$('#lc-ttftO').textContent=sla+' ms';$('#lc-sensO').textContent=sens;
+  let o='<rect x="0" y="0" width="535" height="330" rx="12" class="box"/><rect x="565" y="0" width="535" height="330" rx="12" class="box"/><rect x="0" y="350" width="1100" height="300" rx="12" class="box"/>';
+  // 1 regression
+  o+=badge(42,40,'1')+T(72,49,'md b','Learn from forward passes');
+  const x0=70,y0=84,w=430,h=170,XM=16384,YM=90,X=v=>x0+w*v/XM,Y=v=>y0+h-h*v/YM;
+  o+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+(y0+h)+'" class="ln" style="stroke-width:2"/><line x1="'+x0+'" y1="'+(y0+h)+'" x2="'+(x0+w)+'" y2="'+(y0+h)+'" class="ln" style="stroke-width:2"/>';
+  [0,45,90].forEach(v=>{o+=T(x0-10,Y(v)+6,'sm',v,'end');});
+  FPM.forEach(p=>{o+='<circle cx="'+X(p.x).toFixed(1)+'" cy="'+Y(p.y).toFixed(1)+'" r="5" style="fill:var(--prefill);opacity:.6"/>';});
+  o+='<line x1="'+X(0)+'" y1="'+Y(fit.a)+'" x2="'+X(XM)+'" y2="'+Y(fit.a+fit.b*XM)+'" class="lnp" style="stroke-width:4"/>';
+  o+=T(x0+w,y0+h+26,'sm','prefill tokens in iteration →','end')+T(x0+4,y0-8,'sm','wall_time (ms)');
+  o+='<text x="24" y="314" class="mo">wall ≈ <tspan class="fp b">'+fit.a.toFixed(1)+' ms + '+(fit.b*1000).toFixed(1)+' ms per 1k tokens</tspan></text>';
+  // 2 queue simulation (middle engine)
+  o+=badge(607,40,'2')+T(637,49,'md b','Simulate the queue');
+  const e=estTTFT(q,isl);
+  o+=T(589,98,'sm','queue '+fk(q)+' + new prompt '+fk(isl)+' = '+fk(q+isl)+' tokens');
+  o+=T(589,128,'sm','→ '+e.n+' chunks of ≤ 8,192 (max_num_batched_tokens)');
+  const W=487,sc=W/e.sum;let cx=589;
+  e.w.forEach((wt,i)=>{const bw=wt*sc;o+='<rect x="'+cx.toFixed(1)+'" y="150" width="'+Math.max(1,bw-(bw>6?3:0)).toFixed(1)+'" height="58" rx="3" class="bpre" opacity="'+(i%2?.6:.95)+'"/>';cx+=bw;});
+  o+=T(589,236,'sm','each chunk ≈ fit(tokens) · summed in order');
+  o+='<text x="589" y="296" class="lg '+(e.sum>sla?'fw':'fg')+'">est. TTFT ≈ '+Math.round(e.sum)+' ms</text>';
+  // 3 decision (mirrors load_scaling._scale_decision)
+  o+=badge(42,390,'3')+T(72,399,'md b','Decide: scale up, consolidate, or hold');
+  o+=T(1080,399,'sm','● now   ○ if one engine is removed (load × 3/2)','end');
+  const NE=3,eq=[q*(1-imb/100),q,q*(1+imb/100)];
+  const own=estTTFT(0,isl).sum;
+  const now=eq.map(v=>estTTFT(v,isl).sum),post=eq.map(v=>estTTFT(v*NE/(NE-1),isl).sum);
+  const bud=own+(sla-own)*sens/100;
+  const gx0=60,gx1=1040,GW=gx1-gx0,top=Math.max(2*sla,1),GX=v=>gx0+GW*Math.min(v,top)/top;
+  o+='<rect x="'+gx0+'" y="452" width="'+(GX(bud)-gx0)+'" height="50" class="zone-ok"/>';
+  o+='<rect x="'+GX(bud)+'" y="452" width="'+(GX(sla)-GX(bud))+'" height="50" class="zone-hold"/>';
+  o+='<rect x="'+GX(sla)+'" y="452" width="'+(gx1-GX(sla))+'" height="50" class="zone-bad"/>';
+  if(GX(bud)-gx0>150)o+=T((gx0+GX(bud))/2,484,'sm b fg','−1 if ALL ○ here','middle');
+  if(GX(sla)-GX(bud)>70)o+=T((GX(bud)+GX(sla))/2,484,'sm b','hold','middle');
+  o+=T((GX(sla)+gx1)/2,484,'sm b fw','+1 if ALL ● here','middle');
+  [[0,'0','start'],[bud,Math.round(bud)+' (budget)','middle'],[sla,sla+' SLA','middle'],[top,'≥'+top+' ms','end']].forEach(([v,l,a])=>{o+=T(GX(v),560,'mo',l,a).replace('class="mo"','class="mo" style="font-size:16px"');});
+  now.forEach((v,i)=>{const x=GX(v);o+='<line x1="'+x+'" y1="446" x2="'+x+'" y2="502" style="stroke:var(--ink);stroke-width:2"/><circle cx="'+x+'" cy="430" r="15" style="fill:var(--prefill);stroke:var(--surface);stroke-width:3"/>'+T(x,436,'mo fon b','E'+(i+1),'middle').replace('class="mo fon b"','class="mo fon b" style="font-size:14px"');});
+  post.forEach((v,i)=>{const x=GX(v);o+='<line x1="'+x+'" y1="452" x2="'+x+'" y2="510" style="stroke:var(--muted);stroke-width:2;stroke-dasharray:3 3"/><circle cx="'+x+'" cy="524" r="13" style="fill:var(--surface);stroke:var(--prefill);stroke-width:3"/>';});
+  const up=now.every(v=>v>sla),down=post.every(v=>v<bud);
+  const dec=up?['+1 replica','fw','every engine is over the TTFT SLA']:down?['−1 replica','fg','load still fits on N−1 engines']:['hold','','neither rule is met for all engines'];
+  o+='<text x="24" y="630" class="xl '+dec[1]+'">'+dec[0]+'</text>'+T(330,624,'md mut',dec[2]);
+  $('#lcsvg').innerHTML=o;
+}
+
+/* ---------------- How Planner decides (timeline) ---------------- */
+// Rules mirror dynamo/planner: throughput loop (sla only) sets a floor every 180 s = ceil(forecast rps / engine rps);
+// load loop every 5 s: +1 if ALL engines over SLA; -1 only if load fits on N-1 engines (queue wait < (SLA - own) x sensitivity);
+// no scale-up while replicas are starting; desired = max(desired, floor); scale-up held at GPU budget.
+const PGC={N:720,thr:36,start:12,ttft:500,itl:50,tOwn:120,iOwn:15,fullP:12,fullD:30,engP:9.1,engD:21,bud:40,sens:0.8,f:[0.92,1,1.08]};
+const PG={mode:'sla',pat:'diurnal',bursts:[],t:380,playing:false,timer:null,S:null,visible:false};
+function pgDemand(i){
+  const m=i*5/60;let v;
+  if(PG.pat==='ramp')v=m<25?10+40*m/25:m<40?50:m<45?50-35*(m-40)/5:15;
+  else if(PG.pat==='steady')v=22+2*Math.sin(m/3)+(m>=30&&m<34?25:0);
+  else v=14+36*(0.5-0.5*Math.cos(2*Math.PI*m/60));
+  PG.bursts.forEach(b=>{if(m>=b)v+=28*Math.exp(-Math.pow((m-b-1.5)/1.2,2));});
+  v+=1.2*Math.sin(i*0.37)+0.8*Math.sin(i*1.13);
+  return Math.max(1,v);
+}
+function pgCompute(){
+  const C=PGC,sla=PG.mode==='sla',S={d:[],fP:[],fD:[],tP:[],tD:[],rP:[],rD:[],eP:[],eD:[],why:{P:[],D:[]},ev:{P:[],D:[]},thr:[]};
+  for(let i=0;i<C.N;i++)S.d.push(pgDemand(i));
+  const st={P:{tgt:Math.ceil(S.d[0]/C.engP),rdy:0,pend:[],floor:1},D:{tgt:Math.ceil(S.d[0]/C.engD),rdy:0,pend:[],floor:1}};
+  st.P.rdy=st.P.tgt;st.D.rdy=st.D.tgt;
+  if(sla){st.P.floor=st.P.tgt;st.D.floor=st.D.tgt;}
+  const avgs=[];
+  for(let i=0;i<C.N;i++){
+    const d=S.d[i];
+    ['P','D'].forEach(k=>{const s=st[k];s.pend=s.pend.filter(t=>{if(t<=i){s.rdy++;return false;}return true;});});
+    if(sla&&i>0&&i%C.thr===0){
+      const w=S.d.slice(i-C.thr,i),nreq=w.reduce((a,b)=>a+b,0)*5,avg=nreq/180;avgs.push(avg);
+      const pred=Math.max(0,avgs.length<2?avg:avg+0.6*(avg-avgs[avgs.length-2]));
+      const fP=Math.max(1,Math.ceil(pred/C.engP)),fD=Math.max(1,Math.ceil(pred/C.engD));
+      st.P.floor=Math.max(1,Math.min(fP,st.P.tgt+8));st.D.floor=Math.max(1,Math.min(fD,st.D.tgt+8));
+      S.thr.push({i,nreq,avg,pred,fP:st.P.floor,fD:st.D.floor});
+    }
+    const est={};
+    ['P','D'].forEach(k=>{
+      const s=st[k],full=k==='P'?C.fullP:C.fullD,own=k==='P'?C.tOwn:C.iOwn,slaV=k==='P'?C.ttft:C.itl;
+      const rho=d/(Math.max(1,s.rdy)*full),ratio=r=>k==='P'?Math.max(0,(r-0.6)/0.3):Math.min(1.6,r*1.1),vals=C.f.map(f=>{const r=rho*f;return sla?own/(1-Math.min(r,.97)):ratio(r);});
+      est[k]=vals;
+      let desired=s.tgt,why='hold';
+      if(s.tgt>s.rdy){why='hold · starting';}
+      else if(sla){
+        if(vals.every(v=>v>slaV)){desired=s.tgt+1;why='+1 · all over SLA';}
+        else if(s.rdy>1){const post=C.f.map(f=>{const r=rho*f*s.rdy/(s.rdy-1);return own/(1-Math.min(r,.97))-own;});
+          if(post.every(q=>q<(slaV-own)*C.sens)){desired=s.tgt-1;why='−1 · fits on N−1';}}
+      } else {
+        const up=1.0,down=k==='P'?0.1:0.6;
+        if(vals.some(v=>v>=up)){desired=s.tgt+1;why='+1 · over threshold';}
+        else if(s.rdy>1&&vals.every(v=>v<down)&&C.f.every(f=>ratio(rho*f*s.rdy/(s.rdy-1))<up)){desired=s.tgt-1;why='−1 · under threshold';}
+      }
+      if(sla&&desired<s.floor){why=s.floor>s.tgt?'↑ to floor '+s.floor:'hold · at floor';desired=s.floor;}
+      if(desired===s.tgt&&why.startsWith('↑'))why='hold';
+      s.want=desired;s.why=why;
+    });
+    // GPU budget: scale-ups held at the ceiling (prefill engine 2 GPUs, decode 4 GPUs)
+    const gp=st.P.want*2+st.D.want*4;
+    if(gp>C.bud){['P','D'].forEach(k=>{if(st[k].want>st[k].tgt){st[k].want=st[k].tgt;st[k].why='hold · GPU budget';}});}
+    ['P','D'].forEach(k=>{const s=st[k],delta=s.want-s.tgt;
+      if(delta>0){for(let j=0;j<delta;j++)s.pend.push(i+C.start);}
+      else if(delta<0){for(let j=0;j<-delta;j++){if(s.pend.length)s.pend.pop();else s.rdy--;}}
+      s.tgt=s.want;
+      S['t'+k].push(s.tgt);S['r'+k].push(s.rdy);S['f'+k].push(sla?s.floor:null);S.ev[k].push(delta);S.why[k].push(s.why);S['e'+k].push(est[k]);});
+  }
+  PG.S=S;
+}
+const pgFmt=i=>{const s=i*5;return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+function pgRender(){
+  if(!PG.S)return;
+  const S=PG.S,C=PGC,t=PG.t,sla=PG.mode==='sla';
+  $('#pg-t').value=t;$('#pg-tO').textContent='t = '+pgFmt(t)+' min';
+  const X0=70,X1=1400,X=i=>X0+(X1-X0)*i/(C.N-1);
+  let o='';
+  // panels
+  const panel=(y,h,lbl)=>'<rect x="0" y="'+y+'" width="1440" height="'+h+'" rx="10" class="box"/>'+T(14,y+26,'sm b',lbl);
+  o+=panel(0,176,'Traffic')+panel(186,118,'Prefill')+panel(314,118,'Decode');
+  // throughput tick grid
+  for(let i=C.thr;i<C.N;i+=C.thr)o+='<line x1="'+X(i)+'" y1="6" x2="'+X(i)+'" y2="428" class="grid" stroke-dasharray="3 6"/>';
+  // traffic
+  const ym=Math.ceil(Math.max(...S.d)*1.1/10)*10,Ya=v=>166-140*v/ym;
+  [0,ym/2,ym].forEach(v=>{o+=T(X0-8,Ya(v)+6,'sm',v,'end');});
+  let p='';S.d.forEach((v,i)=>{p+=(i?'L':'M')+X(i).toFixed(1)+' '+Ya(v).toFixed(1);});
+  o+='<path d="'+p+'" style="stroke:var(--grove);stroke-width:3;fill:none"/>';
+  if(sla)S.thr.forEach(r=>{const x2=X(Math.min(C.N-1,r.i+C.thr));o+='<line x1="'+X(r.i)+'" y1="'+Ya(r.pred)+'" x2="'+x2+'" y2="'+Ya(r.pred)+'" class="lnp" style="stroke-width:4;stroke-dasharray:8 5"/>';});
+  o+='<line x1="1030" y1="20" x2="1060" y2="20" style="stroke:var(--grove);stroke-width:3"/>'+T(1066,27,'sm','observed req/s');
+  if(sla)o+='<line x1="1220" y1="20" x2="1250" y2="20" class="lnp" style="stroke-width:4;stroke-dasharray:8 5"/>'+T(1256,27,'sm','forecast / 180 s');
+  // replica charts
+  const rep=(k,y0,cls,col)=>{
+    const top=y0+14,bot=y0+108,mx=Math.max(4,...S['t'+k],...(sla?S['f'+k]:[0]))+1,Y=v=>bot-(bot-top)*v/mx;
+    let q='';
+    [0,Math.round(mx/2),mx].forEach(v=>{q+=T(X0-8,Y(v)+6,'sm',v,'end');});
+    let area='M'+X0+' '+bot;S['r'+k].forEach((v,i)=>{area+=' L'+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' L'+X(i+1>C.N-1?C.N-1:i+1).toFixed(1)+' '+Y(v).toFixed(1);});area+=' L'+X1+' '+bot+' Z';
+    q+='<path d="'+area+'" class="'+cls+'" opacity=".22"/>';
+    const step=arr=>{let s='';arr.forEach((v,i)=>{if(v==null)return;s+=(s?' L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' L'+X(i+1>C.N-1?C.N-1:i+1).toFixed(1)+' '+Y(v).toFixed(1);});return s;};
+    if(sla)q+='<path d="'+step(S['f'+k])+'" class="lnp" style="stroke-width:3;stroke-dasharray:6 5"/>';
+    q+='<path d="'+step(S['t'+k])+'" style="stroke:var('+col+');stroke-width:3.5;fill:none"/>';
+    S.ev[k].forEach((dl,i)=>{if(!dl)return;const x=X(i),y=Y(S['t'+k][i]);
+      q+=dl>0?'<path d="M'+x+' '+(y-14)+' l-6 9 h12 z" style="fill:var(--ink)"/>':'<path d="M'+x+' '+(y+14)+' l-6 -9 h12 z" style="fill:var(--ink)"/>';});
+    return q;};
+  o+=rep('P',186,'bpre','--prefill')+rep('D',314,'bdec','--decode');
+  o+='<rect x="1030" y="194" width="24" height="12" class="bpre" opacity=".3"/>'+T(1060,206,'sm','ready');
+  o+='<line x1="1130" y1="200" x2="1160" y2="200" style="stroke:var(--prefill);stroke-width:3.5"/>'+T(1166,206,'sm','target');
+  if(sla)o+='<line x1="1240" y1="200" x2="1270" y2="200" class="lnp" style="stroke-width:3;stroke-dasharray:6 5"/>'+T(1276,206,'sm','throughput floor');
+  for(let m=0;m<=60;m+=10)o+=T(X(Math.min(C.N-1,m*12)),452,'sm',m+' min','middle');
+  // cursor
+  o+='<line x1="'+X(t)+'" y1="4" x2="'+X(t)+'" y2="432" style="stroke:var(--ink);stroke-width:2.5"/>';
+  o+='<circle cx="'+X(t)+'" cy="'+Ya(S.d[t])+'" r="7" style="fill:var(--grove);stroke:var(--surface);stroke-width:3"/>';
+  // throughput card
+  o+='<rect x="0" y="466" width="690" height="154" rx="10" class="box"/>';
+  if(sla){
+    const last=S.thr.filter(r=>r.i<=t).pop();
+    o+=T(16,494,'md b','Throughput loop · every 180 s')+T(674,494,'sm',last?'fired at '+pgFmt(last.i):'first fire at 3:00','end');
+    if(last){
+      const chips=[['observed 180 s',Math.round(last.nreq).toLocaleString()+' req',last.avg.toFixed(1)+' req/s'],['forecast',last.pred.toFixed(1)+' req/s','next 180 s'],['perf model @SLA',C.engP+' · '+C.engD,'req/s per P · D engine'],['floor','P '+last.fP+' · D '+last.fD,'⌈forecast ÷ engine⌉']];
+      chips.forEach((c,j)=>{const x=16+j*170;o+='<rect x="'+x+'" y="510" width="148" height="96" rx="8" class="'+(j===3?'pbox':'sbox')+'"/>'+T(x+10,532,'sm',c[0])+T(x+10,566,'md b'+(j===3?' fp':''),c[1])+T(x+10,594,'sm',c[2]).replace('class="sm"','class="sm" style="font-size:16px"');
+        if(j<3)o+='<line x1="'+(x+150)+'" y1="558" x2="'+(x+166)+'" y2="558" class="ln" marker-end="url(#ah)"/>';});
+    } else o+=T(16,560,'md mut','No forecast yet: the floor starts at the deployed replica count.');
+  } else {
+    o+=T(16,494,'md b','Throughput loop · off');
+    o+=T(16,540,'md','With the default target, Planner skips the forecast');
+    o+=T(16,572,'md','and SLA math; it only runs the load loop on');
+    o+=T(16,604,'md','queue and KV‑utilization thresholds.');
+  }
+  // load card
+  o+='<rect x="710" y="466" width="730" height="154" rx="10" class="box"/>';
+  o+=T(726,494,'md b','Load loop · every 5 s')+T(1424,494,'sm','at '+pgFmt(t)+' · '+S.rP[t]+' P / '+S.rD[t]+' D ready','end');
+  const gauge=(k,y,lbl,col)=>{
+    const vals=S['e'+k][t],slaV=k==='P'?C.ttft:C.itl,gx0=880,gx1=1250,mx=sla?slaV*2:2,G=v=>gx0+(gx1-gx0)*Math.min(v,mx)/mx;
+    let q=T(726,y+6,'sm b',lbl)+'<rect x="'+gx0+'" y="'+(y-8)+'" width="'+(gx1-gx0)+'" height="16" rx="8" class="gf"/>';
+    const up=sla?slaV:1.0,down=sla?null:(k==='P'?0.1:0.6);
+    q+='<line x1="'+G(up)+'" y1="'+(y-16)+'" x2="'+G(up)+'" y2="'+(y+16)+'" style="stroke:var(--warn);stroke-width:3"/>';
+    if(down!=null)q+='<line x1="'+G(down)+'" y1="'+(y-16)+'" x2="'+G(down)+'" y2="'+(y+16)+'" style="stroke:var(--grove);stroke-width:3"/>';
+    vals.forEach(v=>{q+='<circle cx="'+G(v).toFixed(1)+'" cy="'+y+'" r="8" style="fill:var('+col+');stroke:var(--surface);stroke-width:2"/>';});
+    const why=S.why[k][t],c=why.startsWith('+')||why.startsWith('↑')?'fw':why.startsWith('−')?'fg':'mut';
+    q+=T(1264,y+7,'sm b '+c,why);
+    return q;};
+  o+=gauge('P',540,sla?'Prefill TTFT':'Prefill queue/ctx','--prefill')+gauge('D',592,sla?'Decode ITL':'Decode KV util','--decode');
+  o+=T(880,516,'sm',sla?'3 engines vs SLA (red)':'3 engines · up (red) / down (green)');
+  $('#pgsvg').innerHTML=o;
+}
+function pgLoop(){clearTimeout(PG.timer);PG.timer=null;if(PG.playing&&PG.visible)PG.timer=setTimeout(()=>{PG.t+=3;if(PG.t>=PGC.N-1){PG.t=PGC.N-1;PG.playing=false;$('#pg-play').textContent='Play';}pgRender();pgLoop();},70);}
+function pgVis(v){PG.visible=v;if(v)pgRender();pgLoop();}
+$('#pg-play').addEventListener('click',()=>{if(!PG.playing&&PG.t>=PGC.N-1)PG.t=0;PG.playing=!PG.playing;$('#pg-play').textContent=PG.playing?'Pause':'Play';pgLoop();});
+$('#pg-burst').addEventListener('click',()=>{PG.bursts.push(PG.t*5/60);pgCompute();pgRender();});
+$('#pg-pat').addEventListener('change',()=>{PG.pat=$('#pg-pat').value;PG.bursts=[];pgCompute();pgRender();});
+$('#pg-mode').addEventListener('change',()=>{PG.mode=$('#pg-mode').value;pgCompute();pgRender();});
+$('#pg-t').addEventListener('input',()=>{PG.t=+$('#pg-t').value;pgRender();});
+$('#pgsvg').addEventListener('click',e=>{const sv=$('#pgsvg'),m=sv.getScreenCTM();if(!m)return;const pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(m.inverse());
+  if(q.y>440)return;PG.t=Math.max(0,Math.min(PGC.N-1,Math.round((q.x-70)/(1400-70)*(PGC.N-1))));pgRender();});
+function pgInit(){pgCompute();pgRender();}
+
+/* ---------------- LWS vs Grove: unit diagram ---------------- */
+function inst(x,y,w,lbl,role){
+  const c=role==='P'?'bpre':'bdec',pw=(w-44)/2;
+  return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="132" rx="10" class="sbox"/>'+T(x+14,y+28,'md b',lbl)
+   +'<rect x="'+(x+14)+'" y="'+(y+42)+'" width="'+pw+'" height="74" rx="8" class="'+c+'"/>'+T(x+14+pw/2,y+86,'sm b fon','leader','middle')
+   +'<rect x="'+(x+30+pw)+'" y="'+(y+42)+'" width="'+pw+'" height="74" rx="8" class="'+c+'" opacity=".65"/>'+T(x+30+pw*1.5,y+86,'sm b fon','worker','middle');
+}
+function unitsRender(){
+  let o='';
+  [[30,'Prefill 1','P'],[250,'Prefill 2','P'],[480,'Decode 1','D']].forEach(([x,l,r])=>{const w=x===480?190:200;
+    o+='<rect x="'+(x-6)+'" y="122" width="'+(w+12)+'" height="160" rx="12" class="lng dash" style="stroke-width:3"/>'+inst(x,128,w,l,r)+T(x+w/2,278,'sm fg','own gang','middle');});
+  $('#lw-u').innerHTML=o;
+  $('#gr-u').innerHTML=inst(790,140,196,'Prefill 1','P')+inst(996,140,196,'Decode 1','D')+inst(1228,140,180,'Prefill 2','P');
+}
+
+/* ---------------- Gang story (LWS vs Grove) ---------------- */
+const STD={
+ tight:[
+  {cap:'Service A needs 4 nodes: prefill (2) + decode (2). Only 3 nodes are free.',
+   L:{n:['x','x','x',0,0,0],w:['AP','AD'],s:['wait','Waiting to schedule']},
+   G:{n:['x','x','x',0,0,0],w:['APD'],s:['wait','Waiting to schedule']}},
+  {cap:'The scheduler places whatever unit fits.',
+   L:{n:['x','x','x','AP','AP',0],w:['AD'],s:['bad','Prefill placed · decode stuck']},
+   G:{n:['x','x','x',0,0,0],w:['APD'],s:['wait','Gang needs 4 nodes · places nothing']}},
+  {cap:'While waiting, what does each approach cost?',
+   L:{n:['x','x','x','AP','AP',0],w:['AD'],s:['bad','16 GPUs held · 0 requests served']},
+   G:{n:['x','x','x',0,0,0],w:['APD'],s:['ok','0 GPUs held · free nodes stay usable']}},
+  {cap:'Another job finishes and a 4th node frees up.',
+   L:{n:['x','x','AD','AP','AP','AD'],w:[],s:['ok','Serving · after idling 16 GPUs']},
+   G:{n:['x','x','AP','AP','AD','AD'],w:[],s:['ok','Serving · placed in one step']}}],
+ race:[
+  {cap:'Services A and B each need 4 nodes. Only 4 nodes are free.',
+   L:{n:['x','x',0,0,0,0],w:['AP','AD','BP','BD'],s:['wait','Waiting to schedule']},
+   G:{n:['x','x',0,0,0,0],w:['APD','BPD'],s:['wait','Waiting to schedule']}},
+  {cap:'First placement.',
+   L:{n:['x','x','AP','AP',0,0],w:['AD','BP','BD'],s:['wait','A·prefill placed']},
+   G:{n:['x','x','AP','AP','AD','AD'],w:['BPD'],s:['ok','A placed whole · A serving']}},
+  {cap:'Second placement.',
+   L:{n:['x','x','AP','AP','BP','BP'],w:['AD','BD'],s:['bad','B·prefill fits too, so it is placed']},
+   G:{n:['x','x','AP','AP','AD','AD'],w:['BPD'],s:['ok','B needs 4 nodes · waits, holds nothing']}},
+  {cap:'Both decodes need 2 nodes, and none are left.',
+   L:{n:['x','x','AP','AP','BP','BP'],w:['AD','BD'],s:['bad','Deadlock · 32 GPUs held · A and B both down']},
+   G:{n:['x','x','AP','AP','AD','AD'],w:['BPD'],s:['ok','A serving · B starts when capacity frees']}}]
+};
+const ST={scn:'tight',i:0};
+function stSide(el,cur,prev){
+  let o='';const cnt={};
+  cur.n.forEach((c,i)=>{const col=i%3,row=Math.floor(i/3),x=6+col*212,y=6+row*118,w=200,h=108;
+    o+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="10" class="sbox"/>'+T(x+12,y+24,'sm','node '+i);
+    if(c==='x')o+='<rect x="'+(x+10)+'" y="'+(y+34)+'" width="'+(w-20)+'" height="'+(h-44)+'" rx="6" style="fill:url(#hatch)"/>'+T(x+w/2,y+76,'sm b','other job','middle');
+    else if(c){cnt[c]=(cnt[c]||0)+1;
+      o+='<rect x="'+(x+10)+'" y="'+(y+34)+'" width="'+(w-20)+'" height="'+(h-44)+'" rx="6" class="'+(c[1]==='P'?'bpre':'bdec')+'" opacity="'+(c[0]==='B'?.6:1)+'"/>';
+      o+=T(x+w/2,y+68,'md b fon',c[0]+' · '+(c[1]==='P'?'prefill':'decode'),'middle')+T(x+w/2,y+92,'sm fon',cnt[c]%2?'leader':'worker','middle');
+      if(prev&&prev.n[i]!==c)o+='<rect x="'+(x+2)+'" y="'+(y+2)+'" width="'+(w-4)+'" height="'+(h-4)+'" rx="9" class="lnp" style="stroke-width:5"/>';}
+    else o+=T(x+w/2,y+70,'sm','free','middle');});
+  o+='<line x1="6" y1="248" x2="634" y2="248" class="grid"/>'+T(6,276,'sm b','Waiting to be placed');
+  if(!cur.w.length)o+=T(6,318,'sm','nothing');
+  let x=6,y=290;
+  cur.w.forEach(u=>{
+    if(u.length===3){const w=300;if(x+w>634){x=6;y+=44;}
+      o+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="38" rx="8" style="fill:var(--surface);stroke:var(--warn);stroke-width:2.5;stroke-dasharray:6 4"/>';
+      o+='<rect x="'+(x+10)+'" y="'+(y+9)+'" width="20" height="20" rx="3" class="bpre"/><rect x="'+(x+34)+'" y="'+(y+9)+'" width="20" height="20" rx="3" class="bdec"/>';
+      o+=T(x+64,y+26,'sm b',u[0]+' gang · prefill + decode · 4 nodes').replace('class="sm b"','class="sm b" style="font-size:17px"');x+=w+10;}
+    else{const w=196;if(x+w>634){x=6;y+=44;}
+      o+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="38" rx="8" style="fill:var(--surface);stroke:var(--warn);stroke-width:2.5;stroke-dasharray:6 4"/>';
+      o+='<rect x="'+(x+10)+'" y="'+(y+9)+'" width="20" height="20" rx="3" class="'+(u[1]==='P'?'bpre':'bdec')+'"/>';
+      o+=T(x+38,y+26,'sm b',u[0]+'·'+(u[1]==='P'?'prefill':'decode')+' · 2 nodes').replace('class="sm b"','class="sm b" style="font-size:17px"');x+=w+8;}
+  });
+  el.innerHTML=o;
+}
+function stRender(){
+  const steps=STD[ST.scn],cur=steps[ST.i],prev=ST.i?steps[ST.i-1]:null;
+  $('#st-cap').textContent=cur.cap;$('#st-n').textContent='Step '+(ST.i+1)+' / '+steps.length;
+  [['lws','L'],['grv','G']].forEach(([id,k])=>{stSide($('#st-'+id),cur[k],prev?prev[k]:null);const se=$('#st-'+id+'-s');se.className='status '+cur[k].s[0];se.textContent=cur[k].s[1];});
+  $('#st-back').disabled=ST.i===0;$('#st-next').disabled=ST.i===steps.length-1;
+  $('#st-tight').className='btn'+(ST.scn==='tight'?' primary':'');$('#st-race').className='btn'+(ST.scn==='race'?' primary':'');
+}
+$('#st-tight').addEventListener('click',()=>{ST.scn='tight';ST.i=0;stRender();});
+$('#st-race').addEventListener('click',()=>{ST.scn='race';ST.i=0;stRender();});
+$('#st-next').addEventListener('click',()=>{if(ST.i<STD[ST.scn].length-1){ST.i++;stRender();}});
+$('#st-back').addEventListener('click',()=>{if(ST.i>0){ST.i--;stRender();}});
+['tc-rps','tc-isl','tc-osl','tc-kv','tc-ttft','tc-itl','tc-bud'].forEach(id=>$('#'+id).addEventListener('input',tcRender));
+['lc-q','lc-imb','lc-isl','lc-ttft','lc-sens'].forEach(id=>$('#'+id).addEventListener('input',lcRender));
+tcRender(); lcRender(); pgInit(); unitsRender(); stRender();
+
+drawLoops();
+buildRacks(); reset();
+for(let i=0;i<60;i++) step();
+const h=(location.hash||'').replace('#','');
+const m=/^s(\d+)$/.exec(h);
+go(m?(+m[1]-1):(h==='demo'?slides.findIndex(s=>s.id==='demo-slide'):0));
+layout(); wake();
+try{if(localStorage.getItem('pg-notes')==='1')toggleNotes(true);}catch(e){}
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitActive);
+})();
+</script>
+
+<script src="deck-tools.js" defer></script>
+</body>
+</html>

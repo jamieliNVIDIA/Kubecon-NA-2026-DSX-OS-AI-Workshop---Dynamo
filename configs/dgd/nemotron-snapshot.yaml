@@ -1,0 +1,196 @@
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+metadata:
+  name: ft-snapshot
+  namespace: dynamo-ft-20261013t061231z
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-20261013t061231z
+  annotations:
+    nvidia.com/enable-grove: 'false'
+spec:
+  backendFramework: vllm
+  components:
+  - name: Frontend
+    type: frontend
+    replicas: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          image: nvcr.io/nvidia/ai-dynamo/vllm-runtime@sha256:2b224a823d52a198ec0eeb0e3e4f5cf26cd8a7fc2e9812ee16204b6b1e974870
+          imagePullPolicy: IfNotPresent
+          command:
+          - python3
+          - -m
+          - dynamo.frontend
+          args:
+          - --router-mode
+          - round-robin
+          - --trust-remote-code
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261013t023201z-features/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: VLLM_CACHE_ROOT
+            value: /tmp/vllm
+          - name: TRITON_CACHE_DIR
+            value: /tmp/triton
+          - name: NCCL_IB_DISABLE
+            value: '1'
+          - name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+            value: '180'
+          resources:
+            requests:
+              cpu: '1'
+              memory: 4Gi
+            limits:
+              memory: 8Gi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 60
+            failureThreshold: 60
+          volumeMounts:
+          - name: cache
+            mountPath: /model-cache
+          - name: shm
+            mountPath: /dev/shm
+        volumes:
+        - name: cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        runtimeClassName: nvidia
+        nodeSelector:
+          kubernetes.io/hostname: kubecon-nke-site-cp-0124
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+          feature-test-run: dynamo-ft-20261013t061231z
+    runtimeVersionOverride: 1.5.1
+  - name: VllmSnapshotWorker
+    type: worker
+    replicas: 1
+    sharedMemorySize: 16Gi
+    podTemplate:
+      spec:
+        tolerations:
+        - key: nvidia.com/gpu
+          operator: Equal
+          value: 'true'
+          effect: NoSchedule
+        volumes:
+        - name: cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        containers:
+        - name: main
+          image: nvcr.io/nvidia/ai-dynamo/vllm-runtime@sha256:2b224a823d52a198ec0eeb0e3e4f5cf26cd8a7fc2e9812ee16204b6b1e974870
+          imagePullPolicy: IfNotPresent
+          workingDir: /workspace/
+          command:
+          - python3
+          - -m
+          - dynamo.vllm
+          args:
+          - --model
+          - nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
+          - --revision
+          - bee7596271d1495f6992ae224aefde4410e816b8
+          - --served-model-name
+          - nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
+          - --trust-remote-code
+          - --tensor-parallel-size
+          - '1'
+          - --max-model-len
+          - '4096'
+          - --max-num-seqs
+          - '8'
+          - --max-num-batched-tokens
+          - '8192'
+          - --gpu-memory-utilization
+          - '0.65'
+          - --enable-prefix-caching
+          - --block-size
+          - '64'
+          - --mamba-backend
+          - flashinfer
+          - --mamba-ssm-cache-dtype
+          - float16
+          - --mamba-cache-mode
+          - align
+          - --reasoning-parser
+          - nemotron_v3
+          - --disaggregation-mode
+          - agg
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261013t023201z-features/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: VLLM_CACHE_ROOT
+            value: /tmp/vllm
+          - name: TRITON_CACHE_DIR
+            value: /tmp/triton
+          - name: NCCL_IB_DISABLE
+            value: '1'
+          - name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+            value: '180'
+          resources:
+            requests:
+              cpu: '4'
+              memory: 64Gi
+              nvidia.com/gpu: '1'
+            limits:
+              memory: 128Gi
+              nvidia.com/gpu: '1'
+          securityContext:
+            runAsUser: 0
+            capabilities:
+              add:
+              - IPC_LOCK
+              - SYS_RESOURCE
+          startupProbe:
+            httpGet:
+              path: /live
+              port: 9090
+            periodSeconds: 30
+            timeoutSeconds: 20
+            failureThreshold: 120
+          volumeMounts:
+          - name: cache
+            mountPath: /model-cache
+          - name: shm
+            mountPath: /dev/shm
+        runtimeClassName: nvidia
+        nodeSelector:
+          kubernetes.io/hostname: kubecon-nke-site-cp-0124
+        securityContext:
+          seccompProfile:
+            type: Localhost
+            localhostProfile: profiles/block-iouring.json
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+          feature-test-run: dynamo-ft-20261013t061231z
+    runtimeVersionOverride: 1.5.1
+    experimental:
+      checkpoint:
+        enabled: true
+        startupPolicy: WaitForCheckpoint
+        deletionPolicy: Retain

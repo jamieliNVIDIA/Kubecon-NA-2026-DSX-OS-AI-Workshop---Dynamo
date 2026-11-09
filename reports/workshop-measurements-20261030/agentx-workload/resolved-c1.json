@@ -1,0 +1,266 @@
+{
+  "benchmark_id": "69a443c96c30",
+  "sweep_id": null,
+  "cfg": {
+    "models": {
+      "strategy": "round_robin",
+      "items": [
+        {
+          "name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+          "weight": null,
+          "lora": null,
+          "modalities": null,
+          "tokenizer": null
+        }
+      ]
+    },
+    "endpoint": {
+      "urls": [
+        "http://127.0.0.1:8000"
+      ],
+      "url_strategy": "round_robin",
+      "type": "chat",
+      "path": null,
+      "api_key": null,
+      "timeout": 1800.0,
+      "streaming": true,
+      "transport": null,
+      "aws_region": null,
+      "aws_profile": null,
+      "auth_type": null,
+      "aws_service": null,
+      "sagemaker": {
+        "endpoint_name": null,
+        "target_model": null,
+        "inference_component_name": null,
+        "target_variant": null
+      },
+      "connection_reuse": "pooled",
+      "use_legacy_max_tokens": false,
+      "use_server_token_count": true,
+      "per_chunk_usage": false,
+      "template": null,
+      "headers": {},
+      "extra": {
+        "ignore_eos": true
+      },
+      "download_video_content": false,
+      "request_content_type": null,
+      "session_header": null,
+      "uuid_and_strip": false,
+      "wait_for_model_timeout": 0.0,
+      "wait_for_model_interval": 5.0,
+      "wait_for_model_mode": "inference",
+      "reset_kv_cache": null,
+      "server_profiler": null
+    },
+    "datasets": [
+      {
+        "system_prompt": null,
+        "system_prompt_file": null,
+        "name": "main",
+        "type": "public",
+        "dataset": "semianalysis_cc_traces_weka_062126",
+        "entries": null,
+        "random_seed": 20261030,
+        "sampling": "sequential",
+        "hf_subset": null,
+        "filters": {},
+        "hf_weka_dataset": null,
+        "weka_nested_timestamp_basis": null,
+        "inter_turn_delay_cap_seconds": null,
+        "trace_idle_gap_cap_seconds": null,
+        "ignore_trace_delays": false,
+        "use_think_time_only": false,
+        "max_context_length": 1048576,
+        "cache_bust": {
+          "target": "first_turn_prefix"
+        },
+        "prompts": null,
+        "synthesis": null,
+        "osl": null
+      }
+    ],
+    "phases": [
+      {
+        "adaptive_scale": false,
+        "adaptive_sustain_duration": null,
+        "adaptive_assessment_period": null,
+        "adaptive_min_completed_requests": 1,
+        "adaptive_control_variable": "concurrency",
+        "adaptive_control_min": 1.0,
+        "adaptive_control_max": null,
+        "adaptive_scale_strategy_type": "ramp_until_fail",
+        "adaptive_scale_step_policy": "sla_margin",
+        "adaptive_scale_base_step": 10,
+        "adaptive_scale_max_step_multiplier": 4,
+        "adaptive_scale_step_percent": 25.0,
+        "name": "profiling",
+        "kind": "profiling",
+        "type": "concurrency",
+        "exclude_from_results": false,
+        "requests": null,
+        "duration": 900.0,
+        "sessions": null,
+        "concurrency": 1,
+        "concurrency_ramp": null,
+        "prefill_concurrency": null,
+        "prefill_ramp": null,
+        "grace_period": 300.0,
+        "cancellation": null,
+        "sla": [],
+        "seamless": false,
+        "timing_mode": "agentic_replay",
+        "failed_request_threshold": null,
+        "trajectory_start_min_ratio": 0.0,
+        "trajectory_start_max_ratio": 1.0,
+        "burst_phase_starts": false,
+        "system_idle_gap_cap_seconds": 10.0,
+        "agentic_cache_warmup_duration": null,
+        "warmup_requests_per_lane": null,
+        "agentic_warmup_grace_period": 1800.0
+      }
+    ],
+    "artifacts": {
+      "dir": "artifacts/agentx-c1",
+      "prefix": null,
+      "summary": [
+        "json"
+      ],
+      "records": [
+        "jsonl"
+      ],
+      "raw": false,
+      "trace": false,
+      "slice_duration": null,
+      "show_trace_timing": false,
+      "user_files": [],
+      "auto_plot": false,
+      "plot_required": false,
+      "export_outputs_json": false
+    },
+    "slos": null,
+    "tokenizer": {
+      "name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+      "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+      "trust_remote_code": false,
+      "apply_chat_template": false
+    },
+    "gpu_telemetry": {
+      "enabled": false,
+      "urls": [],
+      "metrics_file": null,
+      "collector": "dcgm",
+      "mode": "summary"
+    },
+    "server_metrics": {
+      "enabled": true,
+      "urls": [],
+      "formats": [
+        "json",
+        "csv"
+      ],
+      "discovery": {
+        "mode": "auto",
+        "label_selector": null,
+        "namespace": null,
+        "timeout_seconds": 30.0
+      }
+    },
+    "network_latency": {
+      "enabled": false,
+      "ping_interval": 1.0,
+      "mean_ms": null
+    },
+    "otel": {
+      "metrics_url": null,
+      "stream_metrics_enabled": true,
+      "stream_timing_enabled": true,
+      "custom_resource_attributes": {},
+      "gen_ai_provider": null
+    },
+    "mlflow": {
+      "tracking_uri": null,
+      "experiment": "aiperf",
+      "run_name": null,
+      "tags": null,
+      "parent_run_id": null,
+      "artifact_globs": null
+    },
+    "wandb": {
+      "project": null,
+      "entity": null,
+      "run_name": null,
+      "tags": null
+    },
+    "runtime": {
+      "ui": "none",
+      "workers": null,
+      "record_processors": null,
+      "service_run_type": "multiprocessing",
+      "communication": null,
+      "api_port": null,
+      "api_host": null,
+      "dataset_api_base_url": null,
+      "workers_per_pod": null,
+      "record_processors_per_pod": null,
+      "workers_min": null,
+      "stats_interval": null
+    },
+    "logging": {
+      "level": "INFO"
+    },
+    "metrics": {},
+    "accuracy": null,
+    "scenario": "inferencex-agentx-mvp",
+    "unsafe_override": false
+  },
+  "variation": null,
+  "trial": 0,
+  "artifact_dir": "artifacts/agentx-c1",
+  "label": "",
+  "cli_command": "aiperf",
+  "random_seed": 20261030,
+  "variables": {},
+  "plot": null,
+  "run_meta": null,
+  "resolved": {
+    "tokenizer_names": null,
+    "gpu_telemetry_mode": "summary",
+    "artifact_dir_created": false,
+    "dataset_file_paths": null,
+    "total_expected_duration": 1200.0,
+    "gpu_custom_metrics": null,
+    "gpu_dcgm_mappings": null,
+    "dataset_types": null,
+    "dataset_sampling_strategies": null,
+    "dataset_has_timing_data": {
+      "main": false
+    },
+    "dataset_total_records": null,
+    "dataset_session_count": null,
+    "dataset_root_count": null,
+    "dataset_is_forking": null,
+    "comm_config": null,
+    "scenario_outcome": {
+      "scenario_name": "inferencex-agentx-mvp",
+      "applied_locks": [
+        "timing_mode",
+        "streaming",
+        "ignore_eos",
+        "forbid_ignore_trace_delays",
+        "forbid_input_truncation",
+        "require_loader",
+        "cache_bust",
+        "default_benchmark_duration",
+        "min_benchmark_duration",
+        "trajectory_start_ratios",
+        "system_idle_gap_cap",
+        "random_seed"
+      ],
+      "violations": [],
+      "submission_valid": true,
+      "submission_invalid_reasons": []
+    }
+  }
+}

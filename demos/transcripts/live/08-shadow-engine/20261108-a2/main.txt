@@ -1,0 +1,169 @@
+Demo files: /home/ubuntu/dynamo-kubecon-workshop/results/demo-08-shadow-engine-workshop_shadow_demo-1794179227644597628
+Dynamo workshop · Shadow Engine · LIVE EXPERIMENTAL
+
+Next: 1/4  One weight copy, two engines
+
+================================================================
+1/4  One weight copy, two engines
+Inspect active and standby engines sharing one GPU.
+================================================================
+
+$ cat shadow-settings.yaml
+model: Qwen/Qwen3-0.6B
+experimental:
+  gpuMemoryService:
+    deviceClassName: dynamo-ft-r610-b24750f1-demo-shadow
+  failover: {}
+engine_args:
+- --tensor-parallel-size
+- '1'
+- --load-format
+- gms
+- --enable-sleep-mode
+frontend_env:
+  DYN_MIGRATION_LIMIT: '0'
+engines: one active; one initialized and parked standby
+weights: one shared committed allocation per TP rank
+fault: one verified active EngineCore SIGKILL
+recovery: standby promotion; fresh requests; then replenish standby
+scope: same Pod and healthy GPU; no live KV or stream preservation
+
+Full executable manifest: deployment.yaml. Capture/Snapshot is not involved.
+
+Next: 2/4  Verify the parked standby
+
+================================================================
+2/4  Verify the parked standby
+Check failover state, GPU identity, and the shared GMS weight layout.
+================================================================
+{
+  "states": {
+    "engine-0": "active",
+    "engine-1": "standby"
+  },
+  "pod_uid": "dfab9552-8e71-4978-b7e5-0a6fdbb0b5fe",
+  "shared_gpu_uuids": [
+    "GPU-7b0cff01-e024-1e7f-5c2e-53c85b3835e4"
+  ]
+}
+Fresh request continuity and capacity restoration are separate questions.
+
+Next: 3/4  Lose the active engine
+
+================================================================
+3/4  Lose the active engine
+Kill one verified EngineCore; observe standby promotion and fresh inference.
+================================================================
+
+$ /home/ubuntu/dynamo-kubecon-workshop/.venv/bin/python -m demos shadow verify --run .
+{
+  "shadow-preflight": {
+    "status": "present",
+    "updated_at": "2026-11-08T23:09:50.300885+00:00",
+    "blockers": [],
+    "eligible_nodes": [
+      "kubecon-nke-site-cp-0124",
+      "kubecon-nke-site-cp-0198",
+      "kubecon-nke-site-cp-0942"
+    ],
+    "scope": "Infrastructure presence and allocator isolation only; runtime/model and actual DRA allocation still need qualification"
+  }
+}
+{
+  "shadow-preflight": {
+    "status": "present",
+    "updated_at": "2026-11-08T23:09:56.830527+00:00",
+    "blockers": [],
+    "eligible_nodes": [
+      "kubecon-nke-site-cp-0124",
+      "kubecon-nke-site-cp-0198",
+      "kubecon-nke-site-cp-0942"
+    ],
+    "scope": "Infrastructure presence and allocator isolation only; runtime/model and actual DRA allocation still need qualification"
+  }
+}
+{
+  "shadow-failover": {
+    "status": "passed",
+    "updated_at": "2026-11-08T23:11:20.554304+00:00",
+    "model": "Qwen/Qwen3-0.6B",
+    "physical_gpus": 1,
+    "active_before": "engine-0",
+    "active_after": "engine-1",
+    "pod_uid": "dfab9552-8e71-4978-b7e5-0a6fdbb0b5fe",
+    "fault_command_to_first_verified_response_seconds": 1.7090602507814765,
+    "worker_before": {
+      "prefill_worker_id": 3672760791027442,
+      "decode_worker_id": 3672760791027442
+    },
+    "worker_after": {
+      "prefill_worker_id": 7007201197692917,
+      "decode_worker_id": 7007201197692917
+    },
+    "tensor_parallel_size": 1,
+    "scope": "EngineCore process failure at the locked TP size; timing includes kubectl exec overhead; no node/hardware failure, KV continuity, or throughput claim",
+    "failed_requests": 2,
+    "new_standby_confirmed": true
+  }
+}
+{
+  "status": "passed",
+  "updated_at": "2026-11-08T23:11:20.554304+00:00",
+  "model": "Qwen/Qwen3-0.6B",
+  "physical_gpus": 1,
+  "active_before": "engine-0",
+  "active_after": "engine-1",
+  "pod_uid": "dfab9552-8e71-4978-b7e5-0a6fdbb0b5fe",
+  "fault_command_to_first_verified_response_seconds": 1.7090602507814765,
+  "worker_before": {
+    "prefill_worker_id": 3672760791027442,
+    "decode_worker_id": 3672760791027442
+  },
+  "worker_after": {
+    "prefill_worker_id": 7007201197692917,
+    "decode_worker_id": 7007201197692917
+  },
+  "tensor_parallel_size": 1,
+  "scope": "EngineCore process failure at the locked TP size; timing includes kubectl exec overhead; no node/hardware failure, KV continuity, or throughput claim",
+  "failed_requests": 2,
+  "new_standby_confirmed": true
+}
+
+Next: 4/4  Check restored capacity
+
+================================================================
+4/4  Check restored capacity
+Inspect changed worker identity, unchanged GMS, and standby replenishment.
+================================================================
+{
+  "status": "passed",
+  "updated_at": "2026-11-08T23:11:20.554304+00:00",
+  "model": "Qwen/Qwen3-0.6B",
+  "physical_gpus": 1,
+  "active_before": "engine-0",
+  "active_after": "engine-1",
+  "pod_uid": "dfab9552-8e71-4978-b7e5-0a6fdbb0b5fe",
+  "fault_command_to_first_verified_response_seconds": 1.7090602507814765,
+  "worker_before": {
+    "prefill_worker_id": 3672760791027442,
+    "decode_worker_id": 3672760791027442
+  },
+  "worker_after": {
+    "prefill_worker_id": 7007201197692917,
+    "decode_worker_id": 7007201197692917
+  },
+  "tensor_parallel_size": 1,
+  "scope": "EngineCore process failure at the locked TP size; timing includes kubectl exec overhead; no node/hardware failure, KV continuity, or throughput claim",
+  "failed_requests": 2,
+  "new_standby_confirmed": true
+}
+
+Recovery timing includes fault command and request polling. It is not a workload SLO result.
+Initialized standby overhead, under-load recovery and repeated swaps remain separate measurements.
+
+Demo complete. The service stays running.
+
+From the repository root:
+
+Resume: /home/ubuntu/dynamo-kubecon-workshop/.venv/bin/python -m demos shadow --run results/demo-08-shadow-engine-workshop_shadow_demo-1794179227644597628
+Cleanup: /home/ubuntu/dynamo-kubecon-workshop/.venv/bin/python -m demos shadow cleanup --run results/demo-08-shadow-engine-workshop_shadow_demo-1794179227644597628

@@ -1,0 +1,22 @@
+{
+  "version": "1.7.0.dev20261103",
+  "dynamo_source_revision": "e37f0b91f841e12715e412b375a40842ec6010b6",
+  "required_fix": "8bf042187a8f3f4224e608b1045db14e5f712f30",
+  "wheels": [
+    {
+      "package": "ai-dynamo",
+      "filename": "ai_dynamo-1.7.0.dev20261103-py3-none-any.whl",
+      "url": "https://pypi.nvidia.com/ai-dynamo/ai_dynamo-1.7.0.dev20261103-py3-none-any.whl",
+      "sha256": "2d086a92bbd6c0ace3f120716d52786458e0b20ba9011b3ebb8a6981126f67d6",
+      "bytes": 4671367
+    },
+    {
+      "package": "ai-dynamo-runtime",
+      "filename": "ai_dynamo_runtime-1.7.0.dev20261103-cp311-abi3-manylinux_2_28_x86_64.whl",
+      "url": "https://pypi.nvidia.com/ai-dynamo-runtime/ai_dynamo_runtime-1.7.0.dev20261103-cp311-abi3-manylinux_2_28_x86_64.whl",
+      "sha256": "9698cfa82642d1a404af46213d8b7798f7d42e36440d048ef410ea79dbce2690",
+      "bytes": 83977319
+    }
+  ],
+  "scope": "Official matching nightly Dynamo wheels in private overlay; existing Super VL/vLLM/NIXL 1.5.0 binaries retained; no global runtime promotion."
+}

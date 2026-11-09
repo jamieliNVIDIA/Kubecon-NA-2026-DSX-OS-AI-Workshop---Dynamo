@@ -1,0 +1,182 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "mx-redis"
+      },
+      "spec": {
+        "selector": {
+          "mx-startup-service": "mx-redis"
+        },
+        "ports": [
+          {
+            "name": "service",
+            "port": 6379,
+            "targetPort": 6379
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "mx-coordinator"
+      },
+      "spec": {
+        "selector": {
+          "mx-startup-service": "mx-coordinator"
+        },
+        "ports": [
+          {
+            "name": "service",
+            "port": 8001,
+            "targetPort": 8001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "mx-redis",
+        "labels": {
+          "mx-startup-service": "mx-redis"
+        }
+      },
+      "spec": {
+        "restartPolicy": "Never",
+        "activeDeadlineSeconds": 21600,
+        "automountServiceAccountToken": false,
+        "nodeSelector": {
+          "kubernetes.io/hostname": "kubecon-nke-site-cp-0942"
+        },
+        "containers": [
+          {
+            "name": "redis",
+            "image": "registry-1.docker.io/library/redis@sha256:519f0189dfdee3bc0bad61fb265fe73d864b5c64020e6579ad48a45c49965635",
+            "command": [
+              "redis-server"
+            ],
+            "args": [
+              "--save",
+              "",
+              "--appendonly",
+              "no"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              },
+              "limits": {
+                "cpu": "1",
+                "memory": "512Mi"
+              }
+            },
+            "readinessProbe": {
+              "tcpSocket": {
+                "port": 6379
+              },
+              "periodSeconds": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "mx-coordinator",
+        "labels": {
+          "mx-startup-service": "mx-coordinator"
+        }
+      },
+      "spec": {
+        "restartPolicy": "Never",
+        "activeDeadlineSeconds": 21600,
+        "automountServiceAccountToken": false,
+        "nodeSelector": {
+          "kubernetes.io/hostname": "kubecon-nke-site-cp-0942"
+        },
+        "imagePullSecrets": [
+          {
+            "name": "common-runtime-pull"
+          }
+        ],
+        "containers": [
+          {
+            "name": "server",
+            "image": "nvcr.io/nvidia/ai-dynamo/modelexpress-server@sha256:0f8456cfc29c02547d6c62d1e640f98dc691e0326523c15fa05987d8bc491a77",
+            "env": [
+              {
+                "name": "MX_METADATA_BACKEND",
+                "value": "redis"
+              },
+              {
+                "name": "REDIS_URL",
+                "value": "redis://mx-redis:6379"
+              },
+              {
+                "name": "MODEL_EXPRESS_SERVER_PORT",
+                "value": "8001"
+              },
+              {
+                "name": "MODEL_EXPRESS_CACHE_DIRECTORY",
+                "value": "/cache"
+              },
+              {
+                "name": "MODEL_EXPRESS_LOG_LEVEL",
+                "value": "info"
+              },
+              {
+                "name": "HF_HUB_OFFLINE",
+                "value": "1"
+              },
+              {
+                "name": "NVIDIA_VISIBLE_DEVICES",
+                "value": "void"
+              }
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "200m",
+                "memory": "256Mi"
+              },
+              "limits": {
+                "cpu": "2",
+                "memory": "1Gi"
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "cache",
+                "mountPath": "/cache"
+              }
+            ],
+            "readinessProbe": {
+              "tcpSocket": {
+                "port": 8001
+              },
+              "periodSeconds": 2
+            }
+          }
+        ],
+        "volumes": [
+          {
+            "name": "cache",
+            "emptyDir": {
+              "sizeLimit": "2Gi"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

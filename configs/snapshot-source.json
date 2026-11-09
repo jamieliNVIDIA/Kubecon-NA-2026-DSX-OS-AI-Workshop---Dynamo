@@ -1,0 +1,25 @@
+{
+  "snapshot_revision": "77fe2f40e4f14e3b3c866e607b266bffc7a3d864",
+  "sources": [
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/README.md",
+      "sha256": "ac82c117417ca8783ec65ab12202dde665b09a12e624adffb2a8148f4caa33c8"
+    },
+    {
+      "path": "docs/limitations.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/limitations.md",
+      "sha256": "7bd0a8d3762ca5d8a111803720aa1b3505690a91a13152fc72574a25b201d653"
+    },
+    {
+      "path": "docs/operations/install.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/operations/install.md",
+      "sha256": "7ada83636518a7b28889519552c0991b8ba01324a09c27a34f49d855d6d12b3e"
+    },
+    {
+      "path": "docs/operations/storage.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/snapshot/77fe2f40e4f14e3b3c866e607b266bffc7a3d864/docs/operations/storage.md",
+      "sha256": "a672ae7c007088502f76d64257e6597fd80a40de7a4a11e1a7ca9335313cc256"
+    }
+  ]
+}

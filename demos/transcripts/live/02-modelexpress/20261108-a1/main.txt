@@ -1,0 +1,672 @@
+Demo files: /home/ubuntu/dynamo-kubecon-workshop/results/demo-02-20261108-capture-a1
+
+Dynamo workshop · ModelExpress peer weights
+LIVE CLUSTER
+Run: /home/ubuntu/dynamo-kubecon-workshop/results/demo-02-20261108-capture-a1
+
+Next: 1/4  Discover peer weights
+
+================================================================
+1/4  Discover peer weights
+The first replica already publishes its weights; the new worker discovers its source Service.
+================================================================
+Running first replica -> its mx-source Service -> second replica
+The first replica loaded from storage and already publishes compatible weights.
+That Kubernetes Service is the discovery path; there is no ModelExpress server in this setup.
+The second uses the same loader and engine settings.
+
+
+$ cat modelexpress-settings.yaml
+# Already enabled on the first replica; the new worker uses the same loader.
+args:
+- --load-format
+- modelexpress
+env:
+- name: MX_METADATA_BACKEND
+  value: k8s-service
+- name: MX_K8S_SERVICE_PATTERN
+  value: mx-source
+- name: MX_NIXL_BACKEND
+  value: LIBFABRIC
+- name: MX_ARTIFACT_TRANSFER
+  value: '0'
+
+Next: 2/4  Start a new worker
+
+================================================================
+2/4  Start a new worker
+Load peer weights over NIXL/EFA, then compare the first and second startups.
+================================================================
+
+$ kubectl apply -f peer.yaml
+Starting the service. Running phase times refresh with each observation.
+  Pod startup        running     1.0s
+  Runtime setup      pending        —
+  Worker / TP setup  pending        —
+  Model setup        pending        —
+  Weight loading     pending        —
+  Weight finalizing  pending        —
+  Engine init        pending        —
+    Warmup window    pending        —
+  Readiness          pending        —
+  Elapsed: 1.0s
+  Pod startup        running     6.0s
+  Runtime setup      pending        —
+  Worker / TP setup  pending        —
+  Model setup        pending        —
+  Weight loading     pending        —
+  Weight finalizing  pending        —
+  Engine init        pending        —
+    Warmup window    pending        —
+  Readiness          pending        —
+  Elapsed: 6.0s
+  Pod startup         done        8.6s
+  Runtime setup       running     2.6s
+  Worker / TP setup   pending        —
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 11.2s
+  Pod startup         done        8.6s
+  Runtime setup       running     7.8s
+  Worker / TP setup   pending        —
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 16.4s
+  Pod startup         done        8.6s
+  Runtime setup       running    13.0s
+  Worker / TP setup   pending        —
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 21.6s
+  Pod startup         done        8.6s
+  Runtime setup       running    18.2s
+  Worker / TP setup   pending        —
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 26.8s
+  Pod startup         done        8.6s
+  Runtime setup       running    23.4s
+  Worker / TP setup   pending        —
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 32.0s
+  Pod startup         done        8.6s
+  Runtime setup       running    28.6s
+  Worker / TP setup   pending        —
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 37.2s
+  Pod startup         done        8.6s
+  Runtime setup       running    33.8s
+  Worker / TP setup   pending        —
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 42.4s
+  Pod startup         done        8.6s
+  Runtime setup       running    39.0s
+  Worker / TP setup   pending        —
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 47.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   running     5.0s
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 52.8s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   running    10.3s
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 58.1s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   running    15.5s
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 63.3s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   running    20.7s
+  Model loading       pending        —
+    Model setup       pending        —
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 68.5s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running     1.6s
+    Model setup       running     1.6s
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 73.7s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running     6.8s
+    Model setup       running     6.8s
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 78.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running    12.0s
+    Model setup       running    12.0s
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 84.1s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running    17.2s
+    Model setup       running    17.2s
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 89.3s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running    22.4s
+    Model setup       running    22.4s
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 94.5s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running    27.6s
+    Model setup       running    27.6s
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 99.7s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running    32.8s
+    Model setup       running    32.8s
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 104.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running    38.0s
+    Model setup       running    38.0s
+    Weight loading    pending        —
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 110.1s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running    43.3s
+    Model setup       done       43.0s
+    Weight loading    running     0.3s
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 115.3s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       running    48.5s
+    Model setup       done       43.0s
+    Weight loading    running     5.6s
+    Weight finalizing pending        —
+  Engine init         pending        —
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 120.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running     1.0s
+    Warmup window     pending        —
+  Readiness           pending        —
+  Elapsed: 126.0s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running     6.4s
+    Warmup window     running     5.0s
+  Readiness           pending        —
+  Elapsed: 131.3s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    11.7s
+    Warmup window     running    10.3s
+  Readiness           pending        —
+  Elapsed: 136.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    17.0s
+    Warmup window     running    15.7s
+  Readiness           pending        —
+  Elapsed: 141.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    22.4s
+    Warmup window     running    21.0s
+  Readiness           pending        —
+  Elapsed: 147.3s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    27.7s
+    Warmup window     running    26.3s
+  Readiness           pending        —
+  Elapsed: 152.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    33.0s
+    Warmup window     running    31.6s
+  Readiness           pending        —
+  Elapsed: 157.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    38.3s
+    Warmup window     running    37.0s
+  Readiness           pending        —
+  Elapsed: 163.2s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    43.7s
+    Warmup window     running    42.3s
+  Readiness           pending        —
+  Elapsed: 168.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    49.0s
+    Warmup window     running    47.7s
+  Readiness           pending        —
+  Elapsed: 173.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    54.4s
+    Warmup window     running    53.0s
+  Readiness           pending        —
+  Elapsed: 179.3s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    59.7s
+    Warmup window     running    58.3s
+  Readiness           pending        —
+  Elapsed: 184.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    65.0s
+    Warmup window     running    63.7s
+  Readiness           pending        —
+  Elapsed: 189.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    70.3s
+    Warmup window     running    69.0s
+  Readiness           pending        —
+  Elapsed: 195.3s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    75.7s
+    Warmup window     running    74.3s
+  Readiness           pending        —
+  Elapsed: 200.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         running    81.0s
+    Warmup window     running    79.6s
+  Readiness           pending        —
+  Elapsed: 205.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         done       83.5s
+    Warmup window     done       82.6s
+  Readiness           running     2.4s
+  Elapsed: 211.2s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         done       83.5s
+    Warmup window     done       82.6s
+  Readiness           running     7.7s
+  Elapsed: 216.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         done       83.5s
+    Warmup window     done       82.6s
+  Readiness           running    13.0s
+  Elapsed: 221.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         done       83.5s
+    Warmup window     done       82.6s
+  Readiness           running    18.4s
+  Elapsed: 227.2s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         done       83.5s
+    Warmup window     done       82.6s
+  Readiness           running    23.7s
+  Elapsed: 232.6s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         done       83.5s
+    Warmup window     done       82.6s
+  Readiness           running    29.0s
+  Elapsed: 237.9s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         done       83.5s
+    Warmup window     done       82.6s
+  Readiness           running    34.4s
+  Elapsed: 243.3s
+  Pod startup         done        8.6s
+  Runtime setup       done       39.2s
+  Worker / TP setup   done       24.3s
+  Model loading       done       53.2s
+    Model setup       done       43.0s
+    Weight loading    done        9.0s
+    Peer copy         done        4.2s
+    Weight finalizing done        0.9s
+  Engine init         done       83.5s
+    Warmup window     done       82.6s
+  Readiness           done       38.7s
+  Elapsed: 247.6s
+
+Startup timing
+  Kubernetes worker Ready timestamp: 247.6s since apply
+  worker_and_frontend_ready           248.7s
+
+Engine log subphases (slowest TP rank):
+  model_loading                       53.17s
+  engine_initialization               83.49s
+  Compilation / CUDA graphs        disabled for this demo
+  Kernel warmup window                82.60s (log markers)
+  This introductory profile skips torch.compile and CUDA graphs (eager execution).
+
+First replica versus new replica · eager profile
+Boundary                        Storage Peer weights
+Deployment to Ready              493.0s       247.6s
+Model loading                    290.7s        53.2s
+  peer copy, slowest rank             —         4.2s
+Engine initialization             84.0s        83.5s
+Observed readiness ratio: 1.99x (first / second replica)
+Observed first and second startups on different nodes with the same model and engine settings.
+Checkpoint staged on EFS; page caches and source traffic are uncontrolled.
+
+Next: 3/4  Follow the weight transfer
+
+================================================================
+3/4  Follow the weight transfer
+Check both TP ranks, the transport, and whether loading fell back to storage.
+================================================================
+
+$ cat transfer-excerpts.log
+2026-11-08T08:18:39.356339455Z (Worker_TP0 pid=1618) INFO 11-08 08:18:39 [__init__.py:89] [Worker 0] Trying strategy: rdma
+2026-11-08T08:18:39.407760992Z (Worker_TP1 pid=1913) INFO 11-08 08:18:39 [__init__.py:89] [Worker 1] Trying strategy: rdma
+2026-11-08T08:19:17.229568644Z I1108 08:19:17.229444    1618 libfabric_rail_manager.cpp:232] Created 8 rails using provider=efa
+2026-11-08T08:19:17.276609388Z 2026-11-08 08:19:17 NIXL INFO    _api.py:405 Backend LIBFABRIC was instantiated
+2026-11-08T08:19:17.518966389Z I1108 08:19:17.518844    1913 libfabric_rail_manager.cpp:232] Created 8 rails using provider=efa
+2026-11-08T08:19:17.560275525Z 2026-11-08 08:19:17 NIXL INFO    _api.py:405 Backend LIBFABRIC was instantiated
+2026-11-08T08:19:18.480172258Z (Worker_TP1 pid=1913) INFO 11-08 08:19:18 [rdma_strategy.py:553] [Worker 1] Receiving 1413 tensors from source (P2P)
+2026-11-08T08:19:21.717837661Z (Worker_TP1 pid=1913) INFO 11-08 08:19:21 [nixl_transfer.py:972] Transfer complete: 1413 tensors, 39.22 GB in 3.24s (96.9 Gbps)
+2026-11-08T08:19:23.220523466Z (Worker_TP0 pid=1618) INFO 11-08 08:19:23 [rdma_strategy.py:553] [Worker 0] Receiving 1413 tensors from source (P2P)
+2026-11-08T08:19:27.437302596Z (Worker_TP0 pid=1618) INFO 11-08 08:19:27 [nixl_transfer.py:972] Transfer complete: 1413 tensors, 39.22 GB in 4.22s (74.4 Gbps)
+TP0: 39.22 GB in 4.22s
+TP1: 39.22 GB in 3.24s
+NIXL LIBFABRIC over EFA, kubecon-nke-site-cp-0124 -> kubecon-nke-site-cp-0198; no fallback to storage.
+Full proof with Pod, claim and GPU identities: peer-proof.json in the run directory.
+Tensor-copy duration is inside model loading; the new engine still has to initialize.
+
+Next: 4/4  Use the new worker
+
+================================================================
+4/4  Use the new worker
+Send a request through the destination frontend.
+================================================================
+
+$ kubectl port-forward -n dynamo-ft-r610-f2bd6ac3-demo service/demo-mx-target-frontend 18001:8000 \
+  --address=127.0.0.1
+
+$ curl --fail --silent --show-error http://127.0.0.1:18001/v1/models
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4","object":"model","created":1794126096,"owned_by":"nvidia","context_window":1048576}]}
+
+Request body: (full JSON: request.json)
+  model: "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+  max_completion_tokens: 64
+  temperature: 0
+  chat_template_kwargs: {"enable_thinking": false}
+  Message 1 · user:
+    Write a short Python function add(a, b) that returns their sum. Reply with code only.
+
+$ curl --fail --silent --show-error --max-time 180 http://127.0.0.1:18001/v1/chat/completions -H \
+  'Content-Type: application/json' --data-binary @request.json
+Assistant response:
+def add(a, b):
+    return a + b
+Output tokens: 12
+
+Demo complete. The service stays running.
+
+From the repository root:
+
+Resume: /home/ubuntu/dynamo-kubecon-workshop/.venv/bin/python -m demos modelexpress --run results/demo-02-20261108-capture-a1
+Cleanup: /home/ubuntu/dynamo-kubecon-workshop/.venv/bin/python -m demos modelexpress cleanup --run results/demo-02-20261108-capture-a1

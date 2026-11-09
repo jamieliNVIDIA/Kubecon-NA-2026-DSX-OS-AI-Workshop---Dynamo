@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "configuration": "two-rr",
+  "max_num_seqs": 128,
+  "workers": {
+    "kubecon-nke-site-cp-0942": {
+      "gpu_uuids": [
+        "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75",
+        "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8"
+      ],
+      "cache_capacity_logs": [
+        "(Worker_TP0 pid=1616) INFO 11-05 07:48:20 [gpu_worker.py:726] Available KV cache memory: 27.78 GiB",
+        "(EngineCore pid=1317) INFO 11-05 07:48:20 [kv_cache_utils.py:2481] GPU KV cache size: 13,691,066 tokens, Maximum concurrency for 1,048,576 tokens per request: 13.06x"
+      ],
+      "uid": "9fc8dcff-4517-4f4b-aad8-bd96543f2851"
+    },
+    "kubecon-nke-site-cp-0198": {
+      "gpu_uuids": [
+        "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326",
+        "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5"
+      ],
+      "cache_capacity_logs": [
+        "(Worker_TP0 pid=1611) INFO 11-05 07:48:11 [gpu_worker.py:726] Available KV cache memory: 27.78 GiB",
+        "(EngineCore pid=1312) INFO 11-05 07:48:11 [kv_cache_utils.py:2481] GPU KV cache size: 13,691,066 tokens, Maximum concurrency for 1,048,576 tokens per request: 13.06x"
+      ],
+      "uid": "d3e301c9-323e-402d-aea7-72ce36c98489"
+    }
+  },
+  "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df"
+}

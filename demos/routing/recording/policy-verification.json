@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "user_stopped": true,
+  "files_verified": 680,
+  "uncompressed_bytes": 182640875,
+  "archive_sha256": "ad2d7a62faaee7b832194dd07d40f5f3ad7fd306cc0ef2ad655130081f3255b4",
+  "cleanup": {
+    "at": "2026-11-05T01:53:18.839506+00:00",
+    "user_stopped": true,
+    "reason": "Replace C1/C4 with higher load sweeps",
+    "controller_id": "57a754d10d67bcfbb7aad2e209e83228374402ce77c2af1496809eec19738baa",
+    "controller_state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 130,
+      "Error": "",
+      "StartedAt": "2026-11-05T00:27:25.44799912Z",
+      "FinishedAt": "2026-11-05T01:51:16.359720043Z"
+    },
+    "controller_exit": {
+      "exit_code": 1,
+      "started_at": "2026-11-05T00:27:25.713602+00:00",
+      "finished_at": "2026-11-05T01:51:16.347955+00:00",
+      "error": "KeyboardInterrupt('Controller signal 15')",
+      "scoped_lease_present": false
+    },
+    "gpu_pods": [],
+    "resourceclaims": [],
+    "dgd": [],
+    "scoped_lease_absent": true,
+    "retained_cpu_pods": [
+      {
+        "name": "rr-loadgen",
+        "uid": "bac8524b-0cb0-4fe9-a386-19a2b1412066",
+        "node": "kubecon-nke-site-cp-0942"
+      }
+    ],
+    "scope": "Only routing namespace and scoped lease; Snapshot resources untouched"
+  }
+}

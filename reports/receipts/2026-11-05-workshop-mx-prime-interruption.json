@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "status": "observer_failed_transport_resources_retained",
+  "run": "results/overnight-mx-live-20261104-a1",
+  "namespace": "dynamo-ft-r610-e969b3c7-demo",
+  "source_startup": {
+    "arm": "source",
+    "simulated": false,
+    "engine_signature": "7fe3dcd23701c11864f8554c8c6040b5da2b5143befbf810dfdab0fbbfa1a13e",
+    "node": "kubecon-nke-site-cp-0124",
+    "source_uid": null,
+    "worker_uid": "6fd8b3ef-2a6e-49a2-8daf-feb7144733cb",
+    "ready_seconds": 1420.993467,
+    "model_loading_seconds": 1241.134493,
+    "engine_init_seconds": 84.19
+  },
+  "source_observed_allocation": {
+    "assignment_id": "overnight-baseline-mx-20261104",
+    "role": "source",
+    "node": "kubecon-nke-site-cp-0124",
+    "gpu_uuids": [
+      "GPU-c220c1d0-843c-ce3c-b1f9-3ad67af277d7",
+      "GPU-ea836524-584e-0719-d7bb-0de129f5e7d3"
+    ],
+    "pod_uid": "6fd8b3ef-2a6e-49a2-8daf-feb7144733cb",
+    "claim_uid": "f6089a47-02cd-40ac-9c40-ffb8745229f1",
+    "scope": "Observed placement, not utilization or inference proof."
+  },
+  "native": {
+    "status": "observation_interrupted_before_terminal_readiness",
+    "pod_uid": "1866559f-915c-4b91-90f2-013cc2b7a7c2",
+    "apply_started_at": "2026-11-05T16:18:24.132089+00:00",
+    "last_successful_observation": "2026-11-05T16:23:30.736015+00:00",
+    "last_log_at": "2026-11-05T16:23:29.023135270Z",
+    "ready_at_last_success": false
+  },
+  "peer_started": false,
+  "matched_comparison_completed": false,
+  "fresh_coding_inference_completed": false,
+  "transport_error": "API observation first timed out, then loopback tunnel endpoint127.0.0.1:16443 refused connections. No captured engine failure.",
+  "configured_consecutive_retry_budget_seconds": 60.0,
+  "retry_exhausted_at": "2026-11-05T18:07:17.958837+00:00",
+  "last_success_to_retry_exit_wall_seconds": 6227.222822,
+  "clock_limit": "Retry attempts span substantially more wall time than the configured monotonic budget; suspension/scheduling is a candidate explanation, not established by these receipts. Do not claim a strict60-second wall-clock exit.",
+  "evidence_snapshot": "results/overnight-baseline-mx-control/mx-interrupted-evidence-20261105-a1",
+  "manifest_sha256": "6cde5e463f6c184da499ce0c90710cbee72723662b3474391fa47717c9cc0262",
+  "evidence_files": 771,
+  "cleanup_status": "pending fresh ownership audit and scoped root-executed cleanup; lease intentionally retained",
+  "scope": "Source-only real-cluster startup result and failed native observer; neither peer functionality nor benchmark comparison is qualified by this attempt."
+}

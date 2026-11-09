@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "demo": "request-continuity",
+  "targets": {
+    "disabled": [
+      {
+        "node": "kubecon-nke-site-cp-0124",
+        "gpu_uuids": [
+          "GPU-b896cc31-be76-0f28-2e2d-d82564b624b7",
+          "GPU-a63322d6-c08e-79cb-c42a-031aeb4c1488"
+        ]
+      },
+      {
+        "node": "kubecon-nke-site-cp-0942",
+        "gpu_uuids": [
+          "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8",
+          "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75"
+        ]
+      }
+    ],
+    "enabled": [
+      {
+        "node": "kubecon-nke-site-cp-0198",
+        "gpu_uuids": [
+          "GPU-3790a112-5f2d-70e8-e65f-30dfa66869e0",
+          "GPU-c78f34dc-e790-cfc7-1745-be1cb2e98409"
+        ]
+      },
+      {
+        "node": "kubecon-nke-site-cp-0942",
+        "gpu_uuids": [
+          "GPU-58272147-35f4-6125-0810-25497aee2a1a",
+          "GPU-e4f59982-2d2b-0692-84bd-ca6c7d709c1e"
+        ]
+      }
+    ]
+  }
+}

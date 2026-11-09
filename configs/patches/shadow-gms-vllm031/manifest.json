@@ -1,0 +1,11 @@
+{
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "patch": {
+    "configmap": "shadow-gms-compat-8f75223bc585",
+    "sha256": "8f75223bc5856a4cca206d416607d2807d985857b3d181938d9c1529c3d8f422",
+    "original_sha256": "a1bce1a996b85ff25d9541aeae80adb2735642748d6fd24c8510e85a5f96846b",
+    "path": "configs/patches/shadow-gms-vllm031/patches.py"
+  },
+  "evidence_run": "results/20261014-shadow-enabled-check",
+  "scope": "Test-local vLLM 0.31 request_memory compatibility; does not qualify quantized-model import or failover"
+}

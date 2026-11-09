@@ -1,0 +1,17 @@
+{
+  "verified": true,
+  "files": 1040,
+  "completed_cells": [
+    "one-rr-c16-a1",
+    "two-kv-c16-a1",
+    "two-rr-c16-a1"
+  ],
+  "controller_status": {
+    "at": "2026-11-05T08:56:51.645997+00:00",
+    "stage": "Stopped; preserve inputs and inspect failure",
+    "error": "AssertionError('one-rr-c32 failed; inspect /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-controller-20261105-a1/one-rr-c32/console.log')",
+    "traceback": "Traceback (most recent call last):\n  File \"/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/reports/overnight-2026-11-04/routing-sweep/controller.py\", line 178, in execute\n    assert code == 0, action + ' failed; inspect ' + str(folder / 'console.log')\n           ^^^^^^^^^\nAssertionError: one-rr-c32 failed; inspect /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-controller-20261105-a1/one-rr-c32/console.log\n"
+  },
+  "archive_sha256": "d0524b4a44602a361b243bb0fdbd8031db39c178625de445383c4f3afb32c8fe",
+  "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-collection-recovered-20261105-0739/verified/results/workshop-routing-overnight-20261105-a1"
+}

@@ -1,0 +1,30 @@
+{
+  "status": "source_supported_canary_expiry_with_existing_upstream_fix",
+  "installed_sources_verified": 8,
+  "installed_source_proof_sha256": "093e759079400e97f9f880cdfeab03f0640509163e375e6514b2b8e406471223",
+  "source_cpu_uid": "4385c581-2c2c-446a-8f7d-123617386cf8",
+  "pinned_runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "observed_prefill_profiling_expiry_delta": 2406,
+  "observed_failed_transfer_notification_and_late_notification_deltas": 0,
+  "full_saved_prefill_log_expiry_warnings": 3878,
+  "full_saved_prefill_log_unique_expired_ids": 1939,
+  "expired_ids_matching_retained_benchmark_request_or_correlation_ids": 0,
+  "findings": [
+    "Health payload marks _HEALTH_CHECK; installed prefill handler has no marker-specific path and always configures prefill KV handoff.",
+    "Expiry warnings start thirty seconds after prefill health task and continue at one request/second after the benchmark has exited; TP2 counts each lease twice.",
+    "NIXL expiry is recorded separately from failed transfers and no late notifications were observed.",
+    "Exact per-canary request tracing was not introduced into this frozen campaign."
+  ],
+  "existing_upstream_fix": {
+    "commit": "5b4ad1db8946117cb50a12af4901c96c12580d66",
+    "subject": "fix(vllm): do not request KV handoff for prefill health probes (#15594)",
+    "pr": "https://github.com/ai-dynamo/dynamo/pull/15594",
+    "source": "Read-only local Git history; clean tracked source and local origin/main ancestry, no live GitHub refresh.",
+    "local_origin_main": "4fb7b3abbc56d48c97fc790c9659861e1a2d8876",
+    "ancestor_of_local_origin_main": true,
+    "release_backport_inclusion_verified": false
+  },
+  "effective_ssm_layout_scope": "Installed envs.py returns None when unset and documents SD as default; actual resolver was not captured. P/D explicitly sets DS; aggregate leaves variable unset.",
+  "runtime_changed": false,
+  "benchmark_replayed": false
+}

@@ -1,0 +1,261 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceClaimTemplate
+  metadata:
+    name: ft-sidecar-worker-main-gpus
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-20261015t220520z
+    namespace: dynamo-ft-20261015t220520z
+  spec:
+    spec:
+      devices:
+        requests:
+        - name: gpu
+          exactly:
+            deviceClassName: gpu.nvidia.com
+            count: 2
+- apiVersion: nvidia.com/v1beta1
+  kind: DynamoGraphDeployment
+  metadata:
+    name: ft-sidecar
+    namespace: dynamo-ft-20261015t220520z
+    labels:
+      app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+      feature-test-run: dynamo-ft-20261015t220520z
+  spec:
+    components:
+    - name: Frontend
+      type: frontend
+      replicas: 1
+      podTemplate:
+        spec:
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            command:
+            - python3
+            - -m
+            - dynamo.frontend
+            args:
+            - --trust-remote-code
+            resources:
+              requests:
+                cpu: '1'
+                memory: 4Gi
+              limits:
+                memory: 8Gi
+            env:
+            - name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - name: PYTHONHASHSEED
+              value: '0'
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: dshm
+              mountPath: /dev/shm
+          imagePullSecrets:
+          - name: common-runtime-pull
+          activeDeadlineSeconds: 2700
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 16Gi
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+            feature-test-run: dynamo-ft-20261015t220520z
+      runtimeVersionOverride: 1.6.0
+    - name: worker
+      type: worker
+      replicas: 1
+      podTemplate:
+        spec:
+          initContainers:
+          - name: runtime
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            command:
+            - dynamo-vllm-sidecar
+            args:
+            - --grpc-endpoint
+            - 127.0.0.1:50051
+            restartPolicy: Always
+            resources:
+              requests:
+                cpu: '1'
+                memory: 1Gi
+              limits:
+                memory: 4Gi
+            securityContext:
+              runAsUser: 0
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            env:
+            - name: DYN_NAMESPACE
+              value: dynamo-ft-20261015t220520z-ft-sidecar
+            - name: DYN_DISCOVERY_BACKEND
+              value: kubernetes
+            - name: DYN_REQUEST_PLANE
+              value: tcp
+            - name: DYN_EVENT_PLANE
+              value: zmq
+            - name: DYN_SYSTEM_PORT
+              value: '9090'
+            - name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+          containers:
+          - name: main
+            image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+            startupProbe:
+              grpc:
+                port: 50051
+                service: ''
+              periodSeconds: 5
+              timeoutSeconds: 5
+              failureThreshold: 360
+            readinessProbe:
+              grpc:
+                port: 50051
+                service: ''
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+            livenessProbe:
+              grpc:
+                port: 50051
+                service: ''
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 6
+            resources:
+              requests:
+                cpu: '8'
+                memory: 128Gi
+              limits:
+                memory: 256Gi
+              claims:
+              - name: gpu-main
+            command:
+            - bash
+            - -ec
+            args:
+            - exec "$(python3 -c 'import os,vllm; print(os.path.join(os.path.dirname(vllm.__file__),
+              "vllm-rs"))')" "$@"
+            - engine
+            - serve
+            - nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+            - --host
+            - 0.0.0.0
+            - --grpc-port
+            - '50051'
+            - --revision
+            - 8a115b9d966adce8c059a7bcf47f49a1e57957d8
+            - --served-model-name
+            - nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+            - --trust-remote-code
+            - --tensor-parallel-size
+            - '2'
+            - --max-model-len
+            - '8192'
+            - --max-num-seqs
+            - '4'
+            - --max-num-batched-tokens
+            - '8192'
+            - --gpu-memory-utilization
+            - '0.85'
+            - --enable-prefix-caching
+            - --block-size
+            - '64'
+            - --mamba-backend
+            - flashinfer
+            - --mamba-ssm-cache-dtype
+            - float16
+            - --mamba-cache-mode
+            - align
+            - --reasoning-parser
+            - nemotron_v3
+            - --limit-mm-per-prompt
+            - '{"image":1,"video":0}'
+            env:
+            - name: HF_HOME
+              value: /model-cache/feature-tests/20261015-super-vl-tp2/hf
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: HF_MODULES_CACHE
+              value: /tmp/hf_modules
+            - name: PYTHONHASHSEED
+              value: '0'
+            securityContext:
+              runAsUser: 0
+              capabilities:
+                add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+            volumeMounts:
+            - name: shared-model-cache
+              mountPath: /model-cache
+            - name: dshm
+              mountPath: /dev/shm
+          imagePullSecrets:
+          - name: common-runtime-pull
+          activeDeadlineSeconds: 2700
+          nodeSelector:
+            kubernetes.io/hostname: kubecon-nke-site-cp-0942
+          volumes:
+          - name: shared-model-cache
+            persistentVolumeClaim:
+              claimName: feature-cache
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 16Gi
+          resourceClaims:
+          - name: gpu-main
+            resourceClaimTemplateName: ft-sidecar-worker-main-gpus
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+            feature-test-run: dynamo-ft-20261015t220520z
+      runtimeVersionOverride: 1.6.0
+      sharedMemorySize: 16Gi
+    backendFramework: vllm

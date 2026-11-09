@@ -1,0 +1,2107 @@
+<meta charset="utf-8">
+<title>Dynamo Fault Tolerance</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: fixed 1920x1080 stage scaled to the screen. Every slide = header row + body that fills
+   the remaining height; diagrams are SVGs whose viewBox matches their box, so SVG px = stage px.
+   Light by default, dark via toggle. One color per layer, separate state colors. */
+:root {
+  color-scheme: light;
+  --outer: #dfe6e4; --bg: #eef2f1; --panel: #ffffff; --panel-2: #f3f6f5; --sink: #f1f4f3;
+  --line: rgba(16,24,28,.13); --fg: #12191c; --dim: #56636a; --faint: #7a878d;
+  --accent: #5e9a00; --accent-ink: #4a7a00; --accent-hi: #76b900; --cyan-hi: #3ec7e0;
+  --c-req: #4a74e8; --c-route: #8a5cf0; --c-life: #c27400; --c-state: #1597b3;
+  --ok: #5e9a00; --fail: #e0353b; --recover: #b08400; --on-accent: #ffffff;
+  --code-bg: #eef3e6; --code-ink: #3d6600;
+  --shadow: 0 1px 2px rgba(16,24,28,.06), 0 8px 24px rgba(16,24,28,.08);
+  --glow-a: rgba(118,185,0,.12); --glow-b: rgba(62,199,224,.10); --base-a: #f9fbfa; --base-b: #eef2f1;
+  --hero-a: rgba(118,185,0,.18); --hero-b: rgba(62,199,224,.16);
+  --nav-bg: rgba(255,255,255,.88); --nav-line: rgba(16,24,28,.18);
+  --font-display: Inter,-apple-system,Helvetica,Arial,sans-serif;
+  --font-body: Inter,-apple-system,Helvetica,Arial,sans-serif;
+  --font-mono: JetBrains Mono,ui-monospace,Menlo,monospace;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --outer: #040506; --bg: #07090a; --panel: #11171a; --panel-2: #172025; --sink: #0d1316;
+  --line: rgba(255,255,255,.10); --fg: #e8eef0; --dim: #c8d2d6; --faint: #8f9ca3;
+  --accent: #76b900; --accent-ink: #76b900; --accent-hi: #76b900; --cyan-hi: #3ec7e0;
+  --c-req: #7aa2ff; --c-route: #b48cff; --c-life: #f5a623; --c-state: #3ec7e0;
+  --ok: #76b900; --fail: #ff5a5f; --recover: #ffd166; --on-accent: #0a0d0b;
+  --code-bg: rgba(118,185,0,.12); --code-ink: #d9f2a8;
+  --shadow: 0 2px 4px rgba(0,0,0,.2), 0 12px 32px rgba(0,0,0,.22);
+  --glow-a: rgba(118,185,0,.10); --glow-b: rgba(62,199,224,.08); --base-a: #080b0c; --base-b: #06080a;
+  --hero-a: rgba(118,185,0,.14); --hero-b: rgba(62,199,224,.12);
+  --nav-bg: rgba(20,28,32,.75); --nav-line: rgba(255,255,255,.16);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body { background: var(--outer); color: var(--fg); font-family: var(--font-body); }
+
+.viewport { position: fixed; inset: 0; overflow: hidden; background: var(--outer); }
+.stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform: translate(-50%, -50%) scale(var(--s, .5)); background: var(--bg); font-size: 28px; line-height: 1.4; overflow: hidden; }
+
+.slide {
+  position: absolute; inset: 0;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 28px;
+  padding: 52px 96px 76px;
+  opacity: 0; pointer-events: none; visibility: hidden;
+  transition: opacity .35s ease, visibility 0s linear .35s;
+  background:
+    radial-gradient(ellipse at 10% 0%, var(--glow-a), transparent 45%),
+    radial-gradient(ellipse at 95% 100%, var(--glow-b), transparent 45%),
+    linear-gradient(180deg, var(--base-a), var(--base-b));
+}
+.slide.active { opacity: 1; pointer-events: auto; visibility: visible; transition: opacity .35s ease, visibility 0s; }
+.slide[data-cat="req"] { --cat: var(--c-req); }
+.slide[data-cat="route"] { --cat: var(--c-route); }
+.slide[data-cat="life"] { --cat: var(--c-life); }
+.slide[data-cat="state"] { --cat: var(--c-state); }
+.slide[data-cat="all"] { --cat: var(--fg); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* chrome */
+.chrome { position: fixed; z-index: 100; display: flex; gap: 8px; align-items: center; }
+.chrome.br { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); }
+.chrome.bl { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); font: 600 14px var(--font-mono); color: var(--faint); gap: 14px; }
+.chrome button { min-width: 40px; height: 38px; padding: 0 12px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); border-radius: 8px; cursor: pointer; font: 600 14px var(--font-body); }
+.chrome button:hover, .chrome button:focus-visible { color: var(--fg); border-color: var(--dim); outline: none; }
+.chrome .sec { text-transform: uppercase; letter-spacing: .1em; }
+.progress { position: fixed; bottom: 0; left: 0; height: 4px; z-index: 100; transition: width .35s ease; }
+body.fs .chrome { opacity: 0; transition: opacity .3s; }
+body.fs .chrome:hover { opacity: 1; }
+
+/* type */
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -.02em; color: var(--fg); text-wrap: balance; }
+h1 { font-size: 104px; font-weight: 800; line-height: 1; }
+h2 { font-size: 56px; font-weight: 800; line-height: 1.08; }
+h3 { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+.head { display: flex; flex-direction: column; gap: 10px; }
+.head-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+.eyebrow { font: 600 22px var(--font-mono); text-transform: uppercase; letter-spacing: .12em; color: var(--cat); display: flex; gap: 16px; align-items: center; }
+.lede { font-size: 34px; color: var(--dim); }
+.note { font-size: 24px; color: var(--dim); }
+.mono { font-family: var(--font-mono); }
+code { font-family: var(--font-mono); font-size: .86em; background: var(--panel-2); border: 1px solid var(--line); padding: 0 .3em; border-radius: 6px; color: var(--fg); white-space: nowrap; }
+b { font-weight: 700; color: var(--fg); }
+
+/* body layouts */
+.body { min-height: 0; display: grid; gap: 28px; }
+.body > * { min-height: 0; min-width: 0; }
+.split { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+.split-even { grid-template-columns: 1fr 1fr; }
+.rows-fa { grid-template-rows: minmax(0, 1fr) auto; }
+.rows-af { grid-template-rows: auto minmax(0, 1fr); }
+.rows-afa { grid-template-rows: auto minmax(0, 1fr) auto; }
+.col { display: flex; flex-direction: column; gap: 22px; min-height: 0; min-width: 0; }
+.col.fill > .grow { flex: 1; min-height: 0; }
+.row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+
+svg.dg { width: 100%; height: 100%; display: block; overflow: visible; }
+.card-svg { background: var(--panel); border: 2px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 12px; min-height: 0; }
+
+/* components */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px 28px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
+.panel p { font-size: 25px; color: var(--dim); }
+.panel.kind { border-left: 10px solid var(--k); }
+.k-req { --k: var(--c-req); } .k-route { --k: var(--c-route); } .k-life { --k: var(--c-life); } .k-state { --k: var(--c-state); }
+.pill { display: inline-flex; align-items: center; font: 600 19px var(--font-mono); text-transform: uppercase; letter-spacing: .05em; padding: 4px 14px; border-radius: 999px; border: 2px solid currentColor; white-space: nowrap; }
+.pill.on { color: var(--ok); } .pill.opt { color: var(--c-req); } .pill.prev { color: var(--recover); } .pill.dev { color: var(--fail); } .pill.ghost { color: var(--dim); }
+.chip { font: 600 22px var(--font-body); padding: 8px 16px; border-radius: 10px; border: 2px solid var(--k); color: var(--fg); background: var(--panel); display: flex; align-items: center; gap: 12px; }
+.chip::before { content: ""; width: 12px; height: 12px; border-radius: 3px; background: var(--k); flex: none; }
+.codeblock { font-family: var(--font-mono); font-size: 23px; line-height: 1.55; background: var(--sink); border: 1px solid var(--line); border-radius: 14px; padding: 18px 24px; white-space: pre; color: var(--fg); overflow: hidden; }
+.codeblock .c { color: var(--faint); } .codeblock .k { color: var(--c-route); } .codeblock .s { color: var(--c-state); } .codeblock .n { color: var(--c-life); }
+table.t { width: 100%; border-collapse: collapse; font-size: 28px; }
+table.t th { text-align: left; font: 600 20px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); padding: 14px 20px; border-bottom: 2px solid var(--line); }
+table.t td { padding: 20px 20px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.t td code { font-size: 24px; }
+
+/* demo controls */
+.btn { font: 600 24px var(--font-body); color: var(--fg); background: var(--panel-2); border: 2px solid var(--line); border-radius: 10px; padding: 10px 20px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--dim); }
+.btn:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--c-req); outline-offset: 2px; }
+.btn.danger { border-color: var(--fail); color: var(--fail); background: var(--panel); }
+.btn.go { border-color: var(--ok); color: var(--ok); background: var(--panel); }
+.btn.pri { border-color: var(--cat); color: var(--cat); background: var(--panel); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.ctl { display: inline-flex; align-items: center; gap: 12px; font-size: 24px; color: var(--dim); }
+.ctl input[type=range] { width: 200px; accent-color: var(--cat); }
+.ctl input[type=checkbox] { accent-color: var(--cat); width: 26px; height: 26px; }
+.ctl select { background: var(--panel-2); color: var(--fg); border: 2px solid var(--line); border-radius: 8px; padding: 4px 8px; font: 600 24px var(--font-body); }
+.ctl output { font: 600 24px var(--font-mono); color: var(--fg); min-width: 3.2ch; }
+.log { font-family: var(--font-mono); font-size: 21px; line-height: 1.5; background: var(--sink); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; overflow-y: auto; color: var(--dim); min-height: 120px; }
+.log .e-ok { color: var(--ok); } .log .e-fail { color: var(--fail); } .log .e-rec { color: var(--recover); } .log .e-info { color: var(--c-req); } .log .e-route { color: var(--c-route); } .log .e-state { color: var(--c-state); }
+.log .ts { color: var(--faint); }
+.counters { display: grid; grid-template-columns: repeat(var(--cn, 2), minmax(0, 1fr)); gap: 14px; }
+.counter { background: var(--panel); border: 2px solid var(--line); border-radius: 12px; padding: 12px 18px; min-width: 0; }
+.counter .v { font: 700 44px var(--font-mono); font-variant-numeric: tabular-nums; line-height: 1.1; color: var(--fg); }
+.counter .l { font-size: 21px; color: var(--dim); line-height: 1.25; }
+.counter.bad .v { color: var(--fail); } .counter.good .v { color: var(--ok); } .counter.warn .v { color: var(--recover); }
+.stream { font-family: var(--font-mono); font-size: 25px; line-height: 1.55; background: var(--sink); border: 1px solid var(--line); border-radius: 12px; padding: 14px 20px; overflow: hidden; color: var(--dim); }
+.stream .tA { color: var(--c-req); } .stream .tB { color: var(--c-route); } .stream .tC { color: var(--c-state); }
+.stream .cut, .stream .err { color: var(--fail); font-weight: 700; } .stream .mig { color: var(--recover); font-weight: 700; }
+.bar { height: 28px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; position: relative; }
+.bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ok); transition: width .2s, background .25s; }
+
+/* ===== SVG diagram vocabulary ===== */
+svg text { font-family: var(--font-body); fill: var(--fg); }
+.nd .bx { fill: var(--panel); stroke: var(--line); stroke-width: 2.5; transition: fill .3s, stroke .3s; }
+.nd .t { font: 700 26px var(--font-display); fill: var(--fg); }
+.nd .s { font: 500 20px var(--font-mono); fill: var(--dim); }
+.nd.k-req .bx { stroke: var(--c-req); } .nd.k-route .bx { stroke: var(--c-route); } .nd.k-life .bx { stroke: var(--c-life); } .nd.k-state .bx { stroke: var(--c-state); }
+.nd.k-plain .bx { stroke: var(--faint); }
+.nd .stripe { fill: var(--k, var(--faint)); }
+.nd.st-ok .bx { stroke: var(--ok); stroke-width: 3.5; }
+.nd.st-fail .bx { stroke: var(--fail); stroke-width: 4; fill: color-mix(in srgb, var(--fail) 12%, var(--panel)); }
+.nd.st-fail .s { fill: var(--fail); }
+.nd.st-rec .bx { stroke: var(--recover); stroke-width: 4; fill: color-mix(in srgb, var(--recover) 12%, var(--panel)); }
+.nd.st-rec .s { fill: var(--recover); }
+.nd.st-idle { opacity: .5; }
+.nd.st-hot .bx { stroke-width: 5; }
+.nd.click { cursor: pointer; }
+.frame { fill: none; stroke: var(--faint); stroke-width: 2; stroke-dasharray: 8 8; }
+.frame-fill { fill: color-mix(in srgb, var(--k, var(--faint)) 5%, transparent); stroke: var(--k, var(--faint)); stroke-width: 2; stroke-dasharray: 8 8; }
+.flabel { font: 700 20px var(--font-mono); fill: var(--faint); text-transform: uppercase; letter-spacing: .1em; }
+.ln { fill: none; stroke: var(--faint); stroke-width: 3; opacity: .75; }
+.ln.thin { stroke-width: 2; }
+.ln.dash { stroke-dasharray: 10 8; }
+.ln.dot { stroke-dasharray: 3 7; stroke-linecap: round; }
+.ln.k-req { stroke: var(--c-req); } .ln.k-route { stroke: var(--c-route); } .ln.k-life { stroke: var(--c-life); } .ln.k-state { stroke: var(--c-state); } .ln.k-ok { stroke: var(--ok); } .ln.k-fail { stroke: var(--fail); } .ln.k-rec { stroke: var(--recover); }
+.ln.ghost { stroke: transparent; }
+.ln.flow { stroke-dasharray: 12 10; animation: dashmove 1s linear infinite; }
+@keyframes dashmove { to { stroke-dashoffset: -22; } }
+.ah { fill: var(--faint); }
+.pk { stroke: var(--panel); stroke-width: 2.5; }
+.pk-req { fill: var(--c-req); } .pk-tok { fill: var(--ok); } .pk-fail { fill: var(--fail); } .pk-rec { fill: var(--recover); } .pk-state { fill: var(--c-state); } .pk-route { fill: var(--c-route); } .pk-life { fill: var(--c-life); }
+.lbl { font: 600 21px var(--font-body); fill: var(--dim); }
+.lbl-b { font: 700 24px var(--font-body); fill: var(--fg); }
+.lbl-m { font: 600 20px var(--font-mono); fill: var(--dim); }
+.big-l { font: 800 44px var(--font-display); }
+.badge rect { stroke-width: 2.5; }
+.badge text { font: 700 20px var(--font-mono); }
+.badge.b-fail rect { fill: var(--panel); stroke: var(--fail); } .badge.b-fail text { fill: var(--fail); }
+.badge.b-rec rect { fill: var(--panel); stroke: var(--recover); } .badge.b-rec text { fill: var(--recover); }
+.badge.b-ok rect { fill: var(--panel); stroke: var(--ok); } .badge.b-ok text { fill: var(--ok); }
+.badge.b-state rect { fill: var(--panel); stroke: var(--c-state); } .badge.b-state text { fill: var(--c-state); }
+.badge.b-req rect { fill: var(--panel); stroke: var(--c-req); } .badge.b-req text { fill: var(--c-req); }
+.badge.b-route rect { fill: var(--panel); stroke: var(--c-route); } .badge.b-route text { fill: var(--c-route); }
+.mk circle { fill: var(--panel); stroke: var(--k, var(--fail)); stroke-width: 3.5; }
+.mk text { font: 800 24px var(--font-display); fill: var(--k, var(--fail)); }
+.mk.on circle { fill: var(--k, var(--fail)); } .mk.on text { fill: var(--on-accent); }
+.region { stroke-width: 2.5; }
+.r-w { fill: color-mix(in srgb, var(--c-life) 16%, var(--panel)); stroke: var(--c-life); }
+.r-kv { fill: color-mix(in srgb, var(--c-state) 14%, var(--panel)); stroke: var(--c-state); }
+.r-sc { fill: var(--panel-2); stroke: var(--faint); }
+.gauge-bg { fill: var(--panel-2); stroke: var(--line); stroke-width: 2; }
+.gauge-fill { transition: height .2s, y .2s; }
+.thr-l { stroke: var(--fg); stroke-width: 4; }
+.axis { stroke: var(--faint); stroke-width: 2; }
+.tick { font: 600 20px var(--font-mono); fill: var(--faint); }
+.cur-l { stroke: var(--fg); stroke-width: 3; }
+.blk { fill: var(--panel-2); stroke: var(--line); stroke-width: 1; transition: fill .25s, opacity .25s; }
+.blk.c { fill: var(--c-state); stroke: none; } .blk.p { fill: var(--recover); opacity: .55; stroke: none; } .blk.x { fill: var(--fail); opacity: .4; stroke: none; } .blk.s { fill: var(--ok); stroke: none; }
+.tok-sq { transition: fill .2s; }
+.tok-sq.pr { fill: var(--faint); } .tok-sq.A { fill: var(--c-req); } .tok-sq.B { fill: var(--c-route); } .tok-sq.C { fill: var(--c-state); } .tok-sq.e { fill: var(--panel-2); }
+.barv { transition: width .4s; }
+
+/* slide-specific HTML */
+.hero { grid-template-rows: 1fr; grid-template-columns: 1.05fr 1fr; align-items: center; gap: 56px; }
+.hero h1 em { font-style: normal; color: var(--c-life); }
+.legendrow { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+/* slide 2: failure points grouped by layer */
+.chipgrid { display: grid; grid-template-columns: 3fr 2fr 2fr 1fr; gap: 16px; }
+.fxg { background: var(--panel); border: 2px solid var(--line); border-top: 8px solid var(--k); border-radius: 12px; padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fxg .gl { font: 700 17px var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--k); padding-left: 2px; }
+.fxg .gi { display: grid; grid-template-columns: repeat(var(--c), minmax(0, 1fr)); gap: 8px; }
+.chipgrid .fx { display: flex; gap: 10px; align-items: flex-start; background: var(--panel-2); border: 2px solid transparent; border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: border-color .2s, background .2s; min-width: 0; }
+.chipgrid .fx .n { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--k); color: var(--k); font: 800 18px var(--font-display); display: grid; place-items: center; }
+.chipgrid .fx .tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.chipgrid .fx .f { font: 700 19px var(--font-body); color: var(--fg); }
+.chipgrid .fx .w { font-size: 16px; color: var(--dim); margin-top: 3px; }
+.chipgrid .fx:hover, .chipgrid .fx.on { border-color: var(--k); background: color-mix(in srgb, var(--k) 10%, var(--panel)); }
+.chipgrid .fx.on .n { background: var(--k); color: var(--on-accent); }
+/* layer tracker shown in the top-right of every content slide */
+.ft-track { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; gap: 10px; pointer-events: none; transition: opacity .3s; }
+.ft-track[hidden] { display: none !important; }
+.ft-seg { display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 10px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel); font: 600 17px var(--font-body); color: var(--faint); }
+.ft-seg .dot { width: 12px; height: 12px; border-radius: 3px; background: var(--k); }
+.ft-seg .nums { display: flex; gap: 4px; margin-left: 2px; }
+.ft-seg .nm { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--k); color: var(--k); font: 800 14px var(--font-display); display: grid; place-items: center; }
+.ft-seg.on { border-color: var(--k); background: color-mix(in srgb, var(--k) 10%, var(--panel)); color: var(--fg); }
+.ft-seg .nm.on { background: var(--k); color: var(--on-accent); }
+.ft-track.dim .ft-seg:not(.on) { opacity: .5; }
+.phases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.phase { background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; transition: border-color .3s, box-shadow .3s, opacity .3s; opacity: .55; }
+.phase.on { opacity: 1; border-color: var(--fg); box-shadow: 0 0 0 2px var(--fg); }
+.phase h3 { display: flex; align-items: center; gap: 14px; }
+.phase h3 .ix { font: 700 22px var(--font-mono); color: var(--faint); }
+.phase .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.phase .chip { font-size: 21px; padding: 6px 12px; }
+.caption { display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center; background: var(--panel); border: 2px solid var(--line); border-left: 12px solid var(--capk, var(--fg)); border-radius: 16px; padding: 20px 28px; box-shadow: var(--shadow); }
+.caption .stepn { font: 800 64px var(--font-display); color: var(--capk, var(--fg)); line-height: 1; min-width: 1.4ch; }
+.caption .ct { font: 800 36px var(--font-display); }
+.caption .cd { font-size: 26px; color: var(--dim); }
+.dots { display: flex; gap: 8px; } .dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); } .dots i.on { background: var(--fg); }
+.tiles { display: grid; gap: 18px; }
+.tile { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 18px 22px; display: flex; flex-direction: column; gap: 6px; }
+.tile .v { font: 800 44px var(--font-display); line-height: 1.05; }
+.tile .l { font-size: 23px; color: var(--dim); }
+.sources { list-style: none; display: flex; flex-direction: column; gap: 22px; font-size: 27px; }
+table.t.big { font-size: 30px; } table.t.big td { padding: 26px 20px; } table.t.big td code { font-size: 26px; }
+.sources a { color: var(--c-req); text-decoration: none; border-bottom: 2px solid color-mix(in srgb, var(--c-req) 35%, transparent); }
+/* developer notes drawer (outside the stage, real px) */
+.notes { position: fixed; z-index: 120; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(60px + env(safe-area-inset-bottom, 0px)); width: min(620px, calc(100vw - 32px)); max-height: min(72vh, 760px); display: flex; flex-direction: column; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-top: 5px solid var(--notes-k, var(--fg)); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.25); font: 15.5px/1.6 var(--font-body); }
+.notes[hidden] { display: none !important; }
+.notes-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px 10px; border-bottom: 1px solid var(--line); }
+.notes-k { font: 700 11px var(--font-mono); text-transform: uppercase; letter-spacing: .12em; color: var(--faint); white-space: nowrap; }
+.notes-t { font: 700 16px var(--font-display); flex: 1; min-width: 0; }
+.notes-head button { border: 1px solid var(--line); background: var(--panel-2); color: var(--dim); border-radius: 7px; padding: 4px 10px; font: 600 13px var(--font-body); cursor: pointer; }
+.notes-body { overflow-y: auto; padding: 12px 20px 18px; }
+.notes-body h4 { font: 700 12px var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--notes-k, var(--dim)); margin: 14px 0 6px; }
+.notes-body h4:first-child { margin-top: 2px; }
+.notes-body p { margin: 0 0 8px; color: var(--dim); }
+.notes-body ul { margin: 0 0 8px 18px; color: var(--dim); }
+.notes-body li { margin: 3px 0; }
+.notes-body b { color: var(--fg); }
+.notes-body code { font-size: 13px; white-space: normal; overflow-wrap: anywhere; }
+body.fs .chrome { opacity: 0; }
+
+/* ===== ModelExpress + Snapshot look (mx-snapshot.html), Inter titles, layered over the FT tokens ===== */
+.slide[data-cat="all"] { --cat: var(--accent); }
+.slide.hero {
+  background:
+    radial-gradient(ellipse at 15% 35%, var(--hero-a), transparent 50%),
+    radial-gradient(ellipse at 65% 72%, var(--hero-b), transparent 50%),
+    linear-gradient(180deg, var(--base-a), var(--base-b));
+}
+h1 { font-weight: 800; letter-spacing: -.035em; }
+h2 { font-weight: 800; letter-spacing: -.025em; }
+h3 { font-weight: 700; letter-spacing: -.01em; }
+.eyebrow { color: var(--accent-ink); letter-spacing: .16em; }
+.lede, .note { color: var(--dim); }
+code { background: var(--code-bg); border-color: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--code-ink); }
+/* cards: white surface, 1px line border, rounded, soft shadow, thin accent edge */
+.card-svg, .fxg, .phase, .caption, .tile, .counter, .ft-seg, .chip, .panel { border-width: 1px; border-color: var(--line); }
+.card-svg, .fxg, .phase, .caption, .tile, .counter { box-shadow: var(--shadow); }
+.panel.kind { border-left: 5px solid var(--k); }
+.fxg { border-top: 4px solid var(--k); border-radius: 14px; }
+.caption { border-left: 5px solid var(--capk, var(--accent)); border-radius: 16px; }
+.tile, .counter { border-radius: 14px; }
+.tile .v, .counter .v, .caption .stepn { font-variant-numeric: tabular-nums; }
+.chip { border-color: color-mix(in srgb, var(--k) 55%, transparent); }
+.ft-seg { box-shadow: none; }
+.ft-seg.on { border-color: var(--k); }
+.phase.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.dots i.on { background: var(--accent); }
+.chipgrid .fx { border-width: 1px; }
+.pill { border-width: 1px; border-color: color-mix(in srgb, currentColor 45%, transparent); background: color-mix(in srgb, currentColor 8%, transparent); font-weight: 500; }
+.codeblock, .log, .stream { border-radius: 14px; }
+table.t th { color: var(--accent-ink); letter-spacing: .12em; }
+table.t td { font-variant-numeric: tabular-nums; }
+/* buttons */
+.btn { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.btn:hover { border-color: var(--accent); }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.pri:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+.btn.go { background: var(--panel); border-color: color-mix(in srgb, var(--ok) 50%, transparent); color: var(--ok); }
+.btn.danger { background: var(--panel); border-color: color-mix(in srgb, var(--fail) 45%, transparent); color: var(--fail); }
+.btn.danger:hover { background: color-mix(in srgb, var(--fail) 8%, var(--panel)); }
+.ctl select { background: var(--panel); border: 1px solid var(--line); }
+.ctl input[type=range], .ctl input[type=checkbox] { accent-color: var(--accent); }
+/* SVG nodes */
+.nd .bx { stroke-width: 2; }
+.nd .t { font-weight: 700; letter-spacing: -.01em; }
+.region { stroke-width: 2; }
+/* chrome: frosted round buttons, mono page counter, gradient progress */
+.chrome.br { right: max(24px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.chrome button { height: 40px; border-radius: 10px; border: 1px solid var(--nav-line); background: var(--nav-bg); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--dim); font-weight: 500; }
+.chrome button:hover, .chrome button:focus-visible { color: var(--fg); border-color: var(--accent); }
+.chrome.bl { left: max(24px, env(safe-area-inset-left, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px)); font: 500 14px var(--font-mono); color: var(--dim); opacity: .8; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.progress { height: 3px; background: linear-gradient(90deg, var(--accent-hi), var(--cyan-hi)) !important; }
+/* notes panel */
+.notes { border-top: 4px solid var(--notes-k, var(--accent)); border-radius: 16px; box-shadow: var(--shadow); }
+.notes-head button { background: var(--panel); border-radius: 8px; }
+.notes-head button:hover { border-color: var(--accent); color: var(--fg); }
+.notes-body h4 { color: var(--accent-ink); }
+</style>
+
+<div class="viewport"><div class="stage" id="deck"><div class="ft-track" id="ftTrack" hidden></div></div></div>
+<div class="chrome bl"><span id="pageNum"></span><span class="sec" id="secName"></span></div>
+<div class="chrome br">
+  <button type="button" id="notesBtn" aria-label="Toggle developer notes">Notes</button>
+  <button type="button" id="themeBtn" aria-label="Toggle dark mode">Dark</button>
+  <button type="button" id="fsBtn" aria-label="Full screen">Full screen</button>
+  <button type="button" onclick="go(-1)" aria-label="Previous slide">&#9664;</button>
+  <button type="button" onclick="go(1)" aria-label="Next slide">&#9654;</button>
+</div>
+<div class="progress" id="progress"></div>
+<aside class="notes" id="notes" hidden aria-label="Developer notes">
+  <div class="notes-head"><span class="notes-k">Developer notes</span><span class="notes-t" id="notesTitle"></span><button type="button" id="notesClose" aria-label="Close notes">Close</button></div>
+  <div class="notes-body" id="notesBody"></div>
+</aside>
+<script>
+const slides = [
+/* 1 Title */
+`<section class="slide hero" data-cat="all" data-sec="Intro">
+  <div class="col" style="gap:34px">
+    <div class="eyebrow">NVIDIA Dynamo · Fault tolerance</div>
+    <h1>Keep serving when <em>something breaks</em></h1>
+    <p class="lede">How requests reach workers, what fails along the way, and how each Dynamo mechanism keeps tokens flowing.</p>
+    <div class="legendrow"><span class="pill on">On by default</span><span class="pill opt">Opt-in</span><span class="pill prev">Preview</span><span class="pill dev">In development</span></div>
+  </div>
+  <svg class="dg" id="dg-hero"></svg>
+</section>`,
+
+/* 2 Request path architecture */
+`<section data-ft="all" class="slide" data-cat="all" data-sec="Architecture">
+  <div class="head"><div class="eyebrow">How a request reaches the workers</div><h2>Every hop in the request path can fail</h2></div>
+  <div class="body" style="grid-template-rows: minmax(0, 1fr) auto auto; gap:20px">
+    <svg class="dg" id="dg-arch"></svg>
+    <div class="row"><button type="button" class="btn" id="arch-prev">◀ Back</button><button type="button" class="btn pri" id="arch-next">Next failure point ▶</button><span class="note" id="arch-cap" style="margin-left:12px"></span></div>
+    <div class="chipgrid" id="arch-chips"></div>
+  </div>
+</section>`,
+
+/* 3 Detect reroute recover */
+`<section data-ft="all" class="slide" data-cat="all" data-sec="Architecture">
+  <div class="head"><div class="eyebrow">Architecture view</div><h2>Detect → reroute → recover</h2></div>
+  <div class="body" style="grid-template-rows: minmax(0, 1fr) auto auto; gap:20px">
+    <svg class="dg" id="dg-drr"></svg>
+    <div class="row"><button type="button" class="btn" id="drr-prev">◀ Back</button><button type="button" class="btn pri" id="drr-next">Inject fault ▶</button></div>
+    <div class="phases">
+      <div class="phase" id="ph-0"><h3><span class="ix">01</span>Detect</h3><div class="chips">
+        <span class="chip k-req">Stream error</span><span class="chip k-route">Lease / EndpointSlice</span><span class="chip k-route">Canary probe</span><span class="chip k-route">KV event gap</span></div></div>
+      <div class="phase" id="ph-1"><h3><span class="ix">02</span>Reroute</h3><div class="chips">
+        <span class="chip k-route">Local inhibition</span><span class="chip k-req">Migration</span><span class="chip k-req">Rejection (529)</span><span class="chip k-req">Cancellation</span></div></div>
+      <div class="phase" id="ph-2"><h3><span class="ix">03</span>Recover</h3><div class="chips">
+        <span class="chip k-life">Shadow + GMS</span><span class="chip k-life">Snapshot restore</span><span class="chip k-route">Router rebuild</span><span class="chip k-state">KVCR-Guard</span></div></div>
+    </div>
+  </div>
+</section>`,
+
+/* 4 Outcomes */
+`<section data-ft="req" class="slide" data-cat="req" data-sec="Request path">
+  <div class="head-row"><div class="head"><div class="eyebrow">Request outcomes</div><h2>Three ways a request can end besides success</h2></div>
+    <div class="row"><button type="button" class="btn" id="out-prev">◀ Back</button><button type="button" class="btn pri" id="out-next">Show: Reject ▶</button></div></div>
+  <div class="body"><svg class="dg" id="dg-out"></svg></div>
+</section>`,
+
+/* 5 Migration */
+`<section data-ft="req:1" class="slide" data-cat="req" data-sec="Request path">
+  <div class="head-row"><div class="head"><div class="eyebrow">Request Migration <span class="pill opt">opt-in</span></div><h2>Kill the worker. The stream continues.</h2></div></div>
+  <div class="body split">
+    <div class="col fill">
+      <svg class="dg grow card-svg" id="dg-mig"></svg>
+      <div class="stream" id="mig-stream" style="height:150px">Press "Send request", then kill the worker while it streams.</div>
+    </div>
+    <div class="col">
+      <div class="row"><button type="button" class="btn go" id="mig-start">Send request</button><button type="button" class="btn danger" id="mig-kill">Kill serving worker</button></div>
+      <div class="row"><label class="ctl">migration limit <select id="mig-limit"><option>0</option><option>1</option><option>2</option><option selected>3</option></select></label><label class="ctl"><input type="checkbox" id="mig-guided"> JSON schema</label></div>
+      <div class="counters">
+        <div class="counter"><div class="v" id="mig-c-tok">0</div><div class="l">tokens in Migrator state</div></div>
+        <div class="counter warn"><div class="v" id="mig-c-mig">0</div><div class="l">migrations</div></div>
+        <div class="counter good"><div class="v" id="mig-c-ok">0</div><div class="l">migrated &amp; finished</div></div>
+        <div class="counter bad"><div class="v" id="mig-c-err">0</div><div class="l">client errors</div></div>
+      </div>
+      <div class="codeblock"><span class="c"># Frontend (default 0 = off)</span>
+<span class="k">DYN_MIGRATION_LIMIT</span>=<span class="n">3</span>
+<span class="k">DYN_MIGRATION_MAX_SEQ_LEN</span>=<span class="n">32000</span></div>
+      <div class="panel kind k-req"><p><b>Not migrated:</b> JSON-schema (guided decoding) and <code>n&gt;1</code> requests return an error instead.</p></div>
+    </div>
+  </div>
+</section>`,
+
+/* 6 Cancellation */
+`<section data-ft="req:2" class="slide" data-cat="req" data-sec="Request path">
+  <div class="head-row"><div class="head"><div class="eyebrow">Request Cancellation <span class="pill on">built-in</span></div><h2>Cancel once, stop everywhere</h2></div>
+    <div class="row"><button type="button" class="btn go" id="can-start">Start request</button><button type="button" class="btn danger" id="can-client">Client disconnects</button><button type="button" class="btn danger" id="can-fe">Frontend crashes</button></div></div>
+  <div class="body rows-fa">
+    <svg class="dg card-svg" id="dg-can"></svg>
+    <div class="body" style="grid-template-columns: 1.1fr 1fr 1fr; gap:24px; height:250px">
+      <div class="codeblock"><span class="k">async def</span> generate(self, req, context):
+    <span class="k">if</span> context.is_stopped(): <span class="k">return</span>
+    <span class="c"># pass context → child is linked</span>
+    <span class="k">await</span> self.client.generate(
+        req, context=context)</div>
+      <div class="col"><label class="ctl"><input type="checkbox" id="can-link" checked> prefill linked as child context</label>
+        <div class="counters"><div class="counter good"><div class="v" id="can-saved">0</div><div class="l">GPU steps avoided</div></div><div class="counter bad"><div class="v" id="can-waste">0</div><div class="l">GPU steps wasted</div></div></div></div>
+      <div class="log" id="can-log"></div>
+    </div>
+  </div>
+</section>`,
+
+/* 7 Rejection */
+`<section data-ft="req:3" class="slide" data-cat="req" data-sec="Request path">
+  <div class="head"><div class="eyebrow">Request Rejection <span class="pill opt">opt-in</span></div><h2>Turn away the excess so admitted requests stay fast</h2></div>
+  <div class="body split">
+    <div class="col fill">
+      <div class="row"><label class="ctl">arrivals/s <input type="range" id="rej-rate" min="1" max="14" value="6"><output id="rej-rate-o">6</output></label>
+        <label class="ctl">threshold <input type="range" id="rej-thr" min="50" max="100" value="85"><output id="rej-thr-o">0.85</output></label>
+        <label class="ctl"><input type="checkbox" id="rej-on" checked> rejection on</label></div>
+      <svg class="dg grow card-svg" id="dg-rej"></svg>
+    </div>
+    <div class="col">
+      <div class="counters">
+        <div class="counter good"><div class="v" id="rej-acc">0</div><div class="l">accepted</div></div>
+        <div class="counter warn"><div class="v" id="rej-529">0</div><div class="l">HTTP 529</div></div>
+        <div class="counter bad"><div class="v" id="rej-slow">0</div><div class="l">admitted when full</div></div>
+        <div class="counter"><div class="v" id="rej-itl">1.0×</div><div class="l">token latency</div></div>
+      </div>
+      <div class="panel kind k-req"><p><b>529</b> = busy, retry with backoff.<br><b>503</b> = no service available.</p></div>
+      <div class="codeblock">--router-mode <span class="s">kv</span>
+--active-decode-blocks-threshold <span class="n">0.85</span>
+--router-track-output-blocks</div>
+      <p class="note">Slide arrivals to 12, then toggle rejection off.</p>
+    </div>
+  </div>
+</section>`,
+
+/* 8 Detection: inhibition + discovery + canaries */
+`<section data-ft="route:4" class="slide" data-cat="route" data-sec="Routing">
+  <div class="head"><div class="eyebrow">Inhibition · discovery · canaries <span class="pill on">inhibition + discovery on</span><span class="pill opt">canaries opt-in</span></div><h2>Stop sending traffic to a dead or hung worker</h2></div>
+  <div class="body" style="grid-template-rows: minmax(0, 1fr) auto auto; gap:20px">
+    <svg class="dg" id="dg-det"></svg>
+    <div class="row"><button type="button" class="btn" id="det-prev">◀ Back</button><button type="button" class="btn pri" id="det-next">Crash Worker 2 ▶</button><span class="note" id="det-cap" style="margin-left:12px"></span></div>
+    <div class="phases">
+      <div class="phase" id="dph-0"><h3><span class="ix">1</span>Local inhibition</h3><p class="note">First failed request → the Frontend skips that worker for 5 s. Instant, no coordination.</p><code style="font-size:19px;align-self:flex-start">DYN_RUNTIME_INHIBITED_DURATION_SECS=5</code></div>
+      <div class="phase" id="dph-1"><h3><span class="ix">2</span>Discovery</h3><p class="note">Authoritative removal: Kubernetes EndpointSlice update, or the etcd lease expires when keep-alives stop.</p><code style="font-size:19px;align-self:flex-start">DYN_DISCOVERY_BACKEND=kubernetes | etcd</code></div>
+      <div class="phase" id="dph-2"><h3><span class="ix">3</span>Canary health check</h3><p class="note">Idle 10 s → send a tiny real inference request, 3 s timeout. Catches an engine that hangs while its process looks alive.</p><code style="font-size:19px;align-self:flex-start">DYN_HEALTH_CHECK_ENABLED=true</code></div>
+    </div>
+  </div>
+</section>`,
+
+/* 9 Router HA */
+`<section data-ft="route:5" class="slide" data-cat="route" data-sec="Routing">
+  <div class="head"><div class="eyebrow">Router fault tolerance</div><h2>Routers are disposable. Workers hold the truth.</h2></div>
+  <div class="body split">
+    <svg class="dg card-svg" id="dg-rt"></svg>
+    <div class="col">
+      <div class="row"><button type="button" class="btn danger" id="rt-k0">Kill R1</button><button type="button" class="btn danger" id="rt-k1">Kill R2</button><button type="button" class="btn danger" id="rt-k2">Kill R3</button></div>
+      <div class="row"><button type="button" class="btn danger" id="rt-w1">Partition W2</button><button type="button" class="btn danger" id="rt-drop">Drop an event</button></div>
+      <label class="ctl"><input type="checkbox" id="rt-sync"> <code>--router-replica-sync</code></label>
+      <div class="counters"><div class="counter good"><div class="v" id="rt-served">0</div><div class="l">requests routed</div></div><div class="counter bad"><div class="v" id="rt-failed">0</div><div class="l">no router (503)</div></div></div>
+      <div class="log" id="rt-log" style="flex:1"></div>
+    </div>
+  </div>
+</section>`,
+
+/* 10 Graceful shutdown */
+`<section data-ft="life:6" class="slide" data-cat="life" data-sec="Lifecycle">
+  <div class="head-row"><div class="head"><div class="eyebrow">Graceful Shutdown <span class="pill on">on by default</span></div><h2>Unregister, drain, then hand off</h2></div>
+    <div class="row"><label class="ctl">pod grace <select id="gs-tgp"><option value="60" selected>60 s</option><option value="180">180 s</option></select></label><label class="ctl"><input type="checkbox" id="gs-mig" checked> migration</label><button type="button" class="btn danger" id="gs-go">kubectl delete pod</button><button type="button" class="btn" id="gs-reset">Reset</button></div></div>
+  <div class="body rows-af">
+    <svg class="dg card-svg" id="dg-gs" style="height:230px"></svg>
+    <div class="body split">
+      <svg class="dg card-svg" id="dg-gsr"></svg>
+      <div class="col">
+        <div class="counters" style="--cn:3"><div class="counter good"><div class="v" id="gs-done">0</div><div class="l">drained</div></div><div class="counter warn"><div class="v" id="gs-moved">0</div><div class="l">migrated</div></div><div class="counter bad"><div class="v" id="gs-err">0</div><div class="l">errors</div></div></div>
+        <div class="log" id="gs-log" style="flex:1"></div>
+      </div>
+    </div>
+  </div>
+</section>`,
+
+/* 11 GMS */
+`<section data-ft="life:7" class="slide" data-cat="life" data-sec="Lifecycle">
+  <div class="head"><div class="eyebrow">GPU Memory Service <span class="pill prev">preview</span></div><h2>Weights outlive the engine process</h2></div>
+  <div class="body split">
+    <svg class="dg" id="dg-gms"></svg>
+    <div class="col">
+      <div class="tiles">
+        <div class="tile" style="border-left:10px solid var(--c-life)"><span class="v" style="color:var(--c-life)">Shared</span><span class="l">Weights: one copy in HBM, owned by GMS, mapped read-only by every engine. Survives crashes.</span></div>
+        <div class="tile" style="border-left:10px solid var(--c-state)"><span class="v" style="color:var(--c-state)">Private</span><span class="l">KV cache, scratch, request state: belong to the active engine. Rebuilt on failover.</span></div>
+        <div class="tile" style="border-left:10px solid var(--c-route)"><span class="v" style="color:var(--c-route)">Parked</span><span class="l">Shadow engine: graphs captured, NCCL ready, weights mapped. Waits on a lock.</span></div>
+      </div>
+      <p class="note">Built on the CUDA VMM API. vLLM, SGLang and TensorRT-LLM plug in through a custom PyTorch allocator.</p>
+    </div>
+  </div>
+</section>`,
+
+/* 12 Shadow failover */
+`<section data-ft="life:7" class="slide" data-cat="life" data-sec="Lifecycle">
+  <div class="head-row"><div class="head"><div class="eyebrow">Shadow Engine failover <span class="pill prev">preview</span></div><h2>Kill the active engine. The shadow takes the lock.</h2></div>
+    <div class="row"><label class="ctl"><select id="sh-mode"><option value="shadow" selected>GMS + shadow</option><option value="cold">Cold restart</option></select></label><button type="button" class="btn danger" id="sh-kill">Kill active engine</button><button type="button" class="btn" id="sh-reset">Reset</button></div></div>
+  <div class="body split">
+    <svg class="dg card-svg" id="dg-sh"></svg>
+    <div class="col fill">
+      <svg class="dg card-svg grow" id="dg-shres"></svg>
+      <div class="log" id="sh-log" style="height:200px"></div>
+    </div>
+  </div>
+</section>`,
+
+/* 13 Snapshot */
+`<section data-ft="life:7" class="slide" data-cat="life" data-sec="Lifecycle">
+  <div class="head"><div class="eyebrow">Dynamo Snapshot <span class="pill prev">experimental · single-GPU vLLM / SGLang</span></div><h2>Checkpoint a warm worker once, restore it in seconds</h2></div>
+  <div class="body rows-af">
+    <svg class="dg card-svg" id="dg-snap" style="height:300px"></svg>
+    <div class="body split">
+      <svg class="dg card-svg" id="dg-snapbar"></svg>
+      <div class="tiles">
+        <div class="tile"><span class="v" style="color:var(--c-state)">190 → 6 GiB</span><span class="l">Qwen3-0.6B checkpoint after unmapping the empty KV cache</span></div>
+        <div class="tile"><span class="v" style="color:var(--c-life)">&lt; 5 s</span><span class="l">gpt-oss-120b restore with GMS + striped NVMe (proof of concept)</span></div>
+        <div class="tile"><span class="v" style="color:var(--c-req)">Composes</span><span class="l">Snapshot warms up the shadow engine without slowing the active one</span></div>
+      </div>
+    </div>
+  </div>
+</section>`,
+
+/* 14 KVCR-Guard */
+`<section data-ft="state:8" class="slide" data-cat="state" data-sec="KV state">
+  <div class="head"><div class="eyebrow">KVCR-Guard <span class="pill dev">in development</span></div><h2>Node 1 crashes. Node 2 still reuses its cache.</h2></div>
+  <div class="body split">
+    <svg class="dg card-svg" id="dg-kv"></svg>
+    <div class="col">
+      <label class="ctl"><input type="checkbox" id="kv-guard" checked> KVCR-Guard enabled</label>
+      <div class="col" style="gap:12px"><button type="button" class="btn danger" id="kv-crash">1 · Crash node 1 engine</button><button type="button" class="btn go" id="kv-req">2 · Same prompt arrives on node 2</button><button type="button" class="btn" id="kv-restart">3 · Restart node 1 engine</button></div>
+      <div class="counters"><div class="counter good"><div class="v" id="kv-hit">0</div><div class="l">blocks reused</div></div><div class="counter bad"><div class="v" id="kv-miss">0</div><div class="l">blocks recomputed</div></div></div>
+      <div class="log" id="kv-log" style="flex:1"></div>
+    </div>
+  </div>
+</section>`,
+
+/* 15 Incident story */
+`<section data-ft="all" class="slide" data-cat="all" data-sec="Together">
+  <div class="head-row"><div class="head"><div class="eyebrow">Putting it together</div><h2>One crash, every layer responds</h2></div>
+    <div class="row"><button type="button" class="btn" id="st-prev">◀ Back</button><button type="button" class="btn pri" id="st-next">Next step ▶</button><button type="button" class="btn" id="st-play">Auto-play</button></div></div>
+  <div class="body rows-fa">
+    <svg class="dg" id="dg-story"></svg>
+    <div class="caption" id="st-cap"><div class="stepn" id="st-n">0</div><div class="col" style="gap:4px"><div class="ct" id="st-t"></div><div class="cd" id="st-d"></div></div><div class="dots" id="st-dots"></div></div>
+  </div>
+</section>`,
+
+/* 15 Checklist + sources */
+`<section class="slide" data-cat="all" data-sec="Wrap-up">
+  <div class="head"><div class="eyebrow">Production checklist</div><h2>What to turn on</h2></div>
+  <div class="body" style="grid-template-columns: 1.7fr 1fr; gap:56px; align-items:center">
+  <table class="t big">
+    <tr><th>Feature</th><th>Setting</th><th>Start</th></tr>
+    <tr><td><span class="chip k-req">Migration</span></td><td><code>DYN_MIGRATION_LIMIT</code></td><td>3</td></tr>
+    <tr><td><span class="chip k-req">Rejection</span></td><td><code>--active-decode-blocks-threshold</code></td><td>0.85</td></tr>
+    <tr><td><span class="chip k-route">Router HA</span></td><td>2+ replicas · <code>--router-replica-sync</code></td><td>on</td></tr>
+    <tr><td><span class="chip k-route">Canaries</span></td><td><code>DYN_HEALTH_CHECK_ENABLED</code></td><td>true</td></tr>
+    <tr><td><span class="chip k-life">Shutdown</span></td><td><code>terminationGracePeriodSeconds</code></td><td>120 s+</td></tr>
+    <tr><td><span class="chip k-life">Shadow + GMS</span></td><td><code>failover</code> in worker spec</td><td>preview</td></tr>
+    <tr><td><span class="chip k-state">KVCR-Guard</span></td><td><code>ai-dynamo/kvcr</code></td><td>not GA</td></tr>
+  </table>
+  <div class="col"><div class="eyebrow">Sources</div>
+  <ul class="sources">
+      <li><a href="https://docs.nvidia.com/dynamo/kubernetes/fault-tolerance/overview" target="_blank" rel="noopener">Fault Tolerance Overview</a></li>
+      <li><a href="https://docs.nvidia.com/dynamo/kubernetes/fault-tolerance/request-migration" target="_blank" rel="noopener">Request Migration</a> · <a href="https://docs.nvidia.com/dynamo/kubernetes/fault-tolerance/request-rejection" target="_blank" rel="noopener">Rejection</a></li>
+      <li><a href="https://docs.nvidia.com/dynamo/knowledge-base/concepts/fault-tolerance/request-cancellation-architecture" target="_blank" rel="noopener">Request Cancellation</a></li>
+      <li><a href="https://docs.nvidia.com/dynamo/kubernetes/fault-tolerance/graceful-shutdown" target="_blank" rel="noopener">Graceful Shutdown</a> · <a href="https://docs.nvidia.com/dynamo/reference/observability/health-checks" target="_blank" rel="noopener">Health Checks</a></li>
+      <li><a href="https://docs.nvidia.com/dynamo/v1.3.0/components/router/router-operations" target="_blank" rel="noopener">Router Operations</a> · <a href="https://docs.nvidia.com/dynamo/dev/knowledge-base/modular-components/router/kv-event-replay-comparison" target="_blank" rel="noopener">KV Event Replay</a></li>
+      <li><a href="https://developer.nvidia.com/blog/restore-llm-inference-capacity-in-seconds-with-shadow-engine-recovery-in-nvidia-dynamo/" target="_blank" rel="noopener">Shadow Engine Recovery</a> · <a href="https://arxiv.org/abs/2609.25451" target="_blank" rel="noopener">arXiv 2609.25451</a></li>
+      <li><a href="https://developer.nvidia.com/blog/nvidia-dynamo-snapshot-fast-startup-for-inference-workloads-on-kubernetes/" target="_blank" rel="noopener">Dynamo Snapshot</a></li>
+      <li><a href="https://github.com/ai-dynamo/kvcr" target="_blank" rel="noopener">ai-dynamo/kvcr</a> · <a href="https://github.com/ai-dynamo/kvcr/blob/main/docs/design_overview.md" target="_blank" rel="noopener">KVCR design</a></li>
+    </ul></div>
+  </div>
+</section>`,
+];
+</script>
+<script>
+/* ================= Slide engine ================= */
+let cur = 0;
+const $ = id => document.getElementById(id);
+const deck = $('deck');
+slides.forEach((html, i) => {
+  const w = document.createElement('div'); w.innerHTML = html.trim();
+  const el = w.firstElementChild; if (el && !el.id) el.id = 'slide-' + i;
+  deck.appendChild(el);
+});
+const all = deck.querySelectorAll('.slide');
+const catColor = { req: 'var(--c-req)', route: 'var(--c-route)', life: 'var(--c-life)', state: 'var(--c-state)', all: 'var(--fg)' };
+
+/* Scale the 1920x1080 stage to fill the window (letterboxed) */
+function fitStage() {
+  const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  deck.style.setProperty('--s', s);
+}
+window.addEventListener('resize', fitStage); fitStage();
+
+/* Theme: light by default, dark on request */
+function applyTheme(t) {
+  if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+  $('themeBtn').textContent = t === 'dark' ? 'Light' : 'Dark';
+  try { localStorage.setItem('dft-theme', t); } catch (_) {}
+}
+function currentTheme() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+(function () {
+  let t = 'light';
+  try { t = localStorage.getItem('dft-theme') || 'light'; } catch (_) {}
+  if (document.documentElement.getAttribute('data-theme') === 'dark') t = 'dark';
+  applyTheme(t);
+})();
+$('themeBtn').addEventListener('click', () => applyTheme(currentTheme() === 'dark' ? 'light' : 'dark'));
+
+/* Full screen */
+function toggleFS() {
+  try {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    else document.exitFullscreen().catch(() => {});
+  } catch (_) {}
+}
+$('fsBtn').addEventListener('click', toggleFS);
+document.addEventListener('fullscreenchange', () => {
+  const on = !!document.fullscreenElement;
+  document.body.classList.toggle('fs', on);
+  $('fsBtn').textContent = on ? 'Exit full screen' : 'Full screen';
+  fitStage();
+});
+
+function slideIndexFromHash(h = window.location.hash) {
+  const r = String(h || '').trim().replace(/^#/, ''); if (!r) return null;
+  const p = Number.parseInt(r, 10); if (!Number.isFinite(p)) return null;
+  return Math.max(0, Math.min(p - 1, all.length - 1));
+}
+function syncCurrentHash() {
+  const t = '#' + (cur + 1); if (window.location.hash === t) return;
+  try { history.replaceState(null, '', t); } catch (_) {}
+}
+window.__deckGo = i => show(i);
+function show(n, { syncHash = true } = {}) {
+  cur = Math.max(0, Math.min(n, all.length - 1));
+  all.forEach((s, i) => s.classList.toggle('active', i === cur));
+  const s = all[cur];
+  $('progress').style.width = ((cur + 1) / all.length * 100) + '%';
+  $('progress').style.background = catColor[s.dataset.cat] || 'var(--recover)';
+  $('pageNum').textContent = String(cur + 1).padStart(2, '0') + ' / ' + all.length;
+  $('secName').textContent = s.dataset.sec || '';
+  if (syncHash) syncCurrentHash();
+  if (window.onSlideChange) window.onSlideChange(cur);
+  if (window.renderTrack) window.renderTrack(s.dataset.ft);
+  if (s._onEnter && s._prev !== true) s._onEnter.forEach(f => { try { f(); } catch (_) {} });
+  all.forEach(x => { x._prev = x === s; });
+}
+function go(d) { show(cur + d); }
+function isActiveSlide(el) { const s = el && el.closest('.slide'); return !!s && s.classList.contains('active'); }
+
+function isFormTarget(node) {
+  return node instanceof Element && !!node.closest('input, textarea, select, [contenteditable="true"]');
+}
+document.addEventListener('keydown', e => {
+  if (isFormTarget(e.target)) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !(e.target instanceof Element && e.target.closest('button')))) { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
+  if (e.key === 'f' || e.key === 'F') toggleFS();
+  if (e.key === 'd' || e.key === 'D') applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  if ((e.key === 'n' || e.key === 'N') && window.toggleNotes) window.toggleNotes();
+});
+window.addEventListener('hashchange', () => { const i = slideIndexFromHash(); if (i !== null && i !== cur) show(i, { syncHash: false }); });
+let tx = 0, ty = 0;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+document.addEventListener('touchend', e => {
+  if (isFormTarget(e.target)) return;
+  const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1);
+});
+function hasScrollableParent(node, dy) {
+  let el = node instanceof Element ? node : null;
+  while (el && el !== document.body) {
+    const s = getComputedStyle(el);
+    if (/(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 1) {
+      if ((dy < 0 && el.scrollTop > 0) || (dy > 0 && el.scrollTop + el.clientHeight < el.scrollHeight - 1)) return true;
+    }
+    el = el.parentElement;
+  }
+  return false;
+}
+let wheelAccum = 0, wheelLastAt = 0, wheelReset = null;
+document.addEventListener('wheel', e => {
+  const delta = e.deltaMode === 1 ? e.deltaY * 18 : e.deltaY;
+  if (!delta || isFormTarget(e.target) || hasScrollableParent(e.target, delta)) return;
+  e.preventDefault();
+  const now = Date.now(); if (now - wheelLastAt < 650) return;
+  if (wheelAccum && Math.sign(wheelAccum) !== Math.sign(delta)) wheelAccum = 0;
+  wheelAccum += delta; clearTimeout(wheelReset); wheelReset = setTimeout(() => { wheelAccum = 0; }, 180);
+  if (Math.abs(wheelAccum) < 90) return;
+  go(wheelAccum > 0 ? 1 : -1); wheelLastAt = now; wheelAccum = 0;
+}, { passive: false });
+
+/* ================= Shared demo helpers ================= */
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+function mkLog(el) {
+  const t0 = performance.now();
+  return {
+    add(msg, cls = '') {
+      const ts = ((performance.now() - t0) / 1000).toFixed(1).padStart(5, ' ');
+      const d = document.createElement('div');
+      d.innerHTML = '<span class="ts">' + ts + 's</span> <span class="' + (cls ? 'e-' + cls : '') + '">' + msg + '</span>';
+      el.appendChild(d); el.scrollTop = el.scrollHeight;
+      while (el.childElementCount > 80) el.firstElementChild.remove();
+    },
+    clear() { el.innerHTML = ''; }
+  };
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ================= SVG diagram toolkit ================= */
+const NS = 'http://www.w3.org/2000/svg';
+const PACE = 1.8; /* global slow-down for all moving dots */
+function S(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function T(parent, x, y, txt, cls, anchor) {
+  const t = S('text', { x, y, class: cls || 'lbl', 'text-anchor': anchor || 'middle', 'dominant-baseline': 'central' }, parent);
+  t.textContent = txt; return t;
+}
+/* Size the viewBox to the element's real content box so 1 SVG unit = 1 stage px */
+function svgInit(id) {
+  const svg = $(id);
+  const cs = getComputedStyle(svg);
+  const w = Math.round(svg.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
+  const h = Math.round(svg.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom));
+  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+  svg.innerHTML = '';
+  const defs = S('defs', null, svg);
+  const m = S('marker', { id: id + '-ah', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse' }, defs);
+  S('path', { d: 'M0,0 L10,5 L0,10 z', class: 'ah' }, m);
+  svg._ah = 'url(#' + id + '-ah)';
+  svg._bg = S('g', null, svg); svg._links = S('g', null, svg); svg._nodes = S('g', null, svg); svg._top = S('g', null, svg); svg._pk = S('g', null, svg);
+  svg.W = w; svg.H = h;
+  return svg;
+}
+function Node(svg, x, y, w, h, title, sub, k, extra) {
+  const base = 'nd' + (k ? ' k-' + k : '') + (extra ? ' ' + extra : '');
+  const g = S('g', { class: base }, svg._nodes);
+  S('rect', { x, y, width: w, height: h, rx: 14, class: 'bx' }, g);
+  const tt = T(g, x + w / 2, y + h / 2 - (sub ? 15 : 0), title, 't');
+  const st = T(g, x + w / 2, y + h / 2 + 19, sub || '', 's');
+  const n = { g, x, y, w, h, cx: x + w / 2, cy: y + h / 2, r: x + w, b: y + h, state: '',
+    set(state) { n.state = state || ''; g.setAttribute('class', base + (state ? ' st-' + state : '')); return n; },
+    sub(t) { st.textContent = t; tt.setAttribute('y', y + h / 2 - (t ? 15 : 0)); return n; }, title(t) { tt.textContent = t; return n; } };
+  return n;
+}
+function Frame(svg, x, y, w, h, label, k) {
+  const g = S('g', { class: k ? 'k-' + k : '' }, svg._bg);
+  S('rect', { x, y, width: w, height: h, rx: 18, class: 'frame-fill' }, g);
+  if (label) T(g, x + 18, y + 22, label, 'flabel', 'start');
+  return g;
+}
+function Link(svg, d, cls, arrow) {
+  const p = S('path', { d, class: 'ln ' + (cls || '') }, svg._links);
+  if (arrow !== false) p.setAttribute('marker-end', svg._ah);
+  return p;
+}
+function hc(x1, y1, x2, y2) { const dx = (x2 - x1) / 2; return 'M' + x1 + ',' + y1 + ' C' + (x1 + dx) + ',' + y1 + ' ' + (x2 - dx) + ',' + y2 + ' ' + x2 + ',' + y2; }
+function vc(x1, y1, x2, y2) { const dy = (y2 - y1) / 2; return 'M' + x1 + ',' + y1 + ' C' + x1 + ',' + (y1 + dy) + ' ' + x2 + ',' + (y2 - dy) + ' ' + x2 + ',' + y2; }
+function Packet(svg, path, cls, dur, r, reverse) {
+  return new Promise(res => {
+    if (!path || !path.getTotalLength) { res(); return; }
+    const c = S('circle', { r: r || 11, class: 'pk ' + (cls || 'pk-req'), cx: -99, cy: -99 }, svg._pk);
+    const L = path.getTotalLength(), t0 = performance.now(), D = (dur || 900) * PACE;
+    function f(t) {
+      const u = Math.min(1, (t - t0) / D), e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+      const p = path.getPointAtLength((reverse ? 1 - e : e) * L);
+      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+      if (u < 1) requestAnimationFrame(f); else { c.remove(); res(); }
+    }
+    requestAnimationFrame(f);
+  });
+}
+async function Route(svg, hops, cls, dur, r) { for (const [p, rev] of hops) await Packet(svg, p, cls, dur, r, rev); }
+function Badge(svg, x, y, text, cls, ms) {
+  const g = S('g', { class: 'badge ' + (cls || 'b-fail') }, svg._top);
+  const w = text.length * 12.5 + 28;
+  S('rect', { x: x - w / 2, y: y - 19, width: w, height: 38, rx: 19 }, g);
+  T(g, x, y, text, '');
+  if (ms !== 0) setTimeout(() => g.remove(), ms || 1400);
+  return g;
+}
+function Marker(svg, x, y, n, k) {
+  const g = S('g', { class: 'mk' + (k ? ' k-' + k : '') }, svg._top);
+  S('circle', { cx: x, cy: y, r: 22 }, g); T(g, x, y + 1, String(n), '');
+  return g;
+}
+/* run a loop only while its slide is visible */
+function whileActive(svg, ms, fn) { setInterval(() => { if (isActiveSlide(svg)) fn(); }, ms); }
+/* background traffic: one request at a time, spaced out, so it reads as context rather than noise */
+function ambient(svg, ms, fn) { let busy = false; setInterval(async () => { if (busy || !isActiveSlide(svg)) return; busy = true; try { await fn(); } catch (_) {} busy = false; }, ms); }
+</script>
+<script>
+/* the four layers; numbers match the failure points on slide 2 */
+const LAYERS = [
+  { k: 'req', name: 'Request path', nums: [1, 2, 3] },
+  { k: 'route', name: 'Routing', nums: [4, 5] },
+  { k: 'life', name: 'Lifecycle', nums: [6, 7] },
+  { k: 'state', name: 'KV state', nums: [8] }
+];
+function onEnter(el, fn) { const s = el.closest('.slide'); s._onEnter = (s._onEnter || []).concat(fn); }
+
+/* ================= Shared: Dynamo request-path architecture ================= */
+function buildArch(id, opts) {
+  const svg = svgInit(id), W = svg.W, H = svg.H;
+  const o = opts || {};
+  const poolX = 680, colW = 250, colGap = 40;
+  const infraH = 118, baseInfraY = H - infraH;
+  const pTop = 44, boxH = 104;
+  const dFrameY = Math.round((baseInfraY - 60) / 2) + 6, dTop = dFrameY + 44;
+  const reqBusY = Math.round((pTop + boxH + dFrameY) / 2);
+  const tokBusY = dTop + boxH + 26;
+  const fy1 = Math.max(40, reqBusY - 160), fy2 = fy1 + 170;
+  const C = Node(svg, 0, Math.round((fy1 + fy2 + 140) / 2) - 65, 170, 130, 'Clients', 'OpenAI API', 'plain');
+  const F = [Node(svg, 250, fy1, 290, 140, 'Frontend + Router', 'replica 1', 'req'), Node(svg, 250, fy2, 290, 140, 'Frontend + Router', 'replica 2', 'req')];
+  Frame(svg, poolX - 20, pTop - 44, 3 * colW + 2 * colGap + 40, boxH + 62, 'Prefill pool', 'life');
+  Frame(svg, poolX - 20, dFrameY, 3 * colW + 2 * colGap + 40, boxH + 62, 'Decode pool', 'life');
+  const P = [], D = [];
+  for (let j = 0; j < 3; j++) {
+    const x = poolX + j * (colW + colGap);
+    P.push(Node(svg, x, pTop, colW, boxH, 'Prefill ' + (j + 1), 'prompt → KV', 'life'));
+    D.push(Node(svg, x, dTop, colW, boxH, 'Decode ' + (j + 1), 'streaming', 'life'));
+  }
+  const poolR = poolX + 3 * colW + 2 * colGap + 20;
+  const infraY = o.liftInfra ? Math.min(baseInfraY, tokBusY + 40) : baseInfraY;
+  const disc = Node(svg, 250, infraY, 520, infraH - 10, 'Discovery', 'K8s EndpointSlices · etcd leases', 'route');
+  const ev = Node(svg, 820, infraY, poolR - 820, infraH - 10, 'Event plane', 'KV events → router prefix index', 'route');
+  // visible links
+  const cf = F.map(f => Link(svg, hc(C.r, C.cy, f.x, f.cy), 'k-req'));
+  F.forEach(f => Link(svg, hc(f.r, f.cy - 30, poolX - 20, reqBusY), 'k-req', false));
+  Link(svg, 'M' + (poolX - 20) + ',' + reqBusY + ' L' + (P[2].x + 60) + ',' + reqBusY, 'k-req', false);
+  P.forEach(p => Link(svg, 'M' + (p.x + 60) + ',' + reqBusY + ' L' + (p.x + 60) + ',' + p.b, 'k-req'));
+  const nixl = P.map((p, j) => Link(svg, 'M' + (p.cx + 50) + ',' + p.b + ' L' + (D[j].cx + 50) + ',' + D[j].y, 'k-state dash'));
+  D.forEach(d => Link(svg, 'M' + (d.x + 60) + ',' + d.b + ' L' + (d.x + 60) + ',' + tokBusY, 'k-ok', false));
+  Link(svg, 'M' + (D[2].x + 60) + ',' + tokBusY + ' L' + (poolX - 20) + ',' + tokBusY, 'k-ok', false);
+  F.forEach(f => Link(svg, hc(poolX - 20, tokBusY, f.r, f.cy + 34), 'k-ok'));
+  Link(svg, 'M' + F[1].cx + ',' + F[1].b + ' L' + F[1].cx + ',' + disc.y, 'k-route dot', false);
+  Link(svg, 'M' + poolR + ',' + (pTop + 40) + ' L' + (poolR + 30) + ',' + (pTop + 40) + ' L' + (poolR + 30) + ',' + ev.cy + ' L' + ev.r + ',' + ev.cy, 'k-route dot');
+  Link(svg, 'M' + poolR + ',' + (dTop + 40) + ' L' + (poolR + 30) + ',' + (dTop + 40), 'k-route dot', false);
+  T(svg._top, (P[0].cx + 50 + P[1].x) / 2 + 10, (P[0].b + D[0].y) / 2, 'KV via NIXL', 'lbl-m');
+  // legend
+  if (W - poolR > 150) {
+    const lx = poolR + 50; let ly = 40;
+    [['k-req', 'requests'], ['k-ok', 'tokens'], ['k-state dash', 'KV (NIXL)'], ['k-route dot', 'events']].forEach(([c, t]) => {
+      S('path', { d: 'M' + lx + ',' + ly + ' L' + (lx + 34) + ',' + ly, class: 'ln ' + c }, svg._top); T(svg._top, lx + 44, ly, t, 'lbl', 'start'); ly += 38;
+    });
+  }
+  // ghost paths for packets
+  const fp = F.map(f => P.map(p => Link(svg, hc(f.r, f.cy - 30, poolX - 20, reqBusY) + ' L' + (p.x + 60) + ',' + reqBusY + ' L' + (p.x + 60) + ',' + p.b, 'ghost', false)));
+  const df = D.map(d => F.map(f => Link(svg, 'M' + (d.x + 60) + ',' + d.b + ' L' + (d.x + 60) + ',' + tokBusY + ' L' + (poolX - 20) + ',' + tokBusY + ' ' + hc(poolX - 20, tokBusY, f.r, f.cy + 34).replace(/^M[^ ]+ /, ''), 'ghost', false)));
+  const dd = (a, b) => Link(svg, 'M' + (a < b ? D[a].r : D[a].x) + ',' + (D[a].cy + 30) + ' L' + (a < b ? D[b].x : D[b].r) + ',' + (D[b].cy + 30), 'ghost', false);
+  const dEv = D.map(d => Link(svg, 'M' + d.r + ',' + (d.y + 30) + ' L' + poolR + ',' + (d.y + 30) + ' L' + (poolR + 30) + ',' + (d.y + 30) + ' L' + (poolR + 30) + ',' + ev.cy + ' L' + ev.r + ',' + ev.cy, 'ghost', false));
+  const A = { svg, C, F, P, D, disc, ev, cf, fp, nixl, df, dd, dEv,
+    async flow(fi, j, cls, tokCls) {
+      await Packet(svg, cf[fi], cls || 'pk-req', 500);
+      await Packet(svg, fp[fi][j], cls || 'pk-req', 650);
+      await Packet(svg, nixl[j], 'pk-state', 380);
+      await Packet(svg, df[j][fi], tokCls || 'pk-tok', 800);
+      await Packet(svg, cf[fi], tokCls || 'pk-tok', 450, 11, true);
+    } };
+  return A;
+}
+
+/* ================= Hero ================= */
+(function () {
+  const svg = svgInit('dg-hero'), W = svg.W, H = svg.H;
+  const cy = H / 2;
+  const C = Node(svg, 0, cy - 60, 150, 120, 'Clients', '', 'plain');
+  const F = Node(svg, Math.round(W * 0.27), cy - 85, 210, 170, 'Frontend', 'router · migrator', 'req');
+  const wx = W - 240, ws = [cy - 260, cy - 60, cy + 140].map((y, i) => Node(svg, wx, y, 240, 120, 'Worker ' + (i + 1), 'healthy', 'life'));
+  const cf = Link(svg, hc(C.r, C.cy, F.x, F.cy), 'k-req');
+  const fw = ws.map(w => Link(svg, hc(F.r, F.cy, w.x, w.cy), 'k-req'));
+  const mig = Link(svg, 'M' + (wx + 40) + ',' + ws[1].b + ' L' + (wx + 40) + ',' + ws[2].y, 'k-rec dash');
+  T(svg._top, W / 2, H - 30, 'Live: a worker fails every few seconds. Traffic keeps flowing.', 'lbl');
+  let down = -1;
+  ambient(svg, 2600, async () => {
+    const ok = [0, 1, 2].filter(i => i !== down);
+    const i = pick(ok);
+    await Packet(svg, cf, 'pk-req', 380); await Packet(svg, fw[i], 'pk-req', 520);
+    await Packet(svg, fw[i], 'pk-tok', 520, 11, true); await Packet(svg, cf, 'pk-tok', 380, 11, true);
+  });
+  async function cycle() {
+    if (!isActiveSlide(svg)) return;
+    down = 1; ws[1].set('fail').sub('engine crashed'); Badge(svg, ws[1].cx, ws[1].y - 4, '✕ crash', 'b-fail', 1500);
+    await sleep(500); Packet(svg, mig, 'pk-rec', 700); Badge(svg, wx - 70, (ws[1].b + ws[2].y) / 2, 'migrate', 'b-rec', 1500);
+    await sleep(1800); ws[1].set('rec').sub('shadow promoting');
+    await sleep(2200); ws[1].set('').sub('healthy'); down = -1;
+  }
+  setInterval(cycle, 9000); onEnter(svg, () => setTimeout(cycle, 2500));
+})();
+
+/* ================= Slide 2: architecture with failure points ================= */
+(function () {
+  const A = buildArch('dg-arch', { liftInfra: true }), svg = A.svg;
+  const points = [
+    [A.D[1], 'worker dies mid-stream', 'Migration', 'req'],
+    [A.C, 'client disconnects', 'Cancellation', 'req'],
+    [A.F[0], 'traffic spike', 'Rejection (529)', 'req'],
+    [A.disc, 'worker vanishes or hangs', 'Inhibition + canaries', 'route'],
+    [A.F[1], 'router replica lost', 'Router recovery', 'route'],
+    [A.P[0], 'rolling update', 'Graceful shutdown', 'life'],
+    [A.D[2], 'engine crash, GPU OK', 'Shadow + GMS', 'life'],
+    [A.P[2], 'cache lost in crash', 'KVCR-Guard', 'state']
+  ];
+  const mks = points.map(([n, , , k], i) => Marker(svg, n.r - 6, n.y + 6, i + 1, k));
+  const grid = $('arch-chips'), chipEls = [];
+  LAYERS.forEach(L => {
+    const idx = points.map((p, i) => i).filter(i => points[i][3] === L.k);
+    const g = document.createElement('div'); g.className = 'fxg k-' + L.k;
+    g.innerHTML = '<div class="gl">' + L.name + '</div><div class="gi" style="--c:' + idx.length + '"></div>';
+    idx.forEach(i => {
+      const [, what, feat, k] = points[i];
+      const d = document.createElement('div'); d.className = 'fx k-' + k;
+      d.innerHTML = '<span class="n">' + (i + 1) + '</span><span class="tx"><span class="f">' + feat + '</span><span class="w">' + what + '</span></span>';
+      d.addEventListener('click', () => setStep(i));
+      g.querySelector('.gi').appendChild(d); chipEls[i] = d;
+    });
+    grid.appendChild(g);
+  });
+  /* presenter-driven: -1 = overview, 0..7 = one failure point highlighted */
+  let step = -1;
+  function setStep(i) {
+    step = i;
+    points.forEach(([n], j) => { const act = j === i; mks[j].setAttribute('class', 'mk k-' + points[j][3] + (act ? ' on' : '')); chipEls[j].classList.toggle('on', act); n.set(act ? 'hot' : ''); });
+    $('arch-next').textContent = i < 0 ? 'Show failure points ▶' : i >= points.length - 1 ? 'Back to overview ▶' : 'Next failure point ▶';
+    $('arch-cap').textContent = i < 0 ? '8 places a request can fail, and the feature that handles each' : (i + 1) + ' of ' + points.length + ' · ' + LAYERS.find(L => L.k === points[i][3]).name + ' · ' + points[i][1] + ' → ' + points[i][2];
+  }
+  $('arch-next').addEventListener('click', () => setStep(step >= points.length - 1 ? -1 : step + 1));
+  $('arch-prev').addEventListener('click', () => setStep(Math.max(-1, step - 1)));
+  onEnter(svg, () => setStep(-1));
+  setStep(-1);
+})();
+
+/* ================= Slide 3: detect → reroute → recover ================= */
+(function () {
+  const svg = svgInit('dg-drr'), W = svg.W, H = svg.H, cy = H / 2;
+  const C = Node(svg, 0, cy - 60, 160, 120, 'Clients', '', 'plain');
+  const Fp = Node(svg, 230, cy - 160, 270, 130, 'Frontend', 'primary', 'req');
+  const Fs = Node(svg, 230, cy + 30, 270, 130, 'Frontend', 'standby', 'req').set('idle');
+  const px = 600, pw = Math.round((W - px) * 0.47);
+  Frame(svg, px, 10, pw, H - 20, 'Prefill pool', 'life');
+  const dx = px + pw + 60, dw = W - dx;
+  Frame(svg, dx, 10, dw, H - 20, 'Decode pool', 'life');
+  const bw = Math.round((pw - 80) / 3), bh = 84, gTop = cy - (3 * bh + 2 * 22) / 2 + 14;
+  const P = [];
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) P.push(Node(svg, px + 20 + c * (bw + 20), gTop + r * (bh + 22), bw, bh, 'Prefill', 'ready', 'life'));
+  const dh = 120, dTop = cy - (3 * dh + 2 * 30) / 2 + 14;
+  const D = [0, 1, 2].map(i => Node(svg, dx + 30, dTop + i * (dh + 30), dw - 60, dh, 'Decode ' + (i + 1), 'healthy', 'life'));
+  const cf = Link(svg, hc(C.r, C.cy, Fp.x, Fp.cy), 'k-req');
+  Link(svg, hc(C.r, C.cy, Fs.x, Fs.cy), 'k-req dash');
+  const fpool = Link(svg, hc(Fp.r, Fp.cy, px, cy), 'k-req');
+  const pd = D.map(d => Link(svg, hc(px + pw, cy, d.x, d.cy), 'k-state dash'));
+  const back = D.map(d => Link(svg, hc(d.x, d.cy + 30, Fp.r, Fp.cy + 40), 'ghost', false));
+  const mg = [1, 2].map(i => Link(svg, 'M' + (D[0].r - 60) + ',' + D[0].b + ' C' + (D[0].r - 20) + ',' + (D[0].b + 40) + ' ' + (D[i].r - 20) + ',' + (D[i].y - 40) + ' ' + (D[i].r - 60) + ',' + D[i].y, 'ghost', false));
+  let isolated = false, running = false;
+  ambient(svg, 2400, async () => {
+    const ok = isolated ? [1, 2] : [0, 1, 2]; const i = pick(ok);
+    await Packet(svg, cf, 'pk-req', 380); await Packet(svg, fpool, 'pk-req', 450); await Packet(svg, pd[i], 'pk-state', 450);
+    if (D[i].state === 'fail') return;
+    await Packet(svg, back[i], 'pk-tok', 650); await Packet(svg, cf, 'pk-tok', 380, 11, true);
+  });
+  const ph = [0, 1, 2].map(i => $('ph-' + i));
+  const lit = i => ph.forEach((p, j) => p.classList.toggle('on', j === i));
+  /* presenter-driven phases: 0 normal, 1 detect, 2 reroute, 3 recover */
+  const labels = ['Inject fault ▶', 'Reroute ▶', 'Recover ▶', 'Reset ▶'];
+  let phase = 0, recTimer = null;
+  function setPhase(k) {
+    phase = k; clearTimeout(recTimer);
+    $('drr-next').textContent = labels[k];
+    if (k === 0) { lit(-1); isolated = false; D[0].set('').sub('healthy'); P[5].set('').sub('ready'); Fp.sub('primary'); return; }
+    if (k === 1) { lit(0); isolated = false; D[0].set('fail').sub('stream error'); P[5].set('rec').sub('degraded'); Fp.sub('primary'); Badge(svg, D[0].cx, D[0].y - 2, '✕ engine crashed', 'b-fail', 2500); return; }
+    if (k === 2) { lit(1); isolated = true; D[0].set('fail').sub('isolated'); P[5].set('rec').sub('degraded'); Fp.sub('skips Decode 1 · 5 s');
+      Packet(svg, mg[0], 'pk-rec', 900); Packet(svg, mg[1], 'pk-rec', 1100); Badge(svg, D[1].cx - 120, D[0].b + 15, 'migrated streams', 'b-rec', 3000); return; }
+    if (k === 3) { lit(2); isolated = true; D[0].set('rec').sub('shadow engine promoting'); P[5].set('').sub('ready');
+      recTimer = setTimeout(() => { if (phase === 3) { D[0].set('ok').sub('healthy again'); isolated = false; Fp.sub('primary'); } }, 2500); }
+  }
+  $('drr-next').addEventListener('click', () => setPhase((phase + 1) % 4));
+  $('drr-prev').addEventListener('click', () => setPhase(Math.max(0, phase - 1)));
+  onEnter(svg, () => setPhase(0));
+  setPhase(0);
+})();
+
+/* ================= Slide 4: outcome lanes ================= */
+(function () {
+  const svg = svgInit('dg-out'), W = svg.W, H = svg.H, lh = H / 3;
+  const lanes = [['Reject', 'admission', 'var(--c-req)'], ['Migrate', 'worker fault', 'var(--recover)'], ['Cancel', 'client gone', 'var(--fail)']];
+  const outX = W - 250;
+  const L = lanes.map(([name, sub, col], i) => {
+    const y0 = i * lh, by = Math.round(y0 + lh / 2 - 55);
+    if (i) S('line', { x1: 0, x2: W, y1: y0, y2: y0, class: 'ln thin dot' }, svg._bg);
+    const t = T(svg._bg, 0, y0 + lh / 2 - 16, name, 'big-l', 'start'); t.setAttribute('style', 'fill:' + col);
+    T(svg._bg, 0, y0 + lh / 2 + 26, sub, 'lbl', 'start');
+    return { y0, by };
+  });
+  function out(i, text, cls) {
+    const g = S('g', { class: 'badge ' + cls }, svg._bg);
+    S('rect', { x: outX, y: L[i].by + 20, width: 250, height: 70, rx: 35 }, g);
+    const t = T(g, outX + 125, L[i].by + 55, text, ''); t.setAttribute('style', 'font-size:22px');
+  }
+  // lane 1: reject
+  const r = L[0].by, rC = Node(svg, 250, r, 170, 110, 'Client', 'new request', 'plain'), rG = Node(svg, 520, r, 320, 110, 'Admission gate', 'KV usage > 0.85', 'req'), rW = Node(svg, 940, r, 340, 110, 'Workers', 'all busy', 'life');
+  const r1 = Link(svg, hc(rC.r, rC.cy, rG.x, rG.cy), 'k-req'); Link(svg, hc(rG.r, rG.cy, rW.x, rW.cy), 'k-fail dash'); Link(svg, hc(rW.r, rW.cy, outX, rW.cy), 'thin dot');
+  out(0, 'Protect SLO', 'b-req');
+  // lane 2: migrate
+  const m = L[1].by, mC = Node(svg, 250, m, 170, 110, 'Client', 'streaming', 'plain'), mF = Node(svg, 520, m, 320, 110, 'Frontend', 'Migrator', 'req'), mA = Node(svg, 940, m, 160, 110, 'Worker A', '', 'life'), mB = Node(svg, 1150, m, 160, 110, 'Worker B', '', 'life');
+  const m1 = Link(svg, hc(mC.r, mC.cy, mF.x, mF.cy), 'k-req'), m2 = Link(svg, hc(mF.r, mF.cy - 20, mA.x, mA.cy - 20), 'k-req');
+  const m3 = Link(svg, 'M' + mF.r + ',' + (mF.cy + 30) + ' C' + (mF.r + 120) + ',' + (m + 165) + ' ' + (mB.x - 60) + ',' + (m + 165) + ' ' + mB.cx + ',' + mB.b, 'k-rec dash');
+  const m4 = Link(svg, 'M' + mB.cx + ',' + mB.y + ' C' + mB.cx + ',' + (m - 50) + ' ' + (mF.r + 60) + ',' + (m - 50) + ' ' + (mF.r - 40) + ',' + mF.y, 'ghost', false);
+  Link(svg, hc(mB.r, mB.cy, outX, mB.cy), 'thin dot');
+  out(1, 'Continue stream', 'b-rec');
+  // lane 3: cancel
+  const c = L[2].by, cC = Node(svg, 250, c, 170, 110, 'Client', 'reading', 'plain'), cF = Node(svg, 520, c, 320, 110, 'Frontend', 'root context', 'req'), cW = Node(svg, 940, c, 340, 110, 'Prefill / Decode', 'generating', 'life');
+  const c1 = Link(svg, hc(cC.r, cC.cy, cF.x, cF.cy), 'k-req'), c2 = Link(svg, hc(cF.r, cF.cy, cW.x, cW.cy), 'k-req'); Link(svg, hc(cW.r, cW.cy, outX, cW.cy), 'thin dot');
+  out(2, 'GPU freed', 'b-ok');
+  async function laneR() {
+    await Packet(svg, r1, 'pk-req', 700); rG.set('hot'); Badge(svg, rG.cx, rG.y - 4, '529 · retry later', 'b-fail', 1300);
+    await sleep(300); await Packet(svg, r1, 'pk-fail', 700, 11, true); rG.set('');
+  }
+  async function laneM() {
+    mA.set('').sub('generating'); mB.set('idle').sub('');
+    await Packet(svg, m1, 'pk-req', 500); await Packet(svg, m2, 'pk-req', 600);
+    for (let k = 0; k < 2; k++) { await Packet(svg, m2, 'pk-tok', 420, 10, true); Packet(svg, m1, 'pk-tok', 420, 10, true); }
+    mA.set('fail').sub('crashed'); Badge(svg, mA.cx, mA.y - 4, '✕', 'b-fail', 1200);
+    await sleep(500); mF.set('hot'); Badge(svg, (mF.r + mB.x) / 2, m + 150, 'replay prompt + tokens', 'b-rec', 1400);
+    await Packet(svg, m3, 'pk-rec', 900); mF.set(''); mB.set('ok').sub('continues');
+    for (let k = 0; k < 2; k++) { await Packet(svg, m4, 'pk-tok', 650); Packet(svg, m1, 'pk-tok', 420, 10, true); }
+    await sleep(600);
+  }
+  async function laneC() {
+    cC.set('').sub('reading'); cW.set('').sub('generating');
+    await Packet(svg, c1, 'pk-req', 500); await Packet(svg, c2, 'pk-req', 600);
+    await Packet(svg, c2, 'pk-tok', 420, 10, true); await Packet(svg, c1, 'pk-tok', 420, 10, true);
+    cC.set('fail').sub('disconnected');
+    await sleep(300); await Packet(svg, c1, 'pk-fail', 500); cF.sub('stop_generating()');
+    await Packet(svg, c2, 'pk-fail', 600); cW.set('idle').sub('stopped'); Badge(svg, cW.cx, cW.y - 4, 'GPU freed', 'b-ok', 1200);
+    await sleep(1500); cF.sub('root context');
+  }
+  /* presenter-driven: step 0 = all lanes static; 1..3 plays one lane, others dimmed */
+  const runners = [laneR, laneM, laneC], names = ['Reject', 'Migrate', 'Cancel'];
+  const dims = L.map(l => S('rect', { x: 0, y: l.y0 + 2, width: W, height: lh - 4, style: 'fill:var(--bg);opacity:0;transition:opacity .3s;pointer-events:none' }, svg._pk));
+  let ostep = 0, token = 0;
+  function resetLanes() { rG.set(''); mA.set('').sub('generating'); mB.set('idle').sub(''); mF.set(''); cC.set('').sub('reading'); cF.sub('root context'); cW.set('').sub('generating'); }
+  async function setOut(k) {
+    ostep = k; const my = ++token;
+    resetLanes();
+    dims.forEach((d, i) => d.style.opacity = k === 0 || i === k - 1 ? 0 : .7);
+    $('out-next').textContent = k < 3 ? 'Show: ' + names[k] + ' ▶' : 'Overview ▶';
+    if (k > 0 && my === token) await runners[k - 1]();
+  }
+  $('out-next').addEventListener('click', () => setOut((ostep + 1) % 4));
+  $('out-prev').addEventListener('click', () => setOut(Math.max(0, ostep - 1)));
+  onEnter(svg, () => setOut(0));
+})();
+
+
+/* ================= Detection slide: inhibition / discovery / canaries ================= */
+(function () {
+  const svg = svgInit('dg-det'), W = svg.W, H = svg.H, cy = H / 2;
+  // left: frontend with routing table + 3 workers
+  const fx = 0, fw = 330, fh = 300, fy = cy - fh / 2;
+  const fg = S('g', { class: 'nd k-req' }, svg._nodes);
+  S('rect', { x: fx, y: fy, width: fw, height: fh, rx: 16, class: 'bx' }, fg);
+  T(fg, fx + fw / 2, fy + 34, 'Frontend', 't');
+  T(fg, fx + 24, fy + 74, 'ROUTABLE WORKERS', 'flabel', 'start');
+  const rows = [0, 1, 2].map(i => {
+    const y = fy + 118 + i * 58;
+    const dot = S('circle', { cx: fx + 40, cy: y, r: 10, style: 'fill:var(--ok)' }, fg);
+    const name = T(fg, fx + 62, y, 'Worker ' + (i + 1), 'lbl-b', 'start');
+    const st = T(fg, fx + fw - 22, y, 'ok', 'lbl-m', 'end');
+    return { dot, name, st };
+  });
+  const wx = 470, ww = 280, wh = 120;
+  const Wk = [0, 1, 2].map(i => Node(svg, wx, cy - 200 + i * 140, ww, wh, 'Worker ' + (i + 1), 'healthy', 'life'));
+  const links = Wk.map(w => Link(svg, hc(fx + fw, cy, w.x, w.cy), 'k-req'));
+  // right: timeline
+  const tx0 = 860, lab = 250, x0 = tx0 + lab, x1 = W - 20, TMAX = 16, X = t => x0 + t / TMAX * (x1 - x0);
+  const axY = 34;
+  S('line', { x1: x0, x2: x1, y1: axY, y2: axY, class: 'axis' }, svg._bg);
+  [0, 4, 8, 12, 16].forEach(t => { S('line', { x1: X(t), x2: X(t), y1: axY, y2: H - 6, class: 'ln thin dot' }, svg._bg); T(svg._bg, X(t), axY - 18, t + ' s', 'tick'); });
+  T(svg._bg, tx0, axY, 'seconds after the fault', 'lbl-m', 'start');
+  const th = (H - axY - 20) / 3, ty = i => axY + 20 + th * i + th / 2;
+  const tracks = [['Local inhibition', 'var(--c-req)'], ['Discovery', 'var(--c-route)'], ['Canary check', 'var(--c-life)']];
+  const tg = tracks.map(([name, col], i) => {
+    S('rect', { x: tx0, y: ty(i) - 40, width: 8, height: 80, rx: 3, style: 'fill:' + col }, svg._bg);
+    T(svg._bg, tx0 + 22, ty(i), name, 'lbl-b', 'start');
+    return S('g', { style: 'opacity:0;transition:opacity .4s' }, svg._nodes);
+  });
+  const defs = svg.querySelector('defs');
+  const gr = S('linearGradient', { id: 'gdisc2', x1: 0, x2: 1, y1: 0, y2: 0 }, defs);
+  S('stop', { offset: '0', style: 'stop-color:var(--c-route);stop-opacity:.2' }, gr);
+  S('stop', { offset: '.6', style: 'stop-color:var(--c-route);stop-opacity:.85' }, gr);
+  S('stop', { offset: '1', style: 'stop-color:var(--c-route);stop-opacity:.25' }, gr);
+  const bar = (g, i, a, b, style, label, txtStyle) => {
+    S('rect', { x: X(a), y: ty(i) - 30, width: X(b) - X(a), height: 60, rx: 10, style }, g);
+    if (label) { const t = T(g, (X(a) + X(b)) / 2, ty(i), label, 'lbl-b'); if (txtStyle) t.setAttribute('style', txtStyle); }
+  };
+  bar(tg[0], 0, 0, 5, 'fill:var(--c-req)', 'skip Worker 2 · 5 s', 'fill:var(--on-accent)');
+  T(tg[0], X(5) + 14, ty(0), 'discovery decides after', 'lbl', 'start');
+  bar(tg[1], 1, 0, 12, 'fill:url(#gdisc2)', 'removed when lease expires / slice updates');
+  bar(tg[2], 2, 0, 10, 'fill:var(--panel-2);stroke:var(--line);stroke-width:2', 'no successful traffic · 10 s');
+  bar(tg[2], 2, 10, 13, 'fill:var(--recover)', 'probe', 'fill:var(--on-accent)');
+  const ub = S('g', { class: 'badge b-fail' }, tg[2]); S('rect', { x: X(13) + 8, y: ty(2) - 19, width: 130, height: 38, rx: 19 }, ub); T(ub, X(13) + 73, ty(2), 'unhealthy', '');
+  const cur = S('line', { x1: X(0), x2: X(0), y1: axY, y2: H - 6, class: 'cur-l', style: 'opacity:0' }, svg._top);
+  let raf = null;
+  function sweep(from, to, ms) {
+    cancelAnimationFrame(raf); cur.style.opacity = 1; const t0 = performance.now();
+    const f = t => { const u = Math.min(1, (t - t0) / ms), v = from + (to - from) * u; cur.setAttribute('x1', X(v)); cur.setAttribute('x2', X(v)); if (u < 1) raf = requestAnimationFrame(f); };
+    raf = requestAnimationFrame(f);
+  }
+  const setRow = (i, col, st) => { rows[i].dot.setAttribute('style', 'fill:' + col); rows[i].st.textContent = st; rows[i].st.setAttribute('style', 'fill:' + col); };
+  const ph = [0, 1, 2].map(i => $('dph-' + i));
+  const steps = [
+    ['Crash Worker 2 ▶', 'All three workers healthy and routable.'],
+    ['Discovery confirms ▶', 'Worker 2 crashed. The next request to it fails, so the Frontend skips it locally for 5 s.'],
+    ['Worker 3 hangs ▶', 'Discovery removes Worker 2 for good: its lease expired / EndpointSlice updated.'],
+    ['Reset ▶', 'Worker 3 hangs but its process is alive, so discovery still lists it. A canary probe times out and marks it unhealthy.']
+  ];
+  let step = 0;
+  async function setStep(k) {
+    step = k; $('det-next').textContent = steps[k][0]; $('det-cap').textContent = steps[k][1];
+    ph.forEach((p, i) => p.classList.toggle('on', i === k - 1));
+    tg.forEach((g, i) => g.style.opacity = i < k ? (i === k - 1 ? 1 : .35) : 0);
+    links.forEach(l => { l.style.opacity = ''; l.setAttribute('class', 'ln k-req'); });
+    Wk.forEach(w => w.set('').sub('healthy')); [0, 1, 2].forEach(i => setRow(i, 'var(--ok)', 'ok'));
+    cur.style.opacity = 0; cancelAnimationFrame(raf);
+    if (k >= 1) { Wk[1].set('fail').sub('crashed'); setRow(1, 'var(--recover)', 'skipped 5 s'); links[1].setAttribute('class', 'ln k-fail dash'); }
+    if (k === 1) { Packet(svg, links[1], 'pk-req', 500).then(() => { Badge(svg, Wk[1].cx, Wk[1].y - 2, '✕ request failed', 'b-fail', 2200); }); sweep(0, 5, 1800); }
+    if (k >= 2) { setRow(1, 'var(--fail)', 'removed'); links[1].style.opacity = .15; }
+    if (k === 2) { sweep(0, 12, 2200); }
+    if (k === 3) {
+      Wk[2].set('rec').sub('hung · /live OK'); setRow(2, 'var(--ok)', 'listed');
+      sweep(0, 13, 3200);
+      setTimeout(() => { if (step !== 3) return; Packet(svg, links[2], 'pk-rec', 500); Badge(svg, Wk[2].cx, Wk[2].y - 2, 'canary probe', 'b-rec', 1600); }, 1900);
+      setTimeout(() => { if (step !== 3) return; Wk[2].set('fail').sub('unhealthy'); setRow(2, 'var(--fail)', 'unhealthy'); links[2].setAttribute('class', 'ln k-fail dash'); }, 3300);
+    }
+  }
+  $('det-next').addEventListener('click', () => setStep((step + 1) % 4));
+  $('det-prev').addEventListener('click', () => setStep(Math.max(0, step - 1)));
+  onEnter(svg, () => setStep(0));
+  setStep(0);
+})();
+/* ================= Slide 11: GMS memory map ================= */
+(function () {
+  const svg = svgInit('dg-gms'), W = svg.W, H = svg.H;
+  const px = 40, pw = 250, ph = 150;
+  const G = Node(svg, px, 40, pw, ph, 'GMS sidecar', 'owns weight pages', 'life');
+  const E = Node(svg, px, H / 2 - ph / 2, pw, ph, 'Active engine', 'running · has lock', 'req');
+  const Sh = Node(svg, px, H - ph - 40, pw, ph, 'Shadow engine', 'parked · same GPU', 'route');
+  const gx = 470, gw = W - gx - 10;
+  Frame(svg, gx, 0, gw, H, 'GPU · HBM', 'plain');
+  const rx = gx + 24, rw = gw - 48;
+  const wy = 50, wh = Math.round(H * 0.42);
+  S('rect', { x: rx, y: wy, width: rw, height: wh, rx: 14, class: 'region r-w' }, svg._nodes);
+  T(svg._nodes, rx + rw / 2, wy + wh / 2 - 40, 'Model weights', 'lbl-b').setAttribute('style', 'font-size:34px');
+  T(svg._nodes, rx + rw / 2, wy + wh / 2 + 6, 'LOCKED · CUDA VMM', 'lbl-m').setAttribute('style', 'font-size:24px;fill:var(--c-life)');
+  T(svg._nodes, rx + rw / 2, wy + wh / 2 + 42, 'one copy · mapped read-only by both engines', 'lbl');
+  const ky = wy + wh + 24, kh = Math.round(H * 0.22);
+  S('rect', { x: rx, y: ky, width: rw * 0.62, height: kh, rx: 14, class: 'region r-kv' }, svg._nodes);
+  T(svg._nodes, rx + rw * 0.31, ky + kh / 2 - 18, 'KV cache', 'lbl-b');
+  T(svg._nodes, rx + rw * 0.31, ky + kh / 2 + 18, 'private · active engine', 'lbl');
+  S('rect', { x: rx + rw * 0.62 + 20, y: ky, width: rw * 0.38 - 20, height: kh, rx: 14, class: 'region r-sc' }, svg._nodes);
+  T(svg._nodes, rx + rw * 0.81 + 10, ky + kh / 2 - 18, 'Scratch', 'lbl-b');
+  T(svg._nodes, rx + rw * 0.81 + 10, ky + kh / 2 + 18, 'private', 'lbl');
+  const sy = ky + kh + 24, sh = H - sy - 24;
+  S('rect', { x: rx, y: sy, width: rw / 2 - 8, height: sh, rx: 12, style: 'fill:var(--c-life)' }, svg._nodes);
+  T(svg._nodes, rx + rw / 4, sy + sh / 2, 'Shared: weights', 'lbl-b').setAttribute('style', 'fill:var(--on-accent);font-size:22px');
+  S('rect', { x: rx + rw / 2 + 8, y: sy, width: rw / 2 - 8, height: sh, rx: 12, style: 'fill:var(--c-state)' }, svg._nodes);
+  T(svg._nodes, rx + rw * 3 / 4, sy + sh / 2, 'Private: KV + state', 'lbl-b').setAttribute('style', 'fill:var(--on-accent);font-size:22px');
+  const l1 = Link(svg, hc(G.r, G.cy, rx, wy + 70), 'k-life');
+  T(svg._top, (G.r + rx) / 2, G.cy - 50, 'allocate + load', 'lbl-m');
+  const l2 = Link(svg, hc(E.r, E.cy - 30, rx, wy + wh - 60), 'k-req');
+  T(svg._top, (E.r + rx) / 2 + 6, E.cy - 92, 'map (read-only)', 'lbl-m');
+  const l3 = Link(svg, hc(E.r, E.cy + 30, rx, ky + kh / 2), 'k-state');
+  const l4 = Link(svg, hc(Sh.r, Sh.cy, rx, wy + wh - 20), 'k-route dash');
+  T(svg._top, (Sh.r + rx) / 2 + 10, Sh.cy + 28, 'mapped, parked', 'lbl-m');
+  const h1 = Link(svg, 'M' + (px + 70) + ',' + G.b + ' L' + (px + 70) + ',' + E.y, 'k-life');
+  const h2 = Link(svg, 'M' + px + ',' + (G.cy + 30) + ' C' + (px - 50) + ',' + (G.cy + 30) + ' ' + (px - 50) + ',' + Sh.cy + ' ' + px + ',' + Sh.cy, 'k-life');
+  T(svg._top, px + 82, (G.b + E.y) / 2, 'VMM handle', 'lbl-m', 'start');
+  ambient(svg, 7000, async () => {
+    Packet(svg, h1, 'pk-life', 700); Packet(svg, h2, 'pk-life', 1100);
+    await sleep(500); Packet(svg, l1, 'pk-life', 700); Packet(svg, l2, 'pk-req', 700); Packet(svg, l3, 'pk-state', 700); Packet(svg, l4, 'pk-route', 900);
+  });
+})();
+
+/* ================= Slide 12 (right): shadow results chart ================= */
+(function () {
+  const svg = svgInit('dg-shres'), W = svg.W, H = svg.H;
+  T(svg._bg, 0, 22, 'GLM-5.2 · B200 · 2 workers, one killed', 'lbl-m', 'start');
+  const groups = [['Back to serving', 283, 7.3, ' s'], ['p50 time to first token', 23.8, 1.3, ' s'], ['Requests waiting > 5 s', 201, 1, '']];
+  const gh = (H - 60) / 3, bx = 0, bw = W - 130;
+  groups.forEach(([name, cold, sh, u], i) => {
+    const y = 60 + i * gh;
+    T(svg._bg, 0, y + 10, name, 'lbl-b', 'start');
+    [[cold, 'cold restart', 'var(--fail)'], [sh, 'shadow', 'var(--ok)']].forEach(([v, lab, col], k) => {
+      const yy = y + 44 + k * 46, w = Math.max(6, v / cold * bw);
+      S('rect', { x: bx, y: yy - 17, width: w, height: 34, rx: 6, style: 'fill:' + col }, svg._bg);
+      T(svg._bg, bx + w + 12, yy, v + u, 'lbl-b', 'start').setAttribute('style', 'fill:' + col);
+      if (w > 170) T(svg._bg, bx + 14, yy, lab, 'lbl', 'start').setAttribute('style', 'fill:var(--on-accent)');
+      else T(svg._bg, bx + w + 110, yy, lab, 'lbl', 'start');
+    });
+  });
+})();
+
+/* ================= Slide 13: snapshot pipeline + restore bars ================= */
+(function () {
+  const svg = svgInit('dg-snap'), W = svg.W, H = svg.H;
+  const n = 5, bw = 270, gap = (W - n * bw) / (n - 1), by = 70, bh = H - 100;
+  const spec = [['Checkpoint job', 'init once, quiesce', 'life'], ['snapshot-agent', 'cuda-checkpoint+CRIU', 'life'], ['Snapshot PVC', 'checkpoint artifact', 'state'], ['Restore pod', 'CRIU + CUDA restore', 'req'], ['Ready worker', 'warm · registers', 'req']];
+  const B = spec.map(([a, b, k], i) => Node(svg, i * (bw + gap), by, bw, bh, a, b, k));
+  const L = B.slice(0, -1).map((b, i) => Link(svg, hc(b.r, b.cy, B[i + 1].x, B[i + 1].cy), i < 2 ? 'k-life' : 'k-req'));
+  const brk = (a, b, txt, col) => {
+    const x1 = B[a].x, x2 = B[b].r;
+    S('path', { d: 'M' + x1 + ',' + (by - 14) + ' L' + x1 + ',' + (by - 30) + ' L' + x2 + ',' + (by - 30) + ' L' + x2 + ',' + (by - 14), class: 'ln thin', style: 'stroke:' + col }, svg._bg);
+    const t = T(svg._bg, (x1 + x2) / 2, by - 50, txt, 'flabel'); t.setAttribute('style', 'fill:' + col);
+  };
+  brk(0, 2, 'checkpoint once', 'var(--c-life)'); brk(3, 4, 'restore on demand (same or other node)', 'var(--c-req)');
+  ambient(svg, 8000, async () => {
+    B[4].set(''); for (let i = 0; i < L.length; i++) await Packet(svg, L[i], i < 2 ? 'pk-life' : 'pk-req', 550);
+    B[4].set('ok'); Badge(svg, B[4].cx, B[4].y - 2, 'serving', 'b-ok', 1200);
+  });
+  // restore-time bars
+  const s2 = svgInit('dg-snapbar'), W2 = s2.W, H2 = s2.H;
+  T(s2._bg, 0, 20, 'Restore time (seconds)', 'lbl-b', 'start');
+  const lx = 190, max = 120, sc = v => v / max * (W2 - lx - 90);
+  const data = [['Qwen3-0.6B', 6.8, 2.4], ['Qwen3-8B', 24, 4.7], ['gpt-oss-120b', 119, 15]];
+  const rh = (H2 - 110) / 3;
+  data.forEach(([m, up, opt], i) => {
+    const y = 64 + i * rh + rh / 2;
+    T(s2._bg, 0, y, m, 'lbl-b', 'start').setAttribute('style', 'font-size:22px');
+    [[up, 'var(--faint)'], [opt, 'var(--ok)']].forEach(([v, col], k) => {
+      const yy = y - 20 + k * 40;
+      S('rect', { x: lx, y: yy - 15, width: Math.max(4, sc(v)), height: 30, rx: 5, style: 'fill:' + col }, s2._bg);
+      T(s2._bg, lx + Math.max(4, sc(v)) + 10, yy, v + ' s', 'lbl-b', 'start').setAttribute('style', 'font-size:21px;fill:' + col);
+    });
+  });
+  const ly = H2 - 22;
+  S('rect', { x: lx, y: ly - 10, width: 20, height: 20, rx: 4, style: 'fill:var(--faint)' }, s2._bg); T(s2._bg, lx + 30, ly, 'upstream CRIU', 'lbl', 'start');
+  S('rect', { x: lx + 220, y: ly - 10, width: 20, height: 20, rx: 4, style: 'fill:var(--ok)' }, s2._bg); T(s2._bg, lx + 250, ly, 'AIO + parallel memfd (pending upstream)', 'lbl', 'start');
+})();
+
+/* ================= Slide 15: incident story ================= */
+(function () {
+  const A = buildArch('dg-story'), svg = A.svg;
+  const steps = [
+    ['Normal traffic', 'Requests fan out across prefill and decode. Tokens stream back through the Frontend.', 'var(--fg)'],
+    ['Detect · Decode 2 engine crashes', '40 in-flight streams error out at the Frontends.', 'var(--fail)'],
+    ['Reroute · local inhibition', 'Each Frontend skips Decode 2 for 5 s. New requests go to Decode 1 and 3.', 'var(--c-route)'],
+    ['Reroute · migration', 'The Migrator replays prompt + generated tokens on healthy workers. Clients see no break.', 'var(--c-req)'],
+    ['KV state · reuse cached prefixes', 'Survivors fetch Decode 2\'s committed KV blocks from KVCR-Guard instead of recomputing (in development).', 'var(--c-state)'],
+    ['Reroute · shed the overflow', 'Survivors fill up. Rejection returns 529 for the excess so admitted streams stay fast.', 'var(--c-req)'],
+    ['Recover · shadow engine promotes', 'The lock is released, the shadow maps weights from GMS and re-registers (~7 s).', 'var(--c-life)'],
+    ['Recover · router catches up', 'Decode 2 publishes fresh KV events. Every router updates its prefix index. Back to normal.', 'var(--c-route)']
+  ];
+  let step = 0, playing = null, down = false;
+  const dots = $('st-dots'); steps.forEach(() => dots.appendChild(document.createElement('i')));
+  ambient(svg, 4000, () => {
+    const ok = down ? [0, 2] : [0, 1, 2];
+    return A.flow(Math.random() < .5 ? 0 : 1, pick(ok));
+  });
+  async function apply(i) {
+    step = i; const [t, d, col] = steps[i];
+    $('st-n').textContent = i; $('st-t').textContent = t; $('st-d').textContent = d; $('st-cap').style.setProperty('--capk', col);
+    [...dots.children].forEach((x, k) => x.classList.toggle('on', k === i));
+    A.D[1].set(''); A.D[1].sub('streaming'); A.F.forEach(f => f.sub(f === A.F[0] ? 'replica 1' : 'replica 2').set('')); A.D[0].set(''); A.D[2].set(''); down = false;
+    if (i >= 1 && i <= 5) { A.D[1].set('fail').sub('engine crashed'); down = true; }
+    if (i === 1) { Badge(svg, A.D[1].cx, A.D[1].y - 2, '✕ stream errors', 'b-fail', 2500); }
+    if (i >= 2 && i <= 5) A.F.forEach(f => f.sub('skips Decode 2'));
+    if (i === 3) { for (let k = 0; k < 3; k++) { A.flow(k % 2, k % 2 ? 2 : 0, 'pk-rec'); await sleep(250); } Badge(svg, A.F[0].cx, A.F[0].y - 2, 'replay', 'b-rec', 2200); }
+    if (i === 4) { A.D[0].set('hot'); A.D[2].set('hot'); for (let k = 0; k < 4; k++) { Packet(svg, A.dd(1, 0), 'pk-state', 800); Packet(svg, A.dd(1, 2), 'pk-state', 800); await sleep(300); } Badge(svg, A.D[1].cx, A.D[1].b + 18, 'KV from KVCR-Guard', 'b-state', 2500); }
+    if (i === 5) { A.D[0].set('rec').sub('busy'); A.D[2].set('rec').sub('busy'); for (let k = 0; k < 3; k++) { Packet(svg, A.cf[k % 2], 'pk-fail', 700, 11, true); await sleep(250); } Badge(svg, A.F[0].x + 60, A.F[0].y - 2, '529', 'b-fail', 2200); }
+    if (i === 6) { A.D[1].set('rec').sub('shadow promoting'); await sleep(1600); if (step === 6) { A.D[1].set('ok').sub('serving again'); } }
+    if (i === 7) { A.D[1].set('ok').sub('serving'); A.ev.set('hot'); Packet(svg, A.dEv[1], 'pk-route', 900); await sleep(900); A.F.forEach(f => Packet(svg, Link(svg, 'M' + A.ev.x + ',' + A.ev.cy + ' C' + (A.ev.x - 120) + ',' + A.ev.cy + ' ' + (f.r + 80) + ',' + (f.b - 10) + ' ' + f.r + ',' + (f.b - 10), 'ghost', false), 'pk-route', 900)); await sleep(1200); A.ev.set(''); }
+  }
+  $('st-next').addEventListener('click', () => apply((step + 1) % steps.length));
+  $('st-prev').addEventListener('click', () => apply((step - 1 + steps.length) % steps.length));
+  $('st-play').addEventListener('click', () => {
+    if (playing) { clearInterval(playing); playing = null; $('st-play').textContent = 'Auto-play'; return; }
+    $('st-play').textContent = 'Stop'; apply(0);
+    playing = setInterval(() => { if (!isActiveSlide(svg)) return; apply((step + 1) % steps.length); }, 4200);
+  });
+  apply(0);
+})();
+</script>
+<script>
+/* layer tracker: shows where the current slide sits among the 4 layers / 8 failure points */
+(function () {
+  const el = $('ftTrack');
+  window.renderTrack = function (ft) {
+    if (!ft) { el.hidden = true; return; }
+    const [k, n] = ft.split(':'), num = n ? +n : null, legend = k === 'all';
+    el.hidden = false; el.classList.toggle('dim', !legend);
+    el.innerHTML = LAYERS.map(L => {
+      const on = !legend && L.k === k;
+      return '<div class="ft-seg k-' + L.k + (on ? ' on' : '') + '"><span class="dot"></span>' + L.name +
+        '<span class="nums">' + L.nums.map(x => '<span class="nm' + (on && (num === x || num === null) ? ' on' : '') + '">' + x + '</span>').join('') + '</span></div>';
+    }).join('');
+  };
+  window.renderTrack(all[cur] && all[cur].dataset.ft);
+})();
+</script>
+<script>
+/* ================= Demo: Request Migration ================= */
+(function () {
+  const svg = svgInit('dg-mig'), W = svg.W, H = svg.H, cy = H / 2;
+  const TEXT = 'Request migration keeps the stream alive. The Migrator appends every generated token to the request, so when a worker dies the next worker receives the prompt plus all tokens so far, prefills that context, and continues exactly where the last one stopped.'.split(' ');
+  const PROMPT = 12, COLS = 12, SQ = 22, GAP = 6;
+  const C = Node(svg, 0, cy - 60, 150, 120, 'Client', 'SSE stream', 'plain');
+  const fx = 200, fw = 400, fy = 30, fh = H - 60;
+  const fg = S('g', { class: 'nd k-req' }, svg._nodes);
+  S('rect', { x: fx, y: fy, width: fw, height: fh, rx: 16, class: 'bx' }, fg);
+  T(fg, fx + fw / 2, fy + 38, 'Frontend · Migrator', 't');
+  T(fg, fx + 30, fy + 90, 'prompt', 'lbl-m', 'start');
+  T(fg, fx + 30, fy + 160, 'generated tokens', 'lbl-m', 'start');
+  const gx = fx + (fw - (COLS * SQ + (COLS - 1) * GAP)) / 2;
+  const sqs = [];
+  for (let i = 0; i < PROMPT + 60; i++) {
+    const r = i < PROMPT ? 0 : 1 + Math.floor((i - PROMPT) / COLS), c = i < PROMPT ? i : (i - PROMPT) % COLS;
+    const y = i < PROMPT ? fy + 110 : fy + 180 + (r - 1) * (SQ + GAP);
+    sqs.push(S('rect', { x: gx + c * (SQ + GAP), y, width: SQ, height: SQ, rx: 4, class: 'tok-sq ' + (i < PROMPT ? 'pr' : 'e') }, fg));
+  }
+  T(fg, fx + fw / 2, fy + fh - 40, 'replayed to the next worker on failure', 'lbl');
+  const wx = W - 250, Wk = ['A', 'B', 'C'].map((id, i) => Node(svg, wx, cy - 200 + i * 140, 250, 120, 'Worker ' + id, 'healthy', 'life'));
+  const cf = Link(svg, hc(C.r, cy, fx, cy), 'k-req');
+  const fwk = Wk.map(w => Link(svg, hc(fx + fw, cy, w.x, w.cy), 'k-req'));
+  const log = { add() {} };
+  const streamEl = $('mig-stream');
+  let running = false, paused = false, idx = 0, cur = 0, left = 3, migs = 0, oks = 0, errs = 0, timer = null, dead = new Set();
+  const counters = () => { $('mig-c-tok').textContent = running || idx ? PROMPT + idx : 0; $('mig-c-mig').textContent = migs; $('mig-c-ok').textContent = oks; $('mig-c-err').textContent = errs; };
+  const append = h => { streamEl.insertAdjacentHTML('beforeend', h); streamEl.scrollTop = streamEl.scrollHeight; };
+  function stop() { running = false; clearInterval(timer); counters(); }
+  function start() {
+    clearInterval(timer); dead.clear(); Wk.forEach(w => w.set('').sub('healthy'));
+    idx = 0; cur = 0; paused = false; running = true; left = +$('mig-limit').value; streamEl.innerHTML = '';
+    sqs.forEach((s, i) => s.setAttribute('class', 'tok-sq ' + (i < PROMPT ? 'pr' : 'e')));
+    Wk[0].set('hot').sub('generating');
+    Packet(svg, cf, 'pk-req', 400).then(() => Packet(svg, fwk[0], 'pk-req', 500));
+    setTimeout(() => {
+      timer = setInterval(() => {
+        if (!running || paused) return;
+        const id = 'ABC'[cur];
+        if (idx % 8 === 0) Packet(svg, fwk[cur], 'pk-tok', 300, 9, true).then(() => Packet(svg, cf, 'pk-tok', 260, 9, true));
+        if (sqs[PROMPT + idx]) sqs[PROMPT + idx].setAttribute('class', 'tok-sq ' + id);
+        append('<span class="t' + id + '">' + TEXT[idx] + ' </span>');
+        idx++; counters();
+        if (idx >= TEXT.length) { if (migs && cur) oks++; Wk[cur].set('').sub('done'); stop(); }
+      }, 230);
+    }, 900);
+    counters();
+  }
+  async function kill() {
+    if (!running || paused) return;
+    const d = cur; dead.add(d); Wk[d].set('fail').sub('crashed'); Badge(svg, Wk[d].cx, Wk[d].y - 2, '✕ crashed', 'b-fail', 1600);
+    append('<span class="cut">✕ </span>');
+    if ($('mig-guided').checked) { errs++; append('<span class="err">[error: guided decoding is not migrated]</span>'); stop(); return; }
+    if (left <= 0) { errs++; append('<span class="err">[error: migration limit reached]</span>'); stop(); return; }
+    const nx = [0, 1, 2].find(i => !dead.has(i));
+    if (nx === undefined) { errs++; append('<span class="err">[error: no healthy workers]</span>'); stop(); return; }
+    paused = true; left--; migs++; counters();
+    Badge(svg, fx + fw / 2, fy + fh - 80, 'replay ' + PROMPT + ' + ' + idx + ' tokens', 'b-rec', 1800);
+    await Packet(svg, fwk[nx], 'pk-rec', 700, 13);
+    if (!running) return;
+    cur = nx; Wk[nx].set('hot').sub('prefill ' + (PROMPT + idx) + ' → continue');
+    append('<span class="mig">↪' + 'ABC'[nx] + ' </span>');
+    await sleep(300); paused = false;
+  }
+  counters();
+  $('mig-start').addEventListener('click', start);
+  $('mig-kill').addEventListener('click', kill);
+})();
+
+/* ================= Demo: Cancellation ================= */
+(function () {
+  const svg = svgInit('dg-can'), W = svg.W, H = svg.H;
+  const bh = 170, by = Math.max(20, Math.round((H - (bh + 50 + 36 + 80)) / 2));
+  const C = Node(svg, 0, by, 220, bh, 'Client', 'idle', 'plain');
+  const F = Node(svg, 340, by, 320, bh, 'Frontend', 'root context', 'req');
+  const D = Node(svg, 790, by, 380, bh, 'Decode worker', 'child context', 'life');
+  const P = Node(svg, 1300, by, W - 1300, bh, 'Prefill worker', 'linked child', 'life');
+  const l1 = Link(svg, hc(C.r, C.cy, F.x, F.cy), 'k-req'), l2 = Link(svg, hc(F.r, F.cy, D.x, D.cy), 'k-req'), l3 = Link(svg, hc(D.r, D.cy, P.x, P.cy), 'k-req');
+  const meter = (n, label) => {
+    const y = n.b + 50;
+    T(svg._bg, n.x, y - 22, label, 'lbl-m', 'start');
+    S('rect', { x: n.x, y, width: n.w, height: 36, rx: 8, class: 'gauge-bg' }, svg._bg);
+    const f = S('rect', { x: n.x, y, width: 0, height: 36, rx: 8, style: 'fill:var(--c-life)' }, svg._bg);
+    const t = T(svg._bg, n.x + n.w, y + 70, '0 steps', 'lbl-b', 'end');
+    return { f, t, w: n.w };
+  };
+  const mD = meter(D, 'DECODE GPU WORK'), mP = meter(P, 'PREFILL GPU WORK');
+  const log = mkLog($('can-log'));
+  const PRE = 60, DEC = 160;
+  let st, timer, saved = 0, waste = 0;
+  const fresh = () => ({ pre: { s: 'idle', n: 0 }, dec: { s: 'idle', n: 0 }, live: false });
+  st = fresh();
+  function draw() {
+    mP.f.setAttribute('width', mP.w * st.pre.n / PRE); mD.f.setAttribute('width', mD.w * st.dec.n / DEC);
+    mP.f.setAttribute('style', 'fill:' + (st.pre.s === 'orphan' ? 'var(--fail)' : st.pre.s === 'stop' ? 'var(--faint)' : 'var(--c-life)'));
+    mD.f.setAttribute('style', 'fill:' + (st.dec.s === 'stop' ? 'var(--faint)' : 'var(--c-life)'));
+    mP.t.textContent = st.pre.n + ' / ' + PRE + ' steps' + (st.pre.s === 'orphan' ? ' · wasted' : st.pre.s === 'stop' ? ' · stopped' : '');
+    mD.t.textContent = st.dec.n + ' / ' + DEC + ' steps' + (st.dec.s === 'stop' ? ' · stopped' : '');
+    $('can-saved').textContent = saved; $('can-waste').textContent = waste;
+  }
+  function start() {
+    clearInterval(timer); st = fresh(); st.live = true; st.pre.s = 'run'; st.dec.s = 'wait';
+    C.set('').sub('reading stream'); F.set('').sub('root context'); D.set('').sub('waiting on prefill'); P.set('hot').sub($('can-link').checked ? 'linked child' : 'NOT linked');
+    Route(svg, [[l1], [l2], [l3]], 'pk-req', 450);
+    log.add('request admitted; contexts linked root → decode → prefill' + ($('can-link').checked ? '' : ' (prefill not linked!)'), 'info');
+    timer = setInterval(tick, 90); draw();
+  }
+  function tick() {
+    if (st.pre.s === 'run' || st.pre.s === 'orphan') {
+      st.pre.n++; if (st.pre.s === 'orphan') waste++;
+      if (st.pre.n >= PRE) { if (st.pre.s === 'orphan') log.add('prefill finished for a request nobody is waiting for', 'fail'); st.pre.s = 'done'; P.set('').sub('done'); if (st.dec.s === 'wait') { st.dec.s = 'run'; D.set('hot').sub('decoding'); } }
+    } else if (st.dec.s === 'run') {
+      st.dec.n++; if (st.dec.n % 30 === 0) { Packet(svg, l2, 'pk-tok', 300, 9, true).then(() => Packet(svg, l1, 'pk-tok', 260, 9, true)); }
+      if (st.dec.n >= DEC) { st.dec.s = 'done'; D.set('').sub('done'); log.add('request completed', 'ok'); clearInterval(timer); }
+    }
+    draw();
+  }
+  async function cancel(kind) {
+    if (!st.live) { log.add('Start a request first.', ''); return; }
+    st.live = false;
+    if (kind === 'client') { C.set('fail').sub('disconnected'); log.add('Frontend: SSE stream closed → stop_generating() on root', 'rec'); await Packet(svg, l1, 'pk-fail', 450); F.set('rec').sub('stop_generating()'); }
+    else { F.set('fail').sub('crashed'); C.set('fail').sub('connection reset'); log.add('Frontend crashed → worker sees TCP drop', 'fail'); }
+    await Packet(svg, l2, 'pk-fail', 500);
+    if (st.dec.s === 'wait' || st.dec.s === 'run') { saved += DEC - st.dec.n; st.dec.s = 'stop'; D.set('rec').sub('is_stopped() → exit'); }
+    if (st.pre.s === 'run') {
+      if ($('can-link').checked) { await Packet(svg, l3, 'pk-fail', 500); saved += PRE - st.pre.n; st.pre.s = 'stop'; P.set('rec').sub('stopped via link_child'); log.add('linked child cancelled: prefill stops at step ' + st.pre.n, 'ok'); }
+      else { st.pre.s = 'orphan'; P.set('fail').sub('still running · orphan'); log.add('prefill not linked → keeps burning GPU', 'fail'); }
+    }
+    draw();
+  }
+  draw();
+  $('can-start').addEventListener('click', start);
+  $('can-client').addEventListener('click', () => cancel('client'));
+  $('can-fe').addEventListener('click', () => cancel('fe'));
+})();
+
+/* ================= Demo: Rejection ================= */
+(function () {
+  const svg = svgInit('dg-rej'), W = svg.W, H = svg.H, cy = H / 2;
+  const C = Node(svg, 0, cy - 70, 150, 140, 'Clients', 'arrivals', 'plain');
+  const G = Node(svg, 220, cy - 120, 250, 240, 'Admission', 'KV > threshold?', 'req');
+  const gx0 = 540, colw = (W - gx0) / 3, gw = 110, gTop = 60, gBot = H - 120, gH = gBot - gTop, MAXL = 1.4;
+  const cg = Link(svg, hc(C.r, cy, G.x, cy), 'k-req');
+  const ws = [0, 1, 2].map(i => {
+    const x = gx0 + i * colw + (colw - gw) / 2;
+    S('rect', { x, y: gTop, width: gw, height: gH, rx: 10, class: 'gauge-bg' }, svg._nodes);
+    const f = S('rect', { x: x + 4, y: gBot, width: gw - 8, height: 0, rx: 7, class: 'gauge-fill', style: 'fill:var(--ok)' }, svg._nodes);
+    const full = gBot - gH / MAXL;
+    S('line', { x1: x - 8, x2: x + gw + 8, y1: full, y2: full, class: 'ln thin dash' }, svg._top);
+    const thr = S('line', { x1: x - 12, x2: x + gw + 12, y1: 0, y2: 0, class: 'thr-l' }, svg._top);
+    T(svg._nodes, x + gw / 2, gBot + 34, 'Decode ' + (i + 1), 'lbl-b');
+    const pct = T(svg._nodes, x + gw / 2, gBot + 70, '0%', 'lbl-m');
+    const link = Link(svg, hc(G.r, cy, x, gTop + gH * 0.55), 'k-req thin');
+    return { x, f, thr, pct, link, reqs: [] };
+  });
+  T(svg._top, ws[2].x + gw + 14, gBot - gH / MAXL, '100%', 'lbl-m', 'start');
+  T(svg._top, gx0 + 10, 26, 'KV cache in use per worker  ·  black line = busy threshold', 'lbl', 'start');
+  const PER = 0.05, DUR = 6, DT = 0.2;
+  let acc = 0, rej = 0, slow = 0, arrAcc = 0, anim = 0;
+  const load = w => w.reqs.length * PER;
+  const factor = l => l <= 1 ? 1 + 0.12 * l : 1.12 + 3.2 * (l - 1);
+  const sync = () => { $('rej-rate-o').textContent = $('rej-rate').value; $('rej-thr-o').textContent = ($('rej-thr').value / 100).toFixed(2); };
+  ['rej-rate', 'rej-thr'].forEach(id => $(id).addEventListener('input', sync)); sync();
+  whileActive(svg, DT * 1000, () => {
+    const rate = +$('rej-rate').value, thr = $('rej-thr').value / 100, on = $('rej-on').checked;
+    arrAcc += rate * DT; anim = 0;
+    while (arrAcc >= 1) {
+      arrAcc -= 1;
+      let c = ws.slice(); if (on) c = c.filter(w => load(w) < thr);
+      const show = anim++ < 1 && Math.random() < 0.25;
+      if (!c.length) {
+        rej++;
+        if (show) Packet(svg, cg, 'pk-req', 350).then(() => { Badge(svg, G.cx, G.y - 4, '529', 'b-fail', 700); Packet(svg, cg, 'pk-fail', 350, 11, true); });
+        continue;
+      }
+      c.sort((a, b) => load(a) - load(b)); const w = c[0];
+      w.reqs.push({ left: DUR * rnd(0.7, 1.3) }); acc++; if (load(w) > 1) slow++;
+      if (show) Packet(svg, cg, 'pk-req', 350).then(() => Packet(svg, w.link, 'pk-req', 380));
+    }
+    let fsum = 0, n = 0;
+    ws.forEach(w => {
+      const f = factor(load(w)); w.reqs.forEach(r => { r.left -= DT / f; }); w.reqs = w.reqs.filter(r => r.left > 0);
+      const l = load(w), h = Math.min(l, MAXL) / MAXL * gH;
+      w.f.setAttribute('y', gBot - h); w.f.setAttribute('height', h);
+      w.f.setAttribute('style', 'fill:' + (l > 1 ? 'var(--fail)' : l >= thr ? 'var(--recover)' : 'var(--ok)'));
+      const ty = gBot - Math.min(thr, MAXL) / MAXL * gH; w.thr.setAttribute('y1', ty); w.thr.setAttribute('y2', ty);
+      w.pct.textContent = Math.round(l * 100) + '%';
+      fsum += factor(l) * w.reqs.length; n += w.reqs.length;
+    });
+    G.sub(on ? 'busy if KV > ' + thr.toFixed(2) : 'admits everything');
+    $('rej-acc').textContent = acc; $('rej-529').textContent = rej; $('rej-slow').textContent = slow;
+    $('rej-itl').textContent = (n ? fsum / n : 1).toFixed(2) + '×';
+  });
+})();
+
+/* ================= Demo: Router replicas ================= */
+(function () {
+  const svg = svgInit('dg-rt'), W = svg.W, H = svg.H;
+  const log = mkLog($('rt-log'));
+  const cw = (W - 60) / 3, rH = 250, planeY = Math.round(H / 2 - 10), wH = 170, wY = H - wH;
+  T(svg._bg, W / 2, planeY - 8, '', 'lbl');
+  S('rect', { x: 0, y: planeY - 30, width: W, height: 60, rx: 12, style: 'fill:color-mix(in srgb, var(--c-route) 10%, var(--panel));stroke:var(--c-route);stroke-width:2' }, svg._bg);
+  T(svg._bg, 20, planeY, 'EVENT PLANE · KV stored / removed events', 'flabel', 'start').setAttribute('style', 'fill:var(--c-route)');
+  const Wk = [0, 1, 2].map(i => ({ id: 'W' + (i + 1), up: true, blocks: 40 + i * 14, eid: 100 + i * 7, x: i * (cw + 30) }));
+  const R = [0, 1, 2].map(i => ({ id: 'R' + (i + 1), alive: true, prefix: {}, seen: {}, rec: {}, lose: {}, active: 0, status: 'synced', x: i * (cw + 30) }));
+  R.forEach(r => Wk.forEach(w => { r.prefix[w.id] = w.blocks; r.seen[w.id] = w.eid; }));
+  // static links
+  Wk.forEach(w => Link(svg, 'M' + (w.x + cw / 2) + ',' + wY + ' L' + (w.x + cw / 2) + ',' + (planeY + 30), 'k-route dot'));
+  R.forEach(r => Link(svg, 'M' + (r.x + cw / 2) + ',' + (planeY - 30) + ' L' + (r.x + cw / 2) + ',' + rH, 'k-route dot'));
+  const syncL = [0, 1].map(i => Link(svg, 'M' + (R[i].x + cw) + ',' + 60 + ' L' + R[i + 1].x + ',' + 60, 'k-route flow', false));
+  // router groups
+  R.forEach(r => {
+    r.g = S('g', { class: 'nd k-route click' }, svg._nodes);
+    r.box = S('rect', { x: r.x, y: 0, width: cw, height: rH, rx: 14, class: 'bx' }, r.g);
+    T(r.g, r.x + 20, 34, 'Router ' + r.id, 't', 'start');
+    r.st = T(r.g, r.x + 20, 70, '', 's', 'start');
+    r.bars = Wk.map((w, j) => {
+      const bx = r.x + 30 + j * ((cw - 60) / 3), bw = (cw - 60) / 3 - 20;
+      S('rect', { x: bx, y: 100, width: bw, height: 100, rx: 6, class: 'gauge-bg' }, r.g);
+      const f = S('rect', { x: bx, y: 200, width: bw, height: 0, rx: 6, style: 'fill:var(--c-route)' }, r.g);
+      T(r.g, bx + bw / 2, 222, w.id, 'lbl-m');
+      return { f, bx, bw };
+    });
+    r.ld = T(r.g, r.x + 20, rH - 4 + 30, '', 'lbl-m', 'start');
+    r.g.addEventListener('click', () => r.alive ? killR(r) : restartR(r));
+  });
+  Wk.forEach(w => {
+    w.n = Node(svg, w.x, wY, cw, wH, 'Worker ' + w.id, '', 'life');
+  });
+  T(svg._top, R[0].x + 20, 258, '', 'lbl');
+  function render() {
+    const fleet = R.reduce((s, r) => s + (r.alive ? r.active : 0), 0), sync = $('rt-sync').checked;
+    syncL.forEach(l => l.style.display = sync ? '' : 'none');
+    R.forEach((r, i) => {
+      const recov = Object.keys(r.rec).length > 0;
+      r.g.setAttribute('class', 'nd k-route click' + (!r.alive ? ' st-fail' : recov ? ' st-rec' : ''));
+      r.st.textContent = r.alive ? r.status : 'down · click to restart';
+      r.bars.forEach((b, j) => {
+        const v = r.alive ? (r.prefix[Wk[j].id] || 0) : 0, h = Math.min(100, v / 90 * 100);
+        b.f.setAttribute('y', 200 - h); b.f.setAttribute('height', h);
+        b.f.setAttribute('style', 'fill:' + (r.rec[Wk[j].id] ? 'var(--recover)' : 'var(--c-route)'));
+      });
+      r.ld.textContent = r.alive ? 'load view ' + (sync ? fleet : r.active) + ' / ' + fleet : '';
+      $('rt-k' + i).textContent = (r.alive ? 'Kill ' : 'Restart ') + r.id;
+      $('rt-k' + i).className = 'btn ' + (r.alive ? 'danger' : 'go');
+    });
+    Wk.forEach(w => { w.n.set(w.up ? '' : 'fail'); w.n.sub(w.up ? 'indexer ' + w.blocks + ' blocks · ev ' + w.eid : 'unreachable'); });
+    $('rt-w1').textContent = Wk[1].up ? 'Partition W2' : 'Reconnect W2';
+    $('rt-served').textContent = served; $('rt-failed').textContent = failed;
+  }
+  let served = 0, failed = 0, rr = 0;
+  function killR(r) { r.alive = false; r.active = 0; r.prefix = {}; r.rec = {}; log.add('router ' + r.id + ' killed; others keep routing', 'fail'); render(); }
+  async function recoverFrom(r, w, why) {
+    r.rec[w.id] = true; r.status = why; render();
+    const p = Link(svg, 'M' + (w.x + cw / 2 + 40) + ',' + wY + ' L' + (r.x + cw / 2 + 40) + ',' + rH, 'ghost', false);
+    if (w.up) await Packet(svg, p, 'pk-state', 900, 14); else await sleep(900);
+    p.remove();
+    if (!r.alive) return;
+    delete r.rec[w.id];
+    if (!w.up) { r.status = 'missing ' + w.id + ' (unreachable)'; log.add(r.id + ': ' + w.id + ' unreachable; its blocks return when it does', 'fail'); render(); return; }
+    r.prefix[w.id] = w.blocks; r.seen[w.id] = w.eid;
+    if (!Object.keys(r.rec).length) r.status = 'synced';
+    render();
+  }
+  async function restartR(r) {
+    r.alive = true; r.active = 0; r.prefix = {}; r.seen = {}; r.status = 'rebuilding from workers';
+    log.add('router ' + r.id + ' restarted empty → TreeDump from each worker\'s local indexer', 'route');
+    await Promise.all(Wk.map(w => recoverFrom(r, w, 'rebuilding from workers')));
+  }
+  function toggleW(w) {
+    w.up = !w.up;
+    if (!w.up) log.add(w.id + ' partitioned: no events, no queries', 'fail');
+    else { log.add(w.id + ' back; routers missing its state query it', 'route'); R.filter(r => r.alive && r.seen[w.id] !== w.eid).forEach(r => recoverFrom(r, w, 'recovering ' + w.id)); }
+    render();
+  }
+  [0, 1, 2].forEach(i => $('rt-k' + i).addEventListener('click', () => R[i].alive ? killR(R[i]) : restartR(R[i])));
+  $('rt-w1').addEventListener('click', () => toggleW(Wk[1]));
+  $('rt-drop').addEventListener('click', () => {
+    const rs = R.filter(r => r.alive), ws = Wk.filter(w => w.up); if (!rs.length || !ws.length) return;
+    const r = pick(rs), w = pick(ws); r.lose[w.id] = true; log.add('next ' + w.id + ' event to ' + r.id + ' is lost in transit', 'fail');
+  });
+  $('rt-sync').addEventListener('change', render);
+  let k = 0;
+  whileActive(svg, 1500, () => {
+    const w = Wk[k++ % 3];
+    if (w.up) {
+      w.eid++; w.blocks = Math.max(15, Math.min(88, w.blocks + Math.round(rnd(-3, 4))));
+      const up = Link(svg, 'M' + (w.x + cw / 2) + ',' + wY + ' L' + (w.x + cw / 2) + ',' + planeY, 'ghost', false);
+      Packet(svg, up, 'pk-route', 380, 9).then(() => {
+        up.remove();
+        R.forEach(r => {
+          if (!r.alive) return;
+          const p = Link(svg, 'M' + (w.x + cw / 2) + ',' + planeY + ' L' + (r.x + cw / 2) + ',' + planeY + ' L' + (r.x + cw / 2) + ',' + rH, 'ghost', false);
+          Packet(svg, p, 'pk-route', 450, 9).then(() => {
+            p.remove();
+            if (!r.alive || r.rec[w.id] || r.seen[w.id] === undefined) return;
+            if (r.lose[w.id]) { delete r.lose[w.id]; return; }
+            if (w.eid !== r.seen[w.id] + 1) { log.add(r.id + ': gap on ' + w.id + ' → query its local indexer', 'rec'); recoverFrom(r, w, 'gap recovery · ' + w.id); return; }
+            r.prefix[w.id] = w.blocks; r.seen[w.id] = w.eid; render();
+          });
+        });
+      });
+    }
+    for (let q = 0; q < 2; q++) { const al = R.filter(r => r.alive); if (!al.length) { failed++; continue; } al[rr++ % al.length].active += 3; served++; }
+    R.forEach(r => { r.active = Math.max(0, Math.round(r.active * 0.86)); });
+    render();
+  });
+  render();
+})();
+
+/* ================= Demo: Graceful shutdown ================= */
+(function () {
+  const tl = svgInit('dg-gs'), W = tl.W, H = tl.H;
+  const x0 = 40, x1 = W - 40, TMAX = 200, X = t => x0 + t / TMAX * (x1 - x0), ay = H / 2 + 20;
+  S('line', { x1: x0, x2: x1, y1: ay, y2: ay, class: 'axis' }, tl._bg);
+  for (let t = 0; t <= TMAX; t += 20) T(tl._bg, X(t), ay + 40, t + ' s', 'tick');
+  S('rect', { x: X(0), y: ay - 26, width: X(5) - X(0), height: 52, style: 'fill:var(--recover)' }, tl._bg);
+  const drain = S('rect', { x: X(5), y: ay - 26, width: 0, height: 52, style: 'fill:color-mix(in srgb, var(--c-life) 30%, transparent)' }, tl._bg);
+  T(tl._bg, X(0), ay - 56, 'SIGTERM · unregister', 'lbl-b', 'start');
+  T(tl._bg, X(12), ay, 'grace 5 s → drain in-flight requests (cap 900 s)', 'lbl', 'start');
+  const kl = S('line', { x1: 0, x2: 0, y1: ay - 60, y2: ay + 26, style: 'stroke:var(--fail);stroke-width:5' }, tl._top);
+  const kt = T(tl._top, 0, ay - 76, '', 'lbl-b'); kt.setAttribute('style', 'fill:var(--fail)');
+  const cur = S('line', { x1: X(0), x2: X(0), y1: ay - 40, y2: ay + 30, class: 'cur-l' }, tl._top);
+  const cl = T(tl._top, X(0), ay + 72, '', 'lbl-b');
+  function setTGP() { const g = +$('gs-tgp').value; kl.setAttribute('x1', X(g)); kl.setAttribute('x2', X(g)); kt.setAttribute('x', X(g)); kt.textContent = 'SIGKILL at ' + g + ' s'; drain.setAttribute('width', X(g) - X(5)); }
+  $('gs-tgp').addEventListener('change', setTGP); setTGP();
+
+  const svg = svgInit('dg-gsr'), W2 = svg.W, H2 = svg.H;
+  const w2x = W2 - 230;
+  const W2n = Node(svg, w2x, 20, 230, H2 - 40, 'worker-2', 'healthy', 'life');
+  T(svg._bg, 0, 18, 'worker-1 in-flight requests (remaining time)', 'lbl-m', 'start');
+  const INIT = [3, 9, 18, 42, 95, 160], rh = (H2 - 50) / 6, bx = 70, bw = w2x - 60 - bx;
+  const rows = INIT.map((r, i) => {
+    const y = 50 + i * rh + rh / 2;
+    T(svg._bg, 0, y, 'r' + (i + 1), 'lbl-b', 'start');
+    S('rect', { x: bx, y: y - 18, width: bw, height: 36, rx: 8, class: 'gauge-bg' }, svg._bg);
+    const f = S('rect', { x: bx, y: y - 18, width: 0, height: 36, rx: 8, style: 'fill:var(--c-life)' }, svg._bg);
+    const t = T(svg._top, bx + 14, y, '', 'lbl-m', 'start');
+    const mp = Link(svg, hc(bx + bw, y, w2x, H2 / 2), 'ghost', false);
+    return { y, f, t, mp };
+  });
+  const log = mkLog($('gs-log'));
+  let reqs, t, timer, done, moved, err;
+  function render(phase) {
+    reqs.forEach((r, i) => {
+      const R = rows[i];
+      R.f.setAttribute('width', bw * (1 - r.left / r.total));
+      R.f.setAttribute('style', 'fill:' + (r.st === 'err' ? 'var(--fail)' : r.where === 2 ? 'var(--recover)' : r.st === 'done' ? 'var(--ok)' : 'var(--c-life)'));
+      R.t.textContent = r.st === 'done' ? 'done on worker-' + r.where : r.st === 'err' ? 'error to client' : Math.ceil(r.left) + ' s left' + (r.where === 2 ? ' · on worker-2' : '');
+    });
+    cur.setAttribute('x1', X(Math.min(t, TMAX))); cur.setAttribute('x2', X(Math.min(t, TMAX))); cl.setAttribute('x', X(Math.min(t, TMAX))); cl.textContent = phase || '';
+    $('gs-done').textContent = done; $('gs-moved').textContent = moved; $('gs-err').textContent = err;
+  }
+  function reset() {
+    clearInterval(timer); t = 0; done = moved = err = 0;
+    reqs = INIT.map(r => ({ total: r, left: r, st: 'run', where: 1 }));
+    W2n.set('').sub('healthy'); log.clear(); log.add('worker-1 serving 6 requests', 'info'); $('gs-go').disabled = false; render('');
+  }
+  function go() {
+    $('gs-go').disabled = true; const tgp = +$('gs-tgp').value, mig = $('gs-mig').checked; let killed = false;
+    log.add('SIGTERM: unregistered, no new work', 'rec');
+    timer = setInterval(() => {
+      t += 1;
+      reqs.forEach((r, i) => {
+        if (r.st !== 'run') return; r.left = Math.max(0, r.left - 1);
+        if (r.left === 0) { r.st = 'done'; if (r.where === 1) { done++; log.add('r' + (i + 1) + ' drained on worker-1', 'ok'); } else log.add('r' + (i + 1) + ' finished on worker-2', 'ok'); }
+      });
+      const pend = reqs.filter(r => r.st === 'run' && r.where === 1);
+      if (!killed && !pend.length) { killed = true; log.add('all drained at ' + t + ' s → clean exit', 'ok'); }
+      if (!killed && t >= tgp) {
+        killed = true; log.add('SIGKILL at ' + tgp + ' s with ' + pend.length + ' unfinished', 'fail');
+        pend.forEach(r => {
+          const i = reqs.indexOf(r);
+          if (mig) { r.where = 2; moved++; Packet(svg, rows[i].mp, 'pk-rec', 800, 13); W2n.set('hot').sub('took ' + moved + ' migrated'); }
+          else { r.st = 'err'; err++; }
+        });
+        log.add(mig ? 'Frontend migrated them to worker-2' : 'migration off → errors to clients', mig ? 'rec' : 'fail');
+      }
+      if (reqs.every(r => r.st !== 'run')) clearInterval(timer);
+      render(t + ' s');
+    }, 100);
+  }
+  $('gs-go').addEventListener('click', go); $('gs-reset').addEventListener('click', reset); reset();
+})();
+
+/* ================= Demo: Shadow engine ================= */
+(function () {
+  const svg = svgInit('dg-sh'), W = svg.W, H = svg.H;
+  const log = mkLog($('sh-log'));
+  T(svg._bg, 0, 22, 'ONE GPU · HBM', 'flabel', 'start');
+  const hy = 44, hh = 96, hx = 0, hw = W;
+  S('rect', { x: hx, y: hy, width: hw, height: hh, rx: 12, class: 'gauge-bg' }, svg._bg);
+  const segDefs = [['w', 'weights · GMS', 'var(--c-life)'], ['kv', 'KV cache', 'var(--c-state)'], ['a', 'A', 'var(--c-req)'], ['b', 'B', 'var(--c-route)']];
+  const seg = {};
+  segDefs.forEach(([k, label, col]) => { const g = S('g', null, svg._nodes); seg[k] = { r: S('rect', { x: hx, y: hy + 4, width: 0, height: hh - 8, rx: 8, style: 'fill:' + col + ';transition:all .45s' }, g), t: T(g, 0, hy + hh / 2, label, 'lbl-b') }; seg[k].t.setAttribute('style', 'fill:var(--on-accent);transition:all .45s'); });
+  function hbm(parts) {
+    let x = hx + 4;
+    ['w', 'kv', 'a', 'b'].forEach(k => {
+      const v = parts[k] || 0, w = v / 100 * (hw - 8);
+      seg[k].r.setAttribute('x', x); seg[k].r.setAttribute('width', Math.max(0, w - (v ? 4 : 0)));
+      seg[k].t.setAttribute('x', x + w / 2); seg[k].t.style.opacity = w > 60 ? 1 : 0;
+      if (parts[k + 'L']) seg[k].t.textContent = parts[k + 'L'];
+      x += w;
+    });
+  }
+  const ey = hy + hh + 80, eh = 170;
+  const A = Node(svg, 0, ey, 300, eh, 'Engine A', '', 'req');
+  const L = Node(svg, W / 2 - 120, ey + 20, 240, eh - 40, 'flock', 'held by A', 'plain');
+  const B = Node(svg, W - 300, ey, 300, eh, 'Engine B', '', 'route');
+  Link(svg, hc(A.r, A.cy, L.x, L.cy), 'thin', false); Link(svg, hc(L.r, L.cy, B.x, B.cy), 'thin dash', false);
+  const ry = ey + eh + 90;
+  const Rt = Node(svg, W / 2 - 170, ry, 340, 110, 'Router', 'routes to engine A', 'route');
+  const rA = Link(svg, hc(Rt.x, Rt.cy, A.cx, A.b), 'k-req'), rB = Link(svg, hc(Rt.r, Rt.cy, B.cx, B.b), 'k-route dash');
+  T(svg._bg, W / 2, H - 70, 'CAPACITY BACK IN', 'flabel');
+  const clock = T(svg._top, W / 2, H - 22, '—', 'big-l'); clock.setAttribute('style', 'font-size:64px');
+  let s, timers = [], clk = null;
+  const at = (ms, f) => timers.push(setTimeout(f, ms));
+  function startClock(scale) { const t0 = performance.now(); clk = setInterval(() => { clock.textContent = ((performance.now() - t0) / 1000 * scale).toFixed(1) + ' s'; }, 50); }
+  function reset() {
+    timers.forEach(clearTimeout); timers = []; clearInterval(clk); log.clear();
+    s = { mode: $('sh-mode').value, killed: false }; clock.textContent = '—'; clock.setAttribute('style', 'font-size:64px'); $('sh-kill').disabled = false;
+    rA.style.display = ''; rB.style.display = '';
+    if (s.mode === 'shadow') {
+      hbm({ w: 52, kv: 30, a: 6, b: 6, wL: 'weights · GMS (shared)', kvL: 'KV cache · A' });
+      A.set('hot').sub('active · has lock'); B.set('idle').sub('parked · no KV cache'); L.set('').sub('held by A'); Rt.sub('routes to engine A');
+      rB.style.display = 'none';
+      log.add('one copy of weights, mapped by both engines', 'info');
+    } else {
+      hbm({ w: 52, kv: 30, a: 6, b: 0, wL: 'weights · owned by A', kvL: 'KV cache · A' });
+      A.set('hot').sub('active'); B.set('idle').sub('not deployed'); L.set('idle').sub('—'); Rt.sub('routes to engine A'); rB.style.display = 'none';
+      log.add('baseline: weights live inside engine A', 'info');
+    }
+  }
+  function kill() {
+    if (s.killed) return; s.killed = true; $('sh-kill').disabled = true;
+    A.set('fail').sub('SIGKILL'); rA.style.display = 'none'; Rt.sub('no healthy engine');
+    if (s.mode === 'shadow') {
+      startClock(1); hbm({ w: 52, kv: 0, a: 0, b: 6, wL: 'weights · still resident' }); L.set('rec').sub('released by kernel');
+      log.add('A dies: its context + KV freed; GMS keeps weights resident', 'fail');
+      at(1700, () => { L.set('').sub('held by B'); B.set('rec').sub('wake() · remap weights'); log.add('1.7 s: B takes the lock', 'rec'); });
+      at(4200, () => { hbm({ w: 52, kv: 30, a: 0, b: 6, wL: 'weights · GMS (shared)', kvL: 'KV cache · B' }); B.sub('materialize KV cache'); log.add('B allocates KV cache in the freed space', 'rec'); });
+      at(7300, () => { clearInterval(clk); clock.textContent = '7.3 s'; clock.setAttribute('style', 'font-size:64px;fill:var(--ok)'); B.set('hot').sub('active · has lock'); rB.style.display = ''; Rt.sub('routes to engine B'); A.set('rec').sub('restarting in background'); log.add('7.3 s: B registered, serving', 'ok'); });
+      at(10500, () => { hbm({ w: 52, kv: 30, a: 6, b: 6, wL: 'weights · GMS (shared)', kvL: 'KV cache · B' }); A.set('idle').sub('parked = new shadow'); log.add('A re-inits off the serving path and parks', 'info'); });
+    } else {
+      const SC = 20; startClock(SC); hbm({ w: 0, kv: 0, a: 0, b: 0 }); L.set('idle');
+      log.add('no GMS: weights freed with the process', 'fail');
+      [[15, 'container restart', { w: 0 }], [80, 'loading weights', { w: 26, wL: 'loading…' }], [150, 'sizing KV · autotune', { w: 52, kv: 30, wL: 'weights · A', kvL: 'KV cache · A' }], [230, 'capturing CUDA graphs', { w: 52, kv: 30, a: 6, wL: 'weights · A', kvL: 'KV cache · A' }]]
+        .forEach(([sec, txt, p]) => at(sec * 1000 / SC, () => { A.set('rec').sub(txt); hbm(p); log.add('cold restart: ' + txt, 'rec'); }));
+      at(283000 / SC, () => { clearInterval(clk); clock.textContent = '283 s'; clock.setAttribute('style', 'font-size:64px;fill:var(--fail)'); A.set('hot').sub('active'); rA.style.display = ''; Rt.sub('routes to engine A'); log.add('283 s: serving again (shown at 20× speed)', 'fail'); });
+    }
+  }
+  ambient(svg, 4000, async () => { if (rA.style.display !== 'none') Packet(svg, rA, 'pk-req', 600); if (rB.style.display !== 'none') Packet(svg, rB, 'pk-req', 600); });
+  $('sh-kill').addEventListener('click', kill); $('sh-reset').addEventListener('click', reset); $('sh-mode').addEventListener('change', reset);
+  reset();
+})();
+
+/* ================= Demo: KVCR-Guard ================= */
+(function () {
+  const svg = svgInit('dg-kv'), W = svg.W, H = svg.H;
+  const log = mkLog($('kv-log'));
+  const Rt = Node(svg, W / 2 - 190, 0, 380, 100, 'KV Router', 'knows node 1 has the prefix', 'route');
+  const n1w = Math.round(W * 0.58), n2x = n1w + 40, n2w = W - n2x, fy = 150, fh = H - fy;
+  Frame(svg, 0, fy, n1w, fh, 'Node 1', 'plain'); Frame(svg, n2x, fy, n2w, fh, 'Node 2', 'plain');
+  const E1 = Node(svg, 20, fy + 50, n1w * 0.46, 130, 'vLLM engine', 'in-process KVCR', 'req');
+  const Gd = Node(svg, n1w * 0.52, fy + 50, n1w * 0.46, 130, 'KVCR-Guard', 'owns the pool', 'state');
+  const px = 20, py = fy + 240, pw = n1w - 40, ph = fh - 260;
+  S('rect', { x: px, y: py, width: pw, height: ph, rx: 14, class: 'frame-fill', style: '--k:var(--c-state)' }, svg._bg);
+  T(svg._bg, px + 18, py + 24, 'HOST DRAM POOL · shared memory', 'flabel', 'start');
+  const N = 64, cols = 16, gap = 6, bs = Math.min((pw - 40 - (cols - 1) * gap) / cols, (ph - 70 - 3 * gap) / 4);
+  const gx = px + (pw - (cols * bs + (cols - 1) * gap)) / 2, gy = py + 50;
+  const cells = []; for (let i = 0; i < N; i++) cells.push(S('rect', { x: gx + (i % cols) * (bs + gap), y: gy + Math.floor(i / cols) * (bs + gap), width: bs, height: bs, rx: 4, class: 'blk' }, svg._nodes));
+  const E2 = Node(svg, n2x + 20, fy + 50, n2w - 40, 130, 'Node 2 engine', 'same system prompt', 'req');
+  const c2 = 8, bs2 = Math.min(30, (n2w - 60 - (c2 - 1) * 6) / c2), g2x = n2x + (n2w - (c2 * bs2 + (c2 - 1) * 6)) / 2, g2y = py + 50;
+  T(svg._bg, n2x + 18, py + 24, 'PREFIX KV ON NODE 2', 'flabel', 'start');
+  const cells2 = []; for (let i = 0; i < 48; i++) cells2.push(S('rect', { x: g2x + (i % c2) * (bs2 + 6), y: g2y + Math.floor(i / c2) * (bs2 + 6), width: bs2, height: bs2, rx: 4, class: 'blk' }, svg._nodes));
+  const hint = Link(svg, hc(Rt.r, Rt.cy, E2.cx, E2.y), 'k-route dash');
+  T(svg._top, Rt.r + 20, Rt.cy - 22, 'hint: fetch from node 1', 'lbl-m', 'start');
+  const own = Link(svg, 'M' + Gd.cx + ',' + Gd.b + ' L' + Gd.cx + ',' + py, 'k-state');
+  const att = Link(svg, 'M' + E1.cx + ',' + E1.b + ' L' + E1.cx + ',' + py, 'k-req dot');
+  const nixl = Link(svg, hc(px + pw, py + ph / 2, g2x, g2y + 60), 'k-state dash');
+  T(svg._top, (px + pw + g2x) / 2, py + ph / 2 - 40, 'NIXL', 'lbl-m');
+  let blocks, engUp, owner, hit = 0, miss = 0;
+  function paint() { cells.forEach((c, i) => c.setAttribute('class', 'blk ' + blocks[i])); $('kv-hit').textContent = hit; $('kv-miss').textContent = miss; }
+  function nodes() {
+    const g = $('kv-guard').checked;
+    E1.set(engUp ? '' : 'fail').sub(engUp ? 'in-process KVCR' : 'crashed');
+    Gd.set(!g ? 'idle' : owner === 'backup' ? 'rec' : '').sub(!g ? 'disabled' : owner === 'backup' ? 'backup KVCR serving' : 'owns the pool');
+    own.style.display = g ? '' : 'none'; att.setAttribute('class', 'ln k-req ' + (g ? 'dot' : '') );
+  }
+  function reset() {
+    blocks = Array.from({ length: N }, (_, i) => i < 48 ? 'c' : i < 55 ? 'p' : '');
+    cells2.forEach(c => c.setAttribute('class', 'blk')); E2.set('').sub('same system prompt');
+    engUp = true; owner = 'active'; log.clear(); log.add('48 prefix blocks cached on node 1 · 7 still writing', 'info'); nodes(); paint();
+  }
+  async function crash() {
+    if (!engUp) return; engUp = false; log.add('node 1 engine crashed', 'fail'); nodes();
+    if ($('kv-guard').checked) {
+      Badge(svg, Gd.cx, Gd.y - 4, 'fence old owner', 'b-rec', 1600); await sleep(600);
+      blocks = blocks.map(b => b === 'p' ? 'x' : b); paint(); owner = 'backup'; nodes();
+      log.add('Guard fences the dead owner; partial writes dropped; backup KVCR serves 48 committed blocks', 'state');
+    } else { blocks = blocks.map(b => b ? 'x' : b); paint(); log.add('pool lived in the engine process: all cache lost', 'fail'); }
+  }
+  async function req() {
+    const g = $('kv-guard').checked, avail = engUp || (g && owner === 'backup'), have = blocks.slice(0, 48).every(b => b === 'c');
+    E2.set('hot').sub('prefill needed: 48 blocks'); await Packet(svg, hint, 'pk-route', 600);
+    if (avail && have) {
+      for (let i = 0; i < 48; i += 6) { for (let j = i; j < i + 6; j++) { blocks[j] = 's'; cells2[j].setAttribute('class', 'blk c'); } paint(); Packet(svg, nixl, 'pk-state', 500, 10); await sleep(110); }
+      hit += 48; paint(); E2.set('ok').sub('reused 48 blocks · prefill suffix only'); log.add('node 2 pulled 48 blocks over NIXL', 'ok');
+      await sleep(600); blocks = blocks.map(b => b === 's' ? 'c' : b); paint();
+    } else {
+      miss += 48; paint(); cells2.forEach(c => c.setAttribute('class', 'blk p')); E2.set('rec').sub('recomputing 48 blocks'); log.add('no live source → full prefill on node 2', 'fail');
+    }
+  }
+  async function restart() {
+    if (engUp) return; engUp = true; nodes();
+    if ($('kv-guard').checked) { log.add('new engine attaches to Guard socket; manifest OK', 'info'); await sleep(500); blocks = blocks.map(b => b === 'x' ? '' : b); owner = 'active'; nodes(); paint(); log.add('fenced handoff back to in-process KVCR · hot start', 'ok'); }
+    else { blocks = blocks.map(() => ''); paint(); log.add('restarted with an empty cache', 'fail'); }
+  }
+  $('kv-crash').addEventListener('click', crash); $('kv-req').addEventListener('click', req); $('kv-restart').addEventListener('click', restart); $('kv-guard').addEventListener('change', reset);
+  reset();
+})();
+
+show(slideIndexFromHash() ?? 0, { syncHash: false });
+</script>
+<script>
+/* Developer notes, one entry per slide (same order as slides[]). Kept in sync with dynamo-fault-tolerance_NOTES.md. */
+const NOTES = [
+/* 1 */ {
+  t: 'Overview', k: 'var(--fg)', h: `
+<h4>What this deck covers</h4>
+<p>Dynamo's docs split fault tolerance into <b>request fault tolerance</b> (migration, rejection, cancellation) and <b>worker fault tolerance</b> (graceful shutdown, shadow engine failover, health checks, discovery). This deck adds two more lenses that recover on their own clocks: <b>routing state</b> (the KV router's prefix index) and <b>KV cache state</b> (KVCR-Guard, GMS-backed KV).</p>
+<h4>Maturity tags</h4>
+<ul><li><b>On by default</b>: graceful shutdown, cancellation, discovery, router prefix recovery.</li>
+<li><b>Opt-in</b>: migration (<code>--migration-limit</code> defaults to 0), rejection thresholds, canary health checks, router replica sync.</li>
+<li><b>Preview / experimental</b>: GMS + shadow engine (vLLM primary, K8s ≥1.34 with DRA), Dynamo Snapshot (single-GPU vLLM/SGLang).</li>
+<li><b>In development</b>: KVCR / KVCR-Guard, GMS-managed KV cache.</li></ul>
+<h4>Mental model</h4>
+<p>Protect three things: the <b>request</b> (finish it or fail it cleanly), <b>serving capacity</b> (get workers back fast), and <b>expensive state</b> (weights, KV cache, routing index).</p>` },
+
+/* 2 */ {
+  t: 'How a request reaches the workers', k: 'var(--fg)', h: `
+<h4>Request path</h4>
+<ul><li><b>Frontend</b> (OpenAI-compatible, port 8000): applies the chat template, tokenizes, validates.</li>
+<li><b>KV router / PrefillRouter</b>: scores workers by KV-cache overlap plus load and picks a prefill worker.</li>
+<li><b>Prefill</b> computes the prompt's KV cache and returns <code>disaggregated_params</code> (transfer metadata).</li>
+<li>The router injects that metadata into the <b>decode</b> request; decode pulls KV GPU-to-GPU over <b>NIXL</b> (NVLink, InfiniBand/UCX or PCIe).</li>
+<li>Decode streams tokens back; the Frontend detokenizes and sends SSE to the client.</li></ul>
+<h4>Three planes</h4>
+<ul><li><b>Discovery</b>: on Kubernetes, <code>DynamoWorkerMetadata</code> + EndpointSlices; on bare metal, etcd with leases that expire when keep-alives stop.</li>
+<li><b>Request plane</b>: TCP by default (<code>DYN_REQUEST_PLANE</code>), NATS optional.</li>
+<li><b>Event plane</b>: ZMQ by default (<code>DYN_EVENT_PLANE</code>), NATS optional. Carries KV <code>Stored</code>/<code>Removed</code> events and load metrics to routers.</li></ul>
+<h4>Reading the numbered points</h4>
+<p>Each number is a place a request can break, paired with the mechanism that owns it. The rest of the deck walks these one by one.</p>` },
+
+/* 3 */ {
+  t: 'Detect → reroute → recover', k: 'var(--fg)', h: `
+<h4>Detect: four signals, four speeds</h4>
+<ul><li><b>Request-path error</b>: a stream to the worker fails. Immediate, seen by whoever sent the request.</li>
+<li><b>Discovery</b>: the worker's lease expires or its EndpointSlice is removed. Authoritative, but only as fast as the lease / K8s update.</li>
+<li><b>Canary health checks</b> (<code>DYN_HEALTH_CHECK_ENABLED=true</code>): after <code>DYN_CANARY_WAIT_TIME</code> (10 s) with no successful traffic, send a minimal real inference request; timeout <code>DYN_HEALTH_CHECK_REQUEST_TIMEOUT</code> (3 s). Catches a hung engine whose process still answers <code>/live</code>.</li>
+<li><b>KV event gap</b>: a router sees non-consecutive event IDs from a worker and starts recovery.</li></ul>
+<h4>Reroute</h4>
+<ul><li><b>Local inhibition</b>: after a request-path failure, each client runtime skips that worker for <code>DYN_RUNTIME_INHIBITED_DURATION_SECS</code> (default 5 s) while discovery catches up. Discovery can restore or remove it earlier.</li>
+<li>Migration moves in-flight streams; rejection sheds overflow; cancellation frees work nobody is waiting for.</li></ul>
+<h4>Recover</h4>
+<p>Shadow engine + GMS (seconds), Snapshot restore (warm start), router prefix rebuild from worker indexers, KVCR-Guard hot start.</p>
+<h4>Health endpoints</h4>
+<p>Frontend <code>/health</code> returns 503 <code>not_ready</code> as soon as draining starts; <code>/live</code> stays 200 until stopping. Workers expose both only when <code>DYN_SYSTEM_PORT</code> is set.</p>` },
+
+/* 4 */ {
+  t: 'Request outcomes', k: 'var(--c-req)', h: `
+<h4>Every request ends in one terminal state</h4>
+<p>success · reject · migrate (then success or fail) · cancel · fail. Designing clients around these states is what makes the server-side features useful.</p>
+<h4>Reject</h4>
+<p>Overload returns <b>HTTP 529</b> (retry with exponential backoff + jitter). <b>503</b> means no service path is available and should not be retried as if it were overload. Legacy clients that only understand 503 can set <code>DYN_HTTP_OVERLOAD_STATUS_CODE=503</code>.</p>
+<h4>Migrate</h4>
+<p>Invisible to the client when it works. Fails to the client when the limit is exhausted, the sequence exceeds <code>--migration-max-seq-len</code>, or the request uses guided decoding or <code>n&gt;1</code>.</p>
+<h4>Cancel</h4>
+<p>Triggered by the client (closed SSE stream / connection) or a Frontend crash (worker sees TCP drop). The goal is freeing GPU time, not notifying anyone.</p>` },
+
+/* 5 */ {
+  t: 'Request Migration', k: 'var(--c-req)', h: `
+<h4>Where it lives</h4>
+<p>A <b>Migrator</b> operator in the Frontend pipeline, between the Backend operator and the service backend. Configured once on the Frontend; applies to every model it serves.</p>
+<h4>How it works</h4>
+<ul><li>Every response is intercepted; generated tokens are appended to the request's token sequence and the remaining <code>max_tokens</code> budget is reduced. Stop conditions and sampling params are carried along.</li>
+<li><b>new_request</b> migration: the chosen worker is unreachable at stream setup → retry the original request elsewhere.</li>
+<li><b>ongoing_request</b> migration: a migratable stream error mid-generation → open a new stream with prompt + generated tokens. The new worker prefills that context and continues; no tokens lost or duplicated.</li></ul>
+<h4>Config</h4>
+<ul><li><code>DYN_MIGRATION_LIMIT</code> / <code>--migration-limit</code> (default 0 = off; start with 3).</li>
+<li><code>DYN_MIGRATION_MAX_SEQ_LEN</code>: once prompt+generated <i>strictly exceeds</i> it, tracking stops and the request is no longer migratable.</li></ul>
+<h4>Metrics</h4>
+<p><code>dynamo_frontend_model_migration_total</code> (by <code>migration_type</code>), <code>..._migration_duration_seconds</code> (by <code>outcome</code>), <code>..._migration_max_seq_len_exceeded_total</code>.</p>
+<h4>Limits and cost</h4>
+<p>Not supported for guided decoding (the FSM restarts at the schema root → corrupted JSON) or <code>n&gt;1</code>. The new worker re-prefills the whole context unless the prefix is cached elsewhere, which is where KV-aware routing and KVCR help.</p>` },
+
+/* 6 */ {
+  t: 'Request Cancellation', k: 'var(--c-req)', h: `
+<h4>AsyncEngineContext</h4>
+<p>Every request stream carries a context. <code>stop_generating()</code> (alias <code>stop()</code>) is the graceful, idempotent stop; <code>kill()</code> also asks to skip draining. Check with <code>is_stopped()</code> / <code>is_killed()</code>, or await <code>stopped()</code> / <code>killed()</code>.</p>
+<h4>Propagation</h4>
+<p><code>link_child(ctx)</code> makes a parent forward stop/kill to children in link order. In disaggregated serving: Frontend root → decode request → remote prefill. In Python, passing <code>context=context</code> to an outgoing <code>client.generate()</code> links it automatically.</p>
+<h4>Detection</h4>
+<ul><li>Frontend: connection closed before streaming, or SSE stream closed mid-response.</li>
+<li>Worker: explicit cancel control message, or the TCP connection from the Frontend drops.</li></ul>
+<h4>Your responsibility as a backend author</h4>
+<p>The runtime only sets state. The engine must check <code>context.is_stopped()</code> (or await <code>async_killed_or_stopped()</code>) and abort. <code>dynamo_component_cancellation_total</code> counts signals received, not actual aborts.</p>` },
+
+/* 7 */ {
+  t: 'Request Rejection', k: 'var(--c-req)', h: `
+<h4>Busy detection</h4>
+<ul><li><code>--active-decode-blocks-threshold</code>: fraction of KV blocks in use (needs <code>--router-mode kv</code>).</li>
+<li><code>--active-prefill-tokens-threshold</code> (absolute) or <code>--active-prefill-tokens-threshold-frac</code> (fraction of <code>max_num_batched_tokens</code>).</li>
+<li>OR logic per data-parallel rank; a worker is busy when all ranks are busy; a request is shed only when <b>every</b> eligible worker is busy.</li></ul>
+<h4>Gotchas</h4>
+<ul><li>Add <code>--router-track-output-blocks</code> for long outputs, otherwise generated tokens fill KV cache without moving the router's load signal.</li>
+<li>Thresholds are live-tunable via <code>POST /busy_threshold</code>; disable the admin API with <code>DYN_DISABLE_FRONTEND_ADMIN_API</code>.</li>
+<li><code>--router-queue-threshold</code> is different: it <i>defers</i> routing until capacity frees, rather than rejecting.</li></ul>
+<h4>Worker-side hard cap</h4>
+<p><code>--engine-request-limit N</code> plus overflow queue <code>DYN_DYNAMO_REQUEST_QUEUE_LIMIT</code> (default 16, min 2): beyond N+Q the worker rejects and the Frontend returns 529.</p>
+<h4>Demo model</h4>
+<p>The latency multiplier is a toy model: once KV usage exceeds 100%, preemption/queueing slows everyone. Real numbers depend on the engine.</p>` },
+
+/* 7b */ {
+  t: 'Inhibition, discovery, canaries', k: 'var(--c-route)', h: `
+<h4>Three detectors, three clocks</h4>
+<ul><li><b>Local inhibition</b> (on): when a routed request to a worker fails, that client runtime (e.g. the Frontend) temporarily removes the worker from its local routing set for <code>DYN_RUNTIME_INHIBITED_DURATION_SECS</code> (default 5 s; 0 disables). Read once when the first client initializes. Direct dispatch bypasses it.</li>
+<li><b>Discovery</b> (on, authoritative): on Kubernetes the operator uses <code>DynamoWorkerMetadata</code> + EndpointSlices (<code>DYN_DISCOVERY_BACKEND=kubernetes</code>); on bare metal, etcd leases expire when a process stops sending keep-alives. Clients watch membership; a discovery update can restore or remove a worker before the inhibition window ends.</li>
+<li><b>Canary health checks</b> (opt-in, <code>DYN_HEALTH_CHECK_ENABLED=true</code>): if an endpoint has no successful activity for <code>DYN_CANARY_WAIT_TIME</code> (10 s), send a minimal inference payload through the backend's normal path; fail after <code>DYN_HEALTH_CHECK_REQUEST_TIMEOUT</code> (3 s). Override the payload with <code>DYN_HEALTH_CHECK_PAYLOAD</code>.</li></ul>
+<h4>Why you need all three</h4>
+<p>Inhibition is fast but local and temporary. Discovery is authoritative but only as fast as a lease or K8s update, and it can't see a <b>hung</b> engine whose process is alive. Canaries exercise real inference, so they catch hangs; the Kubernetes liveness probe can then restart the pod (and with a shadow engine, the kernel-released lock triggers failover).</p>
+<h4>Health endpoints</h4>
+<p>Workers expose <code>/live</code> and <code>/health</code> only when <code>DYN_SYSTEM_PORT</code> is set; both return 503 until endpoints are ready. Frontend <code>/health</code> lists discovered instances and returns 503 while draining.</p>
+<h4>Demo</h4>
+<p>Timeline lengths for discovery are illustrative: lease TTLs and EndpointSlice propagation depend on your cluster.</p>` },
+
+/* 8 */ {
+  t: 'Router fault tolerance', k: 'var(--c-route)', h: `
+<h4>Two kinds of router state</h4>
+<ul><li><b>Prefix cache state</b> (radix tree of cached blocks per worker): drives cache-overlap scoring. Built from worker KV events; every replica consumes the same events, so no router-to-router sync is needed.</li>
+<li><b>Active block state</b> (in-flight load): deliberately ephemeral. A restarted router starts at zero and converges as requests flow.</li></ul>
+<h4>Worker local indexer</h4>
+<p>Each worker keeps a circular event buffer plus its own radix tree. Routers query it and get <code>Events</code> (replay from an ID) or a full <code>TreeDump</code> snapshot, which replaces that worker rank in one transaction.</p>
+<ul><li><b>Router restart</b>: query every worker → TreeDump → full prefix view.</li>
+<li><b>Event gap</b> (ZMQ PUB/SUB is lossy): buffer live events, query that worker, apply, drain buffer.</li>
+<li><b>Limit</b>: an unreachable worker can't be queried; its blocks return when it does.</li></ul>
+<h4>Flags</h4>
+<ul><li><code>--router-replica-sync</code>: share active-sequence events across replicas for fleet-wide load.</li>
+<li><code>--serve-indexer</code> / <code>--use-remote-indexer</code>: let some routers serve overlap queries for others.</li>
+<li><code>--no-router-kv-events</code>: approximate mode, predicts cache from routing decisions with <code>--router-ttl-secs</code>. Not recommended for production.</li></ul>` },
+
+/* 9 */ {
+  t: 'Graceful Shutdown', k: 'var(--c-life)', h: `
+<h4>Sequence on SIGTERM</h4>
+<ol style="margin:0 0 8px 18px;color:var(--dim)"><li>Endpoints unregister from discovery immediately (no new work).</li>
+<li>Worker keeps serving for <code>DYN_GRACEFUL_SHUTDOWN_GRACE_PERIOD_SECS</code> (5 s) while routers notice, then endpoints are invalidated.</li>
+<li>In-flight requests drain, bounded by <code>DYN_RUNTIME_GRACEFUL_SHUTDOWN_TIMEOUT_SECS</code> (900 s).</li>
+<li>Unfinished requests are cancelled; the Frontend migrates them if migration is enabled.</li></ol>
+<h4>The Kubernetes deadline</h4>
+<p>The operator sets <code>terminationGracePeriodSeconds</code> to 60 s by default; Kubernetes sends SIGKILL after it. Use 120 s+ for long generations and keep every internal timeout below it.</p>
+<h4>Frontend side</h4>
+<p><code>DYN_HTTP_GRACEFUL_SHUTDOWN_TIMEOUT_SECS</code> (5 s) bounds admitted HTTP/WebSocket requests. During drain <code>/health</code> = 503 (out of the load balancer) and <code>/live</code> = 200 (no restart). New requests get 503.</p>
+<h4>Custom workers</h4>
+<p><code>serve_endpoint(..., graceful_shutdown=True)</code> waits for in-flight requests; backend workers default to True.</p>` },
+
+/* 10 */ {
+  t: 'GPU Memory Service', k: 'var(--c-life)', h: `
+<h4>Problem</h4>
+<p>GPU memory belongs to the engine's CUDA context, which belongs to the process. When the process dies the driver frees everything, including weights, so a replacement reloads from storage.</p>
+<h4>Mechanism</h4>
+<ul><li>GMS is a per-GPU sidecar with <b>no CUDA context of its own</b>. It allocates physical pages with the CUDA VMM API, hands out handles, and arbitrates read/write access.</li>
+<li>Engines import handles and map pages at their own virtual addresses once at startup; GMS is not on the access path, so reads cost the same as engine-owned memory.</li>
+<li>Physical allocations are reference-counted, so weights stay resident while any process (GMS) holds them.</li></ul>
+<h4>Integration</h4>
+<p>vLLM, SGLang and TensorRT-LLM plug in through a <code>torch.cuda.CUDAPluggableAllocator</code> bound to the weight pool; weights remain ordinary tensors.</p>
+<h4>Scope today</h4>
+<p>Preview manages <b>weights</b>. GMS-managed KV cache (so a promoted shadow could map the old engine's cache) is in active development. GMS is also how Snapshot splits weights out of the CRIU image.</p>` },
+
+/* 11 */ {
+  t: 'Shadow engine failover', k: 'var(--c-life)', h: `
+<h4>Why a second engine</h4>
+<p>NCCL communicators and CUDA graphs are tied to one process and virtual addresses, so they can't be handed over. The shadow runs full init (import weights from GMS, NCCL/NIXL setup, graph capture, warm-up), then parks with no KV cache.</p>
+<h4>Leader election</h4>
+<p>A POSIX <code>flock</code> on a shared file. When the active process exits for any reason (including SIGKILL) the kernel releases the lock; the shadow acquires it, wakes, remaps weights, materializes KV cache and re-registers. Hung-but-alive engines are handled by the liveness probe → SIGKILL → same path.</p>
+<h4>Measured (GLM-5.2 NVFP4, B200, TP=8, 2 workers)</h4>
+<p>7.3 s to serve again (1.7 s detect + 5.6 s promote) vs 283 s cold restart. p50 TTFT after fault 1.3 s vs 23.8 s. The paper reports &lt;7 s across 4 models, 13–29× faster than a warm restart, 4–8 GiB extra per GPU.</p>
+<h4>Limits</h4>
+<ul><li>Preview; vLLM primary; needs Kubernetes ≥1.34 with DRA and the NVIDIA GPU DRA driver.</li>
+<li>Covers process faults, not hardware, node or multi-node failures.</li>
+<li>Does not preserve in-flight requests (use migration) or KV cache (small TTFT bump after promotion).</li></ul>` },
+
+/* 12 */ {
+  t: 'Dynamo Snapshot', k: 'var(--c-life)', h: `
+<h4>Idea</h4>
+<p>Checkpoint a fully initialized worker once, then restore it instead of cold-starting. Useful for scale-out and for warming up shadow engines.</p>
+<h4>How</h4>
+<ul><li><code>cuda-checkpoint</code> dumps GPU state into host memory; <b>CRIU</b> dumps the process tree; the overlay filesystem is captured too.</li>
+<li>A privileged <b>snapshot-agent</b> DaemonSet on each node runs checkpoint/restore and writes artifacts to shared storage (PVC), so restore can happen on another node.</li>
+<li><b>Quiesce/resume hooks</b>: the worker checkpoints after engine init but before distributed-runtime startup (no live TCP connections), signalled via files.</li></ul>
+<h4>Optimizations</h4>
+<ul><li>KV cache unmapped before checkpoint (<code>cuMemUnmap</code>/<code>cuMemRelease</code>, VA kept): Qwen3-0.6B artifact ~190 GiB → ~6 GiB.</li>
+<li>CRIU parallel memfd restore + Linux AIO: up to 7.9× faster (pending upstream merge).</li>
+<li>GMS moves weights out of the CRIU image so weights and process state restore in parallel: gpt-oss-120b &lt;5 s with striped NVMe (proof of concept).</li></ul>
+<h4>Status</h4>
+<p>Experimental: single-GPU vLLM and SGLang via the non-GMS path. TensorRT-LLM and multi-GPU/multi-node are on the roadmap.</p>` },
+
+/* 13 */ {
+  t: 'KV Cache Runner + KVCR-Guard', k: 'var(--c-state)', h: `
+<h4>Roles</h4>
+<ul><li><b>Framework/engine</b> owns all GPU memory and scheduling.</li>
+<li><b>KVCR</b> (in-process library) manages KVCR-owned DRAM, SSD and object storage, reports inventory, and moves blocks over NIXL. Calls never block the engine's hot path.</li>
+<li><b>KV router</b> keeps the global <code>BlockKey</code> inventory and sends request-scoped hints (<code>submit_hint(keys, src=node, mode=copy|move)</code>). It is never on the data path.</li></ul>
+<h4>KVCR-Guard</h4>
+<ul><li>Optional sidecar that <b>owns</b> the DRAM pool (shared memory). The active KVCR attaches once via a socket, then uses the pool directly: no IPC on normal operations.</li>
+<li>On engine/GPU failure the Guard <b>fences</b> the failed owner and activates a backup KVCR (own NIXL agent) that can serve committed blocks to peers.</li>
+<li>A restarted KVCR attaches, verifies <code>KVLayoutManifest</code>, recovers committed state, resyncs inventory, and takes ownership back via a fenced handoff.</li></ul>
+<h4>Not preserved</h4>
+<p>Partial writes, in-flight operations, framework-owned GPU or host memory.</p>
+<h4>Status</h4>
+<p>Under active development (<code>ai-dynamo/kvcr</code>), not for production; public end-to-end depends on an upstream vLLM PR. Known issue: first peer transfer after Guard promotion can be refused (kvcr #51).</p>` },
+
+/* 14 */ {
+  t: 'Incident walkthrough', k: 'var(--fg)', h: `
+<h4>What each step relies on</h4>
+<ul><li><b>Detect</b>: stream errors on the request path (instant). Discovery and canaries confirm later.</li>
+<li><b>Inhibition</b>: local 5 s skip per client runtime.</li>
+<li><b>Migration</b>: only if <code>DYN_MIGRATION_LIMIT</code> &gt; 0; each migrated stream costs a re-prefill of its full context.</li>
+<li><b>KVCR-Guard</b>: would turn that re-prefill into a NIXL fetch. In development.</li>
+<li><b>Rejection</b>: survivors absorb ~50% more load; without thresholds they overflow KV cache and slow everyone.</li>
+<li><b>Shadow promotion</b>: ~7 s, starts with an empty KV cache.</li>
+<li><b>Router catch-up</b>: the promoted engine publishes fresh KV events; routers update prefix state.</li></ul>
+<h4>Takeaway for developers</h4>
+<p>No single feature is enough. Migration needs capacity (shadow), shadow needs migration (in-flight requests), and both pay a prefill cost that only cache preservation removes.</p>` },
+
+/* 15 */ {
+  t: 'Production checklist', k: 'var(--fg)', h: `
+<h4>Why each setting</h4>
+<ul><li><b>Migration = 3</b>: survives transient loss without retry storms; it's off by default.</li>
+<li><b>Decode-blocks threshold 0.75–0.85</b>: start conservative, watch <code>dynamo_frontend_model_rejection_total</code> and latency, then raise.</li>
+<li><b>2+ router replicas + replica sync</b>: replicas rebuild prefix state from workers; sync gives each a fleet-wide load view.</li>
+<li><b>Canaries</b>: the only detector for a hung engine with a live process.</li>
+<li><b>Grace period 120 s+</b>: long generations need time to drain before SIGKILL.</li>
+<li><b>Shadow + GMS</b>: preview; see the vLLM <code>agg_failover.yaml</code> example.</li>
+<li><b>KVCR-Guard</b>: track the repo; not GA.</li></ul>
+<h4>Test it</h4>
+<p>The docs' fault-tolerance testing framework covers cancellation, migration, etcd HA failover and hardware fault injection.</p>` },
+];
+
+(function () {
+  const panel = $('notes');
+  let open = false; /* always start closed; opens only when clicked or N pressed */
+  function render(i) {
+    const n = NOTES[i]; if (!n) return;
+    $('notesTitle').textContent = (i + 1) + ' · ' + n.t;
+    $('notesBody').innerHTML = n.h;
+    panel.style.setProperty('--notes-k', n.k);
+    $('notesBody').scrollTop = 0;
+  }
+  function set(o) {
+    open = o; panel.hidden = !o;
+    $('notesBtn').textContent = o ? 'Hide notes' : 'Notes';
+  }
+  window.toggleNotes = () => set(!open);
+  window.onSlideChange = render;
+  $('notesBtn').addEventListener('click', window.toggleNotes);
+  $('notesClose').addEventListener('click', () => set(false));
+  render(cur); set(false);
+})();
+</script>
+<script src="deck-tools.js" defer></script>

@@ -1,0 +1,45 @@
+{
+  "sealed_at": "2026-11-05T07:11:30.699849+00:00",
+  "arm": "one-rr-c16-a1",
+  "configuration": "one-rr",
+  "replicas": 1,
+  "h100_gpus": 2,
+  "concurrency_session_trees": 16,
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+  "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+  "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+  "dataset_pin_patch_sha256": "4230167ccd705a71860bae27a981655d4f23fcef499b27665fe09c9239745c95",
+  "profile_sha256": "0df9aae700816dff2805c78c8aa34845baef93fe57172a3a6836b8a86eec50fd",
+  "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df",
+  "client_preprocessor_workers": 1,
+  "client_resources": {
+    "requests": {
+      "cpu": "4",
+      "memory": "64Gi",
+      "ephemeral-storage": "40Gi"
+    },
+    "limits": {
+      "cpu": "8",
+      "memory": "96Gi",
+      "ephemeral-storage": "80Gi"
+    }
+  },
+  "router_mode": "round-robin",
+  "native_max_model_len": 1048576,
+  "max_num_seqs_per_worker": 128,
+  "cache_history": "Fresh workers/private compiler caches per cell; bounded smoke and new canonical AgentX primer before each profile",
+  "initial_gpu_cache": "Fresh worker processes for this topology/load cell; bounded smoke plus mandatory canonical primer",
+  "worker_pods": [
+    {
+      "name": "ft-agg-0-agg-79v9n",
+      "uid": "d8b725cc-876a-412d-9604-1a09f9a2bd2f",
+      "node": "kubecon-nke-site-cp-0198",
+      "image_ids": [
+        "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+      ]
+    }
+  ]
+}

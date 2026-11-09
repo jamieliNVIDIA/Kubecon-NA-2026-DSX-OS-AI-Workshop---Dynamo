@@ -1,0 +1,184 @@
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+metadata:
+  annotations:
+    nvidia.com/dynamo-kube-discovery-mode: container
+  name: ft-shadow
+  namespace: dynamo-ft-20261014t211122z
+  labels:
+    app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+    feature-test-run: dynamo-ft-20261014t211122z
+spec:
+  components:
+  - name: Frontend
+    podTemplate:
+      spec:
+        containers:
+        - image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+          name: main
+          volumeMounts:
+          - name: cache
+            mountPath: /model-cache
+            readOnly: true
+          - name: dshm
+            mountPath: /dev/shm
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261014-shadow-qwen-control/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: VLLM_CACHE_ROOT
+            value: /tmp/vllm-cache
+          - name: TRITON_CACHE_DIR
+            value: /tmp/triton-cache
+          - name: NCCL_IB_DISABLE
+            value: '1'
+          - name: PYTHONHASHSEED
+            value: '0'
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: void
+          command:
+          - python3
+          - -m
+          - dynamo.frontend
+          args:
+          - --router-mode
+          - round-robin
+          - --trust-remote-code
+          resources:
+            requests:
+              cpu: '1'
+              memory: 4Gi
+            limits:
+              memory: 8Gi
+        volumes:
+        - name: cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        activeDeadlineSeconds: 3600
+        imagePullSecrets:
+        - name: common-runtime-pull
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+          feature-test-run: dynamo-ft-20261014t211122z
+    replicas: 1
+    type: frontend
+    runtimeVersionOverride: 1.6.0
+  - experimental:
+      gpuMemoryService: {}
+      failover: {}
+    name: VllmWorker
+    podTemplate:
+      spec:
+        containers:
+        - args:
+          - --model
+          - Qwen/Qwen3-0.6B
+          - --revision
+          - c1899de289a04d12100db370d81485cdf75e47ca
+          - --served-model-name
+          - Qwen/Qwen3-0.6B
+          - --trust-remote-code
+          - --tensor-parallel-size
+          - '1'
+          - --max-model-len
+          - '1024'
+          - --max-num-seqs
+          - '4'
+          - --max-num-batched-tokens
+          - '1024'
+          - --gpu-memory-utilization
+          - '0.25'
+          - --enable-prefix-caching
+          - --block-size
+          - '64'
+          - --disaggregation-mode
+          - agg
+          - --load-format
+          - gms
+          - --enable-sleep-mode
+          command:
+          - python3
+          - -m
+          - dynamo.vllm
+          image: nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d
+          name: main
+          resources:
+            requests:
+              cpu: '4'
+              memory: 64Gi
+              nvidia.com/gpu: '1'
+            limits:
+              memory: 128Gi
+              nvidia.com/gpu: '1'
+          workingDir: /workspace/examples/backends/vllm
+          volumeMounts:
+          - name: cache
+            mountPath: /model-cache
+            readOnly: true
+          - name: dshm
+            mountPath: /dev/shm
+          - name: shadow-gms-compat
+            mountPath: /usr/local/lib/python3.12/dist-packages/gpu_memory_service/integrations/vllm/patches.py
+            subPath: patches.py
+            readOnly: true
+          env:
+          - name: HF_HOME
+            value: /model-cache/feature-tests/20261014-shadow-qwen-control/hf
+          - name: HF_HUB_OFFLINE
+            value: '1'
+          - name: HF_MODULES_CACHE
+            value: /tmp/hf_modules
+          - name: VLLM_CACHE_ROOT
+            value: /tmp/vllm-cache
+          - name: TRITON_CACHE_DIR
+            value: /tmp/triton-cache
+          - name: NCCL_IB_DISABLE
+            value: '1'
+          - name: PYTHONHASHSEED
+            value: '0'
+          - name: DYN_HEALTH_CHECK_REQUEST_TIMEOUT
+            value: '180'
+        volumes:
+        - name: cache
+          persistentVolumeClaim:
+            claimName: feature-cache
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        - name: shadow-gms-compat
+          configMap:
+            name: shadow-gms-compat-8f75223bc585
+        activeDeadlineSeconds: 3600
+        imagePullSecrets:
+        - name: common-runtime-pull
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: nvidia.com/gpu.product
+                  operator: In
+                  values:
+                  - NVIDIA-H100-80GB-HBM3
+        nodeSelector:
+          kubernetes.io/hostname: kubecon-nke-site-cp-0124
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: kubecon-dynamo-feature-tests
+          feature-test-run: dynamo-ft-20261014t211122z
+        annotations:
+          workshop.nvidia.com/shadow-gms-compat-sha256: 8f75223bc5856a4cca206d416607d2807d985857b3d181938d9c1529c3d8f422
+    replicas: 1
+    type: worker
+    runtimeVersionOverride: 1.6.0
+    sharedMemorySize: 16Gi
+  backendFramework: vllm

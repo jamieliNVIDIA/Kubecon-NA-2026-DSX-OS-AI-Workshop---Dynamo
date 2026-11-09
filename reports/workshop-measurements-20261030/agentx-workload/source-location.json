@@ -1,0 +1,12 @@
+{
+  "source_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+  "source_archive": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/20261030-agentx-workload-prep-000329/aiperf-source.tar",
+  "source_sha256": "e850fbc534f5b3a9353cfa63a72d7c6f0c58d65d27187c196a11c07ebcf66626",
+  "source_directory": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/20261030-agentx-workload-prep-000329/aiperf-source",
+  "dependency_python": "/Users/nealv/Documents/dynamo/aiperf/.venv/bin/python",
+  "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+  "dataset_revision_patch": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/reports/workshop-measurements-20261030/agentx-workload/aiperf-dataset-revision.patch",
+  "dataset_revision_patch_sha256": "4230167ccd705a71860bae27a981655d4f23fcef499b27665fe09c9239745c95",
+  "pinned_source_archive": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/20261030-agentx-workload-prep-000329/aiperf-agentx-pinned-source.tar.gz",
+  "pinned_source_sha256": "4e7f3a2ed15276a5252200e4d4772bf4d10e182edf2cbff4a9606794822d4699"
+}

@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "status": "qualified_and_cleaned",
+  "qualified_at": "2026-11-05T21:14:49.440242+00:00",
+  "cleanup_completed_at": "2026-11-05T21:19:03.836175+00:00",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "dynamo_nightly": "1.7.0.dev20261103",
+  "dynamo_source_revision": "e37f0b91f841e12715e412b375a40842ec6010b6",
+  "source_bundle_sha256": "592cda9d1831d1ece346b1185eca54d67488a9eb02bc6d8b8cdc62e79a88bc4d",
+  "run": "results/workshop-kvcr-demo-20261105-a6",
+  "original_failed_parent": "results/workshop-kvcr-demo-20261105-a5",
+  "binding": "retained source A with one explicitly recorded supported B/frontend replacement",
+  "cross_node": true,
+  "gpu_count": 4,
+  "workers_tensor_parallel_size": 2,
+  "source_worker_id": "8147780429315143",
+  "receiver_worker_id": "5636635651289859",
+  "source_prompt_tokens": 6426,
+  "receiver_prompt_tokens": 6427,
+  "shared_prefix_tokens": 6406,
+  "effective_page_tokens": 4224,
+  "cached_and_external_tokens": 4224,
+  "matched_transfer_blocks": 6,
+  "matched_transfer_bytes": 103809024,
+  "matched_wire_operation": "2525103854758807",
+  "transport": "NIXL/LIBFABRIC/EFA",
+  "source_cached_tokens": 0,
+  "source_http_requests": 1,
+  "receiver_http_requests": 1,
+  "responses": "READY, HTTP200, complete streams without errors",
+  "capture": {
+    "path": "demos/transcripts/live/07-kvcr/20261105-a6/main.txt",
+    "sha256": "aec31b8b91eaaa887d9725be0498b16da26c5eb268993fa27c207f6cb7d342a0",
+    "source_hashes_verified": 48,
+    "evidence_hashes_verified": 417,
+    "startup_measured": false
+  },
+  "http_seconds": {
+    "source": 19.548692665999994,
+    "target": 19.426493417000017
+  },
+  "acceptance": {
+    "path": "results/workshop-kvcr-demo-20261105-a6-independent-audit/terminal.json",
+    "sha256": "067876ec3191b922d44a7a109bb4390acc21b10c3ce6cfd5bf1bd55b2d855709"
+  },
+  "cleanup": {
+    "path": "results/workshop-kvcr-demo-20261105-a6-cleanup-controller/terminal.json",
+    "sha256": "31627167b808baa97f37b33bb22d86147483277e449d2b8020c198db358733ab",
+    "zero_scoped_pods_claims_dgd": true,
+    "owning_lease_absent": true,
+    "independent_audit": "results/workshop-kvcr-demo-20261105-a6-independent-audit/cleanup-audit.json",
+    "independent_audit_sha256": "ce234b2cc8109ef68f0e44d599deaa820953d55614ee6a80807cdb571fce388e"
+  },
+  "original_failures_and_fresh_scientific_bytes_preserved": true,
+  "maturity": "Experimental pinned runtime integration; bounded functional qualification.",
+  "limits": [
+    "Explicit A/B placement; automatic routing not qualified.",
+    "No under-load speedup or production qualification.",
+    "No process-failure/Guard recovery injected.",
+    "Long projector guard overhead and first-request token pauses need polish/investigation."
+  ]
+}

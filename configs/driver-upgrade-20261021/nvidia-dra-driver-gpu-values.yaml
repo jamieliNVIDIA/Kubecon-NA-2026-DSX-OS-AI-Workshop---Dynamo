@@ -1,0 +1,170 @@
+# Complete values exported from the live release; driver upgrade bundle.
+allowDefaultNamespace: false
+altProcDevices: ''
+consumableShares: ''
+controller:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              dra-driver-nvidia-gpu-component: controller
+          topologyKey: kubernetes.io/hostname
+        weight: 100
+  containers:
+    computeDomain:
+      env: []
+      resources: {}
+      securityContext: {}
+  leaderElection:
+    enabled: false
+    leaseDuration: 15s
+    renewDeadline: 10s
+    retryPeriod: 2s
+  metrics:
+    enabled: true
+    httpEndpoint: :8080
+    metricsPath: /metrics
+    profilePath: ''
+  networkPolicy:
+    enabled: false
+  nodeSelector: {}
+  podAnnotations:
+    aicr.run/gpu-operator-chart-version: v26.7.0
+  podSecurityContext: {}
+  priorityClassName: ''
+  replicas: 1
+  tolerations:
+  - operator: Exists
+featureGates: {}
+fullnameOverride: nvidia-dra-driver-gpu
+gpuResourcesEnabledOverride: true
+image:
+  pullPolicy: IfNotPresent
+  repository: registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu
+  tag: ''
+imagePullSecrets: []
+kubeletPlugin:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: feature.node.kubernetes.io/pci-10de.present
+            operator: In
+            values:
+            - 'true'
+        - matchExpressions:
+          - key: feature.node.kubernetes.io/pci-0302_10de.present
+            operator: In
+            values:
+            - 'true'
+        - matchExpressions:
+          - key: feature.node.kubernetes.io/pci-0300_10de.present
+            operator: In
+            values:
+            - 'true'
+        - matchExpressions:
+          - key: feature.node.kubernetes.io/cpu-model.vendor_id
+            operator: In
+            values:
+            - NVIDIA
+        - matchExpressions:
+          - key: nvidia.com/gpu.present
+            operator: In
+            values:
+            - 'true'
+  containers:
+    computeDomains:
+      env: []
+      gpuCliqueLabelEnabled: false
+      healthcheckPort: 51515
+      resources: {}
+      securityContext:
+        privileged: true
+    gpus:
+      env: []
+      healthcheckPort: 51516
+      resources: {}
+      securityContext:
+        privileged: true
+    init:
+      resources: {}
+      securityContext: {}
+  kubeletPluginsDirectoryPath: /var/lib/kubelet/plugins
+  kubeletRegistrarDirectoryPath: /var/lib/kubelet/plugins_registry
+  metrics:
+    computeDomainHttpEndpoint: :8081
+    enabled: true
+    gpuHttpEndpoint: :8080
+    metricsPath: /metrics
+  networkPolicy:
+    enabled: false
+  nodeSelector:
+    nvidia.com/gpu.deploy.client: 'true'
+  podAnnotations:
+    aicr.run/gpu-operator-chart-version: v26.7.0
+  podSecurityContext: {}
+  priorityClassName: ''
+  tolerations:
+  - operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 100%
+    type: RollingUpdate
+logVerbosity: '4'
+nameOverride: nvidia-dra-driver-gpu
+namespaceOverride: ''
+nvidiaCDIHookPath: ''
+nvidiaDriverRoot: /run/nvidia/driver
+resourceApiVersion: ''
+resources:
+  computeDomains:
+    enabled: true
+    imex:
+      hostSocketPath: /etc/nvidia-imex/imex_ctrl.sock
+      isolation: domain
+      mode: driverManaged
+  gpus:
+    enabled: true
+selectorLabelsOverride: {}
+serviceAccount:
+  annotations: {}
+  create: true
+  name: ''
+webhook:
+  affinity: {}
+  containerPort: 443
+  containers:
+    webhook:
+      resources: {}
+      securityContext:
+        privileged: false
+  enabled: false
+  failurePolicy: Fail
+  nodeSelector: {}
+  podAnnotations: {}
+  podSecurityContext: {}
+  priorityClassName: system-cluster-critical
+  replicas: 1
+  serviceAccount:
+    create: true
+    name: ''
+  servicePort: 443
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 100%
+    type: RollingUpdate
+  tls:
+    certManager:
+      dnsNames: []
+      issuerName: ''
+      issuerType: selfsigned
+    mode: cert-manager
+    secret:
+      caBundle: ''
+      name: ''
+  tolerations:
+  - key: CriticalAddonsOnly
+    operator: Exists

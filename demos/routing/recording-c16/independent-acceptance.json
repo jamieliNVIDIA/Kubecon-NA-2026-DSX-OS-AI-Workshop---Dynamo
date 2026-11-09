@@ -1,0 +1,37 @@
+{
+  "verified_at": "2026-11-05T15:42:31.081411+00:00",
+  "transport_files_verified": 1040,
+  "frozen_payload_files_verified": 47,
+  "plan_sha256": "78b74d4e044d990bddf6451219133d0f0ebf320bfa4f2f7b6b5c18dadff4e67b",
+  "analysis_sha256": "f01d4a62c909176207eb162a6c2baf4de9b52abac74fed5dbe0175e96152bf12",
+  "remote_exit_sha256": "6c501fd7c9e38d262df088ca726a07ef2730d9aee4fd6393f9c67d6ca3d5438d",
+  "remote_gpu_cleanup_sha256": "07b271db5a8acfc071c1197fed48c4ac51ca07b441abc2404aa33b082676e51c",
+  "inventory_sha256": {
+    "pods": "2e2cd7e5e0071af3fab6ae0672d5d0f28815b132e3bfa2da20a7ac9922b2372f",
+    "claims": "72d399f0799dd5f97b134e2819dbb1bb011496fa63d08388828d8736fa782d92",
+    "dgds": "8d648fd8b460b1b9bfb15e1f2d7f51ccc77d94861d1634ba8d809a06731348c2"
+  },
+  "namespace": "dynamo-ft-routing-overnight-20261105-a1",
+  "live_namespace_claims": 0,
+  "live_namespace_dgds": 0,
+  "retained_cpu_client_uid": "4385c581-2c2c-446a-8f7d-123617386cf8",
+  "local_lease_owner": {
+    "agent": "/root/routing_load_sweep_controller",
+    "run": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-20261105-a1",
+    "acquired_at": "2026-11-05T06:45:04.585232+00:00",
+    "controller_name": "kubecon-workshop-routing-overnight-20261105-a1",
+    "plan_sha256": "78b74d4e044d990bddf6451219133d0f0ebf320bfa4f2f7b6b5c18dadff4e67b",
+    "gpu_uuids_by_node": {
+      "kubecon-nke-site-cp-0198": [
+        "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5",
+        "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326"
+      ],
+      "kubecon-nke-site-cp-0942": [
+        "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8",
+        "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75"
+      ]
+    },
+    "scope": "Routing-only reservation; global Snapshot lease and cp-0124 unchanged"
+  },
+  "scope": "Release only this completed controller local GPU reservation; no cluster mutation; CPU client retained"
+}

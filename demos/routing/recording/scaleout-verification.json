@@ -1,0 +1,65 @@
+{
+  "files_verified": 142,
+  "mismatches": 0,
+  "archive_sha256": "e5c12c71ae17aec4d3cc8f1791be30b91d3d8f35aba983d843e6fcc933f9bad6",
+  "manifest_sha256": "20064ae3ffc635ca9eca5bfbc48511e7968ac54772beedb0c1937338d7deed1d",
+  "controller_state": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 1,
+    "Error": "",
+    "StartedAt": "2026-11-03T23:34:29.150713466Z",
+    "FinishedAt": "2026-11-04T01:20:55.370626564Z"
+  },
+  "c4_stage_exit": {
+    "exit_code": 0,
+    "started_at": "2026-11-03T23:34:29.675694+00:00",
+    "finished_at": "2026-11-04T00:06:08.144280+00:00",
+    "gpu_lease_present": false
+  },
+  "inventories": {
+    "results/workshop-rr-20261103-resume02/c4-r1-a1/integrity-final.json": {
+      "files_verified": 33,
+      "sha256": "a32ced82edaaee9f07395a5fec4771d5f7cf64f973e84958c4235ab541a643a4"
+    },
+    "results/workshop-rr-20261103-resume02/c4-r1-a1/integrity.json": {
+      "files_verified": 31,
+      "sha256": "f2a95cf184b1c569bd57fb947c3e1776ff238902fac55255eab0ad3704612ca5"
+    },
+    "results/workshop-rr-20261103-resume02/c4-r2-a1/integrity-final.json": {
+      "files_verified": 35,
+      "sha256": "8c1b5d343631f79be27f5fe007afdb47ddaee74ff5ca6ff3d385ecca0faab719"
+    },
+    "results/workshop-rr-20261103-resume02/c4-r2-a1/integrity.json": {
+      "files_verified": 33,
+      "sha256": "9606d63519415b2a3b5cad918fe2323555f7fbc4b58d1b6eace1637547e8bccc"
+    },
+    "results/workshop-rr-20261103-resume02/recovery-c4-r1-a1/integrity.json": {
+      "files_verified": 24,
+      "sha256": "18a0396b9cd3c75a4ee74dd902d4232fb7664fb2a787e387df47e354507d61ba"
+    },
+    "results/workshop-rr-20261103-resume02/resume-c4-r2-stable-a1/integrity.json": {
+      "files_verified": 16,
+      "sha256": "e4e477d0d87bdf37180e7100c6b5ae117c692516da698110910db1b364912bb0"
+    }
+  },
+  "live_namespace_audit": {
+    "namespace": "dynamo-ft-r610-1ec4908b-rr",
+    "gpu_pods": [],
+    "resourceclaims": [],
+    "graphs": [],
+    "retained_non_gpu_pods": [
+      {
+        "name": "rr-loadgen",
+        "phase": "Failed"
+      }
+    ]
+  },
+  "collector_sha256": "27b5309f6affd3075e4d6108143cf6ed1bd8cc2aef63281e9faf8ed0cf8ec706",
+  "scope": "Original accepted C4 scale-out pair only; later routing failure preserved, no new GPU execution"
+}

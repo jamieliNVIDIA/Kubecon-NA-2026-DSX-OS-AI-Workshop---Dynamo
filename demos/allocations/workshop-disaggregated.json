@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "demo": "disaggregated",
+  "targets": {
+    "prefill": [
+      {
+        "node": "kubecon-nke-site-cp-0124",
+        "gpu_uuids": [
+          "GPU-b0ee6c73-bb3a-38e9-0546-30279eca76f5",
+          "GPU-aca1caa2-27c5-8591-6e84-fa0203889f51"
+        ]
+      }
+    ],
+    "decode": [
+      {
+        "node": "kubecon-nke-site-cp-0198",
+        "gpu_uuids": [
+          "GPU-c22769a2-282c-de40-459e-261999971cd9",
+          "GPU-7338f39e-745f-e46a-7ef6-cc8cc155d7af"
+        ]
+      }
+    ]
+  }
+}

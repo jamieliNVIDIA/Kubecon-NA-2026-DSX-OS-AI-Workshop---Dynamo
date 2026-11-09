@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "disposition": "cpu_cache_rpc_capability_passed_wrapper_failed",
+  "model_service_result": {
+    "address": "mx-dev-cpu-20261105-a2-server:8001",
+    "client_cgroup": {
+      "memory.current": "565555200",
+      "memory.max": "2147483648"
+    },
+    "elapsed_seconds": 1.5601177201606333,
+    "host_memory": {
+      "MemAvailable": "2057538576 kB",
+      "MemTotal": "2097089020 kB"
+    },
+    "installed_snapshot": "/probe-cache/models--nvidia--NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4/snapshots/8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+    "metadata_files": 26,
+    "metadata_hashes": {
+      "README.md": "c3408047c2e42cae5c19c7c10f407c364b0926d5a523b34c40d0b55f80c8a807",
+      "config.json": "35189a8038d1b1f934e58cba50eb7e97b42a4da569424e35b9fd1048058bc7ea",
+      "model.safetensors.index.json": "c368acdbcfe882236af1ec79df4a1fb6127e6ed9f742d59c01c21fe96ddc2741",
+      "tokenizer_config.json": "89fa70d31734c0c75ffdcee4114449f8cf8abd64bc233d420b58e25763f91aba"
+    },
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+    "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+    "sample_weight": {
+      "bytes": 35661352,
+      "path": "model-00008-of-00088.safetensors",
+      "sha256": "5ae1f86003d237659f6fb990ce55e2f4adeb9c0e81ac484b63de066b60746418"
+    },
+    "schema": 1,
+    "scope": "CPU-only exact revision, metadata/full file selection, metadata hashes and one bounded weight-shard read/hash; no CUDA/model load.",
+    "status": "passed",
+    "torch_imported": true,
+    "weight_bytes": 75010188240,
+    "weight_files": 88
+  },
+  "gpu_resources_requested": 0,
+  "shared_cache_mounted_read_only": true,
+  "actual_server_image": "nvcr.io/nvidia/ai-dynamo/modelexpress-server@sha256:0f8456cfc29c02547d6c62d1e640f98dc691e0326523c15fa05987d8bc491a77",
+  "client_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "namespace": "dynamo-ft-mx-dev-cache-20261105-a2",
+  "original_wrapper_status": "failed",
+  "original_wrapper_failure": "Incorrect assertion that SDK would not import Torch; actual CPU probe exits0 and reports torch_imported=true. Original terminal receipt preserved.",
+  "torch_imported": true,
+  "cuda_initialized": "not measured by this probe; do not infer false from zero GPU resources alone",
+  "unreached_wrapper_issue": "Source review notes duplicate Run.result status keyword would require fixing in a fresh controller; not an observed execution failure.",
+  "scope": "Accept existing pinned-cache ModelService revision/manifests/metadata and one weight-read hash only. No full RAM seed, throughput, GPU load, GMS-MX composition or CUDA initialization claim.",
+  "evidence": "results/mx-dev-cache-capability-20261105-a2",
+  "evidence_sha256": {
+    "plan.json": "0cd7bfd9fb74ab6ddb0fabc4d6bbdd35b0a5f5c3f0e82718197c2a22e4c84d41",
+    "probe.yaml": "df8b8e998f1814f55327a2d40545b2a67cffd27cdad86567d6d4b29e984c0a18",
+    "server.yaml": "78de945fb4fc859e20c0372d5942e5f47c9764fa15aec881a6edb3ed9484f01d",
+    "probe-console.log": "acaa000d9eb7d45ac83241834da52562751e8b87ffc659d10d3e74b08957e3c3",
+    "terminal.json": "dc67012140225ad3739482ca67bec572ade613078dbf3694bdf5984212a2d750",
+    "embedded_probe.py": "a60f65f7f525d7fc62d1f0198d11bd57c1b0440fb5272648b02008f98637bee8"
+  }
+}

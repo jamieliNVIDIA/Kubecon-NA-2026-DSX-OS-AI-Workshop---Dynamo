@@ -1,0 +1,898 @@
+<meta charset="utf-8">
+<title>Dynamo KVCR</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 16:9 full-viewport slides; one visual per slide; right-arrow walks build steps before advancing. Light by default, dark via T. */
+:root{
+  color-scheme:light;
+  --bg:#eef2f1; --surface:#ffffff; --surface2:#f1f4f3; --line:rgba(16,24,28,.13);
+  --text:#12191c; --dim:#56636a;
+  --req:#c27400; --disc:#4a74e8; --evt:#8a5cf0; --gpu:#4a7a00; --cpu:#1597b3;
+  --warn:#b08400; --bad:#e0353b; --ok:#4a7a00;
+  --green:#5e9a00; --green-fill:#76b900; --green-ink:#4a7a00; --tint:rgba(118,185,0,.12);
+  --shadow:0 1px 2px rgba(16,24,28,.06),0 8px 24px rgba(16,24,28,.08);
+  --slidebg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.12),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.10),transparent 45%),linear-gradient(180deg,#f9fbfa,#eef2f1);
+  --herobg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.18),transparent 50%),radial-gradient(ellipse at 65% 72%,rgba(62,199,224,.16),transparent 50%),linear-gradient(180deg,#f9fbfa,#eef2f1);
+  --display:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --body:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:JetBrains Mono,ui-monospace,Menlo,Consolas,monospace;
+}
+html.dark{
+  color-scheme:dark;
+  --bg:#07090a; --surface:#11171a; --surface2:#172025; --line:rgba(255,255,255,.12);
+  --text:#e8eef0; --dim:#8f9ca3;
+  --req:#f5a623; --disc:#7aa2ff; --evt:#b48cff; --gpu:#76b900; --cpu:#3ec7e0;
+  --warn:#ffd166; --bad:#ff5a5f; --ok:#76b900;
+  --green:#76b900; --green-fill:#76b900; --green-ink:#9fd44a; --tint:rgba(118,185,0,.14);
+  --shadow:0 2px 4px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.22);
+  --slidebg:radial-gradient(ellipse at 10% 0%,rgba(118,185,0,.10),transparent 45%),radial-gradient(ellipse at 95% 100%,rgba(62,199,224,.08),transparent 45%),linear-gradient(180deg,#080b0c,#06080a);
+  --herobg:radial-gradient(ellipse at 15% 35%,rgba(118,185,0,.14),transparent 50%),radial-gradient(ellipse at 65% 72%,rgba(62,199,224,.12),transparent 50%),linear-gradient(180deg,#080b0c,#06080a);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--body)}
+body{padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+.deck{position:relative;width:100%;height:100%}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(10px,2.2vh,26px);
+  padding:clamp(18px,5vh,64px) max(16px,clamp(18px,5vw,88px)) clamp(54px,9vh,90px);
+  opacity:0;pointer-events:none;transition:opacity .45s ease,transform .45s ease;transform:translateX(30px);overflow:hidden}
+.slide.active{opacity:1;pointer-events:auto;transform:none}
+@media (prefers-reduced-motion:reduce){.slide,[data-s],[data-only],.anim{transition:none!important;animation:none!important}}
+
+/* type */
+.kicker{font-family:var(--mono);font-size:clamp(11px,1.4vh,14px);letter-spacing:.16em;text-transform:uppercase;color:var(--cpu)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,8.5vh,104px);line-height:.98;letter-spacing:-.025em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,5vh,54px);line-height:1.05;letter-spacing:-.015em;text-wrap:balance}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(16px,2.4vh,26px)}
+p,li{font-size:clamp(14px,2.2vh,22px);line-height:1.45}
+.dim{color:var(--dim)}
+.mono,code{font-family:var(--mono)}
+code{font-size:.9em;background:var(--surface2);padding:1px 6px;border-radius:4px}
+.head{display:flex;flex-direction:column;gap:6px;max-width:1500px}
+.body{flex:0 1 auto;min-height:0;display:flex;gap:clamp(14px,2.5vw,36px);align-items:center;max-width:1600px;width:100%}
+.body.col{flex-direction:column;align-items:stretch}
+
+/* svg */
+.viz{width:100%;min-width:0;flex:1 1 auto}
+.viz svg{display:block;width:100%;height:auto;max-height:60vh}
+svg text{font-family:var(--body);fill:var(--text)}
+svg .h{font-family:var(--display);font-weight:700;font-size:20px}
+svg .hs{font-family:var(--display);font-weight:700;font-size:17px}
+svg .s{font-size:14px;fill:var(--dim)}
+svg .m{font-family:var(--mono);font-size:12.5px;fill:var(--dim)}
+svg .lb{font-size:13.5px;font-weight:600}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .cpu{fill:color-mix(in srgb,var(--cpu) 12%,var(--surface));stroke:var(--cpu);stroke-width:1.8}
+svg .gpu{fill:color-mix(in srgb,var(--gpu) 12%,var(--surface));stroke:var(--gpu);stroke-width:1.8}
+svg .py{fill:color-mix(in srgb,var(--warn) 9%,var(--surface));stroke:var(--warn);stroke-width:1.5}
+svg .hot{fill:color-mix(in srgb,var(--bad) 20%,var(--surface));stroke:var(--bad);stroke-width:1.8}
+svg .disc-f{fill:color-mix(in srgb,var(--disc) 12%,var(--surface));stroke:var(--disc);stroke-width:1.6}
+svg .evt-f{fill:color-mix(in srgb,var(--evt) 12%,var(--surface));stroke:var(--evt);stroke-width:1.6}
+svg .pod{fill:none;stroke:var(--dim);stroke-width:1.4;stroke-dasharray:7 6}
+svg .a-req{stroke:var(--req);stroke-width:3.2;fill:none}
+svg .a-disc{stroke:var(--disc);stroke-width:2.2;fill:none;stroke-dasharray:6 5}
+svg .a-evt{stroke:var(--evt);stroke-width:2.2;fill:none;stroke-dasharray:6 5}
+svg .a-ink{stroke:var(--text);stroke-width:2;fill:none}
+svg .a-gpu{stroke:var(--gpu);stroke-width:3.2;fill:none}
+svg .a-dim{stroke:var(--dim);stroke-width:1.3;fill:none}
+svg .flow{stroke-dasharray:11 8;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-19}}
+svg .c-req{fill:var(--req)} svg .c-disc{fill:var(--disc)} svg .c-evt{fill:var(--evt)} svg .c-gpu{fill:var(--gpu)}
+svg .c-cpu{fill:var(--cpu)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-ok{fill:var(--ok)} svg .c-ink{fill:var(--text)}
+
+/* build steps */
+[data-s],[data-only]{opacity:0;transition:opacity .35s ease}
+[data-s].on,[data-only].on{opacity:1}
+.stack{display:grid}.stack>*{grid-area:1/1}
+
+/* controls */
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.modes button{font:600 clamp(13px,1.8vh,17px) var(--body);color:var(--text);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:7px 16px;cursor:pointer}
+.modes button[aria-pressed="true"]{border-color:var(--req);background:color-mix(in srgb,var(--req) 16%,var(--surface))}
+.modes button:focus-visible,.navbtn:focus-visible{outline:2px solid var(--cpu);outline-offset:2px}
+
+/* cards & chips */
+.cards{display:grid;gap:clamp(10px,1.6vw,20px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(12px,2vh,22px);display:flex;flex-direction:column;gap:6px;min-width:0}
+.card p{font-size:clamp(13px,1.9vh,19px);color:var(--dim)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:clamp(11px,1.6vh,15px);padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);white-space:nowrap}
+.yes{color:var(--ok)} .no{color:var(--bad)} .part{color:var(--warn)}
+
+/* stats row */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat{border-top:2px solid var(--line);padding-top:8px;min-width:0}
+.stat b{display:block;font-family:var(--display);font-size:clamp(18px,3vh,32px)}
+.stat span{font-size:clamp(12px,1.7vh,17px);color:var(--dim)}
+
+/* split slide */
+.split{display:grid;grid-template-columns:1fr 0px 1fr;width:100%;max-width:1400px;margin:0 auto;transition:grid-template-columns .6s ease}
+.slide[data-step="1"] .split{grid-template-columns:1fr clamp(120px,14vw,220px) 1fr}
+.half{border:2px solid var(--warn);padding:clamp(14px,2.4vh,26px);display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .5s,border-radius .5s,background .5s;background:var(--surface)}
+.half.l{border-right:none;border-radius:14px 0 0 14px}
+.half.r{border-left:none;border-radius:0 14px 14px 0}
+.slide[data-step="1"] .half.l{border:2px solid var(--cpu);border-radius:14px;background:color-mix(in srgb,var(--cpu) 8%,var(--surface))}
+.slide[data-step="1"] .half.r{border:2px solid var(--gpu);border-radius:14px;background:color-mix(in srgb,var(--gpu) 8%,var(--surface))}
+.half .chips{display:flex;flex-direction:column;gap:8px}
+.half .chip{white-space:normal;font-size:clamp(12px,1.9vh,18px);padding:7px 12px;border-radius:8px}
+.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;gap:6px;text-align:center}
+.mid .line{width:100%;height:3px;background:var(--text);position:relative}
+.mid .line::before,.mid .line::after{content:"";position:absolute;top:-6px;border:7.5px solid transparent}
+.mid .line::before{left:-4px;border-right-color:var(--text)}
+.mid .line::after{right:-4px;border-left-color:var(--text)}
+.mid small{font-family:var(--mono);font-size:clamp(11px,1.6vh,15px);color:var(--dim)}
+.splitlabel{font-family:var(--mono);font-size:clamp(12px,1.7vh,16px);color:var(--dim)}
+
+/* lifecycle grid */
+.lanes{display:grid;grid-template-columns:clamp(90px,10vw,150px) repeat(6,1fr);gap:6px;width:100%}
+.lanes .ln{font-family:var(--mono);font-size:clamp(11px,1.6vh,15px);color:var(--dim);display:flex;align-items:center}
+.lanes .hd{font-family:var(--mono);font-size:clamp(11px,1.5vh,14px);color:var(--dim);text-align:center;padding-bottom:4px}
+.lanes .cell{min-height:clamp(46px,8vh,84px);border-radius:8px;background:color-mix(in srgb,var(--surface) 60%,transparent);border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;padding:6px}
+.lanes .ev{font-size:clamp(11px,1.65vh,16px);line-height:1.25;text-align:center;padding:6px 8px;border-radius:7px;background:var(--surface2);border:1px solid var(--line);width:100%}
+.lanes .ev.now{border-color:var(--req);box-shadow:0 0 0 2px color-mix(in srgb,var(--req) 35%,transparent)}
+.ev.k{color:var(--dim)} .ev.sc{border-left:3px solid var(--cpu)} .ev.en{border-left:3px solid var(--gpu)} .ev.rt{border-left:3px solid var(--disc)}
+.caption{font-size:clamp(15px,2.3vh,24px);min-height:2.6em}
+
+/* failure slide */
+.slide[data-step="1"] .eng-box{stroke:var(--bad);fill:color-mix(in srgb,var(--bad) 14%,var(--surface))}
+.slide[data-step="2"] .sc-box{stroke:var(--bad);fill:color-mix(in srgb,var(--bad) 14%,var(--surface))}
+.slide[data-step="3"] .eng-box{stroke:var(--warn);fill:color-mix(in srgb,var(--warn) 12%,var(--surface))}
+.slide[data-step="1"] .route,.slide[data-step="2"] .route,.slide[data-step="3"] .route{stroke:var(--bad);stroke-dasharray:4 6}
+.outcome{list-style:none;display:flex;flex-direction:column;gap:10px}
+.outcome li{padding-left:22px;position:relative;font-size:clamp(14px,2.1vh,21px)}
+.outcome li::before{content:"";position:absolute;left:0;top:.5em;width:10px;height:10px;border-radius:50%;background:var(--dim)}
+.outcome li.g::before{background:var(--ok)} .outcome li.b::before{background:var(--bad)} .outcome li.w::before{background:var(--warn)}
+
+/* perf sim */
+.sim{display:flex;flex-direction:column;gap:10px;width:100%}
+.simctl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:clamp(13px,1.9vh,18px)}
+.simctl input{width:min(380px,60vw);accent-color:var(--req)}
+.badge{font-family:var(--mono);font-size:clamp(11px,1.5vh,14px);padding:3px 9px;border-radius:6px;border:1px solid var(--warn);color:var(--warn)}
+
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(13px,2vh,20px)}
+th,td{padding:clamp(6px,1.2vh,12px) 12px;border-bottom:1px solid var(--line);text-align:left}
+th{font-family:var(--mono);font-size:clamp(11px,1.5vh,14px);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:500}
+td:first-child{font-family:var(--display);font-weight:700}
+td.c{text-align:center;font-family:var(--mono);font-weight:600}
+
+pre{font-family:var(--mono);font-size:clamp(11px,1.75vh,17px);line-height:1.55;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:clamp(10px,1.8vh,20px);overflow:auto;color:var(--text)}
+pre .cm{color:var(--dim)} pre .k{color:var(--cpu)} pre .g{color:var(--gpu)}
+
+.phases{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.phase{border-top:4px solid var(--line);padding-top:8px;font-size:clamp(12px,1.8vh,17px)}
+.phase b{display:block;font-family:var(--mono);font-size:clamp(11px,1.5vh,14px);color:var(--dim)}
+.phase.cur{border-top-color:var(--req)}
+
+/* chrome */
+.progress{position:fixed;left:0;bottom:0;height:4px;background:var(--req);transition:width .4s ease;z-index:50}
+.chrome{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;align-items:center;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));z-index:60;pointer-events:none}
+.chrome>*{pointer-events:auto}
+.hint{font-family:var(--mono);font-size:12px;color:var(--dim);opacity:.7}
+.navs{display:flex;gap:6px;align-items:center}
+.navbtn{font:500 13px var(--mono);height:34px;min-width:34px;padding:0 10px;color:var(--dim);background:color-mix(in srgb,var(--surface) 80%,transparent);border:1px solid var(--line);border-radius:7px;cursor:pointer}
+.navbtn:hover{color:var(--text)}
+.pg{font-family:var(--mono);font-size:12px;color:var(--dim);min-width:58px;text-align:center}
+.stepdots{display:flex;gap:4px;margin-right:6px}
+.stepdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.stepdots i.on{background:var(--req)}
+.notes-panel{visibility:hidden;position:fixed;left:50%;transform:translate(-50%,calc(100% + 80px));bottom:56px;width:min(960px,calc(100% - 32px));max-height:38vh;overflow:auto;
+  background:color-mix(in srgb,var(--surface2) 96%,transparent);border:1px solid var(--line);border-radius:12px;padding:16px 20px;z-index:70;transition:transform .3s ease;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.notes-panel.open{transform:translate(-50%,0);visibility:visible}
+.notes-panel h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cpu);margin-bottom:8px}
+.notes-panel li,.notes-panel p{font-size:15px;line-height:1.5;color:var(--text)}
+.notes-panel ul{padding-left:18px;display:flex;flex-direction:column;gap:4px}
+aside.notes{display:none}
+
+@media (max-width:820px){
+  .body{flex-direction:column;align-items:stretch}
+  .stats{grid-template-columns:1fr}
+  .hint{display:none}
+  .lanes{grid-template-columns:70px repeat(6,minmax(70px,1fr));overflow-x:auto}
+}
+
+/* ===== Unified Dynamo deck look (matches the slides on ai-dynamo.github.io) ===== */
+html,body{background:var(--bg)}
+.slide{background:var(--slidebg)}
+.slide:first-child{background:var(--herobg)}
+h1{font-weight:800;letter-spacing:-.035em}
+h2{font-weight:700;letter-spacing:-.025em}
+h3{font-weight:700;letter-spacing:-.01em}
+.kicker{color:var(--green-ink);font-weight:500;display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--green-fill);flex:none}
+code{background:var(--tint);color:var(--green-ink);border-radius:6px}
+.card{border-radius:16px;box-shadow:var(--shadow)}
+.chip{background:var(--surface)}
+.modes button{border-width:1px;box-shadow:0 1px 2px rgba(16,24,28,.05)}
+.modes button:hover{border-color:var(--green)}
+.modes button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);box-shadow:inset 0 0 0 1px var(--green)}
+.half{box-shadow:var(--shadow)}
+.lanes .ev{background:var(--surface);box-shadow:0 1px 2px rgba(16,24,28,.06)}
+.lanes .ev.now{border-color:var(--green);box-shadow:0 0 0 2px color-mix(in srgb,var(--green) 35%,transparent)}
+pre{background:#0d1316;color:#cdd6d3;border-color:rgba(255,255,255,.08);box-shadow:var(--shadow)}
+pre .cm{color:#7a878d} pre .k{color:#3ec7e0} pre .g{color:#9fd44a}
+.phase.cur{border-top-color:var(--green-fill)}
+.simctl input{accent-color:var(--green)}
+.stepdots i.on{background:var(--green-fill)}
+td.c,.stat b{font-variant-numeric:tabular-nums}
+.progress{height:3px;background:linear-gradient(90deg,#76b900,#3ec7e0)}
+.pg{font-size:13px;opacity:.8}
+.navbtn{height:40px;min-width:40px;padding:0 12px;border-radius:10px;font:500 13px var(--body);background:rgba(255,255,255,.88);border-color:rgba(16,24,28,.18);backdrop-filter:blur(8px)}
+.navbtn:hover{border-color:var(--green)}
+html.dark .navbtn{background:rgba(20,28,32,.75);border-color:rgba(255,255,255,.16)}
+.notes-panel{background:var(--surface);box-shadow:var(--shadow)}
+.notes-panel h4{color:var(--green-ink)}
+.modes button:focus-visible,.navbtn:focus-visible{outline-color:var(--green)}
+
+/* ===== Fill the screen: title at the top, content uses the space below it ===== */
+.slide{justify-content:flex-start;padding-top:clamp(28px,6.5vh,76px);padding-bottom:clamp(64px,10vh,96px);gap:clamp(14px,2.6vh,30px)}
+.slide>.head{flex:none}
+.slide>.body{flex:1 1 auto;min-height:0;max-width:none;align-items:center;justify-content:center}
+.slide>.body.col{justify-content:center}
+.viz{align-self:stretch;display:flex;align-items:center;justify-content:center;min-height:0}
+.viz svg{height:100%;max-height:none}
+.body.col>.viz{flex:1 1 0}
+/* text-led slides: larger type so cards fill the screen without empty boxes */
+.card{padding:clamp(16px,2.8vh,32px);gap:clamp(8px,1.3vh,14px)}
+.card h3{font-size:clamp(18px,3vh,32px)}
+.card p,.card li{font-size:clamp(15px,2.35vh,24px)}
+.card .chip{font-size:clamp(12px,1.8vh,17px)}
+table{font-size:clamp(14px,2.4vh,24px)}
+th{font-size:clamp(12px,1.7vh,16px)}
+pre{font-size:clamp(12px,2.1vh,20px)}
+.phase{font-size:clamp(13px,2.1vh,20px)}
+.caption{font-size:clamp(16px,2.6vh,26px)}
+.outcome li{font-size:clamp(15px,2.4vh,24px)}
+.lanes .cell{min-height:clamp(54px,10vh,104px)}
+.lanes .ev{font-size:clamp(12px,1.9vh,18px)}
+/* card rows: equal-height cards at natural height, centred in the space below the title */
+.slide>.body[style*="align-items:stretch"]{flex:0 0 auto;margin:auto 0}
+/* slide 14: keep the phase strip right under the tables; centre the pair */
+.slide>.body[style*="align-items:stretch"]:has(+.phases){margin-bottom:0}
+.slide>.phases{margin-bottom:auto}
+/* slides 12-15: text-led, so type scales up to fill the screen at natural height */
+.slide.txt{gap:clamp(18px,4vh,48px)}
+.slide.txt>.body{gap:clamp(16px,2vw,32px)}
+.slide.txt .card{padding:clamp(20px,3.6vh,44px) clamp(20px,2.2vw,40px);gap:clamp(10px,1.8vh,20px)}
+.slide.txt .card h3{font-size:clamp(20px,4vh,42px)}
+.slide.txt .card p{font-size:clamp(16px,2.9vh,30px)}
+.slide.txt .outcome{gap:clamp(10px,2vh,22px)}
+.slide.txt .outcome li{font-size:clamp(16px,2.9vh,30px);padding-left:28px}
+.slide.txt .outcome li::before{width:12px;height:12px}
+.slide.txt .chip{font-size:clamp(13px,2.2vh,22px);padding:6px 14px}
+.slide.txt table{font-size:clamp(16px,3.2vh,32px)}
+.slide.txt th{font-size:clamp(12px,2vh,19px)}
+.slide.txt th,.slide.txt td{padding:clamp(8px,2vh,20px) 14px}
+.slide.txt pre{font-size:clamp(14px,2.8vh,28px);padding:clamp(16px,3.4vh,40px)}
+.slide.txt .phases{gap:16px}
+.slide.txt .phase{font-size:clamp(14px,2.6vh,26px);padding-top:12px}
+.slide.txt .phase b{font-size:clamp(12px,1.9vh,18px)}
+.slide.txt p.dim{font-size:clamp(13px,2vh,19px)!important}
+.slide.txt td:first-child{white-space:nowrap}
+.slide.txt pre{font-size:clamp(12px,2.25vh,23px);flex:1.9 1 0!important;min-width:0}
+.slide.txt pre+.card{flex:1 1 0!important}
+/* perf slide: Python roofline chart */
+.body.pl{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(16px,2vw,32px);align-items:stretch}
+.pl-chart{gap:10px!important;justify-content:center}
+.pl-top{display:flex;align-items:center;gap:16px;font-size:clamp(15px,2.2vh,22px)}
+.pl-k{font-weight:600}
+.pl-top input{flex:1;accent-color:var(--green)}
+.pl-top b{font:700 clamp(22px,3.6vh,36px) var(--display);color:var(--gpu);min-width:3.4em;text-align:right;font-variant-numeric:tabular-nums}
+.pl-leg{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:clamp(13px,1.9vh,18px);color:var(--dim)}
+.pl-leg i{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:8px;vertical-align:4px}
+.pl-leg i.sc{background:var(--gpu)}.pl-leg i.ip{background:var(--req)}
+.pl-side{display:flex;flex-direction:column;gap:clamp(14px,2vh,24px)}
+.pl-c{flex:1;justify-content:center}
+.pl-c h3{font-size:clamp(18px,3vh,30px)}
+.pl-c .outcome li{font-size:clamp(15px,2.4vh,24px)}
+.pl-minor{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
+.pl-minor span{font:600 clamp(11px,1.6vh,14px) var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.pl-minor i,.pl-gate i{font-style:normal;font-size:clamp(12px,1.9vh,18px);padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);color:var(--dim)}
+.pl-chk{list-style:none;display:flex;flex-direction:column;gap:clamp(6px,1.2vh,12px)}
+.pl-chk li{font-size:clamp(15px,2.3vh,23px);padding-left:34px;position:relative}
+.pl-chk li::before{content:"";position:absolute;left:0;top:.15em;width:22px;height:22px;border-radius:6px;border:2px solid var(--disc)}
+/* slide 13 legend */
+.ct-leg{display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,2vw,40px);align-items:start;font-size:clamp(14px,2.2vh,22px)}
+.ct-leg>div{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.ct-leg i{display:inline-block;width:26px;height:4px;border-radius:2px}
+.ct-leg i.ink{background:var(--text)}.ct-leg i.evt{background:var(--evt)}
+.ct-leg span{color:var(--dim)}
+.ct-leg em{font-style:normal;font:500 clamp(12px,1.8vh,17px) var(--mono);padding:4px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--evt) 40%,transparent);background:color-mix(in srgb,var(--evt) 8%,var(--surface));color:var(--evt)}
+/* slide 14 timeline */
+.tl4{display:grid;grid-template-columns:repeat(4,1fr);position:relative;width:100%;padding-top:12px}
+.tl4::before{content:"";position:absolute;left:12px;right:12px;top:20px;height:3px;background:var(--line)}
+.tl4-i{position:relative;display:flex;flex-direction:column;gap:4px;padding-right:12px}
+.tl4-i i{width:19px;height:19px;border-radius:50%;background:var(--surface);border:3px solid var(--line);margin-bottom:6px;z-index:1}
+.tl4-i.now i{background:var(--green-fill);border-color:var(--green-fill);box-shadow:0 0 0 5px var(--tint)}
+.tl4-i b{font-size:clamp(15px,2.5vh,25px)}
+.tl4-i span{font-size:clamp(13px,1.9vh,19px);color:var(--dim)}
+.gp-l{font:600 clamp(11px,1.6vh,15px) var(--mono);letter-spacing:.12em;text-transform:uppercase;margin-top:6px}
+/* ===== Vertical balance: content sits centred between the title and the footer ===== */
+.slide{gap:clamp(18px,3.6vh,40px);padding-bottom:clamp(40px,5vh,52px)}
+.slide>.body{flex:0 1 auto;margin-top:auto;margin-bottom:auto;padding-top:clamp(0px,3.4vh,32px)}
+.slide>.body:has(+.tl4){margin-bottom:0}
+.slide>.tl4{margin-bottom:auto}
+.viz svg{height:auto;max-height:64vh}
+.body.col>.viz{flex:0 1 auto}
+/* mode buttons: clear separation from the title, sized like the rest of the controls */
+.head>.modes{margin-top:clamp(14px,3vh,30px);gap:10px}
+.head>.modes button{font-size:clamp(14px,2vh,19px);padding:9px 20px}
+/* diagrams that share the slide with a row below them stay shorter */
+.body.col:has(>.stack) .viz svg,.body.col:has(>.ct-leg) .viz svg{max-height:52vh}
+</style>
+
+<style>
+/* ===== KVCR deck ===== */
+.body.col:has(>.stack) .viz svg{max-height:60vh}
+.slide:first-child h1{font-size:clamp(34px,6.6vh,78px);line-height:1.06}
+.slide:last-child{background:var(--herobg)}
+.rq-c{gap:10px!important}.rq-c svg{width:100%;height:auto;max-height:24vh}
+.rq-c h3{font-size:clamp(17px,2.8vh,28px)}.rq-c p{font-size:clamp(13px,2vh,19px);margin:0}
+.rq-n{display:grid;place-items:center;width:clamp(30px,4.6vh,44px);height:clamp(30px,4.6vh,44px);border-radius:50%;background:var(--green-fill);color:#12191c;font:800 clamp(16px,2.6vh,24px) var(--display)}
+.tiers{display:flex;flex-direction:column;gap:clamp(8px,1.4vh,14px);width:100%}
+.tr{display:grid;grid-template-columns:1.1fr 2.4fr .7fr 1.2fr;align-items:center;gap:20px;padding:clamp(12px,2vh,22px) 22px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.tr.fut{border-style:dashed;box-shadow:none;background:transparent}
+.tr.th{background:none;border:0;box-shadow:none;padding-top:0;padding-bottom:0;font:600 clamp(11px,1.6vh,15px) var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.tn b{display:block;font-size:clamp(17px,2.8vh,28px)}.tn span{font-size:clamp(13px,1.9vh,18px);color:var(--dim)}
+.tn em{font-style:normal;font:500 clamp(11px,1.6vh,14px) var(--mono);color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 10px;margin-left:10px}
+.tb{display:flex;gap:5px;flex-wrap:wrap}.tb i{width:clamp(14px,2.4vh,24px);height:clamp(14px,2.4vh,24px);border-radius:5px;background:var(--line)}.tb i.on{background:var(--green-fill)}
+.own-kvcr,.own-eng{display:inline-block;font-weight:700;font-size:clamp(14px,2.2vh,21px);padding:6px 16px;border-radius:10px}
+.own-kvcr{background:var(--green-fill);color:#12191c}.own-eng{border:1.5px solid var(--text)}
+.ts{font-size:clamp(14px,2.1vh,20px);color:var(--dim)}.ts.g{color:var(--green-ink);font-weight:600}
+svg .kvb{fill:var(--green-fill)}svg .kvbt{fill:#12191c}
+.slide[data-step="1"] .kvb,.slide[data-step="2"] .kvb{fill:var(--surface2);stroke:var(--line)}.slide[data-step="1"] .kvbt,.slide[data-step="2"] .kvbt{fill:var(--dim)}
+.slide[data-step="1"] .eng-b,.slide[data-step="2"] .eng-b{stroke:var(--bad);stroke-width:2}
+svg .bk{fill:none;stroke:var(--green);stroke-width:2;stroke-dasharray:6 5}
+.slide[data-step="2"] .bk{fill:var(--green-fill);stroke-dasharray:none}
+.body.res{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:clamp(14px,1.8vw,28px);align-items:stretch;width:100%}
+.res-g{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.6vw,22px)}
+.rc{gap:6px!important}.rc b{font:800 clamp(30px,6vh,62px) var(--display);letter-spacing:-.03em;line-height:1.05}
+.rc h3{font-size:clamp(14px,2.2vh,21px)}.rc p{margin:0;font-size:clamp(12px,1.7vh,16px)}
+.res-sub{margin:4px 0 0;font-size:clamp(14px,2.1vh,20px)}
+.rmg{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,1.8vw,26px);width:100%}
+.rm{gap:clamp(6px,1vh,10px)!important;padding:clamp(14px,2.2vh,24px) clamp(16px,1.6vw,28px)!important}
+.rm-setup{font:500 clamp(12px,1.8vh,17px) var(--mono);color:var(--dim)}
+.rm-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:1px solid var(--line);padding-top:clamp(4px,.9vh,10px)}
+.rm-row span{font-size:clamp(14px,2.2vh,21px)}
+.rm-row b{font:800 clamp(20px,3.6vh,36px) var(--display);letter-spacing:-.02em;color:var(--green-ink);white-space:nowrap}
+.rm-row b small{font:600 clamp(12px,1.8vh,17px) var(--body);color:var(--dim);margin-left:6px;letter-spacing:0}
+.rm-row b i{font-style:normal;margin-right:2px}
+.simwrap{flex:1 1 auto!important;min-height:0;width:100%;margin:0!important;padding-top:0!important}
+.sim-box{position:relative;flex:1 1 auto;min-height:clamp(380px,62vh,760px);width:100%}
+#simFrame{position:absolute;top:0;left:0;width:1240px;height:660px;border:0;transform-origin:top left;background:transparent}
+html.dark .sim-box{background:#f3f6f5;border-radius:16px;box-shadow:var(--shadow)}
+html.dark #simFrame{padding:0}
+.prim .pfoot{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;width:100%}
+.prim .caption{flex:1;min-height:2.8em}
+.pleg{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:flex-end;max-width:46%;font-size:clamp(12px,1.7vh,16px);color:var(--dim)}
+.pleg span{display:flex;align-items:center;gap:6px}.pleg i{width:16px;height:16px;border-radius:4px;display:inline-block}
+.pleg i.h{background:var(--green-fill)}.pleg i.d{background:color-mix(in srgb,var(--green-fill) 45%,var(--surface))}.pleg i.t{border:2px dashed var(--green)}.pleg i.f{border:2px dashed var(--bad)}.pleg i.o{background:var(--line)}
+.tag{align-self:flex-start;font:600 clamp(10px,1.5vh,13px) var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:3px 12px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.tag.prod{background:var(--green-fill);border-color:var(--green-fill);color:#12191c}.tag.rep{border-color:var(--req);color:var(--req)}
+.rchart{gap:10px!important}.rchart h3{font-size:clamp(16px,2.6vh,26px)}
+.seg2{display:inline-flex;align-self:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg2 button{font:600 clamp(13px,1.9vh,17px) var(--body);color:var(--dim);background:none;border:0;border-radius:9px;padding:6px 14px;cursor:pointer}
+.seg2 button.on{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--green)}
+.body.gd{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);gap:clamp(14px,1.8vw,28px);align-items:stretch;width:100%}
+.gtop{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.gtop h3{font-size:clamp(16px,2.6vh,26px);margin:0}
+.gnote{font-size:clamp(14px,2.2vh,21px)}.gnote b{color:var(--green-ink)}
+.gsetup{margin:4px 0 0;font:500 clamp(12px,1.8vh,16px) var(--mono)}
+.gpre{font:500 clamp(12px,1.7vh,15px) var(--mono);color:var(--dim)}
+.gstats{display:flex!important;flex-direction:column;justify-content:space-around!important;gap:0!important}
+.gstats .stat{border-top:0;padding:0}
+.gstats .stat+.stat{border-top:1px solid var(--line);padding-top:clamp(8px,1.4vh,14px)}
+.gchart{gap:10px!important}
+.gstats .stat b{color:var(--green-ink);font-size:clamp(20px,3.6vh,36px)}.gstats .stat span{display:block}
+.tiny-setup{font:500 clamp(11px,1.6vh,14px) var(--mono);color:var(--dim);text-align:center}
+/* slide 10: size the chart by height so it never runs past the footer */
+#gdSvg{width:auto!important;max-width:100%;height:auto;max-height:44vh;align-self:center}
+.body.gd{align-items:start!important}
+.gchart{gap:6px!important;padding:clamp(12px,2vh,22px) clamp(16px,1.6vw,26px)!important}
+.gstats .stat b{font-size:clamp(18px,3.2vh,32px)!important}
+/* section divider: center the title on the whole slide */
+.slide.sect{justify-content:center;padding-top:0;padding-bottom:0}
+.slide.sect>.body{flex:0 0 auto}
+</style>
+<!-- shared markers -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="mr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--req)"/></marker>
+    <marker id="md" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--disc)"/></marker>
+    <marker id="me" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--evt)"/></marker>
+    <marker id="mk" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--text)"/></marker>
+    <marker id="mg" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--gpu)"/></marker>
+  </defs>
+</svg>
+
+<main class="deck" id="deck">
+
+<section class="slide" data-title="Title">
+  <div class="body" style="align-items:center">
+    <div class="head" style="flex:1 1 52%;gap:18px">
+      <span class="kicker">NVIDIA Dynamo · KVCR</span>
+      <h1>Distributed KV Cache Management with Dynamo Router and KVCR</h1>
+    </div>
+    <div class="viz" style="flex:1 1 48%">
+      <svg viewBox="0 0 560 380" role="img" aria-label="Router planning KV moves between two workers with KVCR">
+        <rect class="box" x="150" y="10" width="260" height="78" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="280" y="44" text-anchor="middle">Router</text><text class="s" x="280" y="70" text-anchor="middle">plans KV moves</text>
+        <path class="a-gpu" d="M240,90 L150,170" marker-end="url(#mg)"/><path class="a-gpu" d="M320,90 L410,170" marker-end="url(#mg)"/>
+        <rect class="box" x="10" y="176" width="250" height="180" rx="14"/><text class="hs" x="30" y="208">Worker A</text>
+        <rect class="box" x="300" y="176" width="250" height="180" rx="14"/><text class="hs" x="320" y="208">Worker B</text>
+        <rect x="30" y="226" width="26" height="24" rx="5" style="fill:var(--green-fill)"/><rect x="62" y="226" width="26" height="24" rx="5" style="fill:var(--green-fill)"/><rect x="94" y="226" width="26" height="24" rx="5" style="fill:var(--line)"/><rect x="126" y="226" width="26" height="24" rx="5" style="fill:var(--line)"/><rect x="158" y="226" width="26" height="24" rx="5" style="fill:var(--green-fill)"/><rect x="320" y="226" width="26" height="24" rx="5" style="fill:var(--line)"/><rect x="352" y="226" width="26" height="24" rx="5" style="fill:var(--green-fill)"/><rect x="384" y="226" width="26" height="24" rx="5" style="fill:var(--green-fill)"/><rect x="416" y="226" width="26" height="24" rx="5" style="fill:var(--green-fill)"/><rect x="448" y="226" width="26" height="24" rx="5" style="fill:var(--green-fill)"/>
+        <rect x="30" y="276" width="210" height="60" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="135" y="313" text-anchor="middle" style="fill:#12191c">KVCR</text>
+        <rect x="320" y="276" width="210" height="60" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="425" y="313" text-anchor="middle" style="fill:#12191c">KVCR</text>
+        <path class="a-gpu flow" d="M318,306 L244,306" marker-end="url(#mg)"/>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Distributed KV cache management with the Dynamo Router and KVCR (KV Cache Runner).</li>
+    <li>The idea in one line: the router plans where KV should be, and KVCR moves it between workers.</li>
+  </ul></aside>
+</section>
+
+<section class="slide" data-title="Requirements">
+  <div class="head"><span class="kicker">The problem</span><h2>Four requirements for KV cache management</h2></div>
+  <div class="body">
+    <div class="cards rq" style="grid-template-columns:repeat(4,1fr);width:100%">
+      <div class="card rq-c"><span class="rq-n">1</span><h3>Avoid recompute</h3>
+        <svg viewBox="0 0 260 230"><text class="m" x="0" y="14">↓ store</text><text class="m c-gpu" x="120" y="14">↑ retrieve</text>
+          <text class="m" x="0" y="46">HBM</text><rect x="0" y="54" width="22" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="27" y="54" width="22" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="54" y="54" width="22" height="20" rx="5" style="fill:var(--green-fill)"/>
+          <text class="m" x="0" y="100">DRAM</text><rect x="0" y="108" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="27" y="108" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="54" y="108" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="81" y="108" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="108" y="108" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/>
+          <text class="m" x="0" y="154">Remote storage</text><rect x="0" y="162" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="27" y="162" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="54" y="162" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="81" y="162" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="108" y="162" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="135" y="162" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="162" y="162" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="189" y="162" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/></svg>
+        <p>Store KV in cheaper tiers and bring it back instead of recomputing.</p></div>
+      <div class="card rq-c"><span class="rq-n">2</span><h3>Avoid hot spots</h3>
+        <svg viewBox="0 0 260 230"><text class="m" x="0" y="14">same prefix, many requests</text>
+          <path class="a-ink" d="M24,24 L24,52" marker-end="url(#mk)"/><path class="a-ink" d="M44,24 L44,52" marker-end="url(#mk)"/><path class="a-ink" d="M64,24 L64,52" marker-end="url(#mk)"/>
+          <rect class="box" x="10" y="58" width="68" height="110" rx="6"/><rect x="14" y="70" width="60" height="94" rx="4" style="fill:var(--bad)"/>
+          <rect class="box" x="96" y="58" width="68" height="110" rx="6"/><rect x="100" y="138" width="60" height="26" rx="4" style="fill:var(--green-fill)"/>
+          <rect class="box" x="182" y="58" width="68" height="110" rx="6"/><rect x="186" y="146" width="60" height="18" rx="4" style="fill:var(--green-fill)"/>
+          <text class="lb c-bad" x="44" y="186" text-anchor="middle">busy</text><text class="m" x="130" y="186" text-anchor="middle">idle</text><text class="m" x="216" y="186" text-anchor="middle">idle</text></svg>
+        <p>One popular prefix shouldn't pin all its traffic to one worker.</p></div>
+      <div class="card rq-c"><span class="rq-n">3</span><h3>Recover failures</h3>
+        <svg viewBox="0 0 260 230"><text class="m" x="0" y="14">worker dies</text>
+          <rect class="box" x="0" y="30" width="110" height="110" rx="6"/><rect x="14" y="48" width="82" height="16" style="fill:var(--line)"/><rect x="14" y="76" width="82" height="16" style="fill:var(--line)"/><rect x="14" y="104" width="82" height="16" style="fill:var(--line)"/>
+          <path d="M0,30 L110,140 M110,30 L0,140" style="stroke:var(--bad);stroke-width:3"/>
+          <path class="a-req" d="M118,85 L146,85" marker-end="url(#mr)" style="stroke:var(--bad);stroke-dasharray:6 5"/>
+          <rect x="150" y="30" width="110" height="110" rx="6" style="fill:none;stroke:var(--dim);stroke-dasharray:6 5"/><text class="m" x="205" y="90" text-anchor="middle">other worker</text>
+          <text class="lb c-bad" x="55" y="168" text-anchor="middle">cache lost</text><text class="lb c-bad" x="205" y="168" text-anchor="middle">recompute</text></svg>
+        <p>Losing a worker shouldn't mean recomputing its whole cache.</p></div>
+      <div class="card rq-c"><span class="rq-n">4</span><h3>Signal aware</h3>
+        <svg viewBox="0 0 260 230"><rect class="box" x="10" y="0" width="240" height="104" rx="8"/><text class="hs" x="24" y="24">Agent harness</text>
+          <rect x="24" y="34" width="212" height="28" rx="14" style="fill:color-mix(in srgb,var(--req) 14%,var(--surface));stroke:var(--req);stroke-dasharray:4 3"/><text class="m" x="130" y="53" text-anchor="middle" style="fill:var(--req)">sub-agent done</text>
+          <rect x="24" y="68" width="212" height="28" rx="14" style="fill:color-mix(in srgb,var(--req) 14%,var(--surface));stroke:var(--req);stroke-dasharray:4 3"/><text class="m" x="130" y="87" text-anchor="middle" style="fill:var(--req)">context compacted</text>
+          <path class="a-dim" d="M130,106 L130,126" marker-end="url(#mk)"/>
+          <rect class="box" x="10" y="130" width="240" height="96" rx="8"/><text class="hs" x="24" y="154">KV cache</text><rect x="24" y="166" width="22" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="51" y="166" width="22" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="78" y="166" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="105" y="166" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="132" y="166" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="159" y="166" width="22" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="186" y="166" width="22" height="20" rx="5" style="fill:var(--line)"/><rect x="213" y="166" width="22" height="20" rx="5" style="fill:var(--line)"/>
+          <rect x="20" y="160" width="164" height="32" rx="6" style="fill:none;stroke:var(--text);stroke-dasharray:4 3"/><text class="m" x="102" y="214" text-anchor="middle">safe to evict</text></svg>
+        <p>The workload knows when KV is done with — use that signal.</p></div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Store and retrieve, avoid hot spots, assume failures, take input from the workload.</li>
+    <li>1. Avoid recompute: offload KV down the tiers (HBM → DRAM → remote storage) and retrieve it instead of recomputing.</li>
+    <li>2. Avoid hot spots: many requests with the same prefix pile onto the one worker that holds it while others sit idle.</li>
+    <li>3. Recover failures: when a worker dies its cache is lost and another worker has to recompute it.</li>
+    <li>4. Signal aware: the agent harness knows when a sub-agent finished or a context was compacted, which tells us that KV is safe to evict.</li>
+  </ul></aside>
+</section>
+
+<section class="slide" data-steps="1" data-title="Approach">
+  <div class="head"><span class="kicker">Dynamo’s approach</span><h2>Router plans. KVCR acts.</h2>
+    <div class="modes"><button data-goto="0">Others</button><button data-goto="1">Dynamo + KVCR</button></div></div>
+  <div class="body col">
+    <div class="viz">
+      <svg viewBox="0 0 1000 470" role="img" aria-label="Others versus Dynamo with KVCR">
+        <rect class="box" x="400" y="0" width="200" height="56" rx="10"/><text class="hs" x="500" y="35" text-anchor="middle">Client</text>
+        <path class="a-dim" d="M500,58 L500,108" marker-end="url(#mk)"/>
+        <rect class="box" x="320" y="112" width="360" height="86" rx="12" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="500" y="148" text-anchor="middle">Router</text>
+        <text class="s" x="500" y="176" text-anchor="middle" data-only="0">load and KV aware</text><text class="s" x="500" y="176" text-anchor="middle" data-only="1">load and KV aware · plans KV moves</text>
+        <rect class="box" x="100" y="270" width="340" height="96" rx="12"/><text class="hs" x="120" y="300">Worker</text><rect class="box" x="120" y="312" width="300" height="42" rx="8"/><text class="s" x="136" y="339">Engine</text>
+        <rect class="box" x="560" y="270" width="340" height="96" rx="12"/><text class="hs" x="580" y="300">Worker</text><rect class="box" x="580" y="312" width="300" height="42" rx="8"/><text class="s" x="596" y="339">Engine</text>
+        <g data-only="0">
+          <path class="a-dim" d="M440,200 L300,266" marker-end="url(#mk)"/>
+          <path class="a-dim" d="M270,368 L270,398" style="stroke-dasharray:4 4"/><path class="a-dim" d="M730,368 L730,398" style="stroke-dasharray:4 4"/>
+          <rect class="box" x="240" y="400" width="520" height="66" rx="12"/><text class="hs" x="500" y="428" text-anchor="middle">KV cache manager</text><text class="s" x="500" y="452" text-anchor="middle">decides where KV goes, on its own</text>
+        </g>
+        <g data-only="1">
+          <rect x="380" y="70" width="92" height="28" rx="14" style="fill:var(--req)"/><text class="m" x="426" y="89" text-anchor="middle" style="fill:#fff">signals</text>
+          <circle cx="536" cy="84" r="14" style="fill:var(--green-ink)"/><text class="m" x="536" y="89" text-anchor="middle" style="fill:#fff">1</text><text class="lb" x="558" y="89">hint-aware router</text>
+          <path class="a-gpu" d="M440,200 L300,266" marker-end="url(#mg)"/>
+          <rect x="300" y="214" width="90" height="28" rx="14" style="fill:var(--green-ink)"/><text class="m" x="345" y="233" text-anchor="middle" style="fill:#fff">kv hint</text>
+          <circle cx="410" cy="228" r="14" style="fill:var(--green-ink)"/><text class="m" x="410" y="233" text-anchor="middle" style="fill:#fff">2</text><text class="lb" x="432" y="233">hints ride on requests</text>
+          <rect x="324" y="316" width="92" height="34" rx="8" style="fill:var(--green-fill)"/><text class="hs" x="370" y="339" text-anchor="middle" style="fill:#12191c">KVCR</text>
+          <rect x="784" y="316" width="92" height="34" rx="8" style="fill:var(--green-fill)"/><text class="hs" x="830" y="339" text-anchor="middle" style="fill:#12191c">KVCR</text>
+          <path class="a-gpu flow" d="M830,352 L830,410 L370,410 L370,356" marker-end="url(#mg)"/>
+          <text class="lb c-gpu" x="600" y="434" text-anchor="middle">KV moves between workers</text>
+          <circle cx="210" cy="296" r="14" style="fill:var(--green-ink)"/><text class="m" x="210" y="301" text-anchor="middle" style="fill:#fff">3</text><text class="lb" x="232" y="301">KVCR library</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Others: the router is load and KV aware, but a separate KV cache manager decides on its own where KV goes.</li>
+    <li>Dynamo + KVCR: 1) the router is hint-aware — it takes signals from the client; 2) it plans KV moves and sends them as hints that ride on requests; 3) the KVCR library inside each worker carries them out, moving KV between workers.</li>
+  </ul></aside>
+</section>
+
+<section class="slide" data-steps="1" data-title="Plan early">
+  <div class="head"><span class="kicker">Planning</span><h2>Plan early, with the full picture</h2>
+    <div class="modes"><button data-goto="0">Today</button><button data-goto="1">Next: router as scheduler</button></div></div>
+  <div class="body col">
+    <div class="viz">
+      <svg viewBox="0 0 1000 380" role="img" aria-label="Router routing request by request versus building a forward plan">
+        <rect class="box" x="120" y="0" width="760" height="76" rx="12" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="146" y="32">Router</text>
+        <text class="s" x="146" y="58" data-only="0">routes this request, then the next</text><text class="s" x="146" y="58" data-only="1">builds a forward plan</text>
+        <g data-only="1"><rect x="600" y="22" width="88" height="30" rx="15" style="fill:var(--req)"/><text class="m" x="644" y="42" text-anchor="middle" style="fill:#fff">signals</text></g>
+        <rect x="696" y="22" width="76" height="30" rx="15" style="fill:var(--green-ink)"/><text class="m" x="734" y="42" text-anchor="middle" style="fill:#fff">cache</text>
+        <rect x="780" y="22" width="76" height="30" rx="15" style="fill:var(--dim)"/><text class="m" x="818" y="42" text-anchor="middle" style="fill:#fff">load</text>
+        <text class="lb" x="330" y="112" text-anchor="middle">now</text><path d="M330,120 L330,300" style="stroke:var(--dim);stroke-width:2;stroke-dasharray:5 5"/>
+        <text class="hs" x="0" y="170">Worker A</text><rect x="140" y="140" width="740" height="52" rx="8" style="fill:var(--surface2)"/>
+        <text class="hs" x="0" y="262">Worker B</text><rect x="140" y="232" width="740" height="52" rx="8" style="fill:var(--surface2)"/>
+        <rect x="246" y="148" width="76" height="36" rx="7" style="fill:var(--green-fill)"/><text class="hs" x="284" y="172" text-anchor="middle" style="fill:#12191c">t1</text>
+        <g data-only="0">
+          <rect x="336" y="148" width="76" height="36" rx="7" style="fill:var(--green-fill)"/><text class="hs" x="374" y="172" text-anchor="middle" style="fill:#12191c">t2</text>
+          <text class="lb c-bad" x="866" y="172" text-anchor="end">busy</text><text class="lb c-gpu" x="866" y="264" text-anchor="end">idle</text>
+        </g>
+        <g data-only="1">
+          <rect x="336" y="148" width="76" height="36" rx="7" style="fill:none;stroke:var(--green);stroke-width:2;stroke-dasharray:5 4"/><text class="hs c-gpu" x="374" y="172" text-anchor="middle">t2</text>
+          <path class="a-gpu" d="M374,186 L374,236" marker-end="url(#mg)" style="stroke-dasharray:5 4"/>
+          <rect x="336" y="240" width="130" height="36" rx="7" style="fill:var(--tint);stroke:var(--green);stroke-width:2;stroke-dasharray:5 4"/><text class="lb c-gpu" x="401" y="264" text-anchor="middle">copy t1 KV</text>
+          <rect x="476" y="240" width="76" height="36" rx="7" style="fill:none;stroke:var(--green);stroke-width:2;stroke-dasharray:5 4"/><text class="hs c-gpu" x="514" y="264" text-anchor="middle">t3</text>
+          <rect x="562" y="240" width="76" height="36" rx="7" style="fill:none;stroke:var(--green);stroke-width:2;stroke-dasharray:5 4"/><text class="hs c-gpu" x="600" y="264" text-anchor="middle">t4</text>
+          <text class="lb c-gpu" x="866" y="172" text-anchor="end">balanced</text>
+        </g>
+        <path class="a-dim" d="M140,330 L876,330" marker-end="url(#mk)"/><text class="m" x="876" y="356" text-anchor="end">time</text>
+      </svg>
+    </div>
+    <div class="stack caption"><span data-only="0">The router sees one request at a time, so t2 queues behind t1 on busy Worker A while B sits idle.</span><span data-only="1">With signals, the router plans ahead: KVCR copies t1’s KV to B early, so t2–t4 run there.</span></div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Engine keeps the hot tiers. Router plans early. KVCR moves the KV.</li>
+    <li>Today the router uses cache and load to route this request, then the next. t2 lands on Worker A behind t1, which is busy, while Worker B is idle.</li>
+    <li>Next, the router as scheduler: it also takes signals from the workload and builds a forward plan. It has KVCR copy t1’s KV to Worker B ahead of time, so later turns (t3, t4) run on B.</li>
+  </ul></aside>
+</section>
+
+<section class="slide" data-steps="1" data-title="Tiers">
+  <div class="head"><span class="kicker">Memory tiers</span><h2>Four tiers, two owners</h2></div>
+  <div class="body col">
+    <div class="tiers">
+      <div class="tr th"><div>Tier</div><div>Capacity</div><div>Owner</div><div>Shared with</div></div>
+      <div class="tr"><div class="tn"><b>G1 · HBM</b><span>GPU memory</span></div><div class="tb"><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i></div><div class="to"><span class="own-eng">Engine</span></div><div class="ts">this engine only</div></div>
+      <div class="tr"><div class="tn"><b>G2 · DRAM</b><span>host memory</span></div><div class="tb"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></div><div class="to"><span class="own-kvcr">KVCR</span></div><div class="ts g">other workers, via KVCR</div></div>
+      <div class="tr fut" data-s="1"><div class="tn"><b>G3 · NVMe</b><span>local disk</span><em>future</em></div><div class="tb"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div><div class="to"><span class="own-kvcr">KVCR</span></div><div class="ts g">other workers, via KVCR</div></div>
+      <div class="tr fut" data-s="1"><div class="tn"><b>G4 · Remote</b><span>shared storage</span><em>future</em></div><div class="tb"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div><div class="to"><span class="own-kvcr">KVCR</span></div><div class="ts g">other workers, via KVCR</div></div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>The engine keeps HBM (G1), private to that engine. KVCR owns and shares everything below it.</li>
+    <li>G2 DRAM is shared with other workers via KVCR today. G3 local NVMe and G4 remote shared storage are future tiers, also owned by KVCR. Press → to reveal them.</li>
+  </ul></aside>
+</section>
+
+<section class="slide" data-steps="4" data-title="Sharing G2">
+  <div class="head"><span class="kicker">KVCR in action</span><h2>Sharing G2 across workers</h2></div>
+  <div class="body col">
+    <div class="viz">
+      <svg viewBox="0 0 1000 470" role="img" aria-label="Router hint lets Worker A pull KV from Worker B's DRAM">
+        <rect class="box" x="300" y="0" width="400" height="92" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="324" y="32">Router</text>
+        <rect class="box" x="324" y="44" width="352" height="36" rx="8"/><text class="m" x="340" y="68">t2 blocks: Worker B, G2</text>
+        <rect class="box" x="20" y="200" width="440" height="250" rx="14" style="fill:var(--surface2)"/><text class="hs" x="40" y="232">Worker A</text><rect class="box" x="34" y="246" width="412" height="190" rx="10"/><text class="lb" x="50" y="272">Engine</text><text class="m" x="50" y="298">G1 HBM</text><rect x="50" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="75" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="100" y="306" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="125" y="306" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="150" y="306" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="175" y="306" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="200" y="306" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="225" y="306" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><text class="m" x="50" y="356">G2 DRAM</text><rect x="50" y="364" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="75" y="364" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="100" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="125" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="150" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="175" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="200" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="225" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="320" y="290" width="120" height="110" rx="12" style="fill:var(--green-fill)"/><text class="hs" x="380" y="352" text-anchor="middle" style="fill:#12191c">KVCR</text><rect class="box" x="540" y="200" width="440" height="250" rx="14" style="fill:var(--surface2)"/><text class="hs" x="560" y="232">Worker B</text><rect class="box" x="554" y="246" width="412" height="190" rx="10"/><text class="lb" x="570" y="272">Engine</text><text class="m" x="720" y="298">G1 HBM</text><rect x="720" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="745" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="770" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="795" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="820" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="845" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="870" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="895" y="306" width="20" height="20" rx="5" style="fill:var(--line)"/><text class="m" x="720" y="356">G2 DRAM</text><rect x="720" y="364" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="745" y="364" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="770" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="795" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="820" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="845" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="870" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="895" y="364" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="570" y="290" width="120" height="110" rx="12" style="fill:var(--green-fill)"/><text class="hs" x="630" y="352" text-anchor="middle" style="fill:#12191c">KVCR</text>
+        <g data-s="1"><circle cx="730" cy="46" r="16" style="fill:var(--green-ink)"/><text class="lb" x="730" y="52" text-anchor="middle" style="fill:#fff">1</text></g>
+        <g data-s="2"><path class="a-gpu" d="M420,94 L240,196" marker-end="url(#mg)"/><rect x="200" y="122" width="200" height="30" rx="15" style="fill:var(--green-ink)"/><text class="m" x="300" y="142" text-anchor="middle" style="fill:#fff">kv hint: fetch t2 from B</text>
+          <circle cx="420" cy="137" r="16" style="fill:var(--green-ink)"/><text class="lb" x="420" y="143" text-anchor="middle" style="fill:#fff">2</text></g>
+        <g data-s="3"><path class="a-gpu flow" d="M630,402 L630,460 L380,460 L380,404" marker-end="url(#mg)"/><circle cx="505" cy="460" r="16" style="fill:var(--green-ink)"/><text class="lb" x="505" y="466" text-anchor="middle" style="fill:#fff">3</text></g>
+        <g data-s="4"><path class="a-gpu" d="M150,360 L150,330" marker-end="url(#mg)"/><circle cx="100" cy="414" r="16" style="fill:var(--green-ink)"/><text class="lb" x="100" y="420" text-anchor="middle" style="fill:#fff">4</text></g>
+      </svg>
+    </div>
+    <div class="stack caption">
+      <span data-only="0" class="dim">The router finds the KV. KVCR brings it to the worker that needs it. Press → to step through.</span>
+      <span data-only="1"><b>1 ·</b> The router knows where the KV is: t2’s blocks sit in Worker B’s G2.</span>
+      <span data-only="2"><b>2 ·</b> The plan rides on the request as a hint: fetch t2 from B.</span>
+      <span data-only="3"><b>3 ·</b> A’s KVCR pulls the blocks from B’s G2, peer to peer.</span>
+      <span data-only="4"><b>4 ·</b> A’s engine loads them into G1 and runs t2 without recomputing.</span>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>The router finds the KV. KVCR brings it to the worker that needs it.</li>
+    <li>1) The router knows where the KV is. 2) The hint rides on a request. 3) Worker A’s KVCR pulls from Worker B’s G2, peer to peer. 4) A’s engine loads it into G1.</li>
+  </ul></aside>
+</section>
+
+<section class="slide" data-steps="3" data-title="Failures">
+  <div class="head"><span class="kicker">KVCR-Guard · try it</span><h2>Recovering from failures</h2>
+    <div class="modes"><button data-goto="0">Healthy</button><button data-goto="1">Engine fails</button><button data-goto="2">Backup serves the pool</button><button data-goto="3">Engine returns</button></div></div>
+  <div class="body col">
+    <div class="viz">
+      <svg viewBox="0 0 1000 440" role="img" aria-label="KVCR-Guard keeps the DRAM pool alive when the engine fails">
+        <rect class="box" x="300" y="0" width="400" height="80" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="324" y="32">Router</text>
+        <text class="s" x="324" y="62" data-only="0">t2 goes to Worker B</text><text class="s" x="324" y="62" data-only="1">B’s engine is down</text><text class="s" x="324" y="62" data-only="2">t2 goes to A, KV from B’s pool</text><text class="s" x="324" y="62" data-only="3">S1 goes to Worker B again</text>
+        <path class="a-dim" d="M620,82 L700,150" marker-end="url(#mk)" data-only="0 3"/>
+        <g data-only="2"><path class="a-gpu" d="M380,82 L200,150" marker-end="url(#mg)"/><rect x="180" y="94" width="210" height="28" rx="14" style="fill:var(--green-ink)"/><text class="m" x="285" y="113" text-anchor="middle" style="fill:#fff">hint: fetch t2 from B’s pool</text></g>
+        <rect class="box" x="0" y="154" width="300" height="250" rx="14" style="fill:var(--surface2)"/><text class="hs" x="20" y="186">Worker A</text>
+        <rect class="box" x="14" y="200" width="272" height="190" rx="10"/><text class="lb" x="28" y="226">Engine</text>
+        <text class="m" x="28" y="252">G1 HBM</text><rect x="28" y="260" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="53" y="260" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="78" y="260" width="20" height="20" rx="5" style="fill:var(--line)"/><text class="m" x="28" y="310">G2 DRAM</text>
+        <g data-only="0 1"><rect x="28" y="318" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="53" y="318" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="78" y="318" width="20" height="20" rx="5" style="fill:var(--line)"/></g><g data-only="2 3"><rect x="28" y="318" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="53" y="318" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="78" y="318" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="103" y="318" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="128" y="318" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="153" y="318" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="178" y="318" width="20" height="20" rx="5" style="fill:var(--green-fill)"/></g>
+        <rect x="196" y="256" width="78" height="100" rx="10" style="fill:var(--green-fill)"/><text class="lb" x="235" y="311" text-anchor="middle" style="fill:#12191c">KVCR</text>
+        <rect class="box" x="340" y="154" width="660" height="250" rx="14" style="fill:var(--surface2)"/><text class="hs" x="360" y="186">Worker B</text>
+        <rect class="box eng-b" x="354" y="200" width="310" height="190" rx="10"/><text class="lb" x="368" y="226">Engine</text>
+        <text class="lb c-bad" x="650" y="226" text-anchor="end" data-only="1 2">down</text>
+        <text class="m" x="368" y="252">G1 HBM</text>
+        <g data-only="0"><rect x="368" y="260" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="393" y="260" width="20" height="20" rx="5" style="fill:var(--line)"/><rect x="418" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="443" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="468" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="493" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="518" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="543" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/></g><g data-only="1 2"><rect class="box" x="368" y="258" width="200" height="26" rx="6"/><text class="lb c-bad" x="468" y="277" text-anchor="middle">lost</text></g><g data-only="3"><rect x="368" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="393" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="418" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="443" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="468" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="493" y="260" width="20" height="20" rx="5" style="fill:var(--green-fill)"/></g>
+        <rect class="kvb" x="540" y="300" width="110" height="76" rx="10"/><text class="lb kvbt" x="595" y="343" text-anchor="middle">KVCR</text>
+        <rect class="box" x="680" y="200" width="306" height="190" rx="10"/><text class="lb" x="694" y="226">KVCR-Guard</text>
+        <text class="m" x="694" y="252">G2 DRAM pool</text><rect x="694" y="260" width="18" height="20" rx="5" style="fill:var(--line)"/><rect x="717" y="260" width="18" height="20" rx="5" style="fill:var(--line)"/><rect x="740" y="260" width="18" height="20" rx="5" style="fill:var(--line)"/><rect x="763" y="260" width="18" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="786" y="260" width="18" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="809" y="260" width="18" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="832" y="260" width="18" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="855" y="260" width="18" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="878" y="260" width="18" height="20" rx="5" style="fill:var(--green-fill)"/><rect x="901" y="260" width="18" height="20" rx="5" style="fill:var(--line)"/><rect x="924" y="260" width="18" height="20" rx="5" style="fill:var(--line)"/><rect x="947" y="260" width="18" height="20" rx="5" style="fill:var(--line)"/>
+        <rect class="bk" x="694" y="300" width="150" height="76" rx="10"/><text class="lb c-gpu" x="769" y="332" text-anchor="middle">Backup KVCR</text>
+        <text class="m" x="769" y="356" text-anchor="middle" data-only="0 3">standby</text><text class="m c-warn" x="769" y="356" text-anchor="middle" data-only="1">checking</text><text class="m" x="769" y="356" text-anchor="middle" data-only="2" style="fill:#12191c">active</text>
+        <path class="a-gpu" d="M652,338 L676,338 L676,272 L690,272" data-only="0 3"/>
+        <g data-only="2"><path class="a-gpu flow" d="M769,378 L769,424 L235,424 L235,360" marker-end="url(#mg)"/></g>
+        <g data-only="3"><path class="a-gpu flow" d="M690,268 L572,268" marker-end="url(#mg)"/></g>
+      </svg>
+    </div>
+    <div class="stack caption">
+      <span data-only="0">The DRAM pool sits in its own container, <b>KVCR-Guard</b>, so it can outlive the engine.</span>
+      <span data-only="1">The engine fails and G1 is lost. The pool survives. The guard confirms the engine is dead — a timeout alone isn’t enough to take over.</span>
+      <span data-only="2">The backup serves the pool. Worker A copies the KV from B’s pool, peer to peer, instead of recomputing it.</span>
+      <span data-only="3">The engine comes back and refills G1 from the pool — a copy, not a recompute — then a fenced handoff returns control.</span>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>The pool sits in its own container (KVCR-Guard), so it can outlive the engine. A backup KVCR waits on standby.</li>
+    <li>Engine fails: B’s G1 is lost but the G2 pool survives. The guard confirms the engine is dead before taking over; a timeout alone is not enough.</li>
+    <li>Backup serves the pool: the router sends t2 to Worker A with a hint to fetch from B’s pool; the backup KVCR serves it peer to peer.</li>
+    <li>Engine returns: it refills G1 from the pool (a copy, not a recompute), and there is a fenced handoff back to the engine.</li>
+  </ul></aside>
+</section>
+
+<section class="slide" data-title="Simulation">
+  <div class="head"><span class="kicker">Try it</span><h2>Live simulation: KVBM vs KVCR</h2></div>
+  <div class="body col simwrap"><div class="sim-box" id="simBox"><iframe id="simFrame" title="KVBM vs KVCR live cluster simulation"></iframe></div></div>
+  <aside class="notes"><ul>
+    <li>Same workload on two clusters side by side: KVBM (per-worker tiers, local onboarding only) and KVCR (router-hinted peer fetch, warm restart).</li>
+    <li>Pick a workload: multi-turn chat with load spikes, shared prompts fanned out across workers, or worker 1 failing mid-run. Use Next request to step, or Play.</li>
+    <li>Watch mean and p90 TTFT, prefill recomputed, and requests served from a failed worker's preserved DRAM pool.</li>
+  </ul></aside>
+</section>
+
+<section class="slide" data-title="Results">
+  <div class="head"><span class="kicker">Results so far</span><h2>KVCR results so far</h2><p class="dim res-sub">Early results from benchmarks and production.</p></div>
+  <div class="body">
+    <div class="rmg">
+      <div class="card rm"><span class="tag">Benchmark</span><div class="rm-setup">DeepSeek V4 Pro · B200 · sticky routing</div>
+        <div class="rm-row"><span>Mean TTFT</span><b>1.95×<small>faster</small></b></div>
+        <div class="rm-row"><span>p99 TTFT on burst</span><b>6.0×<small>faster</small></b></div>
+        <div class="rm-row"><span>Output throughput</span><b><i>↑</i>21.4%</b></div></div>
+      <div class="card rm"><span class="tag prod">Production, in-house</span><div class="rm-setup">DeepSeek V4 Pro · 22 B200 nodes · agentic</div>
+        <div class="rm-row"><span>TTFT p50</span><b>1.28×<small>faster</small></b></div>
+        <div class="rm-row"><span>TPOT</span><b>1.37×<small>faster</small></b></div></div>
+      <div class="card rm"><span class="tag">Benchmark</span><div class="rm-setup">AgentX · Qwen3.8-27B · H200 · concurrency 128</div>
+        <div class="rm-row"><span>Input tokens / s at high load</span><b><i>↑</i>25–50%</b></div>
+        <div class="rm-row"><span>TTFT p90</span><b>1.6–3.4×<small>faster</small></b></div></div>
+      <div class="card rm"><span class="tag rep">Production, external</span><div class="rm-setup">KVCR 0.1.0 in production</div>
+        <div class="rm-row"><span>KV cache reuse</span><b><i>↑</i>14%</b></div></div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Early results from benchmarks and production. Baselines and setups are still being confirmed.</li>
+    <li>Benchmark: −48.7% mean TTFT and −83.3% p99 on burst (DeepSeek V4 Pro, B200, sticky routing); output throughput +21.4%, goodput +32% at TTFT of 5 s or less.</li>
+    <li>Production: −22% TTFT p50 and −27% TPOT (internal provider, DeepSeek V4 Pro, 22 nodes of B200, agentic).</li>
+    <li>Benchmark: +25% to 50% input tokens per second at high load (AgentX at concurrency 128, KVCR on vs off, H200, Qwen3.8-27B); TTFT p90 is 1.6× to 3.4× worse with KVCR off.</li>
+    <li>Production, reported: +14% KV reuse after two weeks with KVCR 0.1.0.</li>
+    
+  </ul></aside>
+</section>
+
+<section class="slide" data-title="Guard results" data-hook="gd">
+  <div class="head"><span class="kicker">KVCR-Guard</span><h2>KVCR-Guard cuts failover tail latency</h2><p class="dim gsetup">Qwen3-235B · B200 TP4 × 2 workers · 512 GB/worker · C128 · ISL 50K–200K (P50 82K) · internal multi-turn trace</p></div>
+  <div class="body gd">
+    <div class="card gchart">
+      <div class="gtop"><h3>TTFT during failover <span class="dim">· seconds, lower is better</span></h3>
+        <div class="seg2" id="gdSeg"><button data-p="0">P50</button><button data-p="1">P90</button><button data-p="2" class="on">P95</button></div></div>
+      <svg id="gdSvg" viewBox="0 0 640 324" style="width:100%;height:auto"></svg>
+      <div class="gnote" id="gdNote"></div><div class="gpre">Before the fault: TTFT P50 / P90 / P95 = 0.69 / 1.71 / 2.21 s</div>
+    </div>
+    <div class="card gstats">
+      <div class="stat"><span>Output throughput</span><b>+6.5%</b><span>458 vs 430 tok/s</span></div>
+      <div class="stat"><span>Successful requests</span><b>268 vs 248</b></div>
+      <div class="stat"><span>Visible at the frontend</span><b>210.4 s sooner</b><span>217.6 s vs 428.0 s</span></div>
+      <div class="stat"><span>Mechanism evidence</span><b>85.94 GiB served</b><span>53 transfers · promotion in 0.81 s</span></div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Setup: Qwen3-235B, B200 TP4 × 2 workers, 512 GB per worker, concurrency 128, ISL 50K–200K (P50 82K), internal multi-turn conversation trace.</li>
+    <li>TTFT during failover (s): P50 1.02 with Guard vs 0.86 without; P90 7.02 vs 20.77; P95 9.65 vs 26.49. Pre-fault TTFT P50/P90/P95: 0.69 / 1.71 / 2.21 s.</li>
+    <li>P50 is slightly higher with Guard; the win is in the tail.</li>
+    <li>Output throughput +6.5% (458 vs 430 tok/s); successful requests 268 vs 248; recovery visible at the frontend 210.4 s sooner (217.6 s vs 428.0 s); 85.94 GiB served in 53 transfers, promotion in 0.81 s.</li>
+  </ul></aside>
+</section>
+
+<section class="slide sect" data-title="Primitives">
+  <div class="body" style="align-items:center;justify-content:center"><div class="head" style="align-items:center;text-align:center;gap:16px"><span class="kicker">Primitives</span><h1>Programmatic KV Cache Control</h1></div></div>
+  <aside class="notes"><ul><li>Section: the primitives the router can use to control where KV lives — copy, invalidate, no retain, move, prefetch, and topology-aware placement — driven by hints from the agent harness.</li></ul></aside>
+</section>
+
+<section class="slide prim" data-steps="3" data-title="Copy">
+  <div class="head"><span class="kicker">Primitives · Copy</span><h2>Copy: fork KV for a sub-agent</h2></div>
+  <div class="body col">
+    <div class="viz"><svg viewBox="0 0 1000 470" role="img" aria-label="Copy: fork KV for a sub-agent"><rect class="box" x="0" y="0" width="250" height="300" rx="14"/><text class="hs" x="18" y="30">Agent harness</text><rect x="18" y="44" width="214" height="34" rx="17" style="fill:color-mix(in srgb,var(--req) 14%,var(--surface));stroke:var(--req)"/><text class="lb" x="125" y="66" text-anchor="middle" style="fill:var(--req)">spawns a sub-agent</text><text class="m" x="18" y="104" style="letter-spacing:.08em">HARNESS METADATA</text><text class="m" x="18" y="132">session</text><text class="lb" x="232" y="132" text-anchor="end">S1</text><text class="m" x="18" y="160">intent</text><text class="lb" x="232" y="160" text-anchor="end">sub-agent fork</text><text class="m" x="18" y="188">ISL / OSL</text><text class="lb" x="232" y="188" text-anchor="end">48k / 2k</text><text class="m" x="18" y="216">starts</text><text class="lb" x="232" y="216" text-anchor="end">now</text><text class="m" x="18" y="244">runs</text><text class="lb" x="232" y="244" text-anchor="end">~350 s</text><rect class="box" x="300" y="0" width="680" height="120" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="322" y="34">Router</text><text class="s" x="322" y="68">A busy: load balance to B</text><text class="s" x="322" y="96">B has plenty of free KV</text><g data-s="2"><rect x="700" y="20" width="260" height="40" rx="20" style="fill:var(--green-ink)"/><text class="lb" x="830" y="46" text-anchor="middle" style="fill:var(--surface)">picks: copy</text></g><rect class="box" x="310" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="326" y="224">Worker A</text><text class="m" x="624" y="224" text-anchor="end">busy</text><text class="m" x="325" y="250">G1 HBM</text><rect class="box" x="325" y="256" width="300" height="32" rx="7"/><rect x="331" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="358" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="385" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="412" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><text class="m" x="325" y="316">G2 DRAM</text><rect class="box" x="325" y="322" width="300" height="32" rx="7"/><rect x="331" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="358" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="385" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="412" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="325" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="475" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="475" y="430" text-anchor="middle" style="fill:#12191c">reads from G2</text><rect class="box" x="660" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="676" y="224">Worker B</text><text class="m" x="974" y="224" text-anchor="end">plenty of free KV</text><text class="m" x="675" y="250">G1 HBM</text><text class="m c-gpu" x="975" y="250" text-anchor="end">S1 loaded for the request</text><rect class="box" x="675" y="256" width="300" height="32" rx="7"/><g data-only="0 1 2"><rect x="681" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="3"><rect x="681" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="708" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="735" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="762" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/></g><text class="m" x="675" y="316">G2 DRAM</text><text class="m c-gpu" x="975" y="316" text-anchor="end">copy lands here</text><rect class="box" x="675" y="322" width="300" height="32" rx="7"/><g data-only="0 1 2"><rect x="681" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="3"><rect x="681" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="708" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="735" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="762" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><rect x="675" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="825" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="825" y="430" text-anchor="middle" style="fill:#12191c">writes into G2</text><g data-s="1"><path class="a-req" d="M250,60 L296,60" marker-end="url(#mr)"/><text class="m c-req" x="273" y="50" text-anchor="middle">hint</text><circle cx="273" cy="92" r="15" style="fill:var(--green-ink)"/><text class="lb" x="273" y="97" text-anchor="middle" style="fill:var(--surface)">1</text></g><g data-s="2"><path class="a-gpu" d="M780,122 L800,192" marker-end="url(#mg)"/><text class="m c-gpu" x="814" y="160">request + fetch hint</text><circle cx="770" cy="160" r="15" style="fill:var(--green-ink)"/><text class="lb" x="770" y="165" text-anchor="middle" style="fill:var(--surface)">2</text></g><g data-s="3"><path class="a-gpu flow" d="M627,412 L672,412" marker-end="url(#mg)"/><text class="lb c-gpu" x="650" y="398" text-anchor="middle">copy</text><circle cx="650" cy="440" r="15" style="fill:var(--green-ink)"/><text class="lb" x="650" y="445" text-anchor="middle" style="fill:var(--surface)">3</text></g></svg></div>
+    <div class="pfoot"><div class="stack caption"><span data-only="0">The harness spawns a sub-agent that forks session S1. Press → to step.</span><span data-only="1"><b>1 ·</b> The harness sends a hint: S1 forks into a sub-agent, 48k in, ~350 s of work.</span><span data-only="2"><b>2 ·</b> A is busy, so the router load-balances to B and picks <b>copy</b>.</span><span data-only="3"><b>3 ·</b> KVCR copies S1 from A’s G2 into B’s G2. B has free KV space and the copy is likely to be reused.</span></div><div class="pleg"><span><i class="h"></i>S1 in HBM</span><span><i class="d"></i>S1 in DRAM</span><span><i class="t"></i>temporary</span><span><i class="f"></i>freed</span><span><i class="o"></i>other sessions</span></div></div>
+  </div>
+  <aside class="notes"><ul><li>Copy: fork KV for a sub-agent.</li><li>The harness metadata says session S1 is forking a sub-agent (ISL 48k, OSL 2k, starts now, runs ~350 s).</li><li>The router sees A is busy and B has plenty of free KV, so it load-balances to B and copies, because there is free KV space and a high chance of reuse.</li><li>A’s KVCR reads from G2, B’s KVCR writes into G2; S1 is loaded into B’s HBM for the request.</li></ul></aside>
+</section>
+
+<section class="slide prim" data-steps="2" data-title="Invalidate">
+  <div class="head"><span class="kicker">Primitives · Invalidate</span><h2>Invalidate: drop context that isn’t needed</h2></div>
+  <div class="body col">
+    <div class="viz"><svg viewBox="0 0 1000 470" role="img" aria-label="Invalidate: drop context that isn’t needed"><rect class="box" x="0" y="0" width="250" height="300" rx="14"/><text class="hs" x="18" y="30">Agent harness</text><rect x="18" y="44" width="214" height="34" rx="17" style="fill:color-mix(in srgb,var(--req) 14%,var(--surface));stroke:var(--req)"/><text class="lb" x="125" y="66" text-anchor="middle" style="fill:var(--req)">compacts the context</text><text class="m" x="18" y="104" style="letter-spacing:.08em">HARNESS METADATA</text><text class="m" x="18" y="132">session</text><text class="lb" x="232" y="132" text-anchor="end">S1</text><text class="m" x="18" y="160">event</text><text class="lb" x="232" y="160" text-anchor="end">compaction</text><text class="m" x="18" y="188">ISL</text><text class="lb" x="232" y="188" text-anchor="end">96k → 8k</text><text class="m" x="18" y="216">keeps</text><text class="lb" x="232" y="216" text-anchor="end">summary + tail</text><text class="m" x="18" y="244">next</text><text class="lb" x="232" y="244" text-anchor="end">~80 s</text><rect class="box" x="300" y="0" width="680" height="120" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="322" y="34">Router</text><text class="s" x="322" y="68">Old blocks are dead</text><text class="s" x="322" y="96">Copies on A and B</text><g data-s="2"><rect x="700" y="20" width="260" height="40" rx="20" style="fill:var(--green-ink)"/><text class="lb" x="830" y="46" text-anchor="middle" style="fill:var(--surface)">picks: invalidate</text></g><rect class="box" x="310" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="326" y="224">Worker A</text><text class="m" x="624" y="224" text-anchor="end">busy</text><text class="m" x="325" y="250">G1 HBM</text><text class="m c-gpu" x="625" y="250" text-anchor="end">summary kept</text><rect class="box" x="325" y="256" width="300" height="32" rx="7"/><g data-only="0 1"><rect x="331" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="358" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="385" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="412" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="439" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="2"><rect x="332" y="262" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M337,267 L347,277" style="stroke:var(--bad);stroke-width:2"/><rect x="359" y="262" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M364,267 L374,277" style="stroke:var(--bad);stroke-width:2"/><rect x="386" y="262" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M391,267 L401,277" style="stroke:var(--bad);stroke-width:2"/><rect x="412" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="439" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/></g><text class="m" x="325" y="316">G2 DRAM</text><text class="m c-gpu" x="625" y="316" text-anchor="end">old context freed</text><rect class="box" x="325" y="322" width="300" height="32" rx="7"/><g data-only="0 1"><rect x="331" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="358" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="385" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="412" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="2"><rect x="332" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M337,333 L347,343" style="stroke:var(--bad);stroke-width:2"/><rect x="359" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M364,333 L374,343" style="stroke:var(--bad);stroke-width:2"/><rect x="386" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M391,333 L401,343" style="stroke:var(--bad);stroke-width:2"/><rect x="412" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><rect x="325" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="475" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="475" y="430" text-anchor="middle" style="fill:#12191c">frees blocks</text><rect class="box" x="660" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="676" y="224">Worker B</text><text class="m" x="974" y="224" text-anchor="end">holds a stale copy</text><text class="m" x="675" y="250">G1 HBM</text><rect class="box" x="675" y="256" width="300" height="32" rx="7"/><rect x="681" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><text class="m" x="675" y="316">G2 DRAM</text><text class="m c-gpu" x="975" y="316" text-anchor="end">stale copy freed</text><rect class="box" x="675" y="322" width="300" height="32" rx="7"/><g data-only="0 1"><rect x="681" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="708" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="735" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="762" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="2"><rect x="682" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M687,333 L697,343" style="stroke:var(--bad);stroke-width:2"/><rect x="709" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M714,333 L724,343" style="stroke:var(--bad);stroke-width:2"/><rect x="736" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M741,333 L751,343" style="stroke:var(--bad);stroke-width:2"/><rect x="762" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><rect x="675" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="825" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="825" y="430" text-anchor="middle" style="fill:#12191c">frees blocks</text><g data-s="1"><path class="a-req" d="M250,60 L296,60" marker-end="url(#mr)"/><text class="m c-req" x="273" y="50" text-anchor="middle">hint</text><circle cx="273" cy="92" r="15" style="fill:var(--green-ink)"/><text class="lb" x="273" y="97" text-anchor="middle" style="fill:var(--surface)">1</text></g><g data-s="2"><path class="a-gpu" d="M560,122 L475,192" marker-end="url(#mg)"/><path class="a-gpu" d="M780,122 L825,192" marker-end="url(#mg)"/><text class="lb c-gpu" x="500" y="150">invalidate</text><text class="lb c-gpu" x="812" y="150">invalidate</text><circle cx="650" cy="160" r="15" style="fill:var(--green-ink)"/><text class="lb" x="650" y="165" text-anchor="middle" style="fill:var(--surface)">2</text></g></svg></div>
+    <div class="pfoot"><div class="stack caption"><span data-only="0">The harness compacts S1’s context. Press → to step.</span><span data-only="1"><b>1 ·</b> The harness reports compaction: 96k becomes 8k, keeping the summary and the tail.</span><span data-only="2"><b>2 ·</b> The old blocks are dead on both workers. The router frees every dead copy.</span></div><div class="pleg"><span><i class="h"></i>S1 in HBM</span><span><i class="d"></i>S1 in DRAM</span><span><i class="t"></i>temporary</span><span><i class="f"></i>freed</span><span><i class="o"></i>other sessions</span></div></div>
+  </div>
+  <aside class="notes"><ul><li>Invalidate: drop context that isn’t needed.</li><li>Harness metadata: session S1, event compaction, ISL 96k → 8k, keeps summary + tail, next turn in ~80 s.</li><li>The router knows the old blocks are dead and that copies exist on A and B, so it picks invalidate.</li><li>A frees the old context in G1 and G2 and keeps the summary; B frees its stale copy in G2.</li></ul></aside>
+</section>
+
+<section class="slide prim" data-steps="3" data-title="No retain">
+  <div class="head"><span class="kicker">Primitives · No retain</span><h2>No retain: use it once, leave nothing behind</h2></div>
+  <div class="body col">
+    <div class="viz"><svg viewBox="0 0 1000 470" role="img" aria-label="No retain: use it once, leave nothing behind"><rect class="box" x="0" y="0" width="250" height="300" rx="14"/><text class="hs" x="18" y="30">Agent harness</text><rect x="18" y="44" width="214" height="34" rx="17" style="fill:color-mix(in srgb,var(--req) 14%,var(--surface));stroke:var(--req)"/><text class="lb" x="125" y="66" text-anchor="middle" style="fill:var(--req)">one-off turn</text><text class="m" x="18" y="104" style="letter-spacing:.08em">HARNESS METADATA</text><text class="m" x="18" y="132">session</text><text class="lb" x="232" y="132" text-anchor="end">S1</text><text class="m" x="18" y="160">intent</text><text class="lb" x="232" y="160" text-anchor="end">one-off turn</text><text class="m" x="18" y="188">ISL / OSL</text><text class="lb" x="232" y="188" text-anchor="end">30k / 500</text><text class="m" x="18" y="216">starts</text><text class="lb" x="232" y="216" text-anchor="end">now</text><text class="m" x="18" y="244">next</text><text class="lb" x="232" y="244" text-anchor="end">none soon</text><rect class="box" x="300" y="0" width="680" height="120" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="322" y="34">Router</text><text class="s" x="322" y="68">A: load is transient</text><text class="s" x="322" y="96">B: KV is contended</text><g data-s="2"><rect x="700" y="20" width="260" height="40" rx="20" style="fill:var(--green-ink)"/><text class="lb" x="830" y="46" text-anchor="middle" style="fill:var(--surface)">picks: no copy, HBM only</text></g><rect class="box" x="310" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="326" y="224">Worker A · rank 0</text><text class="m" x="624" y="224" text-anchor="end">load spike</text><text class="m" x="325" y="250">G1 HBM</text><rect class="box" x="325" y="256" width="300" height="32" rx="7"/><rect x="331" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="358" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><text class="m" x="325" y="316">G2 DRAM</text><rect class="box" x="325" y="322" width="300" height="32" rx="7"/><rect x="331" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="358" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="385" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="412" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="325" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="475" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="475" y="430" text-anchor="middle" style="fill:#12191c">reads from G2</text><rect class="box" x="660" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="676" y="224">Worker B · rank 1</text><text class="m" x="974" y="224" text-anchor="end">KV 92% full</text><text class="m" x="675" y="250">G1 HBM</text><text class="m c-gpu" x="975" y="250" text-anchor="end">S1 held for this request</text><rect class="box" x="675" y="256" width="300" height="32" rx="7"/><g data-only="0 1 2"><rect x="681" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="735" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="762" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="3"><rect x="682" y="262" width="20" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 18%,var(--surface));stroke:var(--green);stroke-width:2;stroke-dasharray:4 3"/><rect x="709" y="262" width="20" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 18%,var(--surface));stroke:var(--green);stroke-width:2;stroke-dasharray:4 3"/><rect x="736" y="262" width="20" height="20" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 18%,var(--surface));stroke:var(--green);stroke-width:2;stroke-dasharray:4 3"/><rect x="762" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="816" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="843" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/></g><text class="m" x="675" y="316">G2 DRAM</text><text class="m c-gpu" x="975" y="316" text-anchor="end">no S1, not demoted</text><rect class="box" x="675" y="322" width="300" height="32" rx="7"/><rect x="681" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="735" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="762" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="816" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="843" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="675" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="825" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="825" y="430" text-anchor="middle" style="fill:#12191c">pulls to HBM</text><g data-s="1"><path class="a-req" d="M250,60 L296,60" marker-end="url(#mr)"/><text class="m c-req" x="273" y="50" text-anchor="middle">hint</text><circle cx="273" cy="92" r="15" style="fill:var(--green-ink)"/><text class="lb" x="273" y="97" text-anchor="middle" style="fill:var(--surface)">1</text></g><g data-s="2"><path class="a-gpu" d="M780,122 L800,192" marker-end="url(#mg)"/><text class="m c-gpu" x="814" y="160">request + one-time fetch</text><circle cx="770" cy="160" r="15" style="fill:var(--green-ink)"/><text class="lb" x="770" y="165" text-anchor="middle" style="fill:var(--surface)">2</text></g><g data-s="3"><path class="a-gpu flow" d="M627,412 L672,412" marker-end="url(#mg)"/><text class="lb c-gpu" x="650" y="398" text-anchor="middle">pull once</text><circle cx="650" cy="440" r="15" style="fill:var(--green-ink)"/><text class="lb" x="650" y="445" text-anchor="middle" style="fill:var(--surface)">3</text></g></svg></div>
+    <div class="pfoot"><div class="stack caption"><span data-only="0">A one-off turn on S1. Press → to step. A and B can be workers or ranks in one server.</span><span data-only="1"><b>1 ·</b> The harness says this is a one-off turn: nothing follows soon.</span><span data-only="2"><b>2 ·</b> A’s load is only a spike and B’s KV is 92% full, so the router picks <b>no copy, HBM only</b>.</span><span data-only="3"><b>3 ·</b> B holds S1 in HBM for one request, then drops it. No demotion, no pressure on B’s DRAM.</span></div><div class="pleg"><span><i class="h"></i>S1 in HBM</span><span><i class="d"></i>S1 in DRAM</span><span><i class="t"></i>temporary</span><span><i class="f"></i>freed</span><span><i class="o"></i>other sessions</span></div></div>
+  </div>
+  <aside class="notes"><ul><li>No retain: use it once, leave nothing behind.</li><li>Harness metadata: session S1, one-off turn, ISL 30k, OSL 500, starts now, no next turn soon.</li><li>The router sees A’s load is transient and B’s KV is contended (92% full), so it picks no copy, HBM only.</li><li>B’s KVCR pulls S1 into HBM for this request only; it is dropped afterwards and never demoted into B’s DRAM. A and B can be separate workers or ranks in one server.</li></ul></aside>
+</section>
+
+<section class="slide prim" data-steps="4" data-title="Move">
+  <div class="head"><span class="kicker">Primitives · Move</span><h2>Move: copy and invalidate</h2></div>
+  <div class="body col">
+    <div class="viz"><svg viewBox="0 0 1000 470" role="img" aria-label="Move: copy and invalidate"><rect class="box" x="0" y="0" width="250" height="300" rx="14"/><text class="hs" x="18" y="30">Agent harness</text><rect x="18" y="44" width="214" height="34" rx="17" style="fill:color-mix(in srgb,var(--req) 14%,var(--surface));stroke:var(--req)"/><text class="lb" x="125" y="66" text-anchor="middle" style="fill:var(--req)">session wakes back up</text><text class="m" x="18" y="104" style="letter-spacing:.08em">HARNESS METADATA</text><text class="m" x="18" y="132">session</text><text class="lb" x="232" y="132" text-anchor="end">S1</text><text class="m" x="18" y="160">event</text><text class="lb" x="232" y="160" text-anchor="end">wake-up</text><text class="m" x="18" y="188">ISL / OSL</text><text class="lb" x="232" y="188" text-anchor="end">120k / 1k</text><text class="m" x="18" y="216">idle</text><text class="lb" x="232" y="216" text-anchor="end">~40 min</text><text class="m" x="18" y="244">resumes</text><text class="lb" x="232" y="244" text-anchor="end">now</text><rect class="box" x="300" y="0" width="680" height="120" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="322" y="34">Router</text><text class="s" x="322" y="68">A busy, B idle</text><text class="s" x="322" y="96">Session needs one home</text><g data-s="2"><rect x="700" y="20" width="260" height="40" rx="20" style="fill:var(--green-ink)"/><text class="lb" x="830" y="46" text-anchor="middle" style="fill:var(--surface)">picks: move</text></g><rect class="box" x="310" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="326" y="224">Worker A</text><text class="m" x="624" y="224" text-anchor="end">busy</text><text class="m" x="325" y="250">G1 HBM</text><rect class="box" x="325" y="256" width="300" height="32" rx="7"/><rect x="331" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="358" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="385" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="412" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><text class="m" x="325" y="316">G2 DRAM</text><rect class="box" x="325" y="322" width="300" height="32" rx="7"/><rect x="331" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="358" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="385" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="412" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="325" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="475" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="475" y="430" text-anchor="middle" style="fill:#12191c">reads from G2</text><rect class="box" x="660" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="676" y="224">Worker B</text><text class="m" x="974" y="224" text-anchor="end">idle</text><text class="m" x="675" y="250">G1 HBM</text><text class="m c-gpu" x="975" y="250" text-anchor="end">S1 loaded</text><rect class="box" x="675" y="256" width="300" height="32" rx="7"/><g data-only="0 1 2"><rect x="681" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="3 4"><rect x="681" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="708" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="735" y="261" width="22" height="22" rx="5" style="fill:var(--green-fill)"/><rect x="762" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/></g><text class="m" x="675" y="316">G2 DRAM</text><text class="m c-gpu" x="975" y="316" text-anchor="end">S1 now here</text><rect class="box" x="675" y="322" width="300" height="32" rx="7"/><g data-only="0 1 2"><rect x="681" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="3 4"><rect x="681" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="708" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="735" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="762" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><rect x="675" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="825" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="825" y="430" text-anchor="middle" style="fill:#12191c">writes into G2</text><g data-only="4"><rect x="325" y="256" width="300" height="32" rx="7" style="fill:var(--surface)"/><rect x="332" y="262" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M337,267 L347,277" style="stroke:var(--bad);stroke-width:2"/><rect x="359" y="262" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M364,267 L374,277" style="stroke:var(--bad);stroke-width:2"/><rect x="386" y="262" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M391,267 L401,277" style="stroke:var(--bad);stroke-width:2"/><rect x="412" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="325" y="322" width="300" height="32" rx="7" style="fill:var(--surface)"/><rect x="332" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M337,333 L347,343" style="stroke:var(--bad);stroke-width:2"/><rect x="359" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M364,333 L374,343" style="stroke:var(--bad);stroke-width:2"/><rect x="386" y="328" width="20" height="20" rx="5" style="fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/><path d="M391,333 L401,343" style="stroke:var(--bad);stroke-width:2"/><rect x="412" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><text class="m c-bad" x="625" y="250" text-anchor="end">freed after the copy</text></g><g data-s="1"><path class="a-req" d="M250,60 L296,60" marker-end="url(#mr)"/><text class="m c-req" x="273" y="50" text-anchor="middle">hint</text><circle cx="273" cy="92" r="15" style="fill:var(--green-ink)"/><text class="lb" x="273" y="97" text-anchor="middle" style="fill:var(--surface)">1</text></g><g data-s="2"><path class="a-gpu" d="M780,122 L800,192" marker-end="url(#mg)"/><text class="m c-gpu" x="814" y="160">request + fetch hint</text><circle cx="770" cy="160" r="15" style="fill:var(--green-ink)"/><text class="lb" x="770" y="165" text-anchor="middle" style="fill:var(--surface)">2</text></g><g data-s="3"><path class="a-gpu flow" d="M627,412 L672,412" marker-end="url(#mg)"/><text class="lb c-gpu" x="650" y="398" text-anchor="middle">copy</text><circle cx="650" cy="440" r="15" style="fill:var(--green-ink)"/><text class="lb" x="650" y="445" text-anchor="middle" style="fill:var(--surface)">3</text></g><g data-s="4"><circle cx="300" cy="272" r="15" style="fill:var(--green-ink)"/><text class="lb" x="300" y="277" text-anchor="middle" style="fill:var(--surface)">4</text></g></svg></div>
+    <div class="pfoot"><div class="stack caption"><span data-only="0">S1 wakes up after ~40 minutes idle. Press → to step.</span><span data-only="1"><b>1 ·</b> The harness reports the wake-up: 120k of context, resuming now.</span><span data-only="2"><b>2 ·</b> A is busy and B is idle, and the session needs one home: the router picks <b>move</b>.</span><span data-only="3"><b>3 ·</b> KVCR copies S1 from A’s G2 to B’s G2, and B loads it into HBM.</span><span data-only="4"><b>4 ·</b> A invalidates its G1 and G2 copies. The harness gave the event; the router inferred the move.</span></div><div class="pleg"><span><i class="h"></i>S1 in HBM</span><span><i class="d"></i>S1 in DRAM</span><span><i class="t"></i>temporary</span><span><i class="f"></i>freed</span><span><i class="o"></i>other sessions</span></div></div>
+  </div>
+  <aside class="notes"><ul><li>Move: copy and invalidate.</li><li>Harness metadata: session S1, event wake-up, ISL 120k, OSL 1k, idle ~40 min, resumes now.</li><li>The router sees A busy and B idle, and the session needs one home, so it picks move.</li><li>KVCR copies S1 to B’s G2 and B loads it into HBM; then A frees its G1 and G2 copies. The harness gives the event; the router infers move.</li></ul></aside>
+</section>
+
+<section class="slide prim" data-steps="3" data-title="Prefetch">
+  <div class="head"><span class="kicker">Primitives · Prefetch</span><h2>Prefetch: copy ahead to a worker with room</h2></div>
+  <div class="body col">
+    <div class="viz"><svg viewBox="0 0 1000 470" role="img" aria-label="Prefetch: copy ahead to a worker with room"><rect class="box" x="0" y="0" width="250" height="300" rx="14"/><text class="hs" x="18" y="30">Agent harness</text><rect x="18" y="44" width="214" height="34" rx="17" style="fill:color-mix(in srgb,var(--req) 14%,var(--surface));stroke:var(--req)"/><text class="lb" x="125" y="66" text-anchor="middle" style="fill:var(--req)">next turn is coming</text><text class="m" x="18" y="104" style="letter-spacing:.08em">HARNESS METADATA</text><text class="m" x="18" y="132">session</text><text class="lb" x="232" y="132" text-anchor="end">S1</text><text class="m" x="18" y="160">expect</text><text class="lb" x="232" y="160" text-anchor="end">next turn</text><text class="m" x="18" y="188">ISL / OSL</text><text class="lb" x="232" y="188" text-anchor="end">64k / 1k</text><text class="m" x="18" y="216">in</text><text class="lb" x="232" y="216" text-anchor="end">~2 s</text><rect class="box" x="300" y="0" width="680" height="120" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="322" y="34">Router</text><text class="s" x="322" y="68">A busy, B has room</text><text class="s" x="322" y="96">Low KV pressure on B</text><g data-s="2"><rect x="700" y="20" width="260" height="40" rx="20" style="fill:var(--green-ink)"/><text class="lb" x="830" y="46" text-anchor="middle" style="fill:var(--surface)">picks: prefetch copy to B</text></g><rect class="box" x="310" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="326" y="224">Worker A</text><text class="m" x="624" y="224" text-anchor="end">busy</text><text class="m" x="325" y="250">G1 HBM</text><rect class="box" x="325" y="256" width="300" height="32" rx="7"/><rect x="331" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="358" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><text class="m" x="325" y="316">G2 DRAM</text><text class="m c-gpu" x="625" y="316" text-anchor="end">S1 is here</text><rect class="box" x="325" y="322" width="300" height="32" rx="7"/><rect x="331" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="358" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="385" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="412" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="439" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="325" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="475" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="475" y="430" text-anchor="middle" style="fill:#12191c">reads from G2</text><rect class="box" x="660" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="676" y="224">Worker B</text><text class="m" x="974" y="224" text-anchor="end">low KV pressure</text><text class="m" x="675" y="250">G1 HBM</text><text class="m c-gpu" x="975" y="250" text-anchor="end">loaded at request time</text><rect class="box" x="675" y="256" width="300" height="32" rx="7"/><rect x="681" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="261" width="22" height="22" rx="5" style="fill:var(--line)"/><text class="m" x="675" y="316">G2 DRAM</text><text class="m c-gpu" x="975" y="316" text-anchor="end">prefetch lands here</text><rect class="box" x="675" y="322" width="300" height="32" rx="7"/><g data-only="0 1 2"><rect x="681" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="708" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><g data-only="3"><rect x="681" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="708" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="735" y="327" width="22" height="22" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="762" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/><rect x="789" y="327" width="22" height="22" rx="5" style="fill:var(--line)"/></g><rect x="675" y="374" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="825" y="406" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="825" y="430" text-anchor="middle" style="fill:#12191c">writes into G2</text><g data-s="1"><path class="a-req" d="M250,60 L296,60" marker-end="url(#mr)"/><text class="m c-req" x="273" y="50" text-anchor="middle">hint</text><circle cx="273" cy="92" r="15" style="fill:var(--green-ink)"/><text class="lb" x="273" y="97" text-anchor="middle" style="fill:var(--surface)">1</text></g><g data-s="2"><path class="a-gpu" d="M780,122 L800,192" marker-end="url(#mg)" style="stroke-dasharray:6 5"/><text class="m c-gpu" x="814" y="160">prefetch hint, ahead of request</text><circle cx="770" cy="160" r="15" style="fill:var(--green-ink)"/><text class="lb" x="770" y="165" text-anchor="middle" style="fill:var(--surface)">2</text></g><g data-s="3"><path class="a-gpu flow" d="M627,412 L672,412" marker-end="url(#mg)"/><text class="lb c-gpu" x="650" y="398" text-anchor="middle">prefetch</text><circle cx="650" cy="440" r="15" style="fill:var(--green-ink)"/><text class="lb" x="650" y="445" text-anchor="middle" style="fill:var(--surface)">3</text></g></svg></div>
+    <div class="pfoot"><div class="stack caption"><span data-only="0">The harness knows S1’s next turn is about 2 seconds away. Press → to step.</span><span data-only="1"><b>1 ·</b> The harness signals the next turn: 64k of context, in ~2 s.</span><span data-only="2"><b>2 ·</b> A is busy and B has room, so the router sends a <b>prefetch hint</b> before the request arrives.</span><span data-only="3"><b>3 ·</b> KVCR copies S1 into B’s DRAM ahead of time. B loads it into HBM when the request lands.</span></div><div class="pleg"><span><i class="h"></i>S1 in HBM</span><span><i class="d"></i>S1 in DRAM</span><span><i class="t"></i>temporary</span><span><i class="f"></i>freed</span><span><i class="o"></i>other sessions</span></div></div>
+  </div>
+  <aside class="notes"><ul><li>Prefetch: copy ahead to a worker with room.</li><li>Harness metadata: session S1, next turn expected, ISL 64k, OSL 1k, in ~2 s.</li><li>The router sees A busy and low KV pressure on B, so it picks a prefetch copy to B, sent as a hint ahead of the request.</li><li>KVCR copies S1 from A’s G2 to B’s G2 before the request; B loads it into HBM at request time.</li></ul></aside>
+</section>
+
+<section class="slide prim" data-steps="3" data-title="Topology-aware">
+  <div class="head"><span class="kicker">Primitives · Topology-aware</span><h2>Topology-aware: KVCR inside an RDMA domain</h2></div>
+  <div class="body col">
+    <div class="viz"><svg viewBox="0 0 1000 470" role="img" aria-label="Topology-aware: KVCR inside an RDMA domain"><rect class="box" x="0" y="0" width="250" height="300" rx="14"/><text class="hs" x="18" y="30">Agent harness</text><rect x="18" y="44" width="214" height="34" rx="17" style="fill:color-mix(in srgb,var(--req) 14%,var(--surface));stroke:var(--req)"/><text class="lb" x="125" y="66" text-anchor="middle" style="fill:var(--req)">spawns a sub-agent</text><text class="m" x="18" y="104" style="letter-spacing:.08em">HARNESS METADATA</text><text class="m" x="18" y="132">session</text><text class="lb" x="232" y="132" text-anchor="end">S1</text><text class="m" x="18" y="160">intent</text><text class="lb" x="232" y="160" text-anchor="end">sub-agent fork</text><text class="m" x="18" y="188">ISL / OSL</text><text class="lb" x="232" y="188" text-anchor="end">48k / 2k</text><text class="m" x="18" y="216">starts</text><text class="lb" x="232" y="216" text-anchor="end">now</text><text class="m" x="18" y="244">runs</text><text class="lb" x="232" y="244" text-anchor="end">~30 s</text><rect class="box" x="300" y="0" width="680" height="120" rx="14" style="fill:var(--tint);stroke:var(--green)"/><text class="h" x="322" y="34">Router</text><text class="s" x="322" y="68">W1 holds S1, busy</text><text class="s" x="322" y="96">W2: same RDMA domain, free</text><g data-s="2"><rect x="700" y="20" width="260" height="40" rx="20" style="fill:var(--green-ink)"/><text class="lb" x="830" y="46" text-anchor="middle" style="fill:var(--surface)">picks: copy to W2</text></g><rect class="box" x="310" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="326" y="224">Server 1 · H1</text><text class="m" x="624" y="224" text-anchor="end">rdma_domain: D1</text><rect class="box" x="325" y="246" width="145" height="110" rx="10"/><text class="hs" x="339" y="276">W1</text><text class="m" x="339" y="300">busy, has S1</text><rect class="cpu" x="480" y="246" width="145" height="110" rx="10"/><text class="hs" x="494" y="276">W2</text><text class="m" x="494" y="300">idle · copy here</text><rect class="box" x="660" y="196" width="330" height="270" rx="14" style="fill:var(--surface2)"/><text class="hs" x="676" y="224">Server 2 · H2</text><text class="m" x="974" y="224" text-anchor="end">rdma_domain: D2</text><rect class="box" x="675" y="246" width="145" height="110" rx="10"/><text class="hs" x="689" y="276">W3</text><text class="m" x="689" y="300">idle</text><rect class="box" x="830" y="246" width="145" height="110" rx="10"/><text class="hs" x="844" y="276">W4</text><text class="m" x="844" y="300">idle</text><rect x="339" y="320" width="18" height="18" rx="5" style="fill:var(--green-fill)"/><rect x="361" y="320" width="18" height="18" rx="5" style="fill:var(--green-fill)"/><rect x="383" y="320" width="18" height="18" rx="5" style="fill:var(--green-fill)"/><g data-s="3"><rect x="494" y="320" width="18" height="18" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="516" y="320" width="18" height="18" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/><rect x="538" y="320" width="18" height="18" rx="5" style="fill:color-mix(in srgb,var(--green-fill) 45%,var(--surface))"/></g><rect x="325" y="372" width="300" height="76" rx="10" style="fill:var(--green-fill)"/><text class="hs" x="475" y="404" text-anchor="middle" style="fill:#12191c">KVCR</text><text class="m" x="475" y="428" text-anchor="middle" style="fill:#12191c">fast path inside D1</text><rect x="675" y="372" width="300" height="76" rx="10" style="fill:none;stroke:var(--dim);stroke-dasharray:6 5"/><text class="m" x="825" y="416" text-anchor="middle">no RDMA path from D1</text><g data-s="1"><path class="a-req" d="M250,60 L296,60" marker-end="url(#mr)"/><text class="m c-req" x="273" y="50" text-anchor="middle">hint</text><circle cx="273" cy="92" r="15" style="fill:var(--green-ink)"/><text class="lb" x="273" y="97" text-anchor="middle" style="fill:var(--surface)">1</text></g><g data-s="2"><path class="a-gpu" d="M552,122 L552,190" marker-end="url(#mg)"/><circle cx="530" cy="160" r="15" style="fill:var(--green-ink)"/><text class="lb" x="530" y="165" text-anchor="middle" style="fill:var(--surface)">2</text><path d="M860,122 L860,190" style="stroke:var(--bad);stroke-width:2;stroke-dasharray:5 4"/><text class="lb c-bad" x="860" y="164" text-anchor="middle" style="paint-order:stroke;stroke:var(--surface);stroke-width:6px">✕</text><text class="m c-bad" x="878" y="164">not picked: no fast path</text></g><g data-s="3"><path class="a-gpu flow" d="M470,330 L488,330" marker-end="url(#mg)"/><text class="lb c-gpu" x="475" y="368" text-anchor="middle">copy inside D1</text><circle cx="394" cy="366" r="15" style="fill:var(--green-ink)"/><text class="lb" x="394" y="371" text-anchor="middle" style="fill:var(--surface)">3</text></g></svg></div>
+    <div class="pfoot"><div class="stack caption"><span data-only="0">A sub-agent forks S1, which lives on busy W1. Press → to step.</span><span data-only="1"><b>1 ·</b> The harness spawns a sub-agent from S1.</span><span data-only="2"><b>2 ·</b> W1 is busy. W2 shares its RDMA domain; W3 and W4 are idle but have no fast path. The router picks W2.</span><span data-only="3"><b>3 ·</b> KVCR copies S1 to W2 inside domain D1.</span></div><div class="pleg"><span><i class="h"></i>S1 in HBM</span><span><i class="d"></i>S1 in DRAM</span><span><i class="t"></i>temporary</span><span><i class="f"></i>freed</span><span><i class="o"></i>other sessions</span></div></div>
+  </div>
+  <aside class="notes"><ul><li>Topology-aware: KVCR inside an RDMA domain.</li><li>Harness metadata: session S1, sub-agent fork, ISL 48k, OSL 2k, starts now, runs ~30 s.</li><li>W1 holds S1 but is busy. W2 is in the same RDMA domain (D1) and free; W3 and W4 on server H2 (domain D2) are idle but have no fast path, so they are not picked.</li><li>The router picks W2 and KVCR copies S1 inside D1.</li></ul></aside>
+</section>
+
+
+</main>
+
+<div class="notes-panel" id="notes" aria-live="polite"><h4>Speaker notes</h4><div id="notesBody"></div></div>
+<div class="progress" id="progress"></div>
+<div class="chrome">
+  <span class="hint">← → step · N notes · F fullscreen</span>
+  <div class="navs">
+    <span class="stepdots" id="dots"></span>
+    <button class="navbtn" id="bPrev" aria-label="Previous">◀</button>
+    <span class="pg" id="pg"></span>
+    <button class="navbtn" id="bNext" aria-label="Next">▶</button>
+    <button class="navbtn" id="bNotes" aria-label="Toggle speaker notes">Notes</button>
+    <button class="navbtn" id="bTheme" aria-label="Toggle dark mode">Dark</button>
+    <button class="navbtn" id="bFs" aria-label="Toggle fullscreen">⛶</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var cur=0, step=0;
+  var $=function(id){return document.getElementById(id)};
+  function maxS(s){return +(s.dataset.steps||0)}
+  var hooks={};
+
+  function render(){
+    slides.forEach(function(s,i){s.classList.toggle('active',i===cur)});
+    var s=slides[cur]; s.dataset.step=step;
+    s.querySelectorAll('[data-s]').forEach(function(e){var k=+e.dataset.s;e.classList.toggle('on',step>=k);e.classList.toggle('now',step===k)});
+    s.querySelectorAll('[data-only]').forEach(function(e){e.classList.toggle('on',e.dataset.only.split(' ').indexOf(String(step))>-1)});
+    s.querySelectorAll('[data-goto]').forEach(function(b){b.setAttribute('aria-pressed',(+b.dataset.goto===step)?'true':'false')});
+    $('progress').style.width=((cur+1)/slides.length*100)+'%';
+    $('pg').textContent=(cur+1)+' / '+slides.length;
+    var n=s.querySelector('aside.notes'); $('notesBody').innerHTML=n?n.innerHTML:'';
+    var d=$('dots'); d.innerHTML=''; var m=maxS(s);
+    if(m){for(var i=0;i<=m;i++){var x=document.createElement('i');if(i<=step)x.className='on';d.appendChild(x)}}
+    if(s.dataset.hook&&hooks[s.dataset.hook]) hooks[s.dataset.hook]();
+    try{history.replaceState(null,'','#'+(cur+1))}catch(e){}
+  }
+  function next(){var m=maxS(slides[cur]); if(step<m){step++}else if(cur<slides.length-1){cur++;step=0} render()}
+  function prev(){if(step>0){step--}else if(cur>0){cur--;step=maxS(slides[cur])} render()}
+  window.__deckGo = i => goto(i);
+  function goto(i){cur=Math.max(0,Math.min(i,slides.length-1));step=0;render()}
+
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-goto]'); if(b){step=+b.dataset.goto; render()}});
+  $('bNext').onclick=next; $('bPrev').onclick=prev;
+  function toggleNotes(){$('notes').classList.toggle('open')}
+  $('bNotes').onclick=toggleNotes;
+  function toggleFs(){
+    try{
+      if(document.fullscreenElement){document.exitFullscreen()}
+      else{var p=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); if(p&&p.catch)p.catch(function(){})}
+    }catch(e){}
+  }
+  $('bFs').onclick=toggleFs;
+  function setTheme(d){document.documentElement.classList.toggle('dark',d);$('bTheme').textContent=d?'Light':'Dark';try{localStorage.setItem('kvcr-theme',d?'dark':'light')}catch(e){}if(slides[cur].dataset.hook&&hooks[slides[cur].dataset.hook])hooks[slides[cur].dataset.hook]()}
+  function toggleTheme(){setTheme(!document.documentElement.classList.contains('dark'))}
+  $('bTheme').onclick=toggleTheme;
+  (function(){var t=null;try{t=localStorage.getItem('kvcr-theme')}catch(e){}if(t==='dark')document.documentElement.classList.add('dark');$('bTheme').textContent=t==='dark'?'Light':'Dark';})();
+  document.addEventListener('keydown',function(e){
+    var t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&e.key!=='Escape'){ if(e.key!=='PageDown'&&e.key!=='PageUp')return }
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev()}
+    else if(e.key==='Home'){goto(0)} else if(e.key==='End'){goto(slides.length-1)}
+    else if(e.key==='n'||e.key==='N'){toggleNotes()}
+    else if(e.key==='f'||e.key==='F'){toggleFs()}
+    else if(e.key==='t'||e.key==='T'){toggleTheme()}
+  });
+  var tx=0;
+  document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',function(e){if(e.target.closest('input'))return;var d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)(d<0?next:prev)()});
+
+
+  var h=parseInt((location.hash||'').slice(1),10);
+  if(h>0&&h<=slides.length)cur=h-1;
+  render();
+})();
+</script>
+
+<script>
+/* Fit each static diagram's viewBox to what it actually draws, so it centres in its space */
+(function(){
+  function fit(){
+    document.querySelectorAll('.viz svg').forEach(function(svg){
+      if(svg.id==='simsvg'||svg.id==='plSvg'||svg.dataset.fitted)return;
+      try{var b=svg.getBBox();if(!b.width||!b.height)return;var m=14;
+        svg.setAttribute('viewBox',[b.x-m,b.y-m,b.width+2*m,b.height+2*m].map(function(v){return Math.round(v)}).join(' '));svg.dataset.fitted='1';}catch(e){}
+    });
+  }
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);else window.addEventListener('load',fit);
+})();
+</script>
+<script>
+var SIM_B64="PCFET0NUWVBFIGh0bWw+PGh0bWwgbGFuZz0iZW4iPjxoZWFkPjxtZXRhIGNoYXJzZXQ9InV0Zi04Ij48bGluayByZWw9InByZWNvbm5lY3QiIGhyZWY9Imh0dHBzOi8vZm9udHMuZ29vZ2xlYXBpcy5jb20iPjxsaW5rIGhyZWY9Imh0dHBzOi8vZm9udHMuZ29vZ2xlYXBpcy5jb20vY3NzMj9mYW1pbHk9SW50ZXI6d2dodEA0MDA7NTAwOzYwMDs3MDA7ODAwJmZhbWlseT1KZXRCcmFpbnMrTW9ubzp3Z2h0QDQwMDs1MDA7NzAwOzgwMCZkaXNwbGF5PXN3YXAiIHJlbD0ic3R5bGVzaGVldCI+PHN0eWxlPgo6cm9vdHstLWJnOiNmZmZmZmY7LS1jYXJkOiNmM2Y2ZjU7LS1jYXJkMjojZmZmZmZmOy0tdGV4dDojMTIxOTFjOy0tbXV0ZWQ6IzU2NjM2YTstLWZhaW50OiM3YTg3OGQ7LS1ib3JkZXI6cmdiYSgxNiwyNCwyOCwuMTMpOy0tYm9yZGVyLXN0cm9uZzpyZ2JhKDE2LDI0LDI4LC4yMik7Ci0ta3ZibTojOGE1Y2YwOy0ta3ZibS1iZzojZjJlZGZlOy0ta3ZibS10ZXh0OiM1YjMzYjg7LS1rdmNyOiM1ZTlhMDA7LS1rdmNyLWJnOiNlZWY2ZTA7LS1rdmNyLXRleHQ6IzRhN2EwMDsKLS1wZWVyOiNlMDhhMDA7LS1wZWVyLWJnOiNmZGYwZGM7LS1iYWQ6I2UwMzUzYjstLWJhZC1iZzojZmRlNmU2Oy0td2Fybi1iZzojZmRmMGRjOy0td2Fybi10ZXh0OiM5YTY0MDA7LS1obGM6IzRhNzRlODstLWdyaWQ6cmdiYSgxNiwyNCwyOCwuMDcpfQoKKntib3gtc2l6aW5nOmJvcmRlci1ib3h9CmJvZHl7bWFyZ2luOjA7YmFja2dyb3VuZDp2YXIoLS1iZyk7Y29sb3I6dmFyKC0tdGV4dCk7Zm9udC1mYW1pbHk6SW50ZXIsLWFwcGxlLXN5c3RlbSxCbGlua01hY1N5c3RlbUZvbnQsIlNlZ29lIFVJIixSb2JvdG8sc2Fucy1zZXJpZjtsaW5lLWhlaWdodDoxLjU1fQptYWlue21heC13aWR0aDoxMDQwcHg7bWFyZ2luOjAgYXV0bztwYWRkaW5nOjEuNzVyZW0gMS4yNXJlbSAzcmVtfQpoMXtmb250LXNpemU6MjJweDtmb250LXdlaWdodDo1MDA7bWFyZ2luOjAgMCAuMjVyZW19Ci5zdWJ7Y29sb3I6dmFyKC0tbXV0ZWQpO2ZvbnQtc2l6ZToxNHB4O21hcmdpbjowIDAgMXJlbX0KYnV0dG9ue2ZvbnQ6aW5oZXJpdDtmb250LXNpemU6MTRweDtjb2xvcjp2YXIoLS10ZXh0KTtiYWNrZ3JvdW5kOnRyYW5zcGFyZW50O2JvcmRlcjouNXB4IHNvbGlkIHZhcigtLWJvcmRlci1zdHJvbmcpO2JvcmRlci1yYWRpdXM6OHB4O3BhZGRpbmc6NnB4IDE0cHg7Y3Vyc29yOnBvaW50ZXJ9CmJ1dHRvbjpob3ZlcntiYWNrZ3JvdW5kOnZhcigtLWNhcmQpfWJ1dHRvbjphY3RpdmV7dHJhbnNmb3JtOnNjYWxlKC45OCl9CmJ1dHRvbi5zZWx7YmFja2dyb3VuZDp2YXIoLS1jYXJkKTtib3JkZXItY29sb3I6dmFyKC0tdGV4dCl9CnNlbGVjdHtmb250OmluaGVyaXQ7Zm9udC1zaXplOjE0cHg7Y29sb3I6dmFyKC0tdGV4dCk7YmFja2dyb3VuZDp2YXIoLS1jYXJkMik7Ym9yZGVyOi41cHggc29saWQgdmFyKC0tYm9yZGVyLXN0cm9uZyk7Ym9yZGVyLXJhZGl1czo4cHg7cGFkZGluZzo1cHggOHB4fQouYmFubmVye2JhY2tncm91bmQ6dmFyKC0td2Fybi1iZyk7Y29sb3I6dmFyKC0td2Fybi10ZXh0KTtib3JkZXItcmFkaXVzOjhweDtwYWRkaW5nOjhweCAxMnB4O2ZvbnQtc2l6ZToxM3B4O21hcmdpbi1ib3R0b206MXJlbX0KLnRhYnN7ZGlzcGxheTpmbGV4O2dhcDo2cHg7Ym9yZGVyLWJvdHRvbTouNXB4IHNvbGlkIHZhcigtLWJvcmRlcik7bWFyZ2luLWJvdHRvbToxLjI1cmVtO2ZsZXgtd3JhcDp3cmFwfQoudGFie2JvcmRlcjpub25lO2JvcmRlci1ib3R0b206MnB4IHNvbGlkIHRyYW5zcGFyZW50O2JvcmRlci1yYWRpdXM6MDtwYWRkaW5nOjhweCAxNHB4O2NvbG9yOnZhcigtLW11dGVkKX0KLnRhYjpob3ZlcntiYWNrZ3JvdW5kOnRyYW5zcGFyZW50O2NvbG9yOnZhcigtLXRleHQpfS50YWIub257Y29sb3I6dmFyKC0tdGV4dCk7Ym9yZGVyLWJvdHRvbS1jb2xvcjp2YXIoLS10ZXh0KX0KLnRhZ3tkaXNwbGF5OmlubGluZS1ibG9jaztmb250LXNpemU6MTFweDtwYWRkaW5nOjJweCA4cHg7Ym9yZGVyLXJhZGl1czo2cHg7bWFyZ2luLWxlZnQ6NnB4O3ZlcnRpY2FsLWFsaWduOjFweH0KLnRhZy5rdmJte2JhY2tncm91bmQ6dmFyKC0ta3ZibS1iZyk7Y29sb3I6dmFyKC0ta3ZibS10ZXh0KX0udGFnLmt2Y3J7YmFja2dyb3VuZDp2YXIoLS1rdmNyLWJnKTtjb2xvcjp2YXIoLS1rdmNyLXRleHQpfQouY29udHJvbHN7ZGlzcGxheTpmbGV4O2dhcDo4cHg7YWxpZ24taXRlbXM6Y2VudGVyO2ZsZXgtd3JhcDp3cmFwO21hcmdpbi1ib3R0b206MXJlbX0KLnJpZ2h0e21hcmdpbi1sZWZ0OmF1dG87Zm9udC1zaXplOjEzcHg7Y29sb3I6dmFyKC0tbXV0ZWQpfS5yaWdodCBie2NvbG9yOnZhcigtLXRleHQpO2ZvbnQtd2VpZ2h0OjUwMH0KLmcye2Rpc3BsYXk6Z3JpZDtncmlkLXRlbXBsYXRlLWNvbHVtbnM6bWlubWF4KDAsMWZyKSBtaW5tYXgoMCwxZnIpO2dhcDoxNnB4fQpAbWVkaWEgKG1heC13aWR0aDo4MjBweCl7Lmcye2dyaWQtdGVtcGxhdGUtY29sdW1uczptaW5tYXgoMCwxZnIpfX0KLnBhbmVse2JvcmRlcjouNXB4IHNvbGlkIHZhcigtLWJvcmRlcik7Ym9yZGVyLXJhZGl1czoxMnB4O3BhZGRpbmc6MTJweCAxNHB4O2JhY2tncm91bmQ6dmFyKC0tY2FyZDIpfQoucGFuZWwua3ZibXtib3JkZXItdG9wOjNweCBzb2xpZCB2YXIoLS1rdmJtKTtib3JkZXItcmFkaXVzOjAgMCAxMnB4IDEycHh9Ci5wYW5lbC5rdmNye2JvcmRlci10b3A6M3B4IHNvbGlkIHZhcigtLWt2Y3IpO2JvcmRlci1yYWRpdXM6MCAwIDEycHggMTJweH0KLnBoe2Rpc3BsYXk6ZmxleDthbGlnbi1pdGVtczpiYXNlbGluZTtnYXA6OHB4O21hcmdpbi1ib3R0b206OHB4fQoucGggaDN7bWFyZ2luOjA7Zm9udC1zaXplOjE2cHg7Zm9udC13ZWlnaHQ6NTAwfQoucGggc3Bhbntmb250LXNpemU6MTJweDtjb2xvcjp2YXIoLS1tdXRlZCl9Ci5jYXB7Zm9udC1zaXplOjEzcHg7Y29sb3I6dmFyKC0tbXV0ZWQpO21hcmdpbi10b3A6OHB4O21pbi1oZWlnaHQ6NjBweH0KLmNhcCBie2NvbG9yOnZhcigtLXRleHQpO2ZvbnQtd2VpZ2h0OjUwMH0KLyogc3ZnICovCnN2ZyB0ZXh0e2ZvbnQtZmFtaWx5OkludGVyLC1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LCJTZWdvZSBVSSIsc2Fucy1zZXJpZn0KLmJ4e2ZpbGw6dmFyKC0tY2FyZCk7c3Ryb2tlOnZhcigtLWJvcmRlci1zdHJvbmcpO3N0cm9rZS13aWR0aDouOH0KLmJ4Lnd7ZmlsbDp2YXIoLS1jYXJkMil9Ci5ieC52YntmaWxsOnZhcigtLWt2Ym0tYmcpO3N0cm9rZTp2YXIoLS1rdmJtKX0uYngudnJ7ZmlsbDp2YXIoLS1rdmNyLWJnKTtzdHJva2U6dmFyKC0ta3Zjcil9Ci5ieC5kYXNoe3N0cm9rZS1kYXNoYXJyYXk6NCAzfQoudHR7ZmlsbDp2YXIoLS10ZXh0KTtmb250LXNpemU6MTJweDtmb250LXdlaWdodDo1MDB9LnRze2ZpbGw6dmFyKC0tbXV0ZWQpO2ZvbnQtc2l6ZToxMC41cHh9Ci50YntmaWxsOnZhcigtLWt2Ym0tdGV4dCk7Zm9udC1zaXplOjExLjVweH0udHJ7ZmlsbDp2YXIoLS1rdmNyLXRleHQpO2ZvbnQtc2l6ZToxMS41cHh9Ci5hcntzdHJva2U6dmFyKC0tZmFpbnQpO3N0cm9rZS13aWR0aDoxLjQ7ZmlsbDpub25lfQouYXIucGVlcntzdHJva2U6dmFyKC0tcGVlcik7c3Ryb2tlLXdpZHRoOjJ9Ci5hci5iYWR7c3Ryb2tlOnZhcigtLWJhZCk7c3Ryb2tlLWRhc2hhcnJheTo1IDR9Ci5hcmNoLmZvY3VzIC5kbXtvcGFjaXR5Oi4xODt0cmFuc2l0aW9uOm9wYWNpdHkgLjNzfQouYXJjaC5mb2N1cyAuZG0ub257b3BhY2l0eToxfQouYXJjaC5mb2N1cyAub24gLmJ4LncsLmFyY2guZm9jdXMgLm9uIC5ieC52YiwuYXJjaC5mb2N1cyAub24gLmJ4LnZye3N0cm9rZTp2YXIoLS1obGMpO3N0cm9rZS13aWR0aDoyfQouYXJjaC5mb2N1cyAub24gLmFye3N0cm9rZS13aWR0aDoyLjZ9Ci8qIGNsdXN0ZXIgKi8KLnJvdXRlcntkaXNwbGF5OmZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2dhcDo4cHg7Zm9udC1zaXplOjEyLjVweDtiYWNrZ3JvdW5kOnZhcigtLWNhcmQpO2JvcmRlci1yYWRpdXM6OHB4O3BhZGRpbmc6MCAxMHB4O21hcmdpbi1ib3R0b206MTBweDtoZWlnaHQ6MzRweDt3aGl0ZS1zcGFjZTpub3dyYXA7b3ZlcmZsb3c6aGlkZGVufQoucm91dGVyIC5ydHh7ZmxleDoxO21pbi13aWR0aDowO292ZXJmbG93OmhpZGRlbjt0ZXh0LW92ZXJmbG93OmVsbGlwc2lzfQoucm91dGVyIC5waWxse2ZsZXg6bm9uZTttYXJnaW46MH0KLnJvdXRlciBie2ZvbnQtd2VpZ2h0OjUwMH0KLmNsdXN0ZXJ7cG9zaXRpb246cmVsYXRpdmU7ZGlzcGxheTpncmlkO2dyaWQtdGVtcGxhdGUtY29sdW1uczpyZXBlYXQoMyxtaW5tYXgoMCwxZnIpKTtnYXA6OHB4fQoud2t7Ym9yZGVyOi41cHggc29saWQgdmFyKC0tYm9yZGVyKTtib3JkZXItcmFkaXVzOjEwcHg7cGFkZGluZzo2cHggN3B4O2JhY2tncm91bmQ6dmFyKC0tY2FyZDIpO3RyYW5zaXRpb246YWxsIC4ycztwb3NpdGlvbjpyZWxhdGl2ZX0KLndrLmFjdHtib3JkZXItY29sb3I6dmFyKC0taGxjKTtib3gtc2hhZG93OjAgMCAwIDEuNXB4IHZhcigtLWhsYyl9Ci53ay5kb3due2JhY2tncm91bmQ6dmFyKC0tYmFkLWJnKTtib3JkZXItY29sb3I6dmFyKC0tYmFkKX0KLndrIC53aHtmb250LXNpemU6MTJweDtmb250LXdlaWdodDo1MDA7ZGlzcGxheTpmbGV4O2p1c3RpZnktY29udGVudDpzcGFjZS1iZXR3ZWVuO21hcmdpbi1ib3R0b206NHB4fQoud2sgLndoIHNwYW57Zm9udC13ZWlnaHQ6NDAwO2NvbG9yOnZhcigtLW11dGVkKTtmb250LXNpemU6MTFweH0KLnRpZXJ7bWFyZ2luLWJvdHRvbTo0cHh9Ci50aWVyIC50bHtmb250LXNpemU6MTAuNXB4O2NvbG9yOnZhcigtLW11dGVkKTtkaXNwbGF5OmZsZXg7anVzdGlmeS1jb250ZW50OnNwYWNlLWJldHdlZW59Ci5zbG90c3tkaXNwbGF5OmZsZXg7ZmxleC13cmFwOndyYXA7Z2FwOjNweDttaW4taGVpZ2h0OjIwcHh9Ci5zbG90e3dpZHRoOjE5cHg7aGVpZ2h0OjE5cHg7Ym9yZGVyLXJhZGl1czo0cHg7Ym9yZGVyOi41cHggZGFzaGVkIHZhcigtLWJvcmRlci1zdHJvbmcpO2ZvbnQtc2l6ZToxMC41cHg7ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyO2ZvbnQtd2VpZ2h0OjUwMDtjb2xvcjojZmZmO3RyYW5zaXRpb246dHJhbnNmb3JtIC4yc30KLnNsb3QuZntib3JkZXI6bm9uZX0KLnNsb3Quc3Jje291dGxpbmU6Mi41cHggc29saWQgdmFyKC0taGxjKTtvdXRsaW5lLW9mZnNldDoxcHg7dHJhbnNmb3JtOnNjYWxlKDEuMTUpfQouc2xvdC5rZXB0e2JveC1zaGFkb3c6aW5zZXQgMCAwIDAgMnB4IHJnYmEoMjU1LDI1NSwyNTUsLjg1KTtvdXRsaW5lOjEuNXB4IGRhc2hlZCB2YXIoLS1rdmNyKTtvdXRsaW5lLW9mZnNldDoxcHh9Ci5tZXRyaWNzLm00e2dyaWQtdGVtcGxhdGUtY29sdW1uczpyZXBlYXQoNCxtaW5tYXgoMCwxZnIpKX0KLmd1YXJke2ZvbnQtc2l6ZToxMHB4O2NvbG9yOnZhcigtLWt2Y3ItdGV4dCk7YmFja2dyb3VuZDp2YXIoLS1rdmNyLWJnKTtib3JkZXItcmFkaXVzOjRweDtwYWRkaW5nOjFweCA1cHg7ZGlzcGxheTppbmxpbmUtYmxvY2s7bWFyZ2luLXRvcDoycHh9Ci5vdmx7cG9zaXRpb246YWJzb2x1dGU7aW5zZXQ6MDtwb2ludGVyLWV2ZW50czpub25lO292ZXJmbG93OnZpc2libGV9Ci5ldmVudHtmb250LXNpemU6MTNweDtib3JkZXItcmFkaXVzOjhweDtwYWRkaW5nOjhweCAxMHB4O21hcmdpbi10b3A6MTBweDtoZWlnaHQ6ODRweDtvdmVyZmxvdzpoaWRkZW47YmFja2dyb3VuZDp2YXIoLS1jYXJkKX0KLmV2ZW50e2Rpc3BsYXk6bm9uZX0KLndrIC53aHt3aGl0ZS1zcGFjZTpub3dyYXB9Ci5ldmVudCBie2ZvbnQtd2VpZ2h0OjUwMH0KLnBpbGx7ZGlzcGxheTppbmxpbmUtYmxvY2s7Zm9udC1zaXplOjExcHg7Ym9yZGVyLXJhZGl1czo2cHg7cGFkZGluZzoxcHggN3B4O21hcmdpbi1yaWdodDo0cHg7Zm9udC13ZWlnaHQ6NTAwfQouby1oYm17YmFja2dyb3VuZDojZThlZWZkO2NvbG9yOiMyZjU1YzR9Lm8tZHJhbXtiYWNrZ3JvdW5kOiNmMmVkZmU7Y29sb3I6IzViMzNiOH0uby1zc2R7YmFja2dyb3VuZDojZjNmNmY1O2NvbG9yOiMzYzQ4NGR9Ci5vLXBlZXJ7YmFja2dyb3VuZDojZmRmMGRjO2NvbG9yOiM5YTY0MDB9Lm8tZ3VhcmR7YmFja2dyb3VuZDojNWU5YTAwO2NvbG9yOiNmZmZ9Lm8td2FybXtiYWNrZ3JvdW5kOiNlM2YzZjc7Y29sb3I6IzBmNzg5MH0uby1taXNze2JhY2tncm91bmQ6I2ZkZTZlNjtjb2xvcjojYzAyODJlfS5vLW5ld3tiYWNrZ3JvdW5kOiNlZWYxZjA7Y29sb3I6IzNjNDg0ZH0KCi5tZXRyaWNze2Rpc3BsYXk6Z3JpZDtncmlkLXRlbXBsYXRlLWNvbHVtbnM6cmVwZWF0KDMsbWlubWF4KDAsMWZyKSk7Z2FwOjhweDttYXJnaW4tdG9wOjEwcHh9Ci5te2JhY2tncm91bmQ6dmFyKC0tY2FyZCk7Ym9yZGVyLXJhZGl1czo4cHg7cGFkZGluZzo4cHggMTBweH0KLm0gLmt7Zm9udC1zaXplOjExLjVweDtjb2xvcjp2YXIoLS1tdXRlZCk7aGVpZ2h0OjMycHg7bGluZS1oZWlnaHQ6MS4zNX0ubSAudntmb250LXNpemU6MTdweDtmb250LXdlaWdodDo1MDA7d2hpdGUtc3BhY2U6bm93cmFwfQoucGggc3Bhbnt3aGl0ZS1zcGFjZTpub3dyYXA7b3ZlcmZsb3c6aGlkZGVuO3RleHQtb3ZlcmZsb3c6ZWxsaXBzaXM7bWluLXdpZHRoOjB9Ci5rdmJtIC5tIC52e2NvbG9yOnZhcigtLWt2Ym0pfS5rdmNyIC5tIC52e2NvbG9yOnZhcigtLWt2Y3IpfQouYmFye2Rpc3BsYXk6ZmxleDtoZWlnaHQ6MTZweDtib3JkZXItcmFkaXVzOjVweDtvdmVyZmxvdzpoaWRkZW47YmFja2dyb3VuZDp2YXIoLS1jYXJkKTttYXJnaW46MTBweCAwIDRweH0KLmJhciBkaXZ7aGVpZ2h0OjEwMCU7dHJhbnNpdGlvbjp3aWR0aCAuM3N9Ci5sZWdlbmR7ZGlzcGxheTpmbGV4O2ZsZXgtd3JhcDp3cmFwO2dhcDo0cHggMTBweDtmb250LXNpemU6MTEuNXB4O2NvbG9yOnZhcigtLW11dGVkKX0KLmxlZ2VuZCBpe2Rpc3BsYXk6aW5saW5lLWJsb2NrO3dpZHRoOjEwcHg7aGVpZ2h0OjEwcHg7Ym9yZGVyLXJhZGl1czoycHg7bWFyZ2luLXJpZ2h0OjRweDt2ZXJ0aWNhbC1hbGlnbjotMXB4fQp0YWJsZS5mdHt3aWR0aDoxMDAlO2JvcmRlci1jb2xsYXBzZTpjb2xsYXBzZTtmb250LXNpemU6MTMuNXB4fQp0YWJsZS5mdCB0aCx0YWJsZS5mdCB0ZHtwYWRkaW5nOjlweCAxMHB4O2JvcmRlci1ib3R0b206LjVweCBzb2xpZCB2YXIoLS1ib3JkZXIpO3RleHQtYWxpZ246bGVmdDt2ZXJ0aWNhbC1hbGlnbjp0b3B9CnRhYmxlLmZ0IHRoe2ZvbnQtd2VpZ2h0OjUwMDtmb250LXNpemU6MTJweDtjb2xvcjp2YXIoLS1tdXRlZCl9CnRhYmxlLmZ0IHRkOmZpcnN0LWNoaWxke2NvbG9yOnZhcigtLW11dGVkKTt3aWR0aDoyMCV9CnRhYmxlLmZ0IHRoOm50aC1jaGlsZCgyKXtjb2xvcjp2YXIoLS1rdmJtKX10YWJsZS5mdCB0aDpudGgtY2hpbGQoMyl7Y29sb3I6dmFyKC0ta3Zjcil9Ci5ub3Rle2ZvbnQtc2l6ZToxM3B4O2NvbG9yOnZhcigtLW11dGVkKTttYXJnaW4tdG9wOjFyZW19Lm5vdGUgcHttYXJnaW46LjRyZW0gMH0KLm5vdGUgYXtjb2xvcjp2YXIoLS1obGMpfQoudmVyZGljdHttYXJnaW4tdG9wOjEycHg7cGFkZGluZzoxMHB4IDE0cHg7Ym9yZGVyLWxlZnQ6M3B4IHNvbGlkIHZhcigtLWhsYyk7YmFja2dyb3VuZDp2YXIoLS1jYXJkKTtmb250LXNpemU6MTRweH0KW2hpZGRlbl17ZGlzcGxheTpub25lIWltcG9ydGFudH0KCmJvZHl7YmFja2dyb3VuZDojZmZmfW1haW57bWF4LXdpZHRoOm5vbmU7cGFkZGluZzo2cHggOHB4IDhweH0udmVyZGljdHttYXJnaW4tdG9wOjEwcHh9Ci8qIGRlY2s6IGxhcmdlciB0eXBlICovCmJ1dHRvbixzZWxlY3R7Zm9udC1zaXplOjE2cHh9LmNvbnRyb2xzIGxhYmVse2ZvbnQtc2l6ZToxNXB4IWltcG9ydGFudH0ucmlnaHR7Zm9udC1zaXplOjE1cHh9Ci5waCBoM3tmb250LXNpemU6MjBweDtmb250LXdlaWdodDo2MDB9LnBoIHNwYW57Zm9udC1zaXplOjE0cHh9Ci5yb3V0ZXJ7Zm9udC1zaXplOjE1cHg7aGVpZ2h0OjQwcHh9LnBpbGx7Zm9udC1zaXplOjEzcHh9Ci53a3twYWRkaW5nOjhweCA5cHh9LndrIC53aHtmb250LXNpemU6MTZweDtmb250LXdlaWdodDo2MDB9LndrIC53aCBzcGFue2ZvbnQtc2l6ZToxM3B4fS5ndWFyZHtmb250LXNpemU6MTJweH0KLnRpZXJ7bWFyZ2luLWJvdHRvbTo2cHh9LnRpZXIgLnRse2ZvbnQtc2l6ZToxMy41cHh9Ci5zbG90c3tnYXA6MnB4fS5zbG90e3dpZHRoOjIxcHg7aGVpZ2h0OjIxcHg7Zm9udC1zaXplOjEyLjVweDtmb250LXdlaWdodDo2MDB9Ci5tIC5re2ZvbnQtc2l6ZToxNHB4O2hlaWdodDozOHB4fS5tIC52e2ZvbnQtc2l6ZToyMnB4O2ZvbnQtd2VpZ2h0OjYwMH0KLmxlZ2VuZHtmb250LXNpemU6MTRweH0ubGVnZW5kIGl7d2lkdGg6MTJweDtoZWlnaHQ6MTJweH0KLnZlcmRpY3R7ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtnYXA6MTRweDtiYWNrZ3JvdW5kOiNmZGYwZGM7Ym9yZGVyLWxlZnQ6NXB4IHNvbGlkICNlMDhhMDA7Y29sb3I6IzlhNjQwMDtmb250LXNpemU6MTlweDtmb250LXdlaWdodDo2MDA7cGFkZGluZzoxMnB4IDE2cHh9Ci52ZXJkaWN0IC53aXtmbGV4Om5vbmU7d2lkdGg6MzBweDtoZWlnaHQ6MzBweDtib3JkZXItcmFkaXVzOjUwJTtiYWNrZ3JvdW5kOiNlMDhhMDA7Y29sb3I6I2ZmZjtmb250LXNpemU6MjBweDtmb250LXdlaWdodDo4MDA7ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyfQoKLyogZGVjazogbGFyZ2VyIHR5cGUsIHJvdW5kIDIgKi8KYnV0dG9uLHNlbGVjdHtmb250LXNpemU6MThweH0uY29udHJvbHMgbGFiZWx7Zm9udC1zaXplOjE3cHghaW1wb3J0YW50fS5yaWdodHtmb250LXNpemU6MTdweH0KLnBoIGgze2ZvbnQtc2l6ZToyNHB4fS5waCBzcGFue2ZvbnQtc2l6ZToxNnB4fQoucm91dGVye2ZvbnQtc2l6ZToxOHB4O2hlaWdodDo0NnB4fS5waWxse2ZvbnQtc2l6ZToxNXB4fQoud2sgLndoe2ZvbnQtc2l6ZToxOXB4fS53ayAud2ggc3Bhbntmb250LXNpemU6MTVweH0uZ3VhcmR7Zm9udC1zaXplOjE0cHh9Ci50aWVyIC50bHtmb250LXNpemU6MTZweH0uc2xvdHtmb250LXNpemU6MTMuNXB4fQoubSAua3tmb250LXNpemU6MTZweDtoZWlnaHQ6NDRweH0ubSAudntmb250LXNpemU6MjdweH0KLmxlZ2VuZHtmb250LXNpemU6MTZweH0KLnZlcmRpY3R7Zm9udC1zaXplOjIzcHh9Ci5zbG90c3tnYXA6M3B4O21heC13aWR0aDoxMTNweH0uc2xvdHt3aWR0aDoyNnB4O2hlaWdodDoyNnB4O2ZvbnQtc2l6ZToxNHB4fS52ZXJkaWN0IC53aXt3aWR0aDozNHB4O2hlaWdodDozNHB4O2ZvbnQtc2l6ZToyM3B4fQoKLyogPT09PT0gbXgtc25hcHNob3QgbG9vayBmb3IgdGhlIGVtYmVkZGVkIHNpbXVsYXRpb24gPT09PT0gKi8KOnJvb3R7LS1tb25vOkpldEJyYWlucyBNb25vLHVpLW1vbm9zcGFjZSxNZW5sbyxtb25vc3BhY2U7LS1zaGFkb3c6MCAxcHggMnB4IHJnYmEoMTYsMjQsMjgsLjA2KSwwIDhweCAyNHB4IHJnYmEoMTYsMjQsMjgsLjA4KX0KaHRtbCxib2R5e2JhY2tncm91bmQ6dHJhbnNwYXJlbnQhaW1wb3J0YW50fQpib2R5e2ZvbnQtZmFtaWx5OkludGVyLC1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LCJTZWdvZSBVSSIsUm9ib3RvLHNhbnMtc2VyaWZ9CmJ1dHRvbntib3JkZXI6MXB4IHNvbGlkIHJnYmEoMTYsMjQsMjgsLjIpO2JvcmRlci1yYWRpdXM6MTBweDtiYWNrZ3JvdW5kOiNmZmY7Zm9udC13ZWlnaHQ6NTAwO3BhZGRpbmc6N3B4IDE2cHh9CmJ1dHRvbjpob3ZlcntiYWNrZ3JvdW5kOiNmZmY7Ym9yZGVyLWNvbG9yOiM1ZTlhMDB9CiNiUGxheXtiYWNrZ3JvdW5kOiM1ZTlhMDA7Ym9yZGVyLWNvbG9yOiM1ZTlhMDA7Y29sb3I6I2ZmZjtmb250LXdlaWdodDo2MDB9CiNiUGxheTpob3ZlcntiYWNrZ3JvdW5kOiM0YTdhMDA7Ym9yZGVyLWNvbG9yOiM0YTdhMDB9CiNiRmFpbHtjb2xvcjojYzAyODJlO2JvcmRlci1jb2xvcjpyZ2JhKDIyNCw1Myw1OSwuNDUpfQojYkZhaWw6aG92ZXJ7YmFja2dyb3VuZDojZmRlNmU2O2JvcmRlci1jb2xvcjojZTAzNTNifQpzZWxlY3R7Ym9yZGVyOjFweCBzb2xpZCByZ2JhKDE2LDI0LDI4LC4yKTtib3JkZXItcmFkaXVzOjEwcHg7YmFja2dyb3VuZDojZmZmO3BhZGRpbmc6NnB4IDEwcHh9Ci5yaWdodCBie2ZvbnQtZmFtaWx5OnZhcigtLW1vbm8pO2ZvbnQtd2VpZ2h0OjcwMDtmb250LXZhcmlhbnQtbnVtZXJpYzp0YWJ1bGFyLW51bXN9Ci5wYW5lbHtiYWNrZ3JvdW5kOiNmZmY7Ym9yZGVyOjFweCBzb2xpZCB2YXIoLS1ib3JkZXIpO2JvcmRlci1yYWRpdXM6MTZweDtib3gtc2hhZG93OnZhcigtLXNoYWRvdyl9Ci5wYW5lbC5rdmJte2JvcmRlci10b3A6NHB4IHNvbGlkIHZhcigtLWt2Ym0pO2JvcmRlci1yYWRpdXM6MTZweH0KLnBhbmVsLmt2Y3J7Ym9yZGVyLXRvcDo0cHggc29saWQgdmFyKC0ta3Zjcik7Ym9yZGVyLXJhZGl1czoxNnB4fQoucGggaDN7Zm9udC13ZWlnaHQ6NzAwO2xldHRlci1zcGFjaW5nOi0uMDE1ZW19Ci5wYW5lbC5rdmJtIC5waCBoM3tjb2xvcjp2YXIoLS1rdmJtLXRleHQpfS5wYW5lbC5rdmNyIC5waCBoM3tjb2xvcjp2YXIoLS1rdmNyLXRleHQpfQoucm91dGVye2JhY2tncm91bmQ6I2YxZjRmMztib3JkZXI6MXB4IHNvbGlkIHZhcigtLWJvcmRlcik7Ym9yZGVyLXJhZGl1czoxMHB4fQoucm91dGVyIC5waWxse2ZvbnQtZmFtaWx5OnZhcigtLW1vbm8pO2ZvbnQtd2VpZ2h0OjUwMDtib3JkZXItcmFkaXVzOjk5OXB4O3BhZGRpbmc6MnB4IDEwcHh9Ci5waWxse2ZvbnQtZmFtaWx5OnZhcigtLW1vbm8pO2JvcmRlci1yYWRpdXM6OTk5cHh9Ci53a3tib3JkZXI6MXB4IHNvbGlkIHZhcigtLWJvcmRlcik7Ym9yZGVyLXJhZGl1czoxMnB4O2JhY2tncm91bmQ6I2ZiZmNmY30KLndrIC53aHtmb250LWZhbWlseTp2YXIoLS1tb25vKTtmb250LXdlaWdodDo3MDB9Ci53ayAud2ggc3Bhbntmb250LWZhbWlseTpJbnRlciwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWZ9Ci5ndWFyZHtmb250LWZhbWlseTp2YXIoLS1tb25vKSFpbXBvcnRhbnQ7Ym9yZGVyLXJhZGl1czo5OTlweDtwYWRkaW5nOjFweCA4cHg7Ym9yZGVyOjFweCBzb2xpZCByZ2JhKDk0LDE1NCwwLC40NSl9Ci5zbG90e2JvcmRlcjoxcHggZGFzaGVkIHJnYmEoMTYsMjQsMjgsLjIyKTtib3JkZXItcmFkaXVzOjVweH0KLm17YmFja2dyb3VuZDojZjFmNGYzO2JvcmRlcjoxcHggc29saWQgcmdiYSgxNiwyNCwyOCwuMDcpO2JvcmRlci1yYWRpdXM6MTJweH0KLm0gLnZ7Zm9udC13ZWlnaHQ6NzAwO2ZvbnQtdmFyaWFudC1udW1lcmljOnRhYnVsYXItbnVtcztsZXR0ZXItc3BhY2luZzotLjAxZW19Ci5rdmJtIC5tIC52e2NvbG9yOnZhcigtLWt2Ym0tdGV4dCl9Lmt2Y3IgLm0gLnZ7Y29sb3I6dmFyKC0ta3Zjci10ZXh0KX0KLmJhcntiYWNrZ3JvdW5kOiNlOGVkZWI7Ym9yZGVyLXJhZGl1czo2cHh9Ci5sZWdlbmR7Y29sb3I6IzU2NjM2YX0KLmxlZ2VuZCBpe2JvcmRlci1yYWRpdXM6M3B4fQoudmVyZGljdHtib3JkZXItcmFkaXVzOjAgMTJweCAxMnB4IDA7YmFja2dyb3VuZDojZmRmMGRjO2JvcmRlci1sZWZ0OjVweCBzb2xpZCAjZTA4YTAwO2NvbG9yOiM3YTUyMDB9Ci52ZXJkaWN0IC53aXtiYWNrZ3JvdW5kOiNlMDhhMDB9Cjwvc3R5bGU+PC9oZWFkPjxib2R5PjxtYWluPjxzZWN0aW9uIGlkPSJ0MiI+CiAgPGRpdiBjbGFzcz0iY29udHJvbHMiPgogICAgPGxhYmVsIHN0eWxlPSJmb250LXNpemU6MTNweDtjb2xvcjp2YXIoLS1tdXRlZCkiPldvcmtsb2FkJm5ic3A7CiAgICAgIDxzZWxlY3QgaWQ9InNjbiI+CiAgICAgICAgPG9wdGlvbiB2YWx1ZT0iY2hhdCI+TXVsdGktdHVybiBjaGF0IHdpdGggbG9hZCBzcGlrZXM8L29wdGlvbj4KICAgICAgICA8b3B0aW9uIHZhbHVlPSJzaGFyZWQiPlNoYXJlZCBwcm9tcHRzIGZhbm5lZCBvdXQgYWNyb3NzIHdvcmtlcnM8L29wdGlvbj4KICAgICAgICA8b3B0aW9uIHZhbHVlPSJmYWlsdXJlIj5Xb3JrZXIgMSBmYWlscyBtaWQtcnVuPC9vcHRpb24+CiAgICAgIDwvc2VsZWN0PjwvbGFiZWw+CiAgICA8YnV0dG9uIGlkPSJiU3RlcCI+TmV4dCByZXF1ZXN0PC9idXR0b24+CiAgICA8YnV0dG9uIGlkPSJiUGxheSI+UGxheTwvYnV0dG9uPgogICAgPGJ1dHRvbiBpZD0iYkZhaWwiPkZhaWwgd29ya2VyIDE8L2J1dHRvbj4KICAgIDxidXR0b24gaWQ9ImJSZXNldCI+UmVzZXQ8L2J1dHRvbj4KICAgIDxzcGFuIGNsYXNzPSJyaWdodCI+UmVxdWVzdCA8YiBpZD0ick4iPjA8L2I+PC9zcGFuPgogIDwvZGl2PgogIDxkaXYgY2xhc3M9ImcyIj4KICAgIDxkaXYgY2xhc3M9InBhbmVsIGt2Ym0iIGlkPSJjb2xBIj4KICAgICAgPGRpdiBjbGFzcz0icGgiPjxoMz5LVkJNPC9oMz48c3Bhbj5wZXItd29ya2VyIHRpZXJzLCBsb2NhbCBvbmJvYXJkaW5nIG9ubHk8L3NwYW4+PC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9InJvdXRlciIgaWQ9InJ0QSI+Um91dGVyIGlkbGU8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iY2x1c3RlciIgaWQ9ImNsQSI+PHN2ZyBjbGFzcz0ib3ZsIiBpZD0ib3ZBIj48L3N2Zz48L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iZXZlbnQiIGlkPSJldkEiPlByZXNzICJOZXh0IHJlcXVlc3QiLjwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJiYXIiIGlkPSJiYXJBIj48L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0ibWV0cmljcyBtNCI+CiAgICAgICAgPGRpdiBjbGFzcz0ibSI+PGRpdiBjbGFzcz0iayI+TWVhbiBUVEZUPC9kaXY+PGRpdiBjbGFzcz0idiIgaWQ9Im10QSI+4oCTPC9kaXY+PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ibSI+PGRpdiBjbGFzcz0iayI+cDkwIFRURlQ8L2Rpdj48ZGl2IGNsYXNzPSJ2IiBpZD0icDlBIj7igJM8L2Rpdj48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJtIj48ZGl2IGNsYXNzPSJrIj5QcmVmaWxsIHJlY29tcHV0ZWQ8L2Rpdj48ZGl2IGNsYXNzPSJ2IiBpZD0icmNBIj7igJM8L2Rpdj48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJtIiB0aXRsZT0iUmVxdWVzdHMgc2VydmVkIGZyb20gYSBmYWlsZWQgd29ya2VyJ3MgcHJlc2VydmVkIERSQU0gcG9vbCI+PGRpdiBjbGFzcz0iayI+RnJvbSBwcmVzZXJ2ZWQgcG9vbDwvZGl2PjxkaXYgY2xhc3M9InYiIGlkPSJwcEEiPuKAkzwvZGl2PjwvZGl2PgogICAgICA8L2Rpdj4KICAgIDwvZGl2PgogICAgPGRpdiBjbGFzcz0icGFuZWwga3ZjciIgaWQ9ImNvbEIiPgogICAgICA8ZGl2IGNsYXNzPSJwaCI+PGgzPktWQ1I8L2gzPjxzcGFuPnJvdXRlci1oaW50ZWQgcGVlciBmZXRjaCwgd2FybSByZXN0YXJ0PC9zcGFuPjwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJyb3V0ZXIiIGlkPSJydEIiPlJvdXRlciBpZGxlPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImNsdXN0ZXIiIGlkPSJjbEIiPjxzdmcgY2xhc3M9Im92bCIgaWQ9Im92QiI+PC9zdmc+PC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImV2ZW50IiBpZD0iZXZCIj5QcmVzcyAiTmV4dCByZXF1ZXN0Ii48L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iYmFyIiBpZD0iYmFyQiI+PC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9Im1ldHJpY3MgbTQiPgogICAgICAgIDxkaXYgY2xhc3M9Im0iPjxkaXYgY2xhc3M9ImsiPk1lYW4gVFRGVDwvZGl2PjxkaXYgY2xhc3M9InYiIGlkPSJtdEIiPuKAkzwvZGl2PjwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9Im0iPjxkaXYgY2xhc3M9ImsiPnA5MCBUVEZUPC9kaXY+PGRpdiBjbGFzcz0idiIgaWQ9InA5QiI+4oCTPC9kaXY+PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ibSI+PGRpdiBjbGFzcz0iayI+UHJlZmlsbCByZWNvbXB1dGVkPC9kaXY+PGRpdiBjbGFzcz0idiIgaWQ9InJjQiI+4oCTPC9kaXY+PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ibSIgdGl0bGU9IlJlcXVlc3RzIHNlcnZlZCBmcm9tIGEgZmFpbGVkIHdvcmtlcidzIHByZXNlcnZlZCBEUkFNIHBvb2wiPjxkaXYgY2xhc3M9ImsiPkZyb20gcHJlc2VydmVkIHBvb2w8L2Rpdj48ZGl2IGNsYXNzPSJ2IiBpZD0icHBCIj7igJM8L2Rpdj48L2Rpdj4KICAgICAgPC9kaXY+CiAgICA8L2Rpdj4KICA8L2Rpdj4KICA8ZGl2IGNsYXNzPSJsZWdlbmQiIHN0eWxlPSJtYXJnaW4tdG9wOjEwcHgiIGlkPSJvbGVnZW5kIj48L2Rpdj4KICA8ZGl2IGNsYXNzPSJ2ZXJkaWN0IiBpZD0idmVyZGljdCI+PHNwYW4gY2xhc3M9IndpIj4hPC9zcGFuPjxzcGFuPlNpbXVsYXRlZCByZXN1bHRzLCBmb3IgZGVtb25zdHJhdGlvbiBvbmx5Ljwvc3Bhbj48L2Rpdj4KPC9zZWN0aW9uPjwvbWFpbj48c2NyaXB0IGlkPSJlbmdpbmUiPgpjb25zdCBUSUVSUz1bJ2hibScsJ2RyYW0nLCdzc2QnXTsKY29uc3QgQ0FQPXtoYm06MixkcmFtOjgsc3NkOjEwfTsgIC8qIEtWIHNoYXJlIG9mIEhCTSBpcyBzbWFsbCBhZnRlciB3ZWlnaHRzOyBob3N0IERSQU0gaG9sZHMgfjR4IG1vcmUgS1YgKi8KY29uc3QgQ09TVD17Y29tcHV0ZTowLjA1LGRyYW06MC4wMDQsc3NkOjAuMDEyLHBlZXI6MC4wMDcscGVlclNldHVwOjMsYmFzZTo4fTsKZnVuY3Rpb24gbXVsYmVycnkoYSl7cmV0dXJuIGZ1bmN0aW9uKCl7YXw9MDthPWErMHg2RDJCNzlGNXwwO2xldCB0PU1hdGguaW11bChhXmE+Pj4xNSwxfGEpO3Q9dCtNYXRoLmltdWwodF50Pj4+Nyw2MXx0KV50O3JldHVybigodF50Pj4+MTQpPj4+MCkvNDI5NDk2NzI5Nn19CgpjbGFzcyBDbHVzdGVyewogIGNvbnN0cnVjdG9yKGtpbmQsbil7dGhpcy5raW5kPWtpbmQ7dGhpcy50aWVycz1bJ2hibScsJ2RyYW0nXTt0aGlzLnc9Wy4uLkFycmF5KG4pXS5tYXAoKF8saSk9Pih7aWQ6aSx1cDp0cnVlLGhibTpbXSxkcmFtOltdLHNzZDpbXX0pKTsKICAgIHRoaXMuc3Q9e2hibTowLGRyYW06MCxzc2Q6MCxwZWVyOjAsZ3VhcmQ6MCx3YXJtOjAsbWlzczowLG5ldzowLHJlY29tcDowLHJldXNlZDowLHR0OltdfX0KICBpbnNlcnQodyx0aWVyLGUpe2NvbnN0IEw9d1t0aWVyXTtjb25zdCBpPUwuZmluZEluZGV4KHg9Pngucz09PWUucyk7aWYoaT49MClMLnNwbGljZShpLDEpO0wucHVzaChlKTsKICAgIHdoaWxlKEwubGVuZ3RoPkNBUFt0aWVyXSl7Y29uc3QgZXY9TC5zaGlmdCgpO2NvbnN0IG54PXRoaXMudGllcnNbdGhpcy50aWVycy5pbmRleE9mKHRpZXIpKzFdO2lmKG54KXRoaXMuaW5zZXJ0KHcsbngsZXYpfX0KICBmaW5kKHcscyx0aWVycyl7bGV0IGJlc3Q9bnVsbDtmb3IoY29uc3QgdCBvZiB0aWVycyl7Y29uc3QgZT13W3RdLmZpbmQoeD0+eC5zPT09cyk7aWYoZSYmKCFiZXN0fHxlLmxlbj5iZXN0LmUubGVuKSliZXN0PXt0LGV9O31yZXR1cm4gYmVzdH0KICBzZXJ2ZShyZXEsd2kpewogICAgY29uc3Qgdz10aGlzLndbd2ldO2xldCBvdXQ9e2tpbmQ6J25ldycsc3JjOm51bGwsc3JjVzp3aSxyZXVzZTowfTsKICAgIGlmKHJlcS5wcmV2PjApewogICAgICBsZXQgbG9jPW51bGw7Zm9yKGNvbnN0IHQgb2YgdGhpcy50aWVycyl7Y29uc3QgZT13W3RdLmZpbmQoeD0+eC5zPT09cmVxLnMpO2lmKGUpe2xvYz17dCxlfTticmVha319CiAgICAgIGlmKGxvYyl7b3V0PXtraW5kOmxvYy50LHNyYzpsb2MuZSxzcmNXOndpLHJldXNlOk1hdGgubWluKGxvYy5lLmxlbixyZXEucHJldil9fQogICAgICBpZih0aGlzLmtpbmQ9PT0na3ZjcicmJighbG9jfHxsb2MuZS5sZW48cmVxLnByZXYpKXsKICAgICAgICBsZXQgcGI9bnVsbDsKICAgICAgICBmb3IoY29uc3QgcCBvZiB0aGlzLncpe2lmKHAuaWQ9PT13aSljb250aW51ZTtjb25zdCB0aWVycz1wLnVwP1snaGJtJywnZHJhbSddOlsnZHJhbSddO2NvbnN0IGY9dGhpcy5maW5kKHAscmVxLnMsdGllcnMpOwogICAgICAgICAgaWYoZiYmKHAudXB8fGYuZS5wcmVzZXJ2ZWQpJiZNYXRoLm1pbihmLmUubGVuLHJlcS5wcmV2KT4ocGI/cGIucmV1c2U6b3V0LnJldXNlKSsyNTYpcGI9e3c6cC5pZCx0OmYudCxlOmYuZSxyZXVzZTpNYXRoLm1pbihmLmUubGVuLHJlcS5wcmV2KSxkb3duOiFwLnVwfTt9CiAgICAgICAgaWYocGIpb3V0PXtraW5kOnBiLmRvd24/J2d1YXJkJzoncGVlcicsc3JjOnBiLmUsc3JjVzpwYi53LHNyY1RpZXI6cGIudCxyZXVzZTpwYi5yZXVzZX07CiAgICAgIH0KICAgICAgaWYoIWxvYyYmb3V0LmtpbmQhPT0ncGVlcicmJm91dC5raW5kIT09J2d1YXJkJylvdXQ9e2tpbmQ6J21pc3MnLHNyYzpudWxsLHNyY1c6d2kscmV1c2U6MH07CiAgICAgIGlmKG91dC5raW5kPT09J2RyYW0nJiZvdXQuc3JjLnByZXNlcnZlZClvdXQua2luZD0nd2FybSc7CiAgICB9CiAgICBjb25zdCByZWM9cmVxLnByZXYtb3V0LnJldXNlOwogICAgY29uc3QgeGZlcj0ob3V0LmtpbmQ9PT0nZHJhbSd8fG91dC5raW5kPT09J3dhcm0nKT9DT1NULmRyYW0qb3V0LnJldXNlOm91dC5raW5kPT09J3NzZCc/Q09TVC5zc2Qqb3V0LnJldXNlOihvdXQua2luZD09PSdwZWVyJ3x8b3V0LmtpbmQ9PT0nZ3VhcmQnKT9DT1NULnBlZXJTZXR1cCtDT1NULnBlZXIqb3V0LnJldXNlOjA7CiAgICBjb25zdCB0dGZ0PUNPU1QuYmFzZSt4ZmVyK0NPU1QuY29tcHV0ZSoocmVjK3JlcS5hZGQpOwogICAgaWYob3V0LmtpbmQhPT0nZ3VhcmQnKXsKICAgIGZvcihjb25zdCB0IG9mIHRoaXMudGllcnMpe2NvbnN0IGk9d1t0XS5maW5kSW5kZXgoeD0+eC5zPT09cmVxLnMpO2lmKGk+PTApd1t0XS5zcGxpY2UoaSwxKX0KICAgIHRoaXMuaW5zZXJ0KHcsJ2hibScse3M6cmVxLnMsbGVuOnJlcS5wcmV2K3JlcS5hZGR9KTsKICAgIHRoaXMuaW5zZXJ0KHcsJ2RyYW0nLHtzOnJlcS5zLGxlbjpyZXEucHJldityZXEuYWRkfSk7fQogICAgdGhpcy5zdFtvdXQua2luZF0rKzt0aGlzLnN0LnJlY29tcCs9cmVjO3RoaXMuc3QucmV1c2VkKz1vdXQucmV1c2U7dGhpcy5zdC50dC5wdXNoKHR0ZnQpOwogICAgcmV0dXJuey4uLm91dCxyZWMsdHRmdCx3aX07CiAgfQogIGZhaWwod2kpe2NvbnN0IHc9dGhpcy53W3dpXTt3LnVwPWZhbHNlO3cuaGJtPVtdO3cuc3NkPVtdO2lmKHRoaXMua2luZD09PSdrdmJtJyl3LmRyYW09W107ZWxzZSB3LmRyYW0uZm9yRWFjaChlPT5lLnByZXNlcnZlZD10cnVlKX0KICByZXN0YXJ0KHdpKXt0aGlzLndbd2ldLnVwPXRydWV9Cn0KCmNvbnN0IFNFU1M9J0FCQ0RFRkdISUpLTCc7Ci8qIFNjcmlwdGVkIGZhaWx1cmUgcnVuOiB3YXJtIFcxIHdpdGggQyxELEcsSDsgZmFpbCBXMSBhdCAjMTc7IHJlc3RhcnQgYXQgIzIzLiBudWxsID0gbm9ybWFsIHJvdXRpbmcuICovCmNvbnN0IEZTQ1JJUFQ9W1snQScsMF0sWydCJywwXSxbJ0MnLDFdLFsnRCcsMV0sWydHJywxXSxbJ0gnLDFdLFsnRScsMl0sWydGJywyXSwKICBbJ0EnLDBdLFsnQicsMF0sWydDJywxXSxbJ0QnLDFdLFsnRycsMV0sWydIJywxXSxbJ0UnLDJdLFsnRicsMl0sCiAgWydDJywxXSxbJ0UnLDJdLFsnRCcsMV0sWydBJywwXSxbJ0YnLDJdLFsnQicsMF0sCiAgWydIJywxXSxbJ0cnLDFdLFsnQycsbnVsbF0sWydFJyxudWxsXV07CmNsYXNzIFdvcmtsb2FkewogIGNvbnN0cnVjdG9yKHNjbixzZWVkKXt0aGlzLnNjbj1zY247dGhpcy5ybmc9bXVsYmVycnkoc2VlZCk7dGhpcy5uPTA7dGhpcy50dXJuPXt9O3RoaXMuaG9tZT17fTt0aGlzLmxvYWQ9WzAsMCwwXTt0aGlzLmRvd249LTE7dGhpcy5kb3duTGlzdD1bXTt0aGlzLmFmdGVyTGlzdD1bXTsKICAgIHRoaXMudGhyPXNjbj09PSdzaGFyZWQnPzEuMzoyLjJ9CiAgcGljaygpe2NvbnN0IHI9dGhpcy5ybmcoKTsKICAgIGlmKHRoaXMuc2NuPT09J3NoYXJlZCcpe2NvbnN0IHM9J1BRUlMnW01hdGgubWluKDMsTWF0aC5mbG9vcihNYXRoLnBvdyhyLDEuNikqNCkpXTtyZXR1cm57cyxwcmV2OjYwMDAsYWRkOjIwMCtNYXRoLmZsb29yKHRoaXMucm5nKCkqNDAwKSxsYWJlbDonc2hhcmVkIHByb21wdCAnK3N9fQogICAgbGV0IHM9U0VTU1tNYXRoLm1pbig5LE1hdGguZmxvb3IoTWF0aC5wb3cociwxLjMpKjEwKSldLGZvcmNlOwogICAgaWYodGhpcy5zY249PT0nZmFpbHVyZScmJnRoaXMubjw9RlNDUklQVC5sZW5ndGgpe1tzLGZvcmNlXT1GU0NSSVBUW3RoaXMubi0xXX0KICAgIGNvbnN0IHQ9dGhpcy50dXJuW3NdPSh0aGlzLnR1cm5bc109PT11bmRlZmluZWQ/MDp0aGlzLnR1cm5bc10rMSk7CiAgICByZXR1cm57cyxmb3JjZSxwcmV2OnQ9PT0wPzA6MTUwMCt0KjYwMCxhZGQ6dD09PTA/MTUwMDo2MDAsbGFiZWw6YHNlc3Npb24gJHtzfSwgdHVybiAke3QrMX1gfX0KICByb3V0ZShyZXEpewogICAgZm9yKGxldCBpPTA7aTwzO2krKyl0aGlzLmxvYWRbaV0qPTAuNzI7CiAgICBjb25zdCBzY3JpcHRlZD10aGlzLnNjbj09PSdmYWlsdXJlJyYmdGhpcy5uPD1GU0NSSVBULmxlbmd0aDsKICAgIGxldCBzcGlrZT1udWxsO2lmKHRoaXMuc2NuIT09J3NoYXJlZCcmJiFzY3JpcHRlZCYmdGhpcy5ybmcoKTwwLjIyKXtzcGlrZT1NYXRoLmZsb29yKHRoaXMucm5nKCkqMyk7dGhpcy5sb2FkW3NwaWtlXSs9M30KICAgIGNvbnN0IHVwPVswLDEsMl0uZmlsdGVyKGk9PmkhPT10aGlzLmRvd24pOwogICAgY29uc3QgaD1yZXEuZm9yY2UhPW51bGw/cmVxLmZvcmNlOnRoaXMuaG9tZVtyZXEuc107bGV0IHdpLHdoeTsKICAgIGlmKHJlcS5mb3JjZSE9bnVsbCYmdXAuaW5jbHVkZXMocmVxLmZvcmNlKSl7d2k9cmVxLmZvcmNlO3doeT10aGlzLmhvbWVbcmVxLnNdPT09dW5kZWZpbmVkPydpbml0aWFsIHBsYWNlbWVudCc6J2NhY2hlIGFmZmluaXR5J30KICAgIGVsc2UgaWYoaCE9PXVuZGVmaW5lZCYmdXAuaW5jbHVkZXMoaCkmJnRoaXMubG9hZFtoXTx0aGlzLnRocil7d2k9aDt3aHk9J2NhY2hlIGFmZmluaXR5J30KICAgIGVsc2V7bGV0IG09SW5maW5pdHk7Zm9yKGNvbnN0IGkgb2YgdXApaWYodGhpcy5sb2FkW2ldPG0tMWUtOSl7bT10aGlzLmxvYWRbaV07d2k9aX0KICAgICAgd2h5PWg9PT11bmRlZmluZWQ/J2xlYXN0IGxvYWRlZCc6KHVwLmluY2x1ZGVzKGgpP2BXJHtofSBvdmVybG9hZGVkYDpgVyR7aH0gZG93bmApfQogICAgdGhpcy5sb2FkW3dpXSs9MTt0aGlzLmhvbWVbcmVxLnNdPXdpO3JldHVybnt3aSx3aHksc3Bpa2V9fQogIG5leHQoKXt0aGlzLm4rKztsZXQgZXY9bnVsbDsKICAgIGlmKHRoaXMuc2NuPT09J2ZhaWx1cmUnKXtpZih0aGlzLm49PT0xNyl7dGhpcy5kb3duPTE7ZXY9J2ZhaWwnfWlmKHRoaXMubj09PTIzKXt0aGlzLmRvd249LTE7ZXY9J3Jlc3RhcnQnfX0KICAgIGNvbnN0IHJlcT10aGlzLnBpY2soKTtjb25zdCByPXRoaXMucm91dGUocmVxKTtyZXR1cm57cmVxLC4uLnIsZXYsbjp0aGlzLm59fQp9Cjwvc2NyaXB0PjxzY3JpcHQ+CmNvbnN0ICQ9aWQ9PmRvY3VtZW50LmdldEVsZW1lbnRCeUlkKGlkKTsKY29uc3QgUEFMPVsnIzhhNWNmMCcsJyMxNTk3YjMnLCcjZTA4YTAwJywnIzRhNzRlOCcsJyNkMDQ1N2EnLCcjYjg4NjJhJywnIzVlOWEwMCcsJyM1NjYzNmEnLCcjYzAyODJlJywnIzBmNzg5MCcsJyM1YjMzYjgnLCcjN2E1MjAwJ107CmNvbnN0IGNvbG9yT2Y9cz0+e2NvbnN0IGk9KCdBQkNERUZHSElKS0xQUVJTJykuaW5kZXhPZihzKTtyZXR1cm4gUEFMW2klUEFMLmxlbmd0aF19Owpjb25zdCBPVVQ9W3trOidoYm0nLG46J0dQVSBoaXQnLGM6JyM0YTc0ZTgnfSx7azonZHJhbScsbjonTG9jYWwgRFJBTScsYzonIzhhNWNmMCd9LHtrOidwZWVyJyxuOidQZWVyIGZldGNoJyxjOicjZTA4YTAwJ30se2s6J2d1YXJkJyxuOidSZWFkIGZyb20gZG93biB3b3JrZXInLGM6JyM1ZTlhMDAnfSx7azond2FybScsbjonV2FybSBoYW5kb2ZmIGhpdCcsYzonIzE1OTdiMyd9LHtrOidtaXNzJyxuOidNaXNzLCByZWNvbXB1dGUnLGM6JyNlMDM1M2InfSx7azonbmV3JyxuOidOZXcgY29udGV4dCcsYzonIzkzYTNhYSd9XTsKJCgnb2xlZ2VuZCcpLmlubmVySFRNTD1PVVQubWFwKG89PmA8c3Bhbj48aSBzdHlsZT0iYmFja2dyb3VuZDoke28uY30iPjwvaT4ke28ubn08L3NwYW4+YCkuam9pbignJyk7CgovKiAtLS0tLS0tLS0tIHRhYiAyOiBzaW11bGF0aW9uIC0tLS0tLS0tLS0gKi8KbGV0IEEsQixXLHRpbWVyPW51bGw7CmZ1bmN0aW9uIHJlc2V0KCl7c3RvcCgpOyQoJ2JGYWlsJykudGV4dENvbnRlbnQ9J0ZhaWwgd29ya2VyIDEnO1c9bmV3IFdvcmtsb2FkKCQoJ3NjbicpLnZhbHVlLDIzKTtBPW5ldyBDbHVzdGVyKCdrdmJtJywzKTtCPW5ldyBDbHVzdGVyKCdrdmNyJywzKTsKICAkKCdyTicpLnRleHRDb250ZW50PTA7WydBJywnQiddLmZvckVhY2goaz0+eyQoJ2V2JytrKS50ZXh0Q29udGVudD0nUHJlc3MgIk5leHQgcmVxdWVzdCIuJzskKCdydCcraykudGV4dENvbnRlbnQ9J1JvdXRlciBpZGxlJ30pOwogIHJlbmRlcihBLCdBJyxudWxsKTtyZW5kZXIoQiwnQicsbnVsbCk7bWV0cmljcyhBLCdBJyk7bWV0cmljcyhCLCdCJyk7dmVyZGljdChudWxsKX0KZnVuY3Rpb24gcmVuZGVyV29ya2VyKGNsLHcscmVzLHNpZGUpewogIGNvbnN0IGFjdD1yZXMmJnJlcy53aT09PXcuaWQ7Y29uc3QgZG93bj0hdy51cDsKICBjb25zdCB0aWVySHRtbD10PT57Y29uc3QgaXRlbXM9d1t0XTtsZXQgaD0nJzsKICAgIGZvcihsZXQgaT0wO2k8Q0FQW3RdO2krKyl7Y29uc3QgZT1pdGVtc1tpXTsKICAgICAgaWYoZSl7Y29uc3QgaXNTcmM9cmVzJiZyZXMuc3JjPT09ZTsKICAgICAgICBoKz1gPGRpdiBjbGFzcz0ic2xvdCBmJHtpc1NyYz8nIHNyYyc6Jyd9JHtlLnByZXNlcnZlZD8nIGtlcHQnOicnfSIgdGl0bGU9IiR7ZS5zfTogJHtlLmxlbn0gdG9rZW5zJHtlLnByZXNlcnZlZD8nIChwcmVzZXJ2ZWQgYnkgS1ZDUi1HdWFyZCknOicnfSIgc3R5bGU9ImJhY2tncm91bmQ6JHtjb2xvck9mKGUucyl9Ij4ke2Uuc308L2Rpdj5gfQogICAgICBlbHNlIGgrPSc8ZGl2IGNsYXNzPSJzbG90Ij48L2Rpdj4nfQogICAgcmV0dXJuIGA8ZGl2IGNsYXNzPSJ0aWVyIj48ZGl2IGNsYXNzPSJ0bCI+PHNwYW4+JHt0PT09J2hibSc/J0dQVSBIQk0nOnQ9PT0nZHJhbSc/KGNsLmtpbmQ9PT0na3Zjcic/J0tWQ1IgRFJBTSc6J0cyIERSQU0nKTonU1NEJ308L3NwYW4+PHNwYW4+JHtpdGVtcy5sZW5ndGh9LyR7Q0FQW3RdfTwvc3Bhbj48L2Rpdj48ZGl2IGNsYXNzPSJzbG90cyI+JHtofTwvZGl2PjwvZGl2PmB9OwogIHJldHVybiBgPGRpdiBjbGFzcz0id2ske2FjdD8nIGFjdCc6Jyd9JHtkb3duPycgZG93bic6Jyd9IiBpZD0iJHtzaWRlfXcke3cuaWR9Ij48ZGl2IGNsYXNzPSJ3aCI+VyR7dy5pZH0ke2Rvd24mJmNsLmtpbmQ9PT0na3Zjcic/JzxzcGFuIGNsYXNzPSJndWFyZCIgc3R5bGU9Im1hcmdpbjowIj5kb3duIMK3IEd1YXJkIG9uPC9zcGFuPic6YDxzcGFuPiR7ZG93bj8nZG93bic6YWN0PydzZXJ2aW5nJzonJ308L3NwYW4+YH08L2Rpdj4ke2NsLnRpZXJzLm1hcCh0aWVySHRtbCkuam9pbignJyl9PC9kaXY+YH0KZnVuY3Rpb24gcmVuZGVyKGNsLHNpZGUscmVzKXtjb25zdCBib3g9JCgnY2wnK3NpZGUpO2NvbnN0IG92PSQoJ292JytzaWRlKTsKICBib3guaW5uZXJIVE1MPWNsLncubWFwKHc9PnJlbmRlcldvcmtlcihjbCx3LHJlcyxzaWRlKSkuam9pbignJyk7Ym94LmFwcGVuZENoaWxkKG92KTtvdi5pbm5lckhUTUw9Jyc7CiAgaWYocmVzJiYocmVzLmtpbmQ9PT0ncGVlcid8fHJlcy5raW5kPT09J2d1YXJkJykpcmVxdWVzdEFuaW1hdGlvbkZyYW1lKCgpPT5kcmF3QXJyb3coc2lkZSxyZXMpKX0KZnVuY3Rpb24gZHJhd0Fycm93KHNpZGUscmVzKXtjb25zdCBib3g9JCgnY2wnK3NpZGUpLG92PSQoJ292JytzaWRlKTtjb25zdCBicj1ib3guZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCk7CiAgY29uc3Qgc3JjPWJveC5xdWVyeVNlbGVjdG9yKCcuc2xvdC5zcmMnKTtjb25zdCBkc3Q9JChzaWRlKyd3JytyZXMud2kpO2lmKCFzcmN8fCFkc3QpcmV0dXJuOwogIGNvbnN0IHM9c3JjLmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpLGQ9ZHN0LmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpOwogIGNvbnN0IHgxPXMubGVmdCtzLndpZHRoLzItYnIubGVmdCx5MT1zLnRvcCtzLmhlaWdodC8yLWJyLnRvcCx4Mj1kLmxlZnQrZC53aWR0aC8yLWJyLmxlZnQseTI9ZC50b3ArMzAtYnIudG9wOwogIGNvbnN0IG14PSh4MSt4MikvMixteT1NYXRoLm1pbih5MSx5MiktNDA7CiAgb3Yuc2V0QXR0cmlidXRlKCd2aWV3Qm94JyxgMCAwICR7YnIud2lkdGh9ICR7YnIuaGVpZ2h0fWApO292LnNldEF0dHJpYnV0ZSgnd2lkdGgnLGJyLndpZHRoKTtvdi5zZXRBdHRyaWJ1dGUoJ2hlaWdodCcsYnIuaGVpZ2h0KTsKICBjb25zdCBjb2w9Z2V0Q29tcHV0ZWRTdHlsZShkb2N1bWVudC5kb2N1bWVudEVsZW1lbnQpLmdldFByb3BlcnR5VmFsdWUocmVzLmtpbmQ9PT0nZ3VhcmQnPyctLWt2Y3InOictLXBlZXInKS50cmltKCk7CiAgb3YuaW5uZXJIVE1MPWA8ZGVmcz48bWFya2VyIGlkPSJwYSR7c2lkZX0iIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iOCIgcmVmWT0iNSIgbWFya2VyV2lkdGg9IjciIG1hcmtlckhlaWdodD0iNyIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNMCwwIEwxMCw1IEwwLDEwIHoiIGZpbGw9IiR7Y29sfSIvPjwvbWFya2VyPjwvZGVmcz4KICA8cGF0aCBkPSJNJHt4MX0sJHt5MX0gUSR7bXh9LCR7bXl9ICR7eDJ9LCR7eTJ9IiBmaWxsPSJub25lIiBzdHJva2U9IiR7Y29sfSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIgbWFya2VyLWVuZD0idXJsKCNwYSR7c2lkZX0pIj48YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJzdHJva2UtZGFzaG9mZnNldCIgZnJvbT0iNDAiIHRvPSIwIiBkdXI9IjAuMTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPjwvcGF0aD5gfQpjb25zdCBwaWxsPWs9Pntjb25zdCBvPU9VVC5maW5kKHg9Pnguaz09PWspO3JldHVybiBgPHNwYW4gY2xhc3M9InBpbGwgby0ke2t9Ij4ke28ubn08L3NwYW4+YH07CmZ1bmN0aW9uIGV2VGV4dChyZXMscmVxLGNsKXtsZXQgdD1gJHtwaWxsKHJlcy5raW5kKX08Yj4ke3JlcS5sYWJlbH08L2I+IOKGkiBXJHtyZXMud2l9LiBgOwogIGlmKHJlcy5raW5kPT09J25ldycpdCs9YE5ldyBjb250ZXh0LCAke3JlcS5hZGQudG9Mb2NhbGVTdHJpbmcoKX0gdG9rZW5zIHByZWZpbGxlZC5gOwogIGVsc2UgaWYocmVzLmtpbmQ9PT0nbWlzcycpdCs9YE5vIHVzYWJsZSBjYWNoZSBvbiBXJHtyZXMud2l9JHtjbC5raW5kPT09J2t2Y3InPycgb3IgYW55IHBlZXInOicnfSwgc28gPGI+JHtyZXMucmVjLnRvTG9jYWxlU3RyaW5nKCl9IHRva2VuczwvYj4gYXJlIHJlY29tcHV0ZWQuYDsKICBlbHNlIGlmKHJlcy5raW5kPT09J3BlZXInKXQrPWBSb3V0ZXIgaGludDogZmV0Y2ggZnJvbSBXJHtyZXMuc3JjV30gJHtyZXMuc3JjVGllcj09PSdoYm0nPydHUFUgKHBpbm5lZCknOidEUkFNJ30gb3ZlciBOSVhMLiAke3Jlcy5yZXVzZS50b0xvY2FsZVN0cmluZygpfSB0b2tlbnMgcmV1c2VkJHtyZXMucmVjP2AsICR7cmVzLnJlYy50b0xvY2FsZVN0cmluZygpfSByZWNvbXB1dGVkYDonJ30uYDsKICBlbHNlIGlmKHJlcy5raW5kPT09J2d1YXJkJyl0Kz1gVyR7cmVzLnNyY1d9IGlzIGRvd24sIGJ1dCBpdHMgS1ZDUi1HdWFyZCBzdGlsbCBob2xkcyB0aGUgRFJBTSBwb29sLiAke3Jlcy5yZXVzZS50b0xvY2FsZVN0cmluZygpfSB0b2tlbnMgd2VyZSByZWFkIGluIHBsYWNlIGZyb20gdGhlIGZhaWxlZCB3b3JrZXIncyBwcmVzZXJ2ZWQgY2FjaGUgb3ZlciBOSVhMJHtyZXMucmVjP2AsICR7cmVzLnJlYy50b0xvY2FsZVN0cmluZygpfSByZWNvbXB1dGVkYDonJ30uYDsKICBlbHNlIGlmKHJlcy5raW5kPT09J3dhcm0nKXQrPWBXJHtyZXMud2l9IHJlc3RhcnRlZCBhbmQgZ290IGl0cyBEUkFNIHBvb2wgYmFjayBmcm9tIEtWQ1ItR3VhcmQuICR7cmVzLnJldXNlLnRvTG9jYWxlU3RyaW5nKCl9IHRva2VucyByZXVzZWQgZnJvbSB0aGUgcHJlc2VydmVkIHBvb2wke3Jlcy5yZWM/YCwgJHtyZXMucmVjLnRvTG9jYWxlU3RyaW5nKCl9IHJlY29tcHV0ZWRgOicnfS5gOwogIGVsc2UgdCs9YCR7cmVzLnJldXNlLnRvTG9jYWxlU3RyaW5nKCl9IHRva2VucyByZXVzZWQgZnJvbSBsb2NhbCAke3Jlcy5raW5kLnRvVXBwZXJDYXNlKCl9JHtyZXMucmVjP2AsICR7cmVzLnJlYy50b0xvY2FsZVN0cmluZygpfSByZWNvbXB1dGVkIChvbGRlciBwcmVmaXgpYDonJ30uYDsKICByZXR1cm4gdCtgIFRURlQgPGI+JHtNYXRoLnJvdW5kKHJlcy50dGZ0KX0gbXM8L2I+YH0KZnVuY3Rpb24gbWV0cmljcyhjbCxzaWRlKXtjb25zdCBzdD1jbC5zdCxuPXN0LnR0Lmxlbmd0aDsKICBjb25zdCB0b3Q9T1VULnJlZHVjZSgoYSxvKT0+YStzdFtvLmtdLDApfHwxOwogICQoJ2Jhcicrc2lkZSkuaW5uZXJIVE1MPU9VVC5tYXAobz0+YDxkaXYgdGl0bGU9IiR7by5ufTogJHtzdFtvLmtdfSIgc3R5bGU9ImJhY2tncm91bmQ6JHtvLmN9O3dpZHRoOiR7MTAwKnN0W28ua10vdG90fSUiPjwvZGl2PmApLmpvaW4oJycpOwogIGNvbnN0IHM9Wy4uLnN0LnR0XS5zb3J0KChhLGIpPT5hLWIpOwogICQoJ210JytzaWRlKS50ZXh0Q29udGVudD1uP01hdGgucm91bmQoc3QudHQucmVkdWNlKChhLGIpPT5hK2IsMCkvbikrJyBtcyc6J+KAkyc7CiAgJCgncDknK3NpZGUpLnRleHRDb250ZW50PW4/TWF0aC5yb3VuZChzW01hdGguZmxvb3IoMC45KihuLTEpKV0pKycgbXMnOifigJMnOwogICQoJ3JjJytzaWRlKS50ZXh0Q29udGVudD1uPyhzdC5yZWNvbXAvMTAwMCkudG9GaXhlZCgxKSsnayB0b2snOifigJMnOwogICQoJ3BwJytzaWRlKS50ZXh0Q29udGVudD1uP1N0cmluZyhzdC5ndWFyZCtzdC53YXJtKTon4oCTJ30KY29uc3QgV0FSTj0nPHNwYW4gY2xhc3M9IndpIj4hPC9zcGFuPjxzcGFuPlNpbXVsYXRlZCByZXN1bHRzLCBmb3IgZGVtb25zdHJhdGlvbiBvbmx5Ljwvc3Bhbj4nOwpmdW5jdGlvbiB2ZXJkaWN0KGxhc3QpeyQoJ3ZlcmRpY3QnKS5pbm5lckhUTUw9V0FSTn0KZnVuY3Rpb24gc3RlcCgpe2NvbnN0IHI9Vy5uZXh0KCk7bGV0IGV4dHJhPScnOwogIGlmKHIuZXY9PT0nZmFpbCcpe0EuZmFpbCgxKTtCLmZhaWwoMSk7ZXh0cmE9J1cxIGp1c3QgZmFpbGVkLiBLVkJNIGxvc3QgaXRzIHBvb2xzOyBLVkNSLUd1YXJkIGtlcHQgVzFcJ3MgRFJBTSBwb29sLCBhbmQgb3RoZXIgd29ya2VycyBjYW4gc3RpbGwgcmVhZCBmcm9tIGl0IHdoaWxlIFcxIGlzIGRvd24uJ30KICBpZihyLmV2PT09J3Jlc3RhcnQnKXtBLnJlc3RhcnQoMSk7Qi5yZXN0YXJ0KDEpO2V4dHJhPSdXMSByZXN0YXJ0ZWQuIEtWQk0gY29tZXMgYmFjayBjb2xkOyBLVkNSIGdldHMgdGhlIHdhcm0gRFJBTSBwb29sIGJhY2sgZnJvbSB0aGUgR3VhcmQuJ30KICBjb25zdCByYT1BLnNlcnZlKHIucmVxLHIud2kpLHJiPUIuc2VydmUoci5yZXEsci53aSk7CiAgY29uc3Qgd2h5PWAke3Iud2h5fSR7ci5zcGlrZSE9PW51bGw/YCwgbG9hZCBzcGlrZSBvbiBXJHtyLnNwaWtlfWA6Jyd9YDsKICBjb25zdCBydD1gPHNwYW4gY2xhc3M9InJ0eCIgdGl0bGU9IiR7d2h5fSI+PGI+Um91dGVyPC9iPiDihpIgVyR7ci53aX0gPHNwYW4gc3R5bGU9ImNvbG9yOnZhcigtLW11dGVkKSI+KCR7d2h5fSk8L3NwYW4+PC9zcGFuPmA7CiAgJCgncnRBJykuaW5uZXJIVE1MPXJ0OyQoJ3J0QicpLmlubmVySFRNTD1ydCsoKHJiLmtpbmQ9PT0ncGVlcid8fHJiLmtpbmQ9PT0nZ3VhcmQnKT9gPHNwYW4gY2xhc3M9InBpbGwgby0ke3JiLmtpbmR9Ij5oaW50OiBzcmMgVyR7cmIuc3JjV308L3NwYW4+YDonJyk7CiAgcmVuZGVyKEEsJ0EnLHJhKTtyZW5kZXIoQiwnQicscmIpOyQoJ2V2QScpLmlubmVySFRNTD1ldlRleHQocmEsci5yZXEsQSk7JCgnZXZCJykuaW5uZXJIVE1MPWV2VGV4dChyYixyLnJlcSxCKTsKICBtZXRyaWNzKEEsJ0EnKTttZXRyaWNzKEIsJ0InKTskKCdyTicpLnRleHRDb250ZW50PXIubjsKICBsZXQgaGludD1leHRyYTtpZighaGludCYmcmEua2luZCE9PXJiLmtpbmQpaGludD1gVGhpcyByZXF1ZXN0IGRpZmZlcnM6IEtWQk0gaGFkIGEgJHtPVVQuZmluZChvPT5vLms9PT1yYS5raW5kKS5uLnRvTG93ZXJDYXNlKCl9LCBLVkNSIGhhZCBhICR7T1VULmZpbmQobz0+by5rPT09cmIua2luZCkubi50b0xvd2VyQ2FzZSgpfS5gOwogIHZlcmRpY3QoaGludCl9CmZ1bmN0aW9uIHN0b3AoKXtpZih0aW1lcil7Y2xlYXJJbnRlcnZhbCh0aW1lcik7dGltZXI9bnVsbDskKCdiUGxheScpLnRleHRDb250ZW50PSdQbGF5J319CiQoJ2JTdGVwJykub25jbGljaz1zdGVwOwokKCdiUGxheScpLm9uY2xpY2s9ZnVuY3Rpb24oKXtpZih0aW1lcilzdG9wKCk7ZWxzZXt0aW1lcj1zZXRJbnRlcnZhbChzdGVwLDE4NSk7dGhpcy50ZXh0Q29udGVudD0nUGF1c2UnfX07CiQoJ2JSZXNldCcpLm9uY2xpY2s9cmVzZXQ7JCgnc2NuJykub25jaGFuZ2U9cmVzZXQ7CiQoJ2JGYWlsJykub25jbGljaz1mdW5jdGlvbigpe2lmKFcuZG93bj09PTEpe1cuZG93bj0tMTtBLnJlc3RhcnQoMSk7Qi5yZXN0YXJ0KDEpO3RoaXMudGV4dENvbnRlbnQ9J0ZhaWwgd29ya2VyIDEnO3ZlcmRpY3QoJ1cxIHJlc3RhcnRlZCBtYW51YWxseS4nKX0KICBlbHNle1cuZG93bj0xO0EuZmFpbCgxKTtCLmZhaWwoMSk7dGhpcy50ZXh0Q29udGVudD0nUmVzdGFydCB3b3JrZXIgMSc7dmVyZGljdCgnVzEgZmFpbGVkIG1hbnVhbGx5LiBLVkJNIGxvc3QgaXRzIHBvb2xzOyBLVkNSLUd1YXJkIGtlZXBzIFcxXCdzIERSQU0gcG9vbCwgc28gb3RoZXIgd29ya2VycyBjYW4gcmVhZCBmcm9tIGl0IG5vdyBhbmQgVzEgcmVzdGFydHMgd2FybS4nKX0KICByZW5kZXIoQSwnQScsbnVsbCk7cmVuZGVyKEIsJ0InLG51bGwpfTsKd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ3Jlc2l6ZScsKCk9PnskKCdvdkEnKS5pbm5lckhUTUw9Jyc7JCgnb3ZCJykuaW5uZXJIVE1MPScnfSk7CnJlc2V0KCk7CgovKiBkZWNrIGludGVncmF0aW9uOiBmb3J3YXJkIHNsaWRlLW5hdmlnYXRpb24ga2V5cyB0byB0aGUgZGVjaywgYWNjZXB0IHN0b3AgcmVxdWVzdHMgKi8KZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigna2V5ZG93bicsZT0+e2lmKFsnQXJyb3dSaWdodCcsJ0Fycm93TGVmdCcsJ0Fycm93VXAnLCdBcnJvd0Rvd24nLCdQYWdlVXAnLCdQYWdlRG93bicsJ0hvbWUnLCdFbmQnLCdmJywnRiddLmluY2x1ZGVzKGUua2V5KSYmIShlLnRhcmdldCYmZS50YXJnZXQudGFnTmFtZT09PSdTRUxFQ1QnKSl7ZS5wcmV2ZW50RGVmYXVsdCgpO3BhcmVudC5wb3N0TWVzc2FnZSh7c2ltOidrZXknLGtleTplLmtleX0sJyonKX19KTsKd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ21lc3NhZ2UnLGU9PntpZihlLmRhdGEmJmUuZGF0YS5zaW09PT0nc3RvcCcpc3RvcCgpfSk7CmZ1bmN0aW9uIHBvc3RTaXplKCl7cGFyZW50LnBvc3RNZXNzYWdlKHtzaW06J3NpemUnLGg6TWF0aC5jZWlsKGRvY3VtZW50LmJvZHkuZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCkuaGVpZ2h0KX0sJyonKX0Kd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ2xvYWQnLHBvc3RTaXplKTtzZXRUaW1lb3V0KHBvc3RTaXplLDUwKTtuZXcgUmVzaXplT2JzZXJ2ZXIocG9zdFNpemUpLm9ic2VydmUoZG9jdW1lbnQuYm9keSk7Cjwvc2NyaXB0PjwvYm9keT48L2h0bWw+";
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  function svg(id,h){var e=document.getElementById(id);if(e)e.innerHTML=h;}
+  /* guard chart */
+  var P=[['P50',1.02,0.86],['P90',7.02,20.77],['P95',9.65,26.49]],gp=2;
+  function gd(){var L=70,Rr=600,mx=30,x=v=>L+v/mx*(Rr-L),h='';
+    for(var t=0;t<=30;t+=5)h+='<line x1="'+x(t)+'" x2="'+x(t)+'" y1="10" y2="270" style="stroke:var(--line);stroke-width:1"/><text x="'+x(t)+'" y="292" text-anchor="middle" style="fill:var(--dim);font-size:14px">'+t+'</text>';
+    P.forEach(function(p,i){var y0=20+i*84,on=i===gp,op=on?1:.35;
+      h+='<text x="'+(L-12)+'" y="'+(y0+40)+'" text-anchor="end" style="fill:var(--text);font:700 18px var(--display);opacity:'+op+'">'+p[0]+'</text>';
+      h+='<rect x="'+L+'" y="'+y0+'" width="'+(x(p[1])-L)+'" height="30" rx="4" style="fill:var(--green-fill);opacity:'+op+'"/><text x="'+(x(p[1])+8)+'" y="'+(y0+21)+'" style="fill:var(--text);font-size:15px;opacity:'+op+'">'+p[1].toFixed(2)+'</text>';
+      h+='<rect x="'+L+'" y="'+(y0+34)+'" width="'+(x(p[2])-L)+'" height="30" rx="4" style="fill:var(--req);opacity:'+op+'"/><text x="'+(x(p[2])+8)+'" y="'+(y0+55)+'" style="fill:var(--text);font-size:15px;opacity:'+op+'">'+p[2].toFixed(2)+'</text>';});
+    h+='<rect x="'+L+'" y="304" width="14" height="14" style="fill:var(--green-fill)"/><text x="'+(L+20)+'" y="316" style="fill:var(--dim);font-size:14px">KVCR-Guard</text>';
+    h+='<rect x="'+(L+130)+'" y="304" width="14" height="14" style="fill:var(--req)"/><text x="'+(L+150)+'" y="316" style="fill:var(--dim);font-size:14px">no KVCR-Guard</text>';
+    svg('gdSvg',h);var p=P[gp],r=p[2]/p[1];
+    document.getElementById('gdNote').innerHTML=r>=1?'<b>'+p[0]+': '+r.toFixed(1)+'× lower</b> with KVCR-Guard ('+p[1].toFixed(2)+' s vs '+p[2].toFixed(2)+' s)':'<b>'+p[0]+':</b> about the same ('+p[1].toFixed(2)+' s vs '+p[2].toFixed(2)+' s) — the win is in the tail';}
+  document.querySelectorAll('#gdSeg button').forEach(function(b){b.onclick=function(){gp=+b.dataset.p;document.querySelectorAll('#gdSeg button').forEach(function(x){x.classList.toggle('on',x===b)});gd();};});
+  gd();
+  /* embedded live simulation (same as kvcr.html) */
+  var f=document.getElementById('simFrame'),box=document.getElementById('simBox');
+  if(f&&box){
+    var doc=new TextDecoder().decode(Uint8Array.from(atob(SIM_B64),function(c){return c.charCodeAt(0)}));
+    f.srcdoc=doc;
+    var simH=660,fitN=0,MINW=960;
+    function fit(){var bw=box.clientWidth,bh=box.clientHeight;if(!bw||!bh)return;var sc=Math.min(bh/simH,bw/MINW);f.style.width=(bw/sc)+'px';f.style.height=(bh/sc)+'px';f.style.transform='scale('+sc+')';}
+    f.addEventListener('load',fit);
+    window.addEventListener('message',function(e){var d=e.data||{};
+      if(d.sim==='size'&&d.h&&Math.abs(d.h+2-simH)>6&&fitN++<12){simH=d.h+2;fit();}
+      if(d.sim==='key'){f.blur();document.dispatchEvent(new KeyboardEvent('keydown',{key:d.key}));}});
+    window.addEventListener('resize',fit);setTimeout(fit,100);
+    var sl=f.closest('.slide');
+    new MutationObserver(function(){if(!sl.classList.contains('active')){f.contentWindow&&f.contentWindow.postMessage({sim:'stop'},'*');if(document.activeElement===f)f.blur();}else fit();}).observe(sl,{attributes:true,attributeFilter:['class']});
+  }
+})();
+</script>
+<script src="deck-tools.js" defer></script>

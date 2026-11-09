@@ -1,0 +1,173 @@
+# syntax=docker/dockerfile:1.7
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+ARG VLLM_IMAGE=vllm/vllm-openai:nightly-43b4aaea3e40e20ef53ce2bfecfa1b72060bf2b5@sha256:f8696a5176c1fb61e025b0772505674a3e092c25597eb26117003945b5121e8d
+
+# The vLLM image, adapter source, and Dynamo revision below are one validated
+# compatibility set. Change them together and repeat the end-to-end test.
+FROM rust:1.93-bookworm AS build-base
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake git libclang-dev libhwloc-dev libprotobuf-dev libudev-dev pkg-config \
+    protobuf-compiler python3-dev python3-pip python3-venv \
+ && rm -rf /var/lib/apt/lists/*
+
+# Pin the merged vLLM KVCR integration to an exact commit SHA.
+FROM build-base AS vllm-kvcr-source
+ARG KVCR_VLLM_REPO=https://github.com/vllm-project/vllm.git
+ARG KVCR_VLLM_REF=08567505b09324f891797f4a13c1bd73fc75a827
+RUN git init /src/vllm-kvcr \
+ && git -C /src/vllm-kvcr remote add origin "${KVCR_VLLM_REPO}" \
+ && git -C /src/vllm-kvcr fetch --depth 1 origin "${KVCR_VLLM_REF}" \
+ && git -C /src/vllm-kvcr checkout --detach FETCH_HEAD \
+ && test "$(git -C /src/vllm-kvcr rev-parse HEAD)" = "${KVCR_VLLM_REF}"
+WORKDIR /src/vllm-kvcr
+RUN mkdir -p /overlay \
+ && cp --parents \
+      vllm/distributed/kv_events.py \
+      vllm/distributed/kv_transfer/kv_connector/v1/offloading/events.py \
+      vllm/v1/kv_offload/base.py \
+      vllm/v1/kv_offload/tiering/factory.py \
+      vllm/v1/kv_offload/tiering/kvcr/__init__.py \
+      vllm/v1/kv_offload/tiering/kvcr/manager.py \
+      /overlay/
+
+# Pin a landed Dynamo revision with the versioned KV hint protocol and
+# per-rank KVCR control ports.
+FROM build-base AS dynamo-builder
+ARG DYNAMO_REF=ea23e5130c1bfbadec477b99449d0cee5598caa0
+RUN git clone --filter=blob:none https://github.com/ai-dynamo/dynamo.git /src/dynamo \
+ && git -C /src/dynamo fetch --depth 1 origin "${DYNAMO_REF}" \
+ && git -C /src/dynamo checkout --detach "${DYNAMO_REF}"
+RUN python3 -m venv /venv \
+ && /venv/bin/pip install --no-cache-dir "maturin[patchelf]"
+RUN cd /src/dynamo/lib/bindings/python \
+ && /venv/bin/maturin build \
+      --release \
+      --features select-service,kv-indexer \
+      --out /wheels
+RUN cd /src/dynamo \
+ && /venv/bin/pip wheel --no-deps . --wheel-dir /wheels
+
+FROM ${VLLM_IMAGE}
+USER root
+ARG NCCL_VERSION=2.30.7
+
+# KVCR's recovery journal reaches libatomic for the 8-byte acquire/release
+# cursor operations CPython does not expose. The runtime image needs it even
+# though it is not a Python distribution and cannot be a pyproject dependency.
+RUN apt-get update && apt-get install -y --no-install-recommends libatomic1 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install the compatible Dynamo router-hint build.
+COPY --from=dynamo-builder /wheels /tmp/dynamo-wheels
+RUN python3 -m pip install --no-cache-dir \
+      --no-deps \
+      /tmp/dynamo-wheels/ai_dynamo_runtime-*.whl \
+ && python3 -m pip install --no-cache-dir \
+      --no-deps \
+      /tmp/dynamo-wheels/ai_dynamo-*.whl \
+ && rm -rf /tmp/dynamo-wheels
+
+# Install KVCR from the checkout used as the Docker build context.
+COPY pyproject.toml README.md LICENSE /opt/kvcr-src/
+COPY src /opt/kvcr-src/src
+RUN python3 -m pip install --no-cache-dir /opt/kvcr-src \
+ && python3 -m pip install --no-cache-dir \
+      "nvidia-nccl-cu13==${NCCL_VERSION}"
+
+# Overlay the six vLLM files fetched from the public KVCR integration commit.
+# The quick start pins that commit and this base image as one validated
+# compatibility set.
+COPY --from=vllm-kvcr-source /overlay/vllm /tmp/kvcr-vllm-overlay/vllm
+RUN VLLM_DIR="$(python3 -c 'import os, vllm; print(os.path.dirname(vllm.__file__))')" \
+ && cp -a /tmp/kvcr-vllm-overlay/vllm/. "${VLLM_DIR}/" \
+ && rm -rf /tmp/kvcr-vllm-overlay
+
+ENV DYN_REQUEST_PLANE=tcp \
+    DYN_EVENT_PLANE=zmq \
+    DYN_DISCOVERY_BACKEND=file \
+    DYN_FILE_KV=/tmp/dynamo-kvcr-quick-start \
+    PYTHONHASHSEED=0 \
+    VLLM_KV_EVENTS_USE_INT_BLOCK_HASHES=1
+
+# On-demand paging keeps Guard preparation off the synchronous registration
+# path. Fallback stays on so hardware without host ODP still registers; set
+# UCX_REG_NONBLOCK_FALLBACK=n to prove ODP is the path actually taken.
+ENV UCX_REG_NONBLOCK_MEM_TYPES=host \
+    UCX_IB_ODP_PREFETCH=n
+
+# Fail the build if an incompatible source revision displaced any part of the
+# serving path. The validated NCCL restore intentionally differs from the
+# torch wheel's declared pin, so a global `pip check` is not a useful canary.
+RUN python3 - <<'PY'
+from importlib import metadata
+import inspect
+from types import SimpleNamespace
+
+import dynamo.vllm
+import kvcr
+import vllm
+from dynamo.common.constants import KV_HINT_TRANSFER_CAPABILITY_KEY
+from dynamo.llm import WorkerType
+from dynamo.vllm.kv_hints import resolve_kv_transfer_hint_sources
+from vllm.v1.kv_offload.base import OffloadPolicy
+from vllm.v1.kv_offload.tiering.base import TransferJob
+from vllm.v1.kv_offload.tiering.factory import SecondaryTierFactory
+from vllm.v1.kv_offload.tiering.kvcr import manager
+
+assert metadata.version("nixl") == "1.5.0"
+assert metadata.version("nvidia-nccl-cu13") == "2.30.7"
+assert metadata.version("numpy").startswith("2.")
+assert int(metadata.version("protobuf").split(".", 1)[0]) < 7
+assert "abandon_timeout_ms" in inspect.signature(
+    manager.KVCRSecondaryTierManager.__init__
+).parameters
+assert "chunk_ids" in TransferJob.__dataclass_fields__
+assert OffloadPolicy.CHUNK_LEVEL.value == "chunk_level"
+assert KV_HINT_TRANSFER_CAPABILITY_KEY == "router_hint"
+engine_args = SimpleNamespace(
+    kv_transfer_config=SimpleNamespace(
+        kv_connector_extra_config={
+            "secondary_tiers": [{
+                "type": "kvcr",
+                "router_capabilities": [KV_HINT_TRANSFER_CAPABILITY_KEY],
+                "control_advertise_host": "127.0.0.1",
+                "control_ports": [17771, 17772],
+            }],
+        }
+    )
+)
+sources = resolve_kv_transfer_hint_sources(
+    engine_args, WorkerType.Aggregated, dp_range=(0, 2)
+)
+assert sources is not None
+assert {
+    rank: source.source_control_endpoint for rank, source in sources.items()
+} == {0: "tcp://127.0.0.1:17771", 1: "tcp://127.0.0.1:17772"}
+assert {source.worker_type for source in sources.values()} == {"aggregated"}
+assert (
+    SecondaryTierFactory.get_tier_class({"type": "kvcr"})
+    is manager.KVCRSecondaryTierManager
+)
+print("dynamo.vllm:", dynamo.vllm.__file__)
+print("vllm:", vllm.__file__)
+print("kvcr:", kvcr.__file__)
+print("KVCR adapter:", manager.__file__)
+for distribution in (
+    "ai-dynamo",
+    "vllm",
+    "kvcr",
+    "nixl",
+    "nvidia-nccl-cu13",
+):
+    print(f"{distribution}=={metadata.version(distribution)}")
+PY
+
+ENV HF_HOME=/home/vllm/.cache/huggingface
+RUN mkdir -p "${HF_HOME}" \
+ && chown -R vllm:0 "${HF_HOME}"
+
+WORKDIR /workspace
+USER vllm
+ENTRYPOINT []

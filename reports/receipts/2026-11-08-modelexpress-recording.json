@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "status": "qualified_recorded",
+  "qualified_by": "Same revised flow the workshop owner accepted on 2026-11-07, recorded live with the capture tool; no independent audit was run.",
+  "run_completed_at": "2026-11-08T08:21:37.989196+00:00",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "profile": "intro-mx-text-only-eager-v1",
+  "mx_profile": "mx-intro-source-text-only-eager-v1",
+  "flow": "Revised: the section 1 intro server is the ModelExpress source; only the peer target is launched.",
+  "run": "results/demo-02-20261108-capture-a1",
+  "source_run": "results/demo-01-20261107T062808330356Z",
+  "namespace": "dynamo-ft-r610-f2bd6ac3-demo",
+  "cross_node": true,
+  "gpu_count": 4,
+  "workers_tensor_parallel_size": 2,
+  "source": {
+    "node": "kubecon-nke-site-cp-0124",
+    "worker_uid": "6e795253-50b5-4a96-8734-801dc4bc15db",
+    "graph_uid": "c27cd522-3d08-4122-8e40-47100eadfcb9",
+    "frontend_uid": "13c8a6e2-1a8e-4732-8526-1e93e31f2065",
+    "claim_uid": "38040127-c002-4a09-a7b8-a073ab84afdf",
+    "gpu_devices": [
+      "GPU-75461e0d-6588-94c9-2517-dca859f5c68b",
+      "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110"
+    ]
+  },
+  "target": {
+    "node": "kubecon-nke-site-cp-0198",
+    "worker_uid": "3c3c84b9-dc33-4f99-afc5-8c7ba86989fa",
+    "worker_pod": "demo-mx-target-0-agg-wnvt9",
+    "graph": "demo-mx-target",
+    "graph_uid": "8c84c7b9-3285-450c-a049-9f7884d4e5dd",
+    "claim_uid": "9c9099d7-1fd2-4a82-8663-ccbf72812012",
+    "gpu_uuids": [
+      "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326",
+      "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5"
+    ]
+  },
+  "mx_settings": {
+    "load_format": "modelexpress",
+    "MX_METADATA_BACKEND": "k8s-service",
+    "MX_K8S_SERVICE_PATTERN": "mx-source",
+    "MX_NIXL_BACKEND": "LIBFABRIC",
+    "MX_ARTIFACT_TRANSFER": "0"
+  },
+  "execution": "eager (--enforce-eager): no torch.compile or CUDA graphs",
+  "transport": "NIXL/LIBFABRIC/EFA",
+  "storage_fallback": false,
+  "transfers": [
+    {
+      "rank": 0,
+      "tensors": 1413,
+      "gigabytes": 39.22,
+      "seconds": 4.22
+    },
+    {
+      "rank": 1,
+      "tensors": 1413,
+      "gigabytes": 39.22,
+      "seconds": 3.24
+    }
+  ],
+  "gigabytes_total": 78.44,
+  "slowest_rank_copy_seconds": 4.22,
+  "startup_seconds": {
+    "apply_started_at": "2026-11-08T08:17:23.417378+00:00",
+    "storage_first_replica": {
+      "ready_seconds": 492.980123,
+      "model_loading_seconds": 290.701028,
+      "engine_init_seconds": 83.98
+    },
+    "peer_new_replica": {
+      "ready_seconds": 247.582622,
+      "model_loading_seconds": 53.173359,
+      "engine_init_seconds": 83.49
+    },
+    "peer_worker_and_frontend_ready": 248.704292,
+    "observed_readiness_ratio": 1.9911741745751446
+  },
+  "responses": "GET /v1/models listed the model; one coding request through the target frontend returned def add(a, b), finish_reason stop.",
+  "capture": {
+    "path": "demos/transcripts/live/02-modelexpress/20261108-a1/main.txt",
+    "sha256": "757560c1fe4df00b9b3da9c2388dfc35597fb935d53940286543582e9b02d480",
+    "status": "live_passed",
+    "started_at": "2026-11-08T08:17:21.768569+00:00",
+    "finished_at": "2026-11-08T08:21:38.023204+00:00",
+    "elapsed_seconds": 256.11746135819703,
+    "automatic_advance": true,
+    "preexisting_startup": true,
+    "startup_scope": "First-replica storage startup is pre-existing evidence from demo 1. Peer-arm startup begins during this recording; use its separate arm timing."
+  },
+  "cleanup": "Not performed: the intro server and this target are retained as the presentation pair.",
+  "scope": "Observed first and second startups on different nodes with the same model and engine settings. Checkpoint staged on EFS; page caches and source traffic are uncontrolled.",
+  "evidence_sha256": {
+    "demo.json": "ea400a6530164a6887e8a182f7e743c480cfcc8db5e0eadee2ce409cbc0dcf2b",
+    "source-binding.json": "7037178000d0be3c5e98c86923613dca4d3e57cdc942ccddec469abba5a389ac",
+    "comparison.json": "4f2c57c6e4fcedd7908983e9fa76ee8a9815fa68354133763b0c7757a119baf8",
+    "peer-proof.json": "6515d381b1b6a2b4f5f7aefd24fd109aa850de689cebcc8c342c323f943ab7f0",
+    "timing.json": "982034b7d4b2d0acdd883009a005157a7833bd8174faec0a4dcb60ed5fb544c1",
+    "request.json": "9098b65608ec38c9b5f6ad47b3ff6cb77bf2ee5933edcbc22313f55e69fe601e",
+    "response.json": "ddf16e13b80f84cebd34914ea822113138455b5e570c5a455ff07923fd7ef7fb",
+    "models.json": "53ca7db824a5083090d8d344e5724230e526b343d2719577f439789fa8fce034",
+    "peer.yaml": "a2af2ec17ca7a817305d5b0f72e1e014af45b469e2681acf1202fff2df7e6adc",
+    "worker.log": "e3d4f624147bb1ad0e7b684e46acfde2b03f019a497f2aa1d29e7ab1a73549b3",
+    "transfer-excerpts.log": "527590079c9680e363ade3a84f857fc1a2ccdf51ed03b2fa7c1011d96b1040d3",
+    "ready-pods.json": "a4a1634c0e371d6f7074c79c812945cff521f1eb9624db0ce879d72a8c109f7e",
+    "arms/peer/record.json": "cb76a09e067972f1a4365eafa8355276a4f0219b3620fcf333552d913e6a87e3"
+  },
+  "limits": [
+    "One observed pair on different nodes; not a controlled same-node comparison (the matched benchmark is separate).",
+    "Eager presenter profile; compile-artifact transfer is disabled and appears only in the matched benchmark.",
+    "The source was idle; any effect on a source serving traffic is not measured.",
+    "The capture advanced automatically, so its clock has no presenter pauses or talk time."
+  ]
+}

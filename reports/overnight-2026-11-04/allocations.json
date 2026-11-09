@@ -1,0 +1,170 @@
+{
+  "schema": 1,
+  "at": "2026-11-05T06:39:59.186318+00:00",
+  "authorization": "User explicitly granted whole cluster overnight; parent delegated exact nonoverlap assignments to cluster_coordinator",
+  "initial_claims": 0,
+  "initial_gpu_pods": 0,
+  "advertised_h100": 24,
+  "allocations": {
+    "snapshot": {
+      "owner": "/root/snapshot_presenter",
+      "by_node": {
+        "kubecon-nke-site-cp-0124": [
+          "gpu-1",
+          "gpu-3"
+        ]
+      },
+      "lease": ".local/workshop-measurements-20261030.gpu-lease",
+      "note": "Exact qualified Snapshot pair; narrow existing agent-private NVMe overlay only",
+      "gpu_uuids_by_node": {
+        "kubecon-nke-site-cp-0124": [
+          "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110",
+          "GPU-75461e0d-6588-94c9-2517-dca859f5c68b"
+        ]
+      }
+    },
+    "shadow": {
+      "owner": "/root/shadow_presenter",
+      "by_node": {
+        "kubecon-nke-site-cp-0124": [
+          "gpu-4",
+          "gpu-5"
+        ]
+      },
+      "lease": ".local/overnight-shadow.gpu-lease",
+      "note": "Shared GMS active+standby claim; namespace-owned DeviceClass UUID selector",
+      "gpu_uuids_by_node": {
+        "kubecon-nke-site-cp-0124": [
+          "GPU-b896cc31-be76-0f28-2e2d-d82564b624b7",
+          "GPU-a63322d6-c08e-79cb-c42a-031aeb4c1488"
+        ]
+      }
+    },
+    "baseline_mx": {
+      "owner": "/root/baseline_mx_capture",
+      "by_node": {
+        "kubecon-nke-site-cp-0124": [
+          "gpu-0",
+          "gpu-2"
+        ],
+        "kubecon-nke-site-cp-0198": [
+          "gpu-6",
+          "gpu-7"
+        ]
+      },
+      "lease": ".local/overnight-baseline-mx.gpu-lease",
+      "note": "Intro/source on0124, EFA target on0198, sequential baseline/source/target",
+      "gpu_uuids_by_node": {
+        "kubecon-nke-site-cp-0124": [
+          "GPU-c220c1d0-843c-ce3c-b1f9-3ad67af277d7",
+          "GPU-ea836524-584e-0719-d7bb-0de129f5e7d3"
+        ],
+        "kubecon-nke-site-cp-0198": [
+          "GPU-3790a112-5f2d-70e8-e65f-30dfa66869e0",
+          "GPU-c78f34dc-e790-cfc7-1745-be1cb2e98409"
+        ]
+      }
+    },
+    "kvcr": {
+      "owner": "/root/kvcr_presenter",
+      "by_node": {
+        "kubecon-nke-site-cp-0198": [
+          "gpu-4",
+          "gpu-5"
+        ],
+        "kubecon-nke-site-cp-0942": [
+          "gpu-4",
+          "gpu-5"
+        ]
+      },
+      "lease": ".local/overnight-kvcr.gpu-lease",
+      "note": "Cross-node G2 peer reuse; EFA total per node must <=8 including Guard",
+      "gpu_uuids_by_node": {
+        "kubecon-nke-site-cp-0198": [
+          "GPU-46608a07-1b00-810d-0d07-2fdf65a8e41f",
+          "GPU-23de81ec-c1e4-39a3-578a-ef7d7a3649cf"
+        ],
+        "kubecon-nke-site-cp-0942": [
+          "GPU-09ecbc64-ad4f-708b-6ca3-ba1ba5fd052f",
+          "GPU-e7ecf749-a1dc-bc9d-890c-f5376c5b995f"
+        ]
+      }
+    },
+    "routing": {
+      "owner": "/root/routing_load_sweep",
+      "by_node": {
+        "kubecon-nke-site-cp-0198": [
+          "gpu-0",
+          "gpu-2"
+        ],
+        "kubecon-nke-site-cp-0942": [
+          "gpu-0",
+          "gpu-2"
+        ]
+      },
+      "lease": ".local/overnight-routing-sweep.gpu-lease",
+      "note": "Fresh immutable retry after terminal failed controller; do not mutate original failed inputs",
+      "gpu_uuids_by_node": {
+        "kubecon-nke-site-cp-0198": [
+          "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5",
+          "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326"
+        ],
+        "kubecon-nke-site-cp-0942": [
+          "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8",
+          "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75"
+        ]
+      }
+    },
+    "disagg": {
+      "owner": "/root/disagg_comparison",
+      "by_node": {
+        "kubecon-nke-site-cp-0198": [
+          "gpu-1",
+          "gpu-3"
+        ],
+        "kubecon-nke-site-cp-0942": [
+          "gpu-1",
+          "gpu-3"
+        ]
+      },
+      "lease": ".local/overnight-disagg.gpu-lease",
+      "note": "Sequential 2 aggregate TP2 vs TP2 P/D on same 4GPU;8EFA/node",
+      "gpu_uuids_by_node": {
+        "kubecon-nke-site-cp-0198": [
+          "GPU-c22769a2-282c-de40-459e-261999971cd9",
+          "GPU-7338f39e-745f-e46a-7ef6-cc8cc155d7af"
+        ],
+        "kubecon-nke-site-cp-0942": [
+          "GPU-7b0cff01-e024-1e7f-5c2e-53c85b3835e4",
+          "GPU-bd8b4452-af4b-12ab-237d-63d32996835c"
+        ]
+      }
+    },
+    "migration": {
+      "owner": "/root/migration_load",
+      "by_node": {
+        "kubecon-nke-site-cp-0124": [
+          "gpu-6",
+          "gpu-7"
+        ],
+        "kubecon-nke-site-cp-0942": [
+          "gpu-6",
+          "gpu-7"
+        ]
+      },
+      "lease": ".local/overnight-migration.gpu-lease",
+      "note": "Sequential disabled/enabled two-worker under-load cases;4GPU total",
+      "gpu_uuids_by_node": {
+        "kubecon-nke-site-cp-0124": [
+          "GPU-b0ee6c73-bb3a-38e9-0546-30279eca76f5",
+          "GPU-aca1caa2-27c5-8591-6e84-fa0203889f51"
+        ],
+        "kubecon-nke-site-cp-0942": [
+          "GPU-58272147-35f4-6125-0810-25497aee2a1a",
+          "GPU-e4f59982-2d2b-0692-84bd-ca6c7d709c1e"
+        ]
+      }
+    }
+  },
+  "concurrency_limitations": "Shared node CPU, EFS and network traffic; measured timings are not isolated performance claims. Keep workload/model controls and report concurrent traffic."
+}

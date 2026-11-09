@@ -1,0 +1,3705 @@
+{
+  "schema": 1,
+  "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df",
+  "campaign": {
+    "schema": 1,
+    "model_lock": {
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+      "revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+      "gated": false,
+      "architecture": [
+        "NemotronH_Omni_Reasoning_V3"
+      ],
+      "dynamo_source_revision": "d48a9641f9754557815cd370c3154a2904ff569b",
+      "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+      "sources": [
+        {
+          "path": "recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/agg-h100-dspark-kv-router/deploy.yaml",
+          "sha256": "c39c79aec821dcda8d154ddb95e9d61c4792eee7ed7b35323982dfee5c15a813"
+        },
+        {
+          "path": "recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/disagg-h100-dspark/deploy.yaml",
+          "sha256": "1c56c9db495e84c0fdb39407c5cf3fabdc64ecb737ae95c88f90258e131bd0bd"
+        },
+        {
+          "path": "recipes/nemotron-3.5-lightning/vllm/check-efa-userspace.sh",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/recipes/nemotron-3.5-lightning/vllm/check-efa-userspace.sh",
+          "sha256": "ae3d5b15b5bc4c43f136b285716e31390fbe3e9b08fc13bc38c573533610896e"
+        },
+        {
+          "path": "lib/sidecar/vllm/deploy/agg.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/lib/sidecar/vllm/deploy/agg.yaml",
+          "sha256": "db991cdbe92dcb5625eb344e71516e031ab7ebad084c85cad19fb420657c977d"
+        },
+        {
+          "path": "lib/sidecar/sglang/deploy/agg_kv_router.yaml",
+          "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/d48a9641f9754557815cd370c3154a2904ff569b/lib/sidecar/sglang/deploy/agg_kv_router.yaml",
+          "sha256": "cc2a2fe4588e76f2f4e40d8ea5611a7211c4cebd1a39e4da3fdb04fad54bcbfc"
+        }
+      ],
+      "runtime_version_override": "1.6.0",
+      "runtime_release": "1.6.0",
+      "common_runtime": true,
+      "image_pull_secret": "common-runtime-pull",
+      "runtime_source_revision": "ea23e5130c1bfbadec477b99449d0cee5598caa0",
+      "tensor_parallel_size": 2,
+      "gpu_allocation": "dra",
+      "manifest_directory": "super-vl-tp2",
+      "model_metadata_sha256": {
+        "config.json": "35189a8038d1b1f934e58cba50eb7e97b42a4da569424e35b9fd1048058bc7ea",
+        "tokenizer_config.json": "89fa70d31734c0c75ffdcee4114449f8cf8abd64bc233d420b58e25763f91aba",
+        "model.safetensors.index.json": "c368acdbcfe882236af1ec79df4a1fb6127e6ed9f742d59c01c21fe96ddc2741",
+        "README.md": "c3408047c2e42cae5c19c7c10f407c364b0926d5a523b34c40d0b55f80c8a807"
+      },
+      "checkpoint_weight_bytes": 75010189968,
+      "checkpoint_weight_files": 88
+    },
+    "namespace": "dynamo-ft-routing-overnight-20261105-a1",
+    "model_cache_run_id": "20261015-super-vl-tp2",
+    "checkpoint_weight_bytes": 75010188240,
+    "model_cache_reference_sha256": "9cb126cd898bd41cda7d7df8f20c7bd0f3d43ea0b37fbe3956598ec9c4d0fc6c",
+    "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+    "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+    "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+    "sequence": [
+      {
+        "configuration": "one-rr",
+        "concurrency": 16,
+        "arm": "one-rr-c16-a1"
+      },
+      {
+        "configuration": "two-rr",
+        "concurrency": 16,
+        "arm": "two-rr-c16-a1"
+      },
+      {
+        "configuration": "two-kv",
+        "concurrency": 16,
+        "arm": "two-kv-c16-a1"
+      },
+      {
+        "configuration": "one-rr",
+        "concurrency": 32,
+        "arm": "one-rr-c32-a1"
+      },
+      {
+        "configuration": "two-rr",
+        "concurrency": 32,
+        "arm": "two-rr-c32-a1"
+      },
+      {
+        "configuration": "two-kv",
+        "concurrency": 32,
+        "arm": "two-kv-c32-a1"
+      }
+    ],
+    "gpu_uuids_by_node": {
+      "kubecon-nke-site-cp-0198": [
+        "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5",
+        "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326"
+      ],
+      "kubecon-nke-site-cp-0942": [
+        "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8",
+        "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75"
+      ]
+    },
+    "cpu_node": "kubecon-nke-site-cp-0942",
+    "tp": 2,
+    "native_context": 1048576,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 8192,
+    "gpu_memory_utilization": 0.85,
+    "text_only": true,
+    "compile": true,
+    "seed": 20261030,
+    "profile_seconds": 900,
+    "grace_seconds": 300,
+    "warmup": "unchanged canonical AgentX snapshot primer",
+    "repetitions": 1,
+    "routing_tuning": "defaults; no weight tuning; only frontend router mode differs",
+    "concurrent_work": "Disjoint exact GPU0+2 pairs on cp-0198/cp-0942; concurrent node CPU, EFS and network load from other demo tests",
+    "pull_secret_source_namespace": "dynamo-ft-r610-1ec4908b-rr",
+    "lease": ".local/overnight-routing-sweep.gpu-lease",
+    "lease_owner": "/root/routing_load_sweep",
+    "loads": [
+      16,
+      32
+    ],
+    "cache_history": "Fresh workers/private compiler caches per cell; bounded smoke and new canonical AgentX primer before each profile",
+    "parameter_authorization": "User authorized overnight testing and full cluster on 2026-11-04; parent selected fresh C16/C32 matched subset of original range",
+    "client_deadline_seconds": 86400,
+    "worker_deadline_seconds": 21600,
+    "measurement_class": "Topology-first C16 then C32 comparisons, N=1. Preserve overload/censoring as outcomes."
+  },
+  "cells": [
+    {
+      "arm": "one-rr-c16-a1",
+      "status": "clean",
+      "eligible": true,
+      "summary": {
+        "outcome": "clean",
+        "clean_comparison_eligible": true,
+        "successful_requests": 303.0,
+        "request_errors": 0,
+        "context_overflow": 0,
+        "cancelled_profile_records": 0,
+        "submission_valid": true,
+        "runtime_submission_invalid_reasons": [],
+        "error_summary": [],
+        "phase_completion_log_lines": [
+          "07:11:46.496 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=16, completed=1, in_flight=15 | sessions: sent=13, completed=0 (runner.py:1163)",
+          "07:15:01.866 NOTICE   Phase agentic.warmup (warmup) complete | completed=16, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=199.62s (runner.py:1286)",
+          "07:30:02.080 NOTICE   Phase profiling (profiling) sending complete | sent=303, completed=302, in_flight=1 | sessions: sent=10, completed=3 | timeout_triggered=True (runner.py:1163)",
+          "07:35:02.080 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=303, completed=303, cancelled=0, in_flight=0 (runner.py:1227)",
+          "07:35:02.081 NOTICE   Phase profiling (profiling) complete | completed=303, cancelled=0, errors=0 | sessions: completed=3, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+          "07:35:02.082 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793862902079022577, sent_end_ns=1793863802080110666, requests_end_ns=1793864102080912661, baseline_start_ns=1793862902078999707, baseline_end_ns=1793864102080938022, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=303, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=303, error_records=0) (records_manager.py:1480)"
+        ],
+        "scope": "Stress outcomes retained; censored/invalid cells do not establish latency SLOs or speedup"
+      },
+      "source_files": {
+        "summary.json": "57bb5b7c37e6d9b8c10ac1244cf0c93277c9a7562e0ccda644a1772841873557",
+        "worker-qualification.json": "e3474ec01f075ea822ef51d654c2b2cefe4db5cfcd19453034cbb9e4af1fdaf7",
+        "discovery-qualification.json": "70897441b4ae45975bc590e1e65f4435a86231e9873298498ded54d5ae41a890",
+        "integrity-final.json": "c9140eb269eddfaf8f0400eaf46abd8df9660bd51eeb0d0024e158f03477ffaf",
+        "profile.yaml": "0df9aae700816dff2805c78c8aa34845baef93fe57172a3a6836b8a86eec50fd",
+        "spec.json": "3e4f20894dbbdebaafaff9b706cff6ef9a8c4722e3c95fa67ee3f1c5477e5071"
+      },
+      "metrics": {
+        "arm": "one-rr-c16-a1",
+        "spec": {
+          "sealed_at": "2026-11-05T07:11:30.699849+00:00",
+          "arm": "one-rr-c16-a1",
+          "configuration": "one-rr",
+          "replicas": 1,
+          "h100_gpus": 2,
+          "concurrency_session_trees": 16,
+          "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+          "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+          "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+          "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+          "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+          "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+          "dataset_pin_patch_sha256": "4230167ccd705a71860bae27a981655d4f23fcef499b27665fe09c9239745c95",
+          "profile_sha256": "0df9aae700816dff2805c78c8aa34845baef93fe57172a3a6836b8a86eec50fd",
+          "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df",
+          "client_preprocessor_workers": 1,
+          "client_resources": {
+            "requests": {
+              "cpu": "4",
+              "memory": "64Gi",
+              "ephemeral-storage": "40Gi"
+            },
+            "limits": {
+              "cpu": "8",
+              "memory": "96Gi",
+              "ephemeral-storage": "80Gi"
+            }
+          },
+          "router_mode": "round-robin",
+          "native_max_model_len": 1048576,
+          "max_num_seqs_per_worker": 128,
+          "cache_history": "Fresh workers/private compiler caches per cell; bounded smoke and new canonical AgentX primer before each profile",
+          "initial_gpu_cache": "Fresh worker processes for this topology/load cell; bounded smoke plus mandatory canonical primer",
+          "worker_pods": [
+            {
+              "name": "ft-agg-0-agg-79v9n",
+              "uid": "d8b725cc-876a-412d-9604-1a09f9a2bd2f",
+              "node": "kubecon-nke-site-cp-0198",
+              "image_ids": [
+                "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+              ]
+            }
+          ]
+        },
+        "spec_sha256": "3e4f20894dbbdebaafaff9b706cff6ef9a8c4722e3c95fa67ee3f1c5477e5071",
+        "accepted_export": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-collection-recovered-20261105-0739/verified/results/workshop-routing-overnight-20261105-a1/one-rr-c16-a1/raw/one-rr-c16-a1/artifacts/profile_export_aiperf.json",
+        "benchmark_id": "d8321005e903",
+        "profile_seconds": 900.0,
+        "grace_seconds": 300.0,
+        "phase_window_seconds": 1200.001890084,
+        "benchmark_duration_metric_seconds": 901.81524992,
+        "canonical_throughput_denominator_seconds": 1200.001890084,
+        "requests": 303.0,
+        "request_error_count": 0,
+        "output_tokens": 205108.0,
+        "input_tokens": 32278032.0,
+        "output_tokens_per_second": 170.92306411754274,
+        "output_tokens_per_second_per_gpu": 85.46153205877137,
+        "record_span_output_tokens_per_second": 227.43904587796126,
+        "decode_tokens_per_second_per_user_mean": 112.63472113962163,
+        "decode_tokens_per_second_per_user_p50": 109.7112889215652,
+        "ttft_p50_ms": 258.981158,
+        "ttft_p99_ms": 3814.8235562000077,
+        "itl_p50_ms": 9.114832300575012,
+        "itl_p99_ms": 17.073092491573657,
+        "input_tokens_mean": 106528.15841584158,
+        "output_tokens_mean": 676.9240924092409,
+        "server_reported_cache_read_pct": 93.86802764183393,
+        "server_reported_cache_read_tokens": 30298752.0,
+        "structural_theoretical_prefix_hit_pct": 96.33527211141282,
+        "interactivity_metrics": {
+          "e2e_normalized_interactivity_p75": {
+            "unit": "tokens/sec/user",
+            "avg": 78.03979758342862
+          },
+          "e2e_normalized_interactivity_p90": {
+            "unit": "tokens/sec/user",
+            "avg": 61.323695167916036
+          }
+        },
+        "worker_generate_requests": [
+          {
+            "endpoint": "http://192.168.100.42:9090/metrics",
+            "worker_id": "117cd78cb5b345",
+            "requests": 303.0
+          }
+        ],
+        "predicted_kv_hit_histogram_count": 0,
+        "predicted_kv_hit_histogram_sum": 0,
+        "branch_stats": {
+          "children_spawned": 38,
+          "children_completed": 12,
+          "children_errored": 0,
+          "children_truncated": 0,
+          "children_delayed": 8,
+          "parents_suspended": 4,
+          "parents_resumed": 3,
+          "parents_failed_due_to_child_error": 0,
+          "joins_suppressed": 0,
+          "graphs_admitted": 0,
+          "graphs_completed_to_end": 0
+        },
+        "record_phase_counts": {
+          "warmup": 16,
+          "profiling": 303
+        },
+        "cancelled_profile_records": 0,
+        "sampled_root_correlation_ids": [
+          "053e472e-5210-41cf-a748-c188bc45b0fc",
+          "0ad88fa3-cd6b-4fa8-b966-88055a32bee5",
+          "3ce51b4b-3fa4-4654-a7ae-dff510c2608c",
+          "59ef2018-5c4f-4655-8932-40e8a780f055",
+          "6293db9f-ed41-42eb-8c7c-f076d4bdedfc",
+          "6b6ac455-e5f5-4692-ab71-97c4756a1bcc",
+          "aaa78313-87ab-4f22-bdf5-23da04065b5b",
+          "dc56ed02-0626-4984-80bc-55692111fdbb",
+          "e8fae165-03d5-4620-8727-cfe7e7c87024",
+          "f69f769c-1750-4592-b626-e81738cd35c2"
+        ],
+        "source_trace_requests": {
+          "07dd40536557a1d6440a923557c3129dc929": {
+            "requests": 117,
+            "source_kinds": {
+              "weka_main": 7,
+              "weka_subagent": 110
+            },
+            "source_outer_idx_min": 2,
+            "source_outer_idx_max": 11
+          },
+          "085411a4cc4b15108dd9b50007261a2efb65": {
+            "requests": 4,
+            "source_kinds": {
+              "weka_main": 3,
+              "weka_flat": 1
+            },
+            "source_outer_idx_min": 3,
+            "source_outer_idx_max": 6
+          },
+          "0196085d85d2075a50b74cd8795ffbdcea9a": {
+            "requests": 15,
+            "source_kinds": {
+              "weka_main": 14,
+              "weka_flat": 1
+            },
+            "source_outer_idx_min": 136,
+            "source_outer_idx_max": 150
+          },
+          "03e110ac6921c2fe9ac7772a9654314a2beb": {
+            "requests": 45,
+            "source_kinds": {
+              "weka_subagent": 41,
+              "weka_main": 4
+            },
+            "source_outer_idx_min": 41,
+            "source_outer_idx_max": 47
+          },
+          "00ca01c4aaeccee751ae6285beb54dea262f": {
+            "requests": 18,
+            "source_kinds": {
+              "weka_main": 18
+            },
+            "source_outer_idx_min": 9,
+            "source_outer_idx_max": 26
+          },
+          "0a279af1bec84c6ab033bb03f5d8bfd6b08d": {
+            "requests": 13,
+            "source_kinds": {
+              "weka_main": 13
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 12
+          },
+          "085aacf44ac5428ad3c6b4f6cd431e083832": {
+            "requests": 67,
+            "source_kinds": {
+              "weka_main": 5,
+              "weka_subagent": 62
+            },
+            "source_outer_idx_min": 51,
+            "source_outer_idx_max": 58
+          },
+          "006c98de37d819e95b0840e25426bb7ca99d": {
+            "requests": 1,
+            "source_kinds": {
+              "weka_main": 1
+            },
+            "source_outer_idx_min": 32,
+            "source_outer_idx_max": 32
+          },
+          "0a688303b1ae62a97607af8021f2130c2caf": {
+            "requests": 5,
+            "source_kinds": {
+              "weka_main": 5
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 4
+          },
+          "0b7f3ca692f15ae2651a310d9411d70794aa": {
+            "requests": 18,
+            "source_kinds": {
+              "weka_main": 16,
+              "weka_flat": 2
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 17
+          }
+        },
+        "gpu_utilization_during_900s_admission_window": {
+          "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5": {
+            "samples": 180,
+            "mean_pct": 88.83888888888889
+          },
+          "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326": {
+            "samples": 180,
+            "mean_pct": 88.55555555555556
+          }
+        },
+        "metadata": {
+          "dataset": {
+            "source_type": "public_dataset",
+            "loader": "semianalysis_cc_traces_weka_062126",
+            "hf_dataset_name": "semianalysisai/cc-traces-weka-062126",
+            "hf_split": "train"
+          },
+          "metric_duration_coverage": [
+            {
+              "phase_name": "profiling",
+              "expected_duration_seconds": 900.0,
+              "required_ratio": 0.95,
+              "ttft_ratio": 1.0,
+              "inter_token_latency_ratio": 1.0
+            }
+          ],
+          "scenario": "inferencex-agentx-mvp",
+          "submission_valid": true
+        },
+        "phase_completion_log_lines": [
+          "07:11:46.496 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=16, completed=1, in_flight=15 | sessions: sent=13, completed=0 (runner.py:1163)",
+          "07:15:01.866 NOTICE   Phase agentic.warmup (warmup) complete | completed=16, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=199.62s (runner.py:1286)",
+          "07:30:02.080 NOTICE   Phase profiling (profiling) sending complete | sent=303, completed=302, in_flight=1 | sessions: sent=10, completed=3 | timeout_triggered=True (runner.py:1163)",
+          "07:35:02.080 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=303, completed=303, cancelled=0, in_flight=0 (runner.py:1227)",
+          "07:35:02.081 NOTICE   Phase profiling (profiling) complete | completed=303, cancelled=0, errors=0 | sessions: completed=3, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+          "07:35:02.082 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793862902079022577, sent_end_ns=1793863802080110666, requests_end_ns=1793864102080912661, baseline_start_ns=1793862902078999707, baseline_end_ns=1793864102080938022, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=303, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=303, error_records=0) (records_manager.py:1480)"
+        ],
+        "pressure_series": {
+          "vllm:num_requests_running": {
+            "type": "gauge",
+            "description": "Number of requests in model execution batches.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "avg": 1.610323312535451,
+                  "min": 0.0,
+                  "max": 7.0,
+                  "std": 1.6227622218836262,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 1.0,
+                  "p75": 3.0,
+                  "p90": 4.0,
+                  "p95": 5.0,
+                  "p99": 6.75
+                }
+              }
+            ]
+          },
+          "vllm:num_requests_waiting": {
+            "type": "gauge",
+            "description": "Number of requests waiting to be processed.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "avg": 0.003403289846851957,
+                  "min": 0.0,
+                  "max": 2.0,
+                  "std": 0.06292889271320454,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              }
+            ]
+          },
+          "vllm:num_requests_waiting_by_reason": {
+            "type": "gauge",
+            "description": "Number of waiting requests by reason. Reason labels: 'capacity' = waiting for scheduling capacity; 'deferred' = deferred by transient constraints (LoRA budget, KV transfer, blocked status). Sum of all reasons equals vllm:num_requests_waiting.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "capacity",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "avg": 0.003403289846851957,
+                  "min": 0.0,
+                  "max": 2.0,
+                  "std": 0.06292889271320454,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "deferred",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "avg": 0.0,
+                  "min": 0.0,
+                  "max": 0.0,
+                  "std": 0.0,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              }
+            ]
+          },
+          "vllm:kv_cache_usage_perc": {
+            "type": "gauge",
+            "description": "KV-cache usage. 1 means 100 percent usage.",
+            "unit": "ratio",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "avg": 0.020204358699770775,
+                  "min": 0.0,
+                  "max": 0.1044689495066744,
+                  "std": 0.023901504619212168,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.011317469529889768,
+                  "p75": 0.03685432385374343,
+                  "p90": 0.057457922228670966,
+                  "p95": 0.0661636680208938,
+                  "p99": 0.09199071387115498
+                }
+              }
+            ]
+          },
+          "vllm:num_preemptions": {
+            "type": "counter",
+            "description": "Cumulative number of preemption from the engine.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "total": 0.0,
+                  "rate": 0.0
+                }
+              }
+            ]
+          },
+          "vllm:prefix_cache_hits": {
+            "type": "counter",
+            "description": "Prefix cache hits, in terms of number of cached tokens.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "total": 30298752.0,
+                  "rate": 25204.35435928313
+                }
+              }
+            ]
+          },
+          "vllm:prefix_cache_queries": {
+            "type": "counter",
+            "description": "Prefix cache queries, in terms of number of queried tokens.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "total": 32278418.0,
+                  "rate": 26851.161573554684
+                }
+              }
+            ]
+          },
+          "vllm:prompt_tokens_cached": {
+            "type": "counter",
+            "description": "Number of cached prompt tokens (local + external).",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "total": 30298752.0,
+                  "rate": 25204.35435928313
+                }
+              }
+            ]
+          },
+          "vllm:request_queue_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in WAITING phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "count": 689,
+                  "sum": 4.02405473170802,
+                  "avg": 0.005840427767355617,
+                  "count_rate": 0.573152325004874,
+                  "sum_rate": 0.0033474547538828972,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 0.0,
+                  "p50_estimate": 2.3649699658913447e-05,
+                  "p75_estimate": 2.3649699658913447e-05,
+                  "p90_estimate": 2.3649699658913447e-05,
+                  "p95_estimate": 2.3649699658913447e-05,
+                  "p99_estimate": 2.3649699658913447e-05
+                },
+                "buckets": {
+                  "0.3": 686,
+                  "0.5": 687,
+                  "0.8": 687,
+                  "1.0": 687,
+                  "1.5": 688,
+                  "2.0": 688,
+                  "2.5": 688,
+                  "5.0": 689,
+                  "10.0": 689,
+                  "15.0": 689,
+                  "20.0": 689,
+                  "30.0": 689,
+                  "40.0": 689,
+                  "50.0": 689,
+                  "60.0": 689,
+                  "120.0": 689,
+                  "240.0": 689,
+                  "480.0": 689,
+                  "960.0": 689,
+                  "1920.0": 689,
+                  "7680.0": 689,
+                  "+Inf": 689
+                }
+              }
+            ]
+          },
+          "vllm:request_prefill_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in PREFILL phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "count": 689,
+                  "sum": 124.11589279444888,
+                  "avg": 0.18013917676988228,
+                  "count_rate": 0.573152325004874,
+                  "sum_rate": 0.10324718799012202,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.006260263546332229,
+                  "p25_estimate": 0.038486466648677206,
+                  "p50_estimate": 0.10943246276414262,
+                  "p75_estimate": 0.2282973750963547,
+                  "p90_estimate": 0.3116560969982462,
+                  "p95_estimate": 0.4469160971741896,
+                  "p99_estimate": 1.2166966038106515
+                },
+                "buckets": {
+                  "0.3": 598,
+                  "0.5": 655,
+                  "0.8": 673,
+                  "1.0": 674,
+                  "1.5": 682,
+                  "2.0": 685,
+                  "2.5": 685,
+                  "5.0": 687,
+                  "10.0": 689,
+                  "15.0": 689,
+                  "20.0": 689,
+                  "30.0": 689,
+                  "40.0": 689,
+                  "50.0": 689,
+                  "60.0": 689,
+                  "120.0": 689,
+                  "240.0": 689,
+                  "480.0": 689,
+                  "960.0": 689,
+                  "1920.0": 689,
+                  "7680.0": 689,
+                  "+Inf": 689
+                }
+              }
+            ]
+          },
+          "vllm:request_decode_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in DECODE phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a3854334",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "117cd78cb5b345"
+                },
+                "stats": {
+                  "count": 689,
+                  "sum": 1857.0115812667646,
+                  "avg": 2.6952272587326047,
+                  "count_rate": 0.573152325004874,
+                  "sum_rate": 1.5447757697591056,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 3.3519370641053665e-05,
+                  "p10_estimate": 0.00024285345780139455,
+                  "p25_estimate": 0.0008708557192824176,
+                  "p50_estimate": 0.03393815969741221,
+                  "p75_estimate": 2.021839597059008,
+                  "p90_estimate": 5.172923881823473,
+                  "p95_estimate": 13.460234816125629,
+                  "p99_estimate": 38.29282681203249
+                },
+                "buckets": {
+                  "0.3": 394,
+                  "0.5": 396,
+                  "0.8": 413,
+                  "1.0": 430,
+                  "1.5": 475,
+                  "2.0": 513,
+                  "2.5": 540,
+                  "5.0": 618,
+                  "10.0": 643,
+                  "15.0": 657,
+                  "20.0": 662,
+                  "30.0": 671,
+                  "40.0": 683,
+                  "50.0": 687,
+                  "60.0": 688,
+                  "120.0": 689,
+                  "240.0": 689,
+                  "480.0": 689,
+                  "960.0": 689,
+                  "1920.0": 689,
+                  "7680.0": 689,
+                  "+Inf": 689
+                }
+              }
+            ]
+          },
+          "dynamo_frontend_active_requests": {
+            "type": "gauge",
+            "description": "Number of requests currently being handled by the frontend, from HTTP handler entry to response completion",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://ft-agg-frontend.dynamo-ft-routing-overnight-20261105-a1.svc.cluster.local:8000/metrics",
+                "labels": {
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 1.6436064644173518,
+                  "min": 0.0,
+                  "max": 7.0,
+                  "std": 1.6511579434156325,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 1.0,
+                  "p75": 3.0,
+                  "p90": 4.0,
+                  "p95": 5.0,
+                  "p99": 7.0
+                }
+              }
+            ]
+          },
+          "dynamo_frontend_queued_requests": {
+            "type": "gauge",
+            "description": "Number of requests in HTTP processing queue",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://ft-agg-frontend.dynamo-ft-routing-overnight-20261105-a1.svc.cluster.local:8000/metrics",
+                "labels": {
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 0.10859087042812589,
+                  "min": 0.0,
+                  "max": 3.0,
+                  "std": 0.34241215699766314,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 1.0,
+                  "p99": 1.0
+                }
+              }
+            ]
+          },
+          "dynamo_component_gpu_cache_usage_percent": {
+            "type": "gauge",
+            "description": "GPU cache usage as a percentage (0.0-1.0).",
+            "unit": "ratio",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.42:9090/metrics",
+                "labels": {
+                  "dp_rank": "0",
+                  "dynamo_component": "backend",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 0.020186828695481274,
+                  "min": 0.0,
+                  "max": 0.1044689495066744,
+                  "std": 0.02389668654353154,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.011317469529889768,
+                  "p75": 0.03678177597214158,
+                  "p90": 0.057457922228670966,
+                  "p95": 0.0661636680208938,
+                  "p99": 0.09199071387115498
+                }
+              }
+            ]
+          }
+        },
+        "all_completed_output_tokens_over_900s_admission": 227.89777777777778,
+        "admission_denominator_caveat": "Numerator includes completions in the grace/drain tail. This derived rate does not measure tokens emitted strictly inside admission.",
+        "event_discovery_proof": {
+          "passed": true,
+          "mode": "round-robin",
+          "worker_pod_ips": [
+            "192.168.100.42"
+          ],
+          "smoke_worker_ids": [
+            "4922339824612165"
+          ],
+          "scope": "One RR worker exercised by four bounded smoke requests"
+        },
+        "worker_configuration_proof": {
+          "passed": true,
+          "configuration": "one-rr",
+          "max_num_seqs": 128,
+          "workers": {
+            "kubecon-nke-site-cp-0198": {
+              "gpu_uuids": [
+                "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326",
+                "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5"
+              ],
+              "cache_capacity_logs": [
+                "(Worker_TP0 pid=1615) INFO 11-05 07:10:55 [gpu_worker.py:726] Available KV cache memory: 27.78 GiB",
+                "(EngineCore pid=1316) INFO 11-05 07:10:55 [kv_cache_utils.py:2481] GPU KV cache size: 13,691,066 tokens, Maximum concurrency for 1,048,576 tokens per request: 13.06x"
+              ],
+              "uid": "d8b725cc-876a-412d-9604-1a09f9a2bd2f"
+            }
+          },
+          "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df"
+        }
+      }
+    },
+    {
+      "arm": "two-rr-c16-a1",
+      "status": "clean",
+      "eligible": true,
+      "summary": {
+        "outcome": "clean",
+        "clean_comparison_eligible": true,
+        "successful_requests": 316.0,
+        "request_errors": 0,
+        "context_overflow": 0,
+        "cancelled_profile_records": 0,
+        "submission_valid": true,
+        "runtime_submission_invalid_reasons": [],
+        "error_summary": [],
+        "phase_completion_log_lines": [
+          "07:49:06.035 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=16, completed=2, in_flight=14 | sessions: sent=13, completed=0 (runner.py:1163)",
+          "07:50:54.793 NOTICE   Phase agentic.warmup (warmup) complete | completed=16, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=113.01s (runner.py:1286)",
+          "08:05:55.059 NOTICE   Phase profiling (profiling) sending complete | sent=316, completed=314, in_flight=2 | sessions: sent=10, completed=3 | timeout_triggered=True (runner.py:1163)",
+          "08:10:55.061 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=316, completed=316, cancelled=0, in_flight=0 (runner.py:1227)",
+          "08:10:55.062 NOTICE   Phase profiling (profiling) complete | completed=316, cancelled=0, errors=0 | sessions: completed=3, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+          "08:10:55.063 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793865055059174519, sent_end_ns=1793865955059132596, requests_end_ns=1793866255061742810, baseline_start_ns=1793865055059086827, baseline_end_ns=1793866255061812612, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=316, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=316, error_records=0) (records_manager.py:1480)"
+        ],
+        "scope": "Stress outcomes retained; censored/invalid cells do not establish latency SLOs or speedup"
+      },
+      "source_files": {
+        "summary.json": "1bc8bce881e94b30d1dd8d9842fa9186f6b5df30f85b16884356d6bf3978ec37",
+        "worker-qualification.json": "0c59aef67206e829d43dee9e949eb07a4c1d1cb8cd3d981739190006eb21f5eb",
+        "discovery-qualification.json": "8b92c0a383ea568ef63eb17632b5d5c92795804963d9c85b57fcfeff3343e6cb",
+        "integrity-final.json": "d6efc178e78867079bf32ff9a21ef05b02d32d11bd2677d2c1d8416965c38fe0",
+        "profile.yaml": "da9c3932fdd666913bb597673047ffe9b6bca3a4f4bae0a054d5686c87224b31",
+        "spec.json": "6b0255a3ea61233c50187e81f529d19f84accdc2357ab34d4241b45a9f60b0b4"
+      },
+      "metrics": {
+        "arm": "two-rr-c16-a1",
+        "spec": {
+          "sealed_at": "2026-11-05T07:48:50.694629+00:00",
+          "arm": "two-rr-c16-a1",
+          "configuration": "two-rr",
+          "replicas": 2,
+          "h100_gpus": 4,
+          "concurrency_session_trees": 16,
+          "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+          "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+          "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+          "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+          "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+          "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+          "dataset_pin_patch_sha256": "4230167ccd705a71860bae27a981655d4f23fcef499b27665fe09c9239745c95",
+          "profile_sha256": "da9c3932fdd666913bb597673047ffe9b6bca3a4f4bae0a054d5686c87224b31",
+          "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df",
+          "client_preprocessor_workers": 1,
+          "client_resources": {
+            "requests": {
+              "cpu": "4",
+              "memory": "64Gi",
+              "ephemeral-storage": "40Gi"
+            },
+            "limits": {
+              "cpu": "8",
+              "memory": "96Gi",
+              "ephemeral-storage": "80Gi"
+            }
+          },
+          "router_mode": "round-robin",
+          "native_max_model_len": 1048576,
+          "max_num_seqs_per_worker": 128,
+          "cache_history": "Fresh workers/private compiler caches per cell; bounded smoke and new canonical AgentX primer before each profile",
+          "initial_gpu_cache": "Fresh worker processes for this topology/load cell; bounded smoke plus mandatory canonical primer",
+          "worker_pods": [
+            {
+              "name": "ft-agg-0-agg-cjcpz",
+              "uid": "9fc8dcff-4517-4f4b-aad8-bd96543f2851",
+              "node": "kubecon-nke-site-cp-0942",
+              "image_ids": [
+                "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+              ]
+            },
+            {
+              "name": "ft-agg-0-agg-m9fz4",
+              "uid": "d3e301c9-323e-402d-aea7-72ce36c98489",
+              "node": "kubecon-nke-site-cp-0198",
+              "image_ids": [
+                "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+              ]
+            }
+          ]
+        },
+        "spec_sha256": "6b0255a3ea61233c50187e81f529d19f84accdc2357ab34d4241b45a9f60b0b4",
+        "accepted_export": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-collection-recovered-20261105-0739/verified/results/workshop-routing-overnight-20261105-a1/two-rr-c16-a1/raw/two-rr-c16-a1/artifacts/profile_export_aiperf.json",
+        "benchmark_id": "5b5acc1da7f8",
+        "profile_seconds": 900.0,
+        "grace_seconds": 300.0,
+        "phase_window_seconds": 1200.002568291,
+        "benchmark_duration_metric_seconds": 900.363767552,
+        "canonical_throughput_denominator_seconds": 1200.002568291,
+        "requests": 316.0,
+        "request_error_count": 0,
+        "output_tokens": 210658.0,
+        "input_tokens": 33899248.0,
+        "output_tokens_per_second": 175.54795761813367,
+        "output_tokens_per_second_per_gpu": 43.886989404533416,
+        "record_span_output_tokens_per_second": 233.96987705620168,
+        "decode_tokens_per_second_per_user_mean": 133.59746698144846,
+        "decode_tokens_per_second_per_user_p50": 137.77293627037432,
+        "ttft_p50_ms": 295.38739449999997,
+        "ttft_p99_ms": 15403.986355500094,
+        "itl_p50_ms": 7.2583299251281055,
+        "itl_p99_ms": 21.414092130500816,
+        "input_tokens_mean": 107276.10126582278,
+        "output_tokens_mean": 666.6392405063291,
+        "server_reported_cache_read_pct": 87.1484110797974,
+        "server_reported_cache_read_tokens": 29542656.0,
+        "structural_theoretical_prefix_hit_pct": 96.39635376642453,
+        "interactivity_metrics": {
+          "e2e_normalized_interactivity_p75": {
+            "unit": "tokens/sec/user",
+            "avg": 91.00197565641015
+          },
+          "e2e_normalized_interactivity_p90": {
+            "unit": "tokens/sec/user",
+            "avg": 57.88776536001417
+          }
+        },
+        "worker_generate_requests": [
+          {
+            "endpoint": "http://192.168.100.46:9090/metrics",
+            "worker_id": "b222da7e5ad49",
+            "requests": 158.0
+          },
+          {
+            "endpoint": "http://192.168.98.189:9090/metrics",
+            "worker_id": "1270667964415b",
+            "requests": 158.0
+          }
+        ],
+        "predicted_kv_hit_histogram_count": 0,
+        "predicted_kv_hit_histogram_sum": 0,
+        "branch_stats": {
+          "children_spawned": 38,
+          "children_completed": 12,
+          "children_errored": 0,
+          "children_truncated": 1,
+          "children_delayed": 8,
+          "parents_suspended": 4,
+          "parents_resumed": 3,
+          "parents_failed_due_to_child_error": 0,
+          "joins_suppressed": 1,
+          "graphs_admitted": 0,
+          "graphs_completed_to_end": 0
+        },
+        "record_phase_counts": {
+          "warmup": 16,
+          "profiling": 316
+        },
+        "cancelled_profile_records": 0,
+        "sampled_root_correlation_ids": [
+          "044a0194-26c4-4685-8c5f-f4515b80ae12",
+          "242616f9-4cfb-485f-919a-2f5b7e62c70b",
+          "2a88eb22-0368-4db8-bb41-813adc905dd3",
+          "4117479e-6f95-44d1-a86f-8352d1b5e1e5",
+          "7ce20c86-d867-4aab-81bb-1ae2d274b2ea",
+          "d06adbe4-ad51-4977-928f-4bb307cb12bb",
+          "e29324a6-ed32-4596-b5f6-c4182b517bc8",
+          "f22c14b7-327f-4e15-9890-0734ce5aa0d2",
+          "f78f6e9b-7dcf-428b-ae00-7eac39f8b485",
+          "fc981565-9e11-4255-89bf-a101dc67c602"
+        ],
+        "source_trace_requests": {
+          "07dd40536557a1d6440a923557c3129dc929": {
+            "requests": 117,
+            "source_kinds": {
+              "weka_main": 7,
+              "weka_subagent": 110
+            },
+            "source_outer_idx_min": 2,
+            "source_outer_idx_max": 11
+          },
+          "085411a4cc4b15108dd9b50007261a2efb65": {
+            "requests": 4,
+            "source_kinds": {
+              "weka_main": 3,
+              "weka_flat": 1
+            },
+            "source_outer_idx_min": 3,
+            "source_outer_idx_max": 6
+          },
+          "03e110ac6921c2fe9ac7772a9654314a2beb": {
+            "requests": 45,
+            "source_kinds": {
+              "weka_subagent": 41,
+              "weka_main": 4
+            },
+            "source_outer_idx_min": 41,
+            "source_outer_idx_max": 47
+          },
+          "0196085d85d2075a50b74cd8795ffbdcea9a": {
+            "requests": 16,
+            "source_kinds": {
+              "weka_main": 15,
+              "weka_flat": 1
+            },
+            "source_outer_idx_min": 136,
+            "source_outer_idx_max": 151
+          },
+          "00ca01c4aaeccee751ae6285beb54dea262f": {
+            "requests": 18,
+            "source_kinds": {
+              "weka_main": 18
+            },
+            "source_outer_idx_min": 9,
+            "source_outer_idx_max": 26
+          },
+          "0a279af1bec84c6ab033bb03f5d8bfd6b08d": {
+            "requests": 13,
+            "source_kinds": {
+              "weka_main": 13
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 12
+          },
+          "085aacf44ac5428ad3c6b4f6cd431e083832": {
+            "requests": 68,
+            "source_kinds": {
+              "weka_main": 5,
+              "weka_subagent": 63
+            },
+            "source_outer_idx_min": 51,
+            "source_outer_idx_max": 59
+          },
+          "006c98de37d819e95b0840e25426bb7ca99d": {
+            "requests": 1,
+            "source_kinds": {
+              "weka_main": 1
+            },
+            "source_outer_idx_min": 32,
+            "source_outer_idx_max": 32
+          },
+          "0a688303b1ae62a97607af8021f2130c2caf": {
+            "requests": 5,
+            "source_kinds": {
+              "weka_main": 5
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 4
+          },
+          "0b7f3ca692f15ae2651a310d9411d70794aa": {
+            "requests": 29,
+            "source_kinds": {
+              "weka_main": 27,
+              "weka_flat": 2
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 28
+          }
+        },
+        "gpu_utilization_during_900s_admission_window": {
+          "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5": {
+            "samples": 180,
+            "mean_pct": 67.06111111111112
+          },
+          "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326": {
+            "samples": 180,
+            "mean_pct": 68.68888888888888
+          },
+          "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8": {
+            "samples": 180,
+            "mean_pct": 63.24444444444445
+          },
+          "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75": {
+            "samples": 180,
+            "mean_pct": 62.85
+          }
+        },
+        "metadata": {
+          "dataset": {
+            "source_type": "public_dataset",
+            "loader": "semianalysis_cc_traces_weka_062126",
+            "hf_dataset_name": "semianalysisai/cc-traces-weka-062126",
+            "hf_split": "train"
+          },
+          "metric_duration_coverage": [
+            {
+              "phase_name": "profiling",
+              "expected_duration_seconds": 900.0,
+              "required_ratio": 0.95,
+              "ttft_ratio": 0.9991758205155555,
+              "inter_token_latency_ratio": 1.0
+            }
+          ],
+          "scenario": "inferencex-agentx-mvp",
+          "submission_valid": true
+        },
+        "phase_completion_log_lines": [
+          "07:49:06.035 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=16, completed=2, in_flight=14 | sessions: sent=13, completed=0 (runner.py:1163)",
+          "07:50:54.793 NOTICE   Phase agentic.warmup (warmup) complete | completed=16, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=113.01s (runner.py:1286)",
+          "08:05:55.059 NOTICE   Phase profiling (profiling) sending complete | sent=316, completed=314, in_flight=2 | sessions: sent=10, completed=3 | timeout_triggered=True (runner.py:1163)",
+          "08:10:55.061 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=316, completed=316, cancelled=0, in_flight=0 (runner.py:1227)",
+          "08:10:55.062 NOTICE   Phase profiling (profiling) complete | completed=316, cancelled=0, errors=0 | sessions: completed=3, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+          "08:10:55.063 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793865055059174519, sent_end_ns=1793865955059132596, requests_end_ns=1793866255061742810, baseline_start_ns=1793865055059086827, baseline_end_ns=1793866255061812612, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=316, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=316, error_records=0) (records_manager.py:1480)"
+        ],
+        "pressure_series": {
+          "vllm:num_requests_running": {
+            "type": "gauge",
+            "description": "Number of requests in model execution batches.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "avg": 0.8765714285714286,
+                  "min": 0.0,
+                  "max": 17.0,
+                  "std": 1.179596820443525,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 1.0,
+                  "p75": 2.0,
+                  "p90": 2.0,
+                  "p95": 3.0,
+                  "p99": 4.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "avg": 0.7271428571428571,
+                  "min": 0.0,
+                  "max": 7.0,
+                  "std": 0.982909317034594,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 1.0,
+                  "p90": 2.0,
+                  "p95": 3.0,
+                  "p99": 4.0
+                }
+              }
+            ]
+          },
+          "vllm:num_requests_waiting": {
+            "type": "gauge",
+            "description": "Number of requests waiting to be processed.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "avg": 0.12228571428571429,
+                  "min": 0.0,
+                  "max": 16.0,
+                  "std": 1.1312371750599874,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 4.0099999999997635
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "avg": 0.02057142857142857,
+                  "min": 0.0,
+                  "max": 3.0,
+                  "std": 0.2128474713356365,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 1.0
+                }
+              }
+            ]
+          },
+          "vllm:num_requests_waiting_by_reason": {
+            "type": "gauge",
+            "description": "Number of waiting requests by reason. Reason labels: 'capacity' = waiting for scheduling capacity; 'deferred' = deferred by transient constraints (LoRA budget, KV transfer, blocked status). Sum of all reasons equals vllm:num_requests_waiting.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "capacity",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "avg": 0.12228571428571429,
+                  "min": 0.0,
+                  "max": 16.0,
+                  "std": 1.1312371750599874,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 4.0099999999997635
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "deferred",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "avg": 0.0,
+                  "min": 0.0,
+                  "max": 0.0,
+                  "std": 0.0,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "capacity",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "avg": 0.02057142857142857,
+                  "min": 0.0,
+                  "max": 3.0,
+                  "std": 0.2128474713356365,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 1.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "deferred",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "avg": 0.0,
+                  "min": 0.0,
+                  "max": 0.0,
+                  "std": 0.0,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              }
+            ]
+          },
+          "vllm:kv_cache_usage_perc": {
+            "type": "gauge",
+            "description": "KV-cache usage. 1 means 100 percent usage.",
+            "unit": "ratio",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "avg": 0.011154962275101567,
+                  "min": 0.0,
+                  "max": 0.08299477655252463,
+                  "std": 0.016003628953714936,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.002031340684852001,
+                  "p75": 0.01538015089959377,
+                  "p90": 0.03743470690655837,
+                  "p95": 0.047881601857225786,
+                  "p99": 0.060359837492745205
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "avg": 0.00962979852416881,
+                  "min": 0.0,
+                  "max": 0.07254788160185721,
+                  "std": 0.015632642901344647,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.011099825885084125,
+                  "p90": 0.04062681369704002,
+                  "p95": 0.04556006964596637,
+                  "p99": 0.06500290191526403
+                }
+              }
+            ]
+          },
+          "vllm:num_preemptions": {
+            "type": "counter",
+            "description": "Cumulative number of preemption from the engine.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "total": 0.0,
+                  "rate": 0.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "total": 0.0,
+                  "rate": 0.0
+                }
+              }
+            ]
+          },
+          "vllm:prefix_cache_hits": {
+            "type": "counter",
+            "description": "Prefix cache hits, in terms of number of cached tokens.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "total": 14065920.0,
+                  "rate": 11701.249088534149
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "total": 15476736.0,
+                  "rate": 12874.982169138699
+                }
+              }
+            ]
+          },
+          "vllm:prefix_cache_queries": {
+            "type": "counter",
+            "description": "Prefix cache queries, in terms of number of queried tokens.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "total": 16561265.0,
+                  "rate": 13777.092930019684
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "total": 17339238.0,
+                  "rate": 14424.383802660468
+                }
+              }
+            ]
+          },
+          "vllm:prompt_tokens_cached": {
+            "type": "counter",
+            "description": "Number of cached prompt tokens (local + external).",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "total": 14065920.0,
+                  "rate": 11701.249088534149
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "total": 15476736.0,
+                  "rate": 12874.982169138699
+                }
+              }
+            ]
+          },
+          "vllm:request_queue_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in WAITING phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "count": 776,
+                  "sum": 141.23769221641123,
+                  "avg": 0.18200733533042684,
+                  "count_rate": 0.6455439311969995,
+                  "sum_rate": 0.11749373075589428,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 0.00011903609567138815,
+                  "p50_estimate": 0.0011707750550771607,
+                  "p75_estimate": 0.01542716096371077,
+                  "p90_estimate": 0.02398099250889093,
+                  "p95_estimate": 0.026832269690617656,
+                  "p99_estimate": 7.607840380578921
+                },
+                "buckets": {
+                  "0.3": 754,
+                  "0.5": 754,
+                  "0.8": 757,
+                  "1.0": 757,
+                  "1.5": 759,
+                  "2.0": 760,
+                  "2.5": 760,
+                  "5.0": 765,
+                  "10.0": 770,
+                  "15.0": 775,
+                  "20.0": 776,
+                  "30.0": 776,
+                  "40.0": 776,
+                  "50.0": 776,
+                  "60.0": 776,
+                  "120.0": 776,
+                  "240.0": 776,
+                  "480.0": 776,
+                  "960.0": 776,
+                  "1920.0": 776,
+                  "7680.0": 776,
+                  "+Inf": 776
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "count": 795,
+                  "sum": 24.03912289859727,
+                  "avg": 0.030237890438487132,
+                  "count_rate": 0.6613546179546685,
+                  "sum_rate": 0.019997968478700782,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 2.5686828029128222e-05,
+                  "p50_estimate": 2.5686828029128222e-05,
+                  "p75_estimate": 2.5686828029128222e-05,
+                  "p90_estimate": 2.5686828029128222e-05,
+                  "p95_estimate": 2.5686828029128222e-05,
+                  "p99_estimate": 2.5686828029128222e-05
+                },
+                "buckets": {
+                  "0.3": 791,
+                  "0.5": 792,
+                  "0.8": 792,
+                  "1.0": 792,
+                  "1.5": 792,
+                  "2.0": 792,
+                  "2.5": 792,
+                  "5.0": 793,
+                  "10.0": 794,
+                  "15.0": 795,
+                  "20.0": 795,
+                  "30.0": 795,
+                  "40.0": 795,
+                  "50.0": 795,
+                  "60.0": 795,
+                  "120.0": 795,
+                  "240.0": 795,
+                  "480.0": 795,
+                  "960.0": 795,
+                  "1920.0": 795,
+                  "7680.0": 795,
+                  "+Inf": 795
+                }
+              }
+            ]
+          },
+          "vllm:request_prefill_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in PREFILL phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "count": 776,
+                  "sum": 210.761439695023,
+                  "avg": 0.2715997934214214,
+                  "count_rate": 0.6455439311969995,
+                  "sum_rate": 0.17532959835755732,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.00035112909582002416,
+                  "p10_estimate": 0.0075940468451710826,
+                  "p25_estimate": 0.029322800093224258,
+                  "p50_estimate": 0.0850795678386386,
+                  "p75_estimate": 0.18285996440637253,
+                  "p90_estimate": 0.4309594530312464,
+                  "p95_estimate": 0.8624887890472993,
+                  "p99_estimate": 2.2797946243262914
+                },
+                "buckets": {
+                  "0.3": 653,
+                  "0.5": 707,
+                  "0.8": 734,
+                  "1.0": 738,
+                  "1.5": 747,
+                  "2.0": 753,
+                  "2.5": 769,
+                  "5.0": 773,
+                  "10.0": 774,
+                  "15.0": 774,
+                  "20.0": 775,
+                  "30.0": 775,
+                  "40.0": 776,
+                  "50.0": 776,
+                  "60.0": 776,
+                  "120.0": 776,
+                  "240.0": 776,
+                  "480.0": 776,
+                  "960.0": 776,
+                  "1920.0": 776,
+                  "7680.0": 776,
+                  "+Inf": 776
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "count": 795,
+                  "sum": 127.57223134534433,
+                  "avg": 0.16046821552873503,
+                  "count_rate": 0.6613546179546685,
+                  "sum_rate": 0.10612639537487396,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0020610868940110338,
+                  "p25_estimate": 0.021887097021754606,
+                  "p50_estimate": 0.06724561848006674,
+                  "p75_estimate": 0.15713923595374313,
+                  "p90_estimate": 0.3,
+                  "p95_estimate": 0.5006309810454047,
+                  "p99_estimate": 1.5017099700390035
+                },
+                "buckets": {
+                  "0.3": 709,
+                  "0.5": 749,
+                  "0.8": 768,
+                  "1.0": 777,
+                  "1.5": 784,
+                  "2.0": 790,
+                  "2.5": 790,
+                  "5.0": 793,
+                  "10.0": 794,
+                  "15.0": 794,
+                  "20.0": 795,
+                  "30.0": 795,
+                  "40.0": 795,
+                  "50.0": 795,
+                  "60.0": 795,
+                  "120.0": 795,
+                  "240.0": 795,
+                  "480.0": 795,
+                  "960.0": 795,
+                  "1920.0": 795,
+                  "7680.0": 795,
+                  "+Inf": 795
+                }
+              }
+            ]
+          },
+          "vllm:request_decode_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in DECODE phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "b222da7e5ad49"
+                },
+                "stats": {
+                  "count": 776,
+                  "sum": 904.8610274852253,
+                  "avg": 1.1660580251098265,
+                  "count_rate": 0.6455439311969995,
+                  "sum_rate": 0.7527416815332069,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 0.00014400250092555327,
+                  "p50_estimate": 0.008152287680516348,
+                  "p75_estimate": 0.02776277966673739,
+                  "p90_estimate": 1.8796541279188883,
+                  "p95_estimate": 4.344548101756438,
+                  "p99_estimate": 28.977188424524396
+                },
+                "buckets": {
+                  "0.3": 621,
+                  "0.5": 622,
+                  "0.8": 634,
+                  "1.0": 656,
+                  "1.5": 678,
+                  "2.0": 702,
+                  "2.5": 719,
+                  "5.0": 741,
+                  "10.0": 754,
+                  "15.0": 760,
+                  "20.0": 764,
+                  "30.0": 768,
+                  "40.0": 771,
+                  "50.0": 775,
+                  "60.0": 775,
+                  "120.0": 776,
+                  "240.0": 776,
+                  "480.0": 776,
+                  "960.0": 776,
+                  "1920.0": 776,
+                  "7680.0": 776,
+                  "+Inf": 776
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "1270667964415b"
+                },
+                "stats": {
+                  "count": 795,
+                  "sum": 787.8010731614195,
+                  "avg": 0.9909447461149931,
+                  "count_rate": 0.6613546179546685,
+                  "sum_rate": 0.6553658839810673,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 5.343874932920089e-05,
+                  "p25_estimate": 0.00023216314396787302,
+                  "p50_estimate": 0.00459083577953296,
+                  "p75_estimate": 0.015494874651299726,
+                  "p90_estimate": 1.8699537290557653,
+                  "p95_estimate": 4.443061240819485,
+                  "p99_estimate": 24.15504406717225
+                },
+                "buckets": {
+                  "0.3": 643,
+                  "0.5": 644,
+                  "0.8": 659,
+                  "1.0": 683,
+                  "1.5": 700,
+                  "2.0": 719,
+                  "2.5": 731,
+                  "5.0": 759,
+                  "10.0": 775,
+                  "15.0": 780,
+                  "20.0": 782,
+                  "30.0": 792,
+                  "40.0": 793,
+                  "50.0": 795,
+                  "60.0": 795,
+                  "120.0": 795,
+                  "240.0": 795,
+                  "480.0": 795,
+                  "960.0": 795,
+                  "1920.0": 795,
+                  "7680.0": 795,
+                  "+Inf": 795
+                }
+              }
+            ]
+          },
+          "dynamo_frontend_active_requests": {
+            "type": "gauge",
+            "description": "Number of requests currently being handled by the frontend, from HTTP handler entry to response completion",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://ft-agg-frontend.dynamo-ft-routing-overnight-20261105-a1.svc.cluster.local:8000/metrics",
+                "labels": {
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 1.6608571428571428,
+                  "min": 0.0,
+                  "max": 10.0,
+                  "std": 1.7364539153747993,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 1.0,
+                  "p75": 3.0,
+                  "p90": 4.0,
+                  "p95": 5.0,
+                  "p99": 9.0
+                }
+              }
+            ]
+          },
+          "dynamo_frontend_queued_requests": {
+            "type": "gauge",
+            "description": "Number of requests in HTTP processing queue",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://ft-agg-frontend.dynamo-ft-routing-overnight-20261105-a1.svc.cluster.local:8000/metrics",
+                "labels": {
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 0.24285714285714285,
+                  "min": 0.0,
+                  "max": 4.0,
+                  "std": 0.5889259624485127,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 1.0,
+                  "p95": 1.0,
+                  "p99": 3.0
+                }
+              }
+            ]
+          },
+          "dynamo_component_gpu_cache_usage_percent": {
+            "type": "gauge",
+            "description": "GPU cache usage as a percentage (0.0-1.0).",
+            "unit": "ratio",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.46:9090/metrics",
+                "labels": {
+                  "dp_rank": "0",
+                  "dynamo_component": "backend",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 0.011149655915761544,
+                  "min": 0.0,
+                  "max": 0.08299477655252463,
+                  "std": 0.016000322491329967,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.002031340684852001,
+                  "p75": 0.01538015089959377,
+                  "p90": 0.03743470690655837,
+                  "p95": 0.047881601857225786,
+                  "p99": 0.060359837492745205
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.189:9090/metrics",
+                "labels": {
+                  "dp_rank": "0",
+                  "dynamo_component": "backend",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 0.009627062432634111,
+                  "min": 0.0,
+                  "max": 0.07254788160185721,
+                  "std": 0.0156323679755449,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.011027278003482244,
+                  "p90": 0.04062681369704002,
+                  "p95": 0.04556006964596637,
+                  "p99": 0.06500290191526403
+                }
+              }
+            ]
+          }
+        },
+        "all_completed_output_tokens_over_900s_admission": 234.06444444444443,
+        "admission_denominator_caveat": "Numerator includes completions in the grace/drain tail. This derived rate does not measure tokens emitted strictly inside admission.",
+        "event_discovery_proof": {
+          "passed": true,
+          "errors": [],
+          "router_mode": "round-robin",
+          "expected_worker_pod_ips": [
+            "192.168.100.46",
+            "192.168.98.189"
+          ],
+          "registered_worker_ids": [],
+          "smoke_worker_ids": [
+            "3133804229537097",
+            "5190135006380379"
+          ],
+          "kv_event_source_hosts": [],
+          "zmq_endpoints_by_topic": {
+            "kv_metrics": [
+              "tcp://192.168.100.46:44135",
+              "tcp://192.168.98.189:40843"
+            ]
+          },
+          "connection_records": [
+            {
+              "topic": "kv_metrics",
+              "endpoint": "tcp://192.168.100.46:44135",
+              "host": "192.168.100.46",
+              "line": "2026-11-05T07:48:39.244508Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.100.46:44135\" topic=\"kv_metrics\" rcvhwm=100000"
+            },
+            {
+              "topic": "kv_metrics",
+              "endpoint": "tcp://192.168.98.189:40843",
+              "host": "192.168.98.189",
+              "line": "2026-11-05T07:48:46.584968Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.98.189:40843\" topic=\"kv_metrics\" rcvhwm=100000"
+            }
+          ],
+          "scope": "Current frontend log and current worker Pod IPs; connection proof is separate from positive prefix-overlap/performance evidence",
+          "frontend_uid": "aa95e1a1-5a1c-4bd4-85f1-2002a5eb200e",
+          "current_frontend_log": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-20261105-a1/two-rr-c16-a1/ft-agg-0-frontend-r4pkw.log",
+          "log_sha256": "a4de737a6fca8fb8ca17c08f25a69fff0876a6788df77145bb56970f41a9f277"
+        },
+        "worker_configuration_proof": {
+          "passed": true,
+          "configuration": "two-rr",
+          "max_num_seqs": 128,
+          "workers": {
+            "kubecon-nke-site-cp-0942": {
+              "gpu_uuids": [
+                "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75",
+                "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8"
+              ],
+              "cache_capacity_logs": [
+                "(Worker_TP0 pid=1616) INFO 11-05 07:48:20 [gpu_worker.py:726] Available KV cache memory: 27.78 GiB",
+                "(EngineCore pid=1317) INFO 11-05 07:48:20 [kv_cache_utils.py:2481] GPU KV cache size: 13,691,066 tokens, Maximum concurrency for 1,048,576 tokens per request: 13.06x"
+              ],
+              "uid": "9fc8dcff-4517-4f4b-aad8-bd96543f2851"
+            },
+            "kubecon-nke-site-cp-0198": {
+              "gpu_uuids": [
+                "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326",
+                "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5"
+              ],
+              "cache_capacity_logs": [
+                "(Worker_TP0 pid=1611) INFO 11-05 07:48:11 [gpu_worker.py:726] Available KV cache memory: 27.78 GiB",
+                "(EngineCore pid=1312) INFO 11-05 07:48:11 [kv_cache_utils.py:2481] GPU KV cache size: 13,691,066 tokens, Maximum concurrency for 1,048,576 tokens per request: 13.06x"
+              ],
+              "uid": "d3e301c9-323e-402d-aea7-72ce36c98489"
+            }
+          },
+          "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df"
+        }
+      }
+    },
+    {
+      "arm": "two-kv-c16-a1",
+      "status": "clean",
+      "eligible": true,
+      "summary": {
+        "outcome": "clean",
+        "clean_comparison_eligible": true,
+        "successful_requests": 311.0,
+        "request_errors": 0,
+        "context_overflow": 0,
+        "cancelled_profile_records": 0,
+        "submission_valid": true,
+        "runtime_submission_invalid_reasons": [],
+        "error_summary": [],
+        "phase_completion_log_lines": [
+          "08:25:06.351 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=16, completed=2, in_flight=14 | sessions: sent=13, completed=0 (runner.py:1163)",
+          "08:26:57.172 NOTICE   Phase agentic.warmup (warmup) complete | completed=16, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=115.08s (runner.py:1286)",
+          "08:41:57.359 NOTICE   Phase profiling (profiling) sending complete | sent=311, completed=311, in_flight=0 | sessions: sent=10, completed=3 | timeout_triggered=True (runner.py:1163)",
+          "08:46:57.358 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=311, completed=311, cancelled=0, in_flight=0 (runner.py:1227)",
+          "08:46:57.359 NOTICE   Phase profiling (profiling) complete | completed=311, cancelled=0, errors=0 | sessions: completed=3, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+          "08:46:57.360 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793867217356759257, sent_end_ns=1793868117358673985, requests_end_ns=1793868417358858708, baseline_start_ns=1793867217356726777, baseline_end_ns=1793868417358883279, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=311, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=311, error_records=0) (records_manager.py:1480)"
+        ],
+        "scope": "Stress outcomes retained; censored/invalid cells do not establish latency SLOs or speedup"
+      },
+      "source_files": {
+        "summary.json": "8bada6f7ddbf3ae3ee79747bae105d22ee07bcf061049fda6b11fe0f41c609e3",
+        "worker-qualification.json": "53be78afca7e39ed0638ae62a89924f804eac147607872e86cb108bca3016c3c",
+        "discovery-qualification.json": "9ac23bf0ba1bd094e09f88e704caa11f6882a000cea0be2862d72b60a3b753a2",
+        "integrity-final.json": "62b5c0265be5b942e56e6cf3101141f19a168d0fa0b53a636c3ff4192261ffd4",
+        "profile.yaml": "903a5ea9e6f17ed5c48090d48d1d79cc589e278520b30f076de8338fa5782f25",
+        "spec.json": "e7066cc2603797a70ff75b037db6ed80aabceb0898b467146387633f2a2e50ee"
+      },
+      "metrics": {
+        "arm": "two-kv-c16-a1",
+        "spec": {
+          "sealed_at": "2026-11-05T08:24:50.944293+00:00",
+          "arm": "two-kv-c16-a1",
+          "configuration": "two-kv",
+          "replicas": 2,
+          "h100_gpus": 4,
+          "concurrency_session_trees": 16,
+          "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+          "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+          "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+          "dataset_revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+          "dataset_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+          "aiperf_commit": "e2c149ee29d3b64798d8ba2176e9f42e0aa89280",
+          "dataset_pin_patch_sha256": "4230167ccd705a71860bae27a981655d4f23fcef499b27665fe09c9239745c95",
+          "profile_sha256": "903a5ea9e6f17ed5c48090d48d1d79cc589e278520b30f076de8338fa5782f25",
+          "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df",
+          "client_preprocessor_workers": 1,
+          "client_resources": {
+            "requests": {
+              "cpu": "4",
+              "memory": "64Gi",
+              "ephemeral-storage": "40Gi"
+            },
+            "limits": {
+              "cpu": "8",
+              "memory": "96Gi",
+              "ephemeral-storage": "80Gi"
+            }
+          },
+          "router_mode": "kv",
+          "native_max_model_len": 1048576,
+          "max_num_seqs_per_worker": 128,
+          "cache_history": "Fresh workers/private compiler caches per cell; bounded smoke and new canonical AgentX primer before each profile",
+          "initial_gpu_cache": "Fresh worker processes for this topology/load cell; bounded smoke plus mandatory canonical primer",
+          "worker_pods": [
+            {
+              "name": "ft-agg-0-agg-fhwtx",
+              "uid": "16a42d45-1a2f-4626-a23f-0ac1382916c1",
+              "node": "kubecon-nke-site-cp-0942",
+              "image_ids": [
+                "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+              ]
+            },
+            {
+              "name": "ft-agg-0-agg-qvzqg",
+              "uid": "91079754-5028-4aeb-899e-41dab8853733",
+              "node": "kubecon-nke-site-cp-0198",
+              "image_ids": [
+                "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d"
+              ]
+            }
+          ]
+        },
+        "spec_sha256": "e7066cc2603797a70ff75b037db6ed80aabceb0898b467146387633f2a2e50ee",
+        "accepted_export": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-collection-recovered-20261105-0739/verified/results/workshop-routing-overnight-20261105-a1/two-kv-c16-a1/raw/two-kv-c16-a1/artifacts/profile_export_aiperf.json",
+        "benchmark_id": "b9ce7cfdf2ad",
+        "profile_seconds": 900.0,
+        "grace_seconds": 300.0,
+        "phase_window_seconds": 1200.002099451,
+        "benchmark_duration_metric_seconds": 898.525330688,
+        "canonical_throughput_denominator_seconds": 1200.002099451,
+        "requests": 311.0,
+        "request_error_count": 0,
+        "output_tokens": 208910.0,
+        "input_tokens": 33493737.0,
+        "output_tokens_per_second": 174.0913620864298,
+        "output_tokens_per_second_per_gpu": 43.52284052160745,
+        "record_span_output_tokens_per_second": 232.50318367767974,
+        "decode_tokens_per_second_per_user_mean": 137.49477931890738,
+        "decode_tokens_per_second_per_user_p50": 146.92212589731284,
+        "ttft_p50_ms": 261.27586199999996,
+        "ttft_p99_ms": 5172.5300239999615,
+        "itl_p50_ms": 6.806326779527558,
+        "itl_p99_ms": 16.35126386729914,
+        "input_tokens_mean": 107696.9035369775,
+        "output_tokens_mean": 671.7363344051447,
+        "server_reported_cache_read_pct": 91.02845705153773,
+        "server_reported_cache_read_tokens": 30488832.0,
+        "structural_theoretical_prefix_hit_pct": 96.45560308578237,
+        "interactivity_metrics": {
+          "e2e_normalized_interactivity_p75": {
+            "unit": "tokens/sec/user",
+            "avg": 94.75362097203717
+          },
+          "e2e_normalized_interactivity_p90": {
+            "unit": "tokens/sec/user",
+            "avg": 66.64086129849102
+          }
+        },
+        "worker_generate_requests": [
+          {
+            "endpoint": "http://192.168.100.28:9090/metrics",
+            "worker_id": "10252ad4254ebf",
+            "requests": 184.0
+          },
+          {
+            "endpoint": "http://192.168.98.146:9090/metrics",
+            "worker_id": "60b849d45ce7a",
+            "requests": 127.0
+          }
+        ],
+        "predicted_kv_hit_histogram_count": 311,
+        "predicted_kv_hit_histogram_sum": 256.4083239705838,
+        "branch_stats": {
+          "children_spawned": 38,
+          "children_completed": 12,
+          "children_errored": 0,
+          "children_truncated": 0,
+          "children_delayed": 8,
+          "parents_suspended": 4,
+          "parents_resumed": 3,
+          "parents_failed_due_to_child_error": 0,
+          "joins_suppressed": 0,
+          "graphs_admitted": 0,
+          "graphs_completed_to_end": 0
+        },
+        "record_phase_counts": {
+          "warmup": 16,
+          "profiling": 311
+        },
+        "cancelled_profile_records": 0,
+        "sampled_root_correlation_ids": [
+          "15949901-40e3-40f8-a1c2-83eec7f89cba",
+          "4a912a44-a7ce-436b-a77e-6d8de1b3265c",
+          "4b22f93e-757a-4f59-83cb-29909a2faeef",
+          "590f9f6f-fd32-4bbd-a907-b0a0c568b12d",
+          "796b2ba3-2368-4faa-b8b9-ecf7f5abd27f",
+          "8828ecc3-f07e-435b-87af-45726244097d",
+          "a726e1aa-6873-44ef-8df3-38bbb78a0f8d",
+          "bd5e932a-6a82-4b9e-9917-2fd8c54d527b",
+          "e8089360-851a-4829-907b-08961ead0409",
+          "fef52819-7881-463b-bf1f-8dbf84ee284c"
+        ],
+        "source_trace_requests": {
+          "07dd40536557a1d6440a923557c3129dc929": {
+            "requests": 117,
+            "source_kinds": {
+              "weka_main": 7,
+              "weka_subagent": 110
+            },
+            "source_outer_idx_min": 2,
+            "source_outer_idx_max": 11
+          },
+          "085411a4cc4b15108dd9b50007261a2efb65": {
+            "requests": 4,
+            "source_kinds": {
+              "weka_main": 3,
+              "weka_flat": 1
+            },
+            "source_outer_idx_min": 3,
+            "source_outer_idx_max": 6
+          },
+          "0196085d85d2075a50b74cd8795ffbdcea9a": {
+            "requests": 16,
+            "source_kinds": {
+              "weka_main": 15,
+              "weka_flat": 1
+            },
+            "source_outer_idx_min": 136,
+            "source_outer_idx_max": 151
+          },
+          "03e110ac6921c2fe9ac7772a9654314a2beb": {
+            "requests": 45,
+            "source_kinds": {
+              "weka_subagent": 41,
+              "weka_main": 4
+            },
+            "source_outer_idx_min": 41,
+            "source_outer_idx_max": 47
+          },
+          "00ca01c4aaeccee751ae6285beb54dea262f": {
+            "requests": 18,
+            "source_kinds": {
+              "weka_main": 18
+            },
+            "source_outer_idx_min": 9,
+            "source_outer_idx_max": 26
+          },
+          "0a279af1bec84c6ab033bb03f5d8bfd6b08d": {
+            "requests": 13,
+            "source_kinds": {
+              "weka_main": 13
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 12
+          },
+          "085aacf44ac5428ad3c6b4f6cd431e083832": {
+            "requests": 67,
+            "source_kinds": {
+              "weka_main": 5,
+              "weka_subagent": 62
+            },
+            "source_outer_idx_min": 51,
+            "source_outer_idx_max": 58
+          },
+          "006c98de37d819e95b0840e25426bb7ca99d": {
+            "requests": 1,
+            "source_kinds": {
+              "weka_main": 1
+            },
+            "source_outer_idx_min": 32,
+            "source_outer_idx_max": 32
+          },
+          "0a688303b1ae62a97607af8021f2130c2caf": {
+            "requests": 5,
+            "source_kinds": {
+              "weka_main": 5
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 4
+          },
+          "0b7f3ca692f15ae2651a310d9411d70794aa": {
+            "requests": 25,
+            "source_kinds": {
+              "weka_main": 23,
+              "weka_flat": 2
+            },
+            "source_outer_idx_min": 0,
+            "source_outer_idx_max": 24
+          }
+        },
+        "gpu_utilization_during_900s_admission_window": {
+          "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8": {
+            "samples": 180,
+            "mean_pct": 66.95555555555555
+          },
+          "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75": {
+            "samples": 180,
+            "mean_pct": 65.7388888888889
+          },
+          "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5": {
+            "samples": 180,
+            "mean_pct": 66.00555555555556
+          },
+          "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326": {
+            "samples": 180,
+            "mean_pct": 64.36111111111111
+          }
+        },
+        "metadata": {
+          "dataset": {
+            "source_type": "public_dataset",
+            "loader": "semianalysis_cc_traces_weka_062126",
+            "hf_dataset_name": "semianalysisai/cc-traces-weka-062126",
+            "hf_split": "train"
+          },
+          "metric_duration_coverage": [
+            {
+              "phase_name": "profiling",
+              "expected_duration_seconds": 900.0,
+              "required_ratio": 0.95,
+              "ttft_ratio": 0.9974537150577778,
+              "inter_token_latency_ratio": 0.9983690524444444
+            }
+          ],
+          "scenario": "inferencex-agentx-mvp",
+          "submission_valid": true
+        },
+        "phase_completion_log_lines": [
+          "08:25:06.351 NOTICE   Phase agentic.warmup (warmup) sending complete | sent=16, completed=2, in_flight=14 | sessions: sent=13, completed=0 (runner.py:1163)",
+          "08:26:57.172 NOTICE   Phase agentic.warmup (warmup) complete | completed=16, cancelled=0, errors=0 | sessions: completed=0, cancelled=0 | elapsed=115.08s (runner.py:1286)",
+          "08:41:57.359 NOTICE   Phase profiling (profiling) sending complete | sent=311, completed=311, in_flight=0 | sessions: sent=10, completed=3 | timeout_triggered=True (runner.py:1163)",
+          "08:46:57.358 WARNING  Phase profiling timed out, cancelling all credits. Stats: sent=311, completed=311, cancelled=0, in_flight=0 (runner.py:1227)",
+          "08:46:57.359 NOTICE   Phase profiling (profiling) complete | completed=311, cancelled=0, errors=0 | sessions: completed=3, cancelled=0 | elapsed=1200.00s | grace_period_timeout=True (runner.py:1286)",
+          "08:46:57.360 INFO     Received CREDIT_PHASE_COMPLETE message, Phase complete: PhaseRecordsStats(phase=CreditPhase.PROFILING, phase_index=0, profiling_index=0, phase_name='profiling', phase_kind='profiling', start_ns=1793867217356759257, sent_end_ns=1793868117358673985, requests_end_ns=1793868417358858708, baseline_start_ns=1793867217356726777, baseline_end_ns=1793868417358883279, total_expected_requests=None, expected_duration_sec=None, expected_num_sessions=None, expected_grace_period_sec=None, final_requests_sent=None, final_requests_completed=311, final_requests_cancelled=0, final_request_errors=0, final_sent_sessions=None, final_completed_sessions=None, final_cancelled_sessions=None, timeout_triggered=True, grace_period_timeout_triggered=True, was_cancelled=False, records_end_ns=None, success_records=311, error_records=0) (records_manager.py:1480)"
+        ],
+        "pressure_series": {
+          "vllm:num_requests_running": {
+            "type": "gauge",
+            "description": "Number of requests in model execution batches.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "avg": 0.7653890824622532,
+                  "min": 0.0,
+                  "max": 6.0,
+                  "std": 0.9891121444705316,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 1.0,
+                  "p90": 2.0,
+                  "p95": 2.0,
+                  "p99": 4.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "avg": 0.6507982583454281,
+                  "min": 0.0,
+                  "max": 5.0,
+                  "std": 0.7633652921995765,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 1.0,
+                  "p90": 2.0,
+                  "p95": 2.0,
+                  "p99": 2.0
+                }
+              }
+            ]
+          },
+          "vllm:num_requests_waiting": {
+            "type": "gauge",
+            "description": "Number of requests waiting to be processed.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "avg": 0.0020325203252032522,
+                  "min": 0.0,
+                  "max": 2.0,
+                  "std": 0.056486775799078015,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "avg": 0.0034833091436865023,
+                  "min": 0.0,
+                  "max": 2.0,
+                  "std": 0.06366241972112795,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              }
+            ]
+          },
+          "vllm:num_requests_waiting_by_reason": {
+            "type": "gauge",
+            "description": "Number of waiting requests by reason. Reason labels: 'capacity' = waiting for scheduling capacity; 'deferred' = deferred by transient constraints (LoRA budget, KV transfer, blocked status). Sum of all reasons equals vllm:num_requests_waiting.",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "capacity",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "avg": 0.0020325203252032522,
+                  "min": 0.0,
+                  "max": 2.0,
+                  "std": 0.056486775799078015,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "deferred",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "avg": 0.0,
+                  "min": 0.0,
+                  "max": 0.0,
+                  "std": 0.0,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "capacity",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "avg": 0.0034833091436865023,
+                  "min": 0.0,
+                  "max": 2.0,
+                  "std": 0.06366241972112795,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "reason": "deferred",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "avg": 0.0,
+                  "min": 0.0,
+                  "max": 0.0,
+                  "std": 0.0,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 0.0,
+                  "p95": 0.0,
+                  "p99": 0.0
+                }
+              }
+            ]
+          },
+          "vllm:kv_cache_usage_perc": {
+            "type": "gauge",
+            "description": "KV-cache usage. 1 means 100 percent usage.",
+            "unit": "ratio",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "avg": 0.007173055935849139,
+                  "min": 0.0,
+                  "max": 0.042077771329077196,
+                  "std": 0.00927212547990229,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.011897852582704593,
+                  "p90": 0.02118398142774236,
+                  "p95": 0.025536854323853775,
+                  "p99": 0.038015089959373194
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "avg": 0.010759156195483796,
+                  "min": 0.0,
+                  "max": 0.0681950087057458,
+                  "std": 0.01634088493347972,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.013058618688334356,
+                  "p90": 0.040917005223447434,
+                  "p95": 0.04701102727800344,
+                  "p99": 0.053685432385374376
+                }
+              }
+            ]
+          },
+          "vllm:num_preemptions": {
+            "type": "counter",
+            "description": "Cumulative number of preemption from the engine.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "total": 0.0,
+                  "rate": 0.0
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "total": 0.0,
+                  "rate": 0.0
+                }
+              }
+            ]
+          },
+          "vllm:prefix_cache_hits": {
+            "type": "counter",
+            "description": "Prefix cache hits, in terms of number of cached tokens.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "total": 13563264.0,
+                  "rate": 11284.233664635387
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "total": 16925568.0,
+                  "rate": 14079.514788437375
+                }
+              }
+            ]
+          },
+          "vllm:prefix_cache_queries": {
+            "type": "counter",
+            "description": "Prefix cache queries, in terms of number of queried tokens.",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "total": 15236115.0,
+                  "rate": 12675.996117251436
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "total": 18258819.0,
+                  "rate": 15188.578139882886
+                }
+              }
+            ]
+          },
+          "vllm:prompt_tokens_cached": {
+            "type": "counter",
+            "description": "Number of cached prompt tokens (local + external).",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "total": 13563264.0,
+                  "rate": 11284.233664635387
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "total": 16925568.0,
+                  "rate": 14079.514788437375
+                }
+              }
+            ]
+          },
+          "vllm:request_queue_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in WAITING phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "count": 773,
+                  "sum": 1.927145787049085,
+                  "avg": 0.002493073463194159,
+                  "count_rate": 0.6431130900912313,
+                  "sum_rate": 0.0016033281787392432,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 0.0,
+                  "p50_estimate": 0.0,
+                  "p75_estimate": 0.0028422773432109053,
+                  "p90_estimate": 0.004806650858676013,
+                  "p95_estimate": 0.005461442030497713,
+                  "p99_estimate": 0.005985274967955075
+                },
+                "buckets": {
+                  "0.3": 770,
+                  "0.5": 771,
+                  "0.8": 772,
+                  "1.0": 773,
+                  "1.5": 773,
+                  "2.0": 773,
+                  "2.5": 773,
+                  "5.0": 773,
+                  "10.0": 773,
+                  "15.0": 773,
+                  "20.0": 773,
+                  "30.0": 773,
+                  "40.0": 773,
+                  "50.0": 773,
+                  "60.0": 773,
+                  "120.0": 773,
+                  "240.0": 773,
+                  "480.0": 773,
+                  "960.0": 773,
+                  "1920.0": 773,
+                  "7680.0": 773,
+                  "+Inf": 773
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "count": 735,
+                  "sum": 3.959229162428528,
+                  "avg": 0.0053867063434401745,
+                  "count_rate": 0.61140892698558,
+                  "sum_rate": 0.003293480345429174,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 0.0,
+                  "p50_estimate": 0.0,
+                  "p75_estimate": 0.011788444865009533,
+                  "p90_estimate": 0.021366823128556683,
+                  "p95_estimate": 0.024559615883072393,
+                  "p99_estimate": 0.02711385008668497
+                },
+                "buckets": {
+                  "0.3": 732,
+                  "0.5": 732,
+                  "0.8": 733,
+                  "1.0": 734,
+                  "1.5": 734,
+                  "2.0": 735,
+                  "2.5": 735,
+                  "5.0": 735,
+                  "10.0": 735,
+                  "15.0": 735,
+                  "20.0": 735,
+                  "30.0": 735,
+                  "40.0": 735,
+                  "50.0": 735,
+                  "60.0": 735,
+                  "120.0": 735,
+                  "240.0": 735,
+                  "480.0": 735,
+                  "960.0": 735,
+                  "1920.0": 735,
+                  "7680.0": 735,
+                  "+Inf": 735
+                }
+              }
+            ]
+          },
+          "vllm:request_prefill_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in PREFILL phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "count": 773,
+                  "sum": 111.20404739724472,
+                  "avg": 0.14386034592140326,
+                  "count_rate": 0.6431130900912313,
+                  "sum_rate": 0.09251847160710712,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0011639581592909347,
+                  "p25_estimate": 0.022945185600882864,
+                  "p50_estimate": 0.07046295823034007,
+                  "p75_estimate": 0.16526866046470057,
+                  "p90_estimate": 0.2221520818053169,
+                  "p95_estimate": 0.3869572171886155,
+                  "p99_estimate": 1.1292229295266571
+                },
+                "buckets": {
+                  "0.3": 699,
+                  "0.5": 744,
+                  "0.8": 757,
+                  "1.0": 760,
+                  "1.5": 767,
+                  "2.0": 771,
+                  "2.5": 771,
+                  "5.0": 772,
+                  "10.0": 772,
+                  "15.0": 772,
+                  "20.0": 773,
+                  "30.0": 773,
+                  "40.0": 773,
+                  "50.0": 773,
+                  "60.0": 773,
+                  "120.0": 773,
+                  "240.0": 773,
+                  "480.0": 773,
+                  "960.0": 773,
+                  "1920.0": 773,
+                  "7680.0": 773,
+                  "+Inf": 773
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "count": 735,
+                  "sum": 98.82423513708636,
+                  "avg": 0.1344547416831107,
+                  "count_rate": 0.61140892698558,
+                  "sum_rate": 0.08220682934059405,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 0.01838095683480341,
+                  "p50_estimate": 0.059424074390150766,
+                  "p75_estimate": 0.1460511269105106,
+                  "p90_estimate": 0.19802735842272645,
+                  "p95_estimate": 0.3960690351841755,
+                  "p99_estimate": 1.5
+                },
+                "buckets": {
+                  "0.3": 670,
+                  "0.5": 704,
+                  "0.8": 720,
+                  "1.0": 721,
+                  "1.5": 725,
+                  "2.0": 730,
+                  "2.5": 731,
+                  "5.0": 732,
+                  "10.0": 735,
+                  "15.0": 735,
+                  "20.0": 735,
+                  "30.0": 735,
+                  "40.0": 735,
+                  "50.0": 735,
+                  "60.0": 735,
+                  "120.0": 735,
+                  "240.0": 735,
+                  "480.0": 735,
+                  "960.0": 735,
+                  "1920.0": 735,
+                  "7680.0": 735,
+                  "+Inf": 735
+                }
+              }
+            ]
+          },
+          "vllm:request_decode_time_seconds": {
+            "type": "histogram",
+            "description": "Histogram of time spent in DECODE phase for request.",
+            "unit": "seconds",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "10252ad4254ebf"
+                },
+                "stats": {
+                  "count": 773,
+                  "sum": 837.0727202380076,
+                  "avg": 1.0828883832315752,
+                  "count_rate": 0.6431130900912313,
+                  "sum_rate": 0.6964196943639558,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 0.00012362240413549313,
+                  "p50_estimate": 0.005349220996841314,
+                  "p75_estimate": 0.016315791098264965,
+                  "p90_estimate": 1.940075990035487,
+                  "p95_estimate": 3.965587097287564,
+                  "p99_estimate": 23.41858564012951
+                },
+                "buckets": {
+                  "0.3": 593,
+                  "0.5": 593,
+                  "0.8": 610,
+                  "1.0": 633,
+                  "1.5": 667,
+                  "2.0": 697,
+                  "2.5": 711,
+                  "5.0": 742,
+                  "10.0": 754,
+                  "15.0": 758,
+                  "20.0": 762,
+                  "30.0": 769,
+                  "40.0": 770,
+                  "50.0": 772,
+                  "60.0": 772,
+                  "120.0": 773,
+                  "240.0": 773,
+                  "480.0": 773,
+                  "960.0": 773,
+                  "1920.0": 773,
+                  "7680.0": 773,
+                  "+Inf": 773
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dynamo_component": "backend",
+                  "dynamo_endpoint": "generate",
+                  "dynamo_namespace": "dynamo-ft-routing-overnight-20261105-a1-ft-agg-a9fda0e2",
+                  "engine": "0",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "model_name": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+                  "worker_id": "60b849d45ce7a"
+                },
+                "stats": {
+                  "count": 735,
+                  "sum": 711.4300158624537,
+                  "avg": 0.9679319943706853,
+                  "count_rate": 0.61140892698558,
+                  "sum_rate": 0.5918022620731932,
+                  "p1_estimate": 0.0,
+                  "p5_estimate": 0.0,
+                  "p10_estimate": 0.0,
+                  "p25_estimate": 0.00017272570752171795,
+                  "p50_estimate": 0.005934603982099267,
+                  "p75_estimate": 0.022611522740055363,
+                  "p90_estimate": 1.5665073535815137,
+                  "p95_estimate": 5.051246350884744,
+                  "p99_estimate": 24.312905258901072
+                },
+                "buckets": {
+                  "0.3": 613,
+                  "0.5": 614,
+                  "0.8": 629,
+                  "1.0": 643,
+                  "1.5": 657,
+                  "2.0": 674,
+                  "2.5": 681,
+                  "5.0": 697,
+                  "10.0": 714,
+                  "15.0": 722,
+                  "20.0": 724,
+                  "30.0": 731,
+                  "40.0": 734,
+                  "50.0": 735,
+                  "60.0": 735,
+                  "120.0": 735,
+                  "240.0": 735,
+                  "480.0": 735,
+                  "960.0": 735,
+                  "1920.0": 735,
+                  "7680.0": 735,
+                  "+Inf": 735
+                }
+              }
+            ]
+          },
+          "dynamo_frontend_active_requests": {
+            "type": "gauge",
+            "description": "Number of requests currently being handled by the frontend, from HTTP handler entry to response completion",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://ft-agg-frontend.dynamo-ft-routing-overnight-20261105-a1.svc.cluster.local:8000/metrics",
+                "labels": {
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 1.456023222060958,
+                  "min": 0.0,
+                  "max": 7.0,
+                  "std": 1.4898599890315283,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 1.0,
+                  "p75": 2.0,
+                  "p90": 4.0,
+                  "p95": 4.0,
+                  "p99": 6.0
+                }
+              }
+            ]
+          },
+          "dynamo_frontend_queued_requests": {
+            "type": "gauge",
+            "description": "Number of requests in HTTP processing queue",
+            "unit": "requests",
+            "series": [
+              {
+                "endpoint_url": "http://ft-agg-frontend.dynamo-ft-routing-overnight-20261105-a1.svc.cluster.local:8000/metrics",
+                "labels": {
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 0.14339622641509434,
+                  "min": 0.0,
+                  "max": 3.0,
+                  "std": 0.4007695356654037,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p90": 1.0,
+                  "p95": 1.0,
+                  "p99": 2.0
+                }
+              }
+            ]
+          },
+          "dynamo_component_gpu_cache_usage_percent": {
+            "type": "gauge",
+            "description": "GPU cache usage as a percentage (0.0-1.0).",
+            "unit": "ratio",
+            "series": [
+              {
+                "endpoint_url": "http://192.168.100.28:9090/metrics",
+                "labels": {
+                  "dp_rank": "0",
+                  "dynamo_component": "backend",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 0.007172297595623335,
+                  "min": 0.0,
+                  "max": 0.042077771329077196,
+                  "std": 0.009271748134105974,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.011897852582704593,
+                  "p90": 0.02118398142774236,
+                  "p95": 0.025536854323853775,
+                  "p99": 0.038015089959373194
+                }
+              },
+              {
+                "endpoint_url": "http://192.168.98.146:9090/metrics",
+                "labels": {
+                  "dp_rank": "0",
+                  "dynamo_component": "backend",
+                  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
+                },
+                "stats": {
+                  "avg": 0.010760840906812721,
+                  "min": 0.0,
+                  "max": 0.0681950087057458,
+                  "std": 0.016341211762481912,
+                  "p1": 0.0,
+                  "p5": 0.0,
+                  "p10": 0.0,
+                  "p25": 0.0,
+                  "p50": 0.0,
+                  "p75": 0.013058618688334356,
+                  "p90": 0.040917005223447434,
+                  "p95": 0.04701102727800344,
+                  "p99": 0.053685432385374376
+                }
+              }
+            ]
+          }
+        },
+        "all_completed_output_tokens_over_900s_admission": 232.12222222222223,
+        "admission_denominator_caveat": "Numerator includes completions in the grace/drain tail. This derived rate does not measure tokens emitted strictly inside admission.",
+        "event_discovery_proof": {
+          "passed": true,
+          "errors": [],
+          "router_mode": "kv",
+          "expected_worker_pod_ips": [
+            "192.168.100.28",
+            "192.168.98.146"
+          ],
+          "registered_worker_ids": [
+            "1701514062450298",
+            "4544465505439423"
+          ],
+          "smoke_worker_ids": [
+            "1701514062450298",
+            "4544465505439423"
+          ],
+          "kv_event_source_hosts": [
+            "192.168.100.28",
+            "192.168.98.146"
+          ],
+          "zmq_endpoints_by_topic": {
+            "active_sequences_events": [
+              "tcp://192.168.100.28:41431",
+              "tcp://192.168.98.146:38165"
+            ],
+            "kv-events": [
+              "tcp://192.168.100.28:38655",
+              "tcp://192.168.98.146:41925"
+            ],
+            "kv_metrics": [
+              "tcp://192.168.100.28:37123",
+              "tcp://192.168.98.146:42945"
+            ]
+          },
+          "connection_records": [
+            {
+              "topic": "kv_metrics",
+              "endpoint": "tcp://192.168.98.146:42945",
+              "host": "192.168.98.146",
+              "line": "2026-11-05T08:24:35.699259Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.98.146:42945\" topic=\"kv_metrics\" rcvhwm=100000"
+            },
+            {
+              "topic": "kv-events",
+              "endpoint": "tcp://192.168.98.146:41925",
+              "host": "192.168.98.146",
+              "line": "2026-11-05T08:24:35.710809Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.98.146:41925\" topic=\"kv-events\" rcvhwm=100000"
+            },
+            {
+              "topic": "active_sequences_events",
+              "endpoint": "tcp://192.168.98.146:38165",
+              "host": "192.168.98.146",
+              "line": "2026-11-05T08:24:35.711668Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.98.146:38165\" topic=\"active_sequences_events\" rcvhwm=1024"
+            },
+            {
+              "topic": "kv_metrics",
+              "endpoint": "tcp://192.168.100.28:37123",
+              "host": "192.168.100.28",
+              "line": "2026-11-05T08:24:42.529704Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.100.28:37123\" topic=\"kv_metrics\" rcvhwm=100000"
+            },
+            {
+              "topic": "active_sequences_events",
+              "endpoint": "tcp://192.168.100.28:41431",
+              "host": "192.168.100.28",
+              "line": "2026-11-05T08:24:42.529923Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.100.28:41431\" topic=\"active_sequences_events\" rcvhwm=1024"
+            },
+            {
+              "topic": "kv-events",
+              "endpoint": "tcp://192.168.100.28:38655",
+              "host": "192.168.100.28",
+              "line": "2026-11-05T08:24:42.530247Z  INFO dynamo_runtime::transports::event_plane::zmq_transport: ZMQ single-consumer stream connected endpoint=\"tcp://192.168.100.28:38655\" topic=\"kv-events\" rcvhwm=100000"
+            }
+          ],
+          "scope": "Current frontend log and current worker Pod IPs; connection proof is separate from positive prefix-overlap/performance evidence",
+          "frontend_uid": "5dc8e534-5de6-48b6-a58e-7b1d8dbda3bc",
+          "current_frontend_log": "/Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/workshop-routing-overnight-20261105-a1/two-kv-c16-a1/ft-agg-0-frontend-2dr2j.log",
+          "log_sha256": "621bfca9bca4268af0477665dc809934f116b184b79720579bb8538eee280f67"
+        },
+        "worker_configuration_proof": {
+          "passed": true,
+          "configuration": "two-kv",
+          "max_num_seqs": 128,
+          "workers": {
+            "kubecon-nke-site-cp-0942": {
+              "gpu_uuids": [
+                "GPU-4aacb1e1-a109-70bb-6b72-8071d736ba75",
+                "GPU-c15ae016-71f1-03bc-0228-624adbb1b4e8"
+              ],
+              "cache_capacity_logs": [
+                "(Worker_TP0 pid=1614) INFO 11-05 08:24:07 [gpu_worker.py:726] Available KV cache memory: 27.78 GiB",
+                "(EngineCore pid=1315) INFO 11-05 08:24:07 [kv_cache_utils.py:2481] GPU KV cache size: 13,691,066 tokens, Maximum concurrency for 1,048,576 tokens per request: 13.06x"
+              ],
+              "uid": "16a42d45-1a2f-4626-a23f-0ac1382916c1"
+            },
+            "kubecon-nke-site-cp-0198": {
+              "gpu_uuids": [
+                "GPU-08dc0ef4-2e92-4cc2-6adc-b735980a1326",
+                "GPU-3aea3e1e-63c3-41cd-43be-4e379ed995b5"
+              ],
+              "cache_capacity_logs": [
+                "(Worker_TP0 pid=1613) INFO 11-05 08:24:14 [gpu_worker.py:726] Available KV cache memory: 27.78 GiB",
+                "(EngineCore pid=1314) INFO 11-05 08:24:14 [kv_cache_utils.py:2481] GPU KV cache size: 13,691,066 tokens, Maximum concurrency for 1,048,576 tokens per request: 13.06x"
+              ],
+              "uid": "91079754-5028-4aeb-899e-41dab8853733"
+            }
+          },
+          "campaign_sha256": "4e3501bc3fdf00ca226804cee45b32fc75e70ca237ba6bbd28de08c26ca249df"
+        }
+      }
+    },
+    {
+      "arm": "one-rr-c32-a1",
+      "status": "failed",
+      "eligible": false,
+      "missing": [
+        "summary.json",
+        "discovery-qualification.json",
+        "integrity-final.json",
+        "profile.yaml",
+        "spec.json"
+      ],
+      "failure": {
+        "status": "stopped",
+        "updated_at": "2026-11-05T08:56:38.395125+00:00",
+        "error": "RuntimeError('Command failed (1): Traceback (most recent call last):\\n  File \"<string>\", line 7, in <module>\\nAssertionError\\ncommand terminated with exit code 1\\n')"
+      }
+    },
+    {
+      "arm": "two-rr-c32-a1",
+      "status": "not_started",
+      "eligible": false,
+      "missing": [
+        "summary.json",
+        "worker-qualification.json",
+        "discovery-qualification.json",
+        "integrity-final.json",
+        "profile.yaml",
+        "spec.json"
+      ]
+    },
+    {
+      "arm": "two-kv-c32-a1",
+      "status": "not_started",
+      "eligible": false,
+      "missing": [
+        "summary.json",
+        "worker-qualification.json",
+        "discovery-qualification.json",
+        "integrity-final.json",
+        "profile.yaml",
+        "spec.json"
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "kind": "scaleout",
+      "concurrency_session_trees": 16,
+      "arms": [
+        "one-rr-c16-a1",
+        "two-rr-c16-a1"
+      ],
+      "eligible": true,
+      "second_over_first": {
+        "output_tokens_per_second": 1.027058334838945,
+        "decode_tokens_per_second_per_user_mean": 1.1861126447486958,
+        "ttft_p50_ms": 1.1405748463755034,
+        "ttft_p99_ms": 4.037928918223466,
+        "server_reported_cache_read_pct": 0.9284142137546968
+      },
+      "canonical_rate_denominators_differ": false
+    },
+    {
+      "kind": "routing",
+      "concurrency_session_trees": 16,
+      "arms": [
+        "two-rr-c16-a1",
+        "two-kv-c16-a1"
+      ],
+      "eligible": true,
+      "second_over_first": {
+        "output_tokens_per_second": 0.9917025777373476,
+        "decode_tokens_per_second_per_user_mean": 1.0291720526258188,
+        "ttft_p50_ms": 0.8845193358445768,
+        "ttft_p99_ms": 0.33579165188971205,
+        "server_reported_cache_read_pct": 1.0445222801387344
+      },
+      "canonical_rate_denominators_differ": false
+    },
+    {
+      "kind": "scaleout",
+      "concurrency_session_trees": 32,
+      "arms": [
+        "one-rr-c32-a1",
+        "two-rr-c32-a1"
+      ],
+      "eligible": false,
+      "reasons": {
+        "one-rr-c32-a1": "failed",
+        "two-rr-c32-a1": "not_started"
+      }
+    },
+    {
+      "kind": "routing",
+      "concurrency_session_trees": 32,
+      "arms": [
+        "two-rr-c32-a1",
+        "two-kv-c32-a1"
+      ],
+      "eligible": false,
+      "reasons": {
+        "two-rr-c32-a1": "not_started",
+        "two-kv-c32-a1": "not_started"
+      }
+    }
+  ],
+  "saved_gpu_cleanup": {
+    "status": "passed",
+    "updated_at": "2026-11-05T08:56:48.792205+00:00",
+    "remaining_claims": 0,
+    "remaining_worker_pods": 0
+  },
+  "cell_cleanup_receipts": {
+    "after-two-kv-c16-cleanup.json": {
+      "at": "2026-11-05T08:48:11.385126+00:00",
+      "verified": true,
+      "worker_pods": [],
+      "resourceclaims": [],
+      "graphs": [],
+      "scoped_lease_absent": true,
+      "scope": "Only this routing namespace/reservation; Snapshot untouched"
+    },
+    "after-two-rr-c16-cleanup.json": {
+      "at": "2026-11-05T08:12:10.896002+00:00",
+      "verified": true,
+      "worker_pods": [],
+      "resourceclaims": [],
+      "graphs": [],
+      "scoped_lease_absent": true,
+      "scope": "Only this routing namespace/reservation; Snapshot untouched"
+    },
+    "after-one-rr-c16-cleanup.json": {
+      "at": "2026-11-05T07:36:20.259681+00:00",
+      "verified": true,
+      "worker_pods": [],
+      "resourceclaims": [],
+      "graphs": [],
+      "scoped_lease_absent": true,
+      "scope": "Only this routing namespace/reservation; Snapshot untouched"
+    },
+    "after-one-rr-c32-cleanup.json": {
+      "at": "2026-11-05T08:56:48.940655+00:00",
+      "verified": true,
+      "worker_pods": [],
+      "resourceclaims": [],
+      "graphs": [],
+      "scoped_lease_absent": true,
+      "scope": "Only this routing namespace/reservation; Snapshot untouched"
+    }
+  },
+  "limits": [
+    "N=1, topology-first fixed order, fresh workers per cell",
+    "Concurrent disjoint-GPU tests share node CPU, EFS and network",
+    "Realized source trace/turn mixes and drain denominators can differ",
+    "Live AgentX tree concurrency differs from active HTTP requests",
+    "No SLO, peak-capacity, production-readiness or universal-speedup claim"
+  ]
+}

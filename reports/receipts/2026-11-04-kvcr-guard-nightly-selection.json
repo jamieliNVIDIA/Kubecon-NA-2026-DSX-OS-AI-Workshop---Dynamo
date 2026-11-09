@@ -1,0 +1,67 @@
+{
+  "checked_at": "2026-11-05T02:29:01.589077+00:00",
+  "stable_release": "v1.6.1",
+  "release_tag_count": 111,
+  "release_tags_containing_fix": [],
+  "required_fix": "8bf042187a8f3f4224e608b1045db14e5f712f30",
+  "official_container": {
+    "source_tag": "nvcr.io/nvidia/ai-dynamo/vllm-runtime-nightly:20261103-e37f0b9-efa",
+    "image": "nvcr.io/nvidia/ai-dynamo/vllm-runtime-nightly@sha256:c186817f4669d615d2b14bee5a6119d35d4d0fe186fdfab69920da8de9d09337",
+    "index_digest": "sha256:0c0f5fc0d45947fd1df87812ec96abbb63006463bcc42396bc4ea05d0125032d",
+    "platform": "linux/amd64",
+    "config_digest": "sha256:dab5e1d6bec8615c83b94b5271db5a63c050794aa121deb68818d20bf3e8f1dc",
+    "created": "2026-11-03T08:29:59.696531992Z",
+    "dynamo_source_revision": "e37f0b91f841e12715e412b375a40842ec6010b6",
+    "required_fix": "8bf042187a8f3f4224e608b1045db14e5f712f30",
+    "fix_is_ancestor": true,
+    "labels": {
+      "ai.vllm.build.commit": "5df63a7203cdb9328d824a27b682e77c7b9928be",
+      "ai.vllm.build.pipeline": "019d130e-464e-4ff7-b84b-492992c0c06b",
+      "ai.vllm.build.url": "https://buildkite.com/vllm/release-v2/builds/8622",
+      "ai.vllm.image.tag": "vllm/vllm-openai:v5df63a7203cdb9328d824a27b682e77c7b9928be-ubuntu2404",
+      "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+      "org.opencontainers.image.ref.name": "ubuntu",
+      "org.opencontainers.image.revision": "5df63a7203cdb9328d824a27b682e77c7b9928be",
+      "org.opencontainers.image.source": "https://github.com/vllm-project/vllm",
+      "org.opencontainers.image.url": "https://buildkite.com/vllm/release-v2/builds/8622",
+      "org.opencontainers.image.version": "vllm/vllm-openai:v5df63a7203cdb9328d824a27b682e77c7b9928be-ubuntu2404"
+    },
+    "compressed_layer_bytes": 10380845750,
+    "scope": "Resolved registry metadata and source ancestry only; runtime compatibility not qualified.",
+    "observed_image_dynamo_commit": "e37f0b91f841e12715e412b375a40842ec6010b6",
+    "official_image_nixl_ref": "v1.4.1",
+    "qualification_uses": "Matching 1.7.0.dev20261103 Dynamo wheels on the existing NIXL 1.5.0 Super VL base; the unmodified official nightly image is not the tested candidate."
+  },
+  "selected_runtime": {
+    "version": "1.7.0.dev20261103",
+    "dynamo_source_revision": "e37f0b91f841e12715e412b375a40842ec6010b6",
+    "required_fix": "8bf042187a8f3f4224e608b1045db14e5f712f30",
+    "wheels": [
+      {
+        "package": "ai-dynamo",
+        "filename": "ai_dynamo-1.7.0.dev20261103-py3-none-any.whl",
+        "url": "https://pypi.nvidia.com/ai-dynamo/ai_dynamo-1.7.0.dev20261103-py3-none-any.whl",
+        "sha256": "2d086a92bbd6c0ace3f120716d52786458e0b20ba9011b3ebb8a6981126f67d6",
+        "bytes": 4671367
+      },
+      {
+        "package": "ai-dynamo-runtime",
+        "filename": "ai_dynamo_runtime-1.7.0.dev20261103-cp311-abi3-manylinux_2_28_x86_64.whl",
+        "url": "https://pypi.nvidia.com/ai-dynamo-runtime/ai_dynamo_runtime-1.7.0.dev20261103-cp311-abi3-manylinux_2_28_x86_64.whl",
+        "sha256": "9698cfa82642d1a404af46213d8b7798f7d42e36440d048ef410ea79dbce2690",
+        "bytes": 83977319
+      }
+    ],
+    "scope": "Official matching nightly Dynamo wheels in private overlay; existing Super VL/vLLM/NIXL 1.5.0 binaries retained; no global runtime promotion."
+  },
+  "qualification_run": "results/workshop-kvcr-guard-20261104-a4",
+  "status": "CPU/native gates passed; GPU qualification running",
+  "evidence_sha256": {
+    "releases.json": "b74342ddb0cdf5382925a3361645f8baffc230323f344235da27907e91790dd5",
+    "release-tags.txt": "5fc4c8e37e8860f7823e04072668af21a0b0d70afab3afd1e9e8008130f75330",
+    "release-tag-ancestry.json": "90e2ebde4cd56a03aaac07aaea1d443129671a39721187be569984894763601d",
+    "candidate.json": "f14430751d6a0baf5a45fabd7f781381ae3c9c4e78afbeb3b528dfe7dac647cb",
+    "amd64-manifest.json": "c186817f4669d615d2b14bee5a6119d35d4d0fe186fdfab69920da8de9d09337",
+    "amd64-config.json": "dab5e1d6bec8615c83b94b5271db5a63c050794aa121deb68818d20bf3e8f1dc"
+  }
+}

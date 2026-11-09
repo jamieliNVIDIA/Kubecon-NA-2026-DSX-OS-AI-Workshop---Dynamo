@@ -1,0 +1,55 @@
+{
+  "verified_at": "2026-11-03T23:08:33.181426+00:00",
+  "runs": [
+    {
+      "run": "results/workshop-mx-startup-20261030-pair01",
+      "hashed_files": 39,
+      "mismatches": [],
+      "manifest_sha256": "58c80c4370c2f92788df6b0a8c5be404775c65c9e079afd6d042edc585cbbdba"
+    },
+    {
+      "run": "results/workshop-mx-startup-20261030-pair02",
+      "hashed_files": 39,
+      "mismatches": [],
+      "manifest_sha256": "3da82066c80b3adfca835ece8910cf8e0b8ad31d73a48967e2b575d3c0335de8"
+    },
+    {
+      "run": "results/workshop-mx-startup-20261030-pair03",
+      "hashed_files": 58,
+      "mismatches": [],
+      "manifest_sha256": "1314731da0341405a39943805e128f88339035bedf5855453de4866724982dc6"
+    },
+    {
+      "run": "results/workshop-mx-startup-20261030-pair04",
+      "hashed_files": 435,
+      "mismatches": [],
+      "manifest_sha256": "72c64db9e28a4b09490d0d248992f040339a24cc20eb1195175529c0a12dfc48"
+    },
+    {
+      "run": "results/workshop-mx-startup-20261030-artifact01",
+      "hashed_files": 86,
+      "mismatches": [],
+      "manifest_sha256": "1c5cfb8535f8c478b9f17d725e6856176890fd1045f81e122fe6fd593d44da6c"
+    },
+    {
+      "run": "results/workshop-mx-startup-20261030-artifact02",
+      "hashed_files": 305,
+      "mismatches": [],
+      "manifest_sha256": "cfd14f27b54fb9ba7b84d706e9f80cf353cf0d816041d666c3db8ca0be1b0804"
+    },
+    {
+      "run": "results/workshop-mx-startup-20261030-artifact03",
+      "hashed_files": 372,
+      "mismatches": [],
+      "manifest_sha256": "d3cb803ae0fac379359d0da5ccfc854479f1257df14e7faab13d49fd2acc2d66",
+      "scope": "Interrupted artifact03 plus final recovery, initialization summary and exact helper source; cleanup verified before lease release"
+    },
+    {
+      "run": "results/workshop-mx-startup-20261103-artifact04",
+      "hashed_files": 82,
+      "mismatches": [],
+      "manifest_sha256": "2f9cd891aacb47cf5fd98c4ce9930b330f22640263b36f76269d0b28e04c02d5",
+      "scope": "CPU-only preparation, no MX GPU stage started; upstream C4 driver stopped on shared API/tunnel failure"
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "status": "qualified_and_cleaned",
+  "profile": "super-vl-kvcr-speedup-v3",
+  "qualified_at": "2026-11-08T07:31:36.395756+00:00",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+  "model_revision": "8a115b9d966adce8c059a7bcf47f49a1e57957d8",
+  "runtime_image": "nvcr.io/nvidian/dynamo-dev/nealv@sha256:e98d074e84e584a93967aa2f53e2c1092cea631034b1b9277c8753f8c3ba307d",
+  "dynamo_nightly": "1.7.0.dev20261103",
+  "source_bundle_sha256": "592cda9d1831d1ece346b1185eca54d67488a9eb02bc6d8b8cdc62e79a88bc4d",
+  "run": "results/workshop-kvcr-speedup-20261108-a3",
+  "placement": {
+    "a": {
+      "node": "kubecon-nke-site-cp-0198",
+      "gpu_uuids": [
+        "GPU-46608a07-1b00-810d-0d07-2fdf65a8e41f",
+        "GPU-23de81ec-c1e4-39a3-578a-ef7d7a3649cf"
+      ]
+    },
+    "b": {
+      "node": "kubecon-nke-site-cp-0124",
+      "gpu_uuids": [
+        "GPU-b896cc31-be76-0f28-2e2d-d82564b624b7",
+        "GPU-a63322d6-c08e-79cb-c42a-031aeb4c1488"
+      ]
+    }
+  },
+  "cross_node": true,
+  "engine": {
+    "max_model_len": 65536,
+    "max_num_batched_tokens": 8448,
+    "tensor_parallel_size": 2,
+    "host_pool_per_worker_gib": 4
+  },
+  "startup_apply_to_ready_seconds": 733.837134,
+  "preflight": {
+    "common_prefix_tokens": {
+      "main/sub": 58356,
+      "warmup_main/warmup_sub": 10033,
+      "control/sub": 10,
+      "control/main": 10
+    },
+    "reusable_pages": 13,
+    "effective_page_tokens": 4224,
+    "context_limit_tokens": 65536
+  },
+  "warmup": {
+    "warmup_main": {
+      "first_token_ms": 619.591145,
+      "client_total_seconds": 20.077901110053062
+    },
+    "warmup_sub": {
+      "first_token_ms": 250.24256499999998,
+      "client_total_seconds": 19.43355572409928,
+      "external_cache_tokens": 8448
+    },
+    "efa_provider": true
+  },
+  "first_token": {
+    "main_a_cold": {
+      "worker": "a",
+      "repository": "shared",
+      "prompt_tokens": 58386,
+      "cached_tokens": 0,
+      "first_token_ms": 2402.4,
+      "answer_matches": true
+    },
+    "control_b_cold": {
+      "worker": "b",
+      "repository": "control",
+      "prompt_tokens": 58452,
+      "cached_tokens": 0,
+      "first_token_ms": 2511.0,
+      "answer_matches": true
+    },
+    "sub_b_kvcr": {
+      "worker": "b",
+      "repository": "shared",
+      "prompt_tokens": 58396,
+      "cached_tokens": 54912,
+      "first_token_ms": 320.3,
+      "answer_matches": true
+    },
+    "speedup_on_b": 7.84,
+    "timing_source": "frontend nvext timing (ttft_ms)"
+  },
+  "transfer": {
+    "blocks": 18,
+    "bytes": 311427072,
+    "external_cache_tokens": 54912,
+    "matched_wire_operations": 1,
+    "transport": "NIXL/LIBFABRIC/EFA"
+  },
+  "capture": {
+    "path": "demos/transcripts/live/07-kvcr/20261108-a3/main.txt",
+    "sha256": "d1d194de907eeecee9e3eef413ef0e5e11707c07d6753bc6000b8f111d091e92",
+    "status": "live_passed",
+    "walkthrough_seconds_auto": 18.9
+  },
+  "cleanup": {
+    "zero_scoped_pods_claims": true,
+    "lease_released": true
+  },
+  "earlier_attempts": {
+    "a1": "Stopped before readiness: engine A bootstrap download of the pinned nightly wheels ended with IncompleteRead (62.9 of 84 MB); the container restarted and the presenter correctly refused a restarted Pod. Cleaned.",
+    "a2": {
+      "status": "live_passed",
+      "capture": "demos/transcripts/live/07-kvcr/20261108-a2/main.txt",
+      "speedup_on_b": 8.37,
+      "note": "Same profile before planted functions moved to distinctive file names. Cleaned."
+    }
+  },
+  "exploratory_repeats": {
+    "rounds": [
+      {
+        "set": "numbered-files",
+        "round": 1,
+        "control_ms": 2428,
+        "sub_ms": 304,
+        "speedup": 7.99,
+        "answers_correct": 2
+      },
+      {
+        "set": "numbered-files",
+        "round": 2,
+        "control_ms": 2414,
+        "sub_ms": 285,
+        "speedup": 8.47,
+        "answers_correct": 3
+      },
+      {
+        "set": "numbered-files",
+        "round": 3,
+        "control_ms": 2421,
+        "sub_ms": 283,
+        "speedup": 8.54,
+        "answers_correct": 3
+      },
+      {
+        "set": "named",
+        "round": 1,
+        "control_ms": 2412,
+        "sub_ms": 307,
+        "speedup": 7.86,
+        "answers_correct": 3
+      },
+      {
+        "set": "named",
+        "round": 2,
+        "control_ms": 2413,
+        "sub_ms": 308,
+        "speedup": 7.83,
+        "answers_correct": 3
+      },
+      {
+        "set": "named",
+        "round": 3,
+        "control_ms": 2408,
+        "sub_ms": 278,
+        "speedup": 8.65,
+        "answers_correct": 3
+      },
+      {
+        "set": "named",
+        "round": 4,
+        "control_ms": 2430,
+        "sub_ms": 287,
+        "speedup": 8.47,
+        "answers_correct": 3
+      }
+    ],
+    "note": "Extra rounds on a2's warm workers after its walkthrough; not qualification evidence. With numbered files the model once named a neighboring module (1 of 9 answers); with distinctive file names 12 of 12 were correct."
+  },
+  "maturity": "Experimental pinned runtime integration; tailored mechanism demonstration.",
+  "limits": [
+    "Requests pinned to A and B by hand; automatic routing not exercised.",
+    "Warm idle workers and one long shared prefix; no under-load or AgentX result.",
+    "No process failure or Guard recovery injected.",
+    "Engine bootstrap downloads nightly wheels at container start; a network interruption restarts the container and fails priming."
+  ]
+}

@@ -1,0 +1,1001 @@
+Demo files: /Users/nealv/Documents/dynamo/dynamo-kubecon-workshop/results/demo-04-dgd-live-20261105-a3
+
+Dynamo workshop · Operator-managed Snapshot recovery
+LIVE CLUSTER
+Run: results/demo-04-dgd-live-20261105-a3
+Namespace: dynamo-ft-snapshot-demo-5af75fb6dd
+Commands shown relative to the run directory; workshop kubectl/kubeconfig supplied.
+
+Next: 1/4  An initialized Dynamo worker, saved once
+
+================================================================
+1/4  An initialized Dynamo worker, saved once
+Inspect the DGD checkpoint settings; capture and storage staging happened offstage.
+================================================================
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:02.594143+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+
+$ cat deployment-excerpt.yaml
+kind: DynamoGraphDeployment
+metadata:
+  name: ft-snapshot
+spec:
+  backendFramework: vllm
+  components:
+  - name: Frontend
+    type: frontend
+    replicas: 1
+  - name: VllmSnapshotWorker
+    type: worker
+    replicas: 1
+    experimental:
+      checkpoint:
+        enabled: true
+        startupPolicy: WaitForCheckpoint
+        deletionPolicy: Retain
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          command:
+          - python3
+          - -m
+          - dynamo.vllm
+          args:
+          - --model
+          - nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4
+          - --tensor-parallel-size
+          - '2'
+          - --max-model-len
+          - '8192'
+Full executable manifest: deployment.yaml. Runtime bridge: runtime-patch.yaml.
+Capture and staging happened offstage; the checkpoint belongs to this living DGD.
+Same-node fresh-request recovery. KV was released before capture; active streams are separate.
+
+Step finished in 1.7s
+
+Next: 2/4  Replace the worker Pod
+
+================================================================
+2/4  Replace the worker Pod
+Delete only the worker. The operator restores its replacement while the frontend stays put.
+================================================================
+
+$ kubectl delete pod ft-snapshot-vllmsnapshotworker-1a997dea-5c8f765cf5-ftk8g -n dynamo-ft-snapshot-demo-5af75fb6dd
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:04.342340+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:06.144530+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+KIND  COMPONENT    STATUS
+DGD   ft-snapshot  some_resources_are_not_ready
+Pod   frontend     1/1 Running
+Pod   worker       1/1 Running
+Pod   worker       0/1 Pending
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:10.859335+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:15.618259+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:20.341574+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+KIND  COMPONENT    STATUS
+DGD   ft-snapshot  some_resources_are_not_ready
+Pod   frontend     1/1 Running
+Pod   worker       0/1 Running
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:25.069248+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:29.845579+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:34.577813+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:39.305410+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:44.077103+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:48.792833+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:54.199253+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:31:58.929709+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:32:03.664683+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:32:08.395950+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+KIND  COMPONENT    STATUS
+DGD   ft-snapshot  Ready
+Pod   frontend     1/1 Running
+Pod   worker       1/1 Running
+
+Restore timing
+Pod to Ready: 59.00s
+Agent restore: 33.89s
+Deletion to observed Ready: 64.29s
+  criu_prepare                0.014s
+  criu_restore               19.197s
+  cuda_restore               13.284s
+  gpu_device_map              0.043s
+  overlay_capture             0.426s
+  pagebroker_commit           0.000s
+  pagebroker_mount            0.002s
+  pagebroker_stage            0.005s
+  unaccounted                 0.924s
+Capture, publication, staging and hashes happened offstage.
+Agent restore, Pod-to-Ready and deletion-to-observed-Ready are different boundaries; do not add them.
+No matched cold-start baseline. The next request has not been sent yet.
+
+Step finished in 66.6s
+
+Next: 3/4  Check what recovered
+
+================================================================
+3/4  Check what recovered
+A new Pod and worker, the same DGD, frontend, checkpoint, node and GPU pair.
+================================================================
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:32:10.920687+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+
+$ cat recovery-proof.json
+{
+  "simulated": false,
+  "before_uid": "bb2c7d35-4928-40dd-8fd3-47dcf3acdf75",
+  "after_uid": "0c6e18f0-1b80-4f91-a57f-f13706e7dda8",
+  "dgd_uid": "dbba0138-63e9-4dbd-b25e-b5cc0e47c624",
+  "frontend_uid": "39e0de4f-2753-4f74-a3a7-514b224a10b0",
+  "service_uid": "f38fc7e7-ba65-4b1c-a73b-b88794ba9d38",
+  "checkpoint_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+  "content_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+  "node": "kubecon-nke-site-cp-0124",
+  "gpu_uuids": [
+    "GPU-75461e0d-6588-94c9-2517-dca859f5c68b",
+    "GPU-ce4aaec3-4fd1-f047-a303-80986bc29110"
+  ],
+  "scope": "Same-node initialized-engine replacement; no KV/stream preservation."
+}
+
+Step finished in 1.7s
+
+Next: 4/4  Use the recovered service
+
+================================================================
+4/4  Use the recovered service
+Submit a fresh coding request through the unchanged HTTP frontend.
+================================================================
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:32:12.650649+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+
+$ kubectl port-forward -n dynamo-ft-snapshot-demo-5af75fb6dd service/ft-snapshot-frontend 18004:8000 --address=127.0.0.1
+
+$ curl --fail --silent --show-error --no-buffer --max-time 180 -H 'Content-Type: application/json' --data-binary @request.json http://127.0.0.1:18004/v1/chat/completions
+TARGET               SOURCE       FSTYPE OPTIONS    UUID
+/mnt/dynamo-snapshot /dev/nvme0n1 ext4   rw,noatime 68d48707-ddd0-4094-b46b-a70255b4d25b
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1   3797634273280 287383613440 3510233882624   8% /mnt/dynamo-snapshot
+
+{
+  "snapshot-dgd-nvme-staging": {
+    "status": "passed",
+    "updated_at": "2026-11-05T20:32:15.196947+00:00",
+    "agent": {
+      "uid": "b6e7ad74-ea5b-433f-98e9-07ab2003b85c",
+      "spec_sha256": "f96c9b212541a0260c59a99ac5286b6d1d6f552d80c6d9bd696e011e7516c72b",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D",
+      "device_bytes": 3800000000000
+    },
+    "available_bytes_at_inspection": 3604472623104,
+    "source": {
+      "snapshot_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78",
+      "snapshot_namespace": "dynamo-ft-snapshot-demo-5af75fb6dd",
+      "snapshot_uid": "c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "content_name": "podsnapshotcontent-c998c9b6-6a40-4128-b75b-56f14c6c8a7d",
+      "artifact_uid": "6d4f8727-df5c-4abd-934c-819115bd5845",
+      "source_pod_uid": "b5b6a947-7541-4435-89a7-a2c2ea6be79a",
+      "source_pod_name": "checkpoint-24bb57dd75a12a96ff2afb3419782f78-dz2l4",
+      "node": "kubecon-nke-site-cp-0124",
+      "filesystem_uuid": "68d48707-ddd0-4094-b46b-a70255b4d25b",
+      "disk_serial": "AWS135BFFA82D334433D"
+    },
+    "target": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845",
+    "partial": "/proc/1/root/mnt/dynamo-snapshot/artifacts/6d4f8727-df5c-4abd-934c-819115bd5845.partial-snapshot-demo-5af75fb6dd",
+    "expected_files": 1818,
+    "expected_bytes": 94232801717,
+    "hash_manifest_sha256": "4b354050d1914ae6f328e66c4302b385b4f0ec5cc1801969d4fed4fcc7f67439",
+    "source_hash_seconds": 198.29297820851207,
+    "phase": "staged",
+    "copy_seconds": 44.460556918755174,
+    "verification_seconds": 63.84327552188188,
+    "staged": true,
+    "staging_complete_at": "2026-11-05T20:29:55.432508+00:00",
+    "overlay_activated_at": "2026-11-05T20:29:57.126537+00:00",
+    "overlay_verified": true
+  }
+}
+def add(a, b):
+    return a + b
+
+Dynamo decode worker: 2863060121645374
+Fresh coding inference through the unchanged frontend. No in-flight request was restored.
+
+Step finished in 4.3s
+
+Demo complete. The service stays running.
+
+From the repository root:
+
+Resume: ./demos/04-snapshot/run-dgd.sh --run results/demo-04-dgd-live-20261105-a3
+Cleanup: ./demos/04-snapshot/run-dgd.sh cleanup --run results/demo-04-dgd-live-20261105-a3
